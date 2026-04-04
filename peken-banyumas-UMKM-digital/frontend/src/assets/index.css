@@ -1,0 +1,123 @@
+/* =========================
+   RESET & BASE
+========================= */
+@import url('https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:ital,wght@0,400;0,500;0,600;0,700;0,800;1,700;1,800&display=swap');
+
+body {
+  margin: 0;
+  font-family: 'Plus Jakarta Sans', sans-serif;
+  background: #f8faf8;
+}
+
+/* =========================
+   LAYOUT UTAMA
+========================= */
+.app-layout {
+  display: flex;
+}
+
+/* MAIN CONTENT */
+.main {
+  margin-left: 260px;
+  width: calc(100% - 260px);
+  padding: 32px 40px;
+  min-height: 100vh;
+  box-sizing: border-box;
+}
+
+/* =========================
+   RESPONSIVE
+========================= */
+@media (max-width: 768px) {
+  .main {
+    margin-left: 0;
+    width: 100%;
+    padding: 16px;
+  }
+}
+
+.menu-toggle {
+  display: none;
+}
+
+@media (max-width: 768px) {
+  .menu-toggle {
+    display: block;
+  }
+}
+
+/* =========================
+   TOPBAR
+========================= */
+.topbar {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 24px;
+}
+
+.topbar-right {
+  display: flex;
+  gap: 10px;
+  align-items: center;
+}
+
+/* =========================
+   CARD
+========================= */
+.card {
+  background: white;
+  border-radius: 16px;
+  padding: 20px;
+  border: 1px solid #e5e5e5;
+  margin-bottom: 16px;
+}
+
+/* =========================
+   MODAL
+========================= */
+.overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background: rgba(0,0,0,0.3);
+  display: flex;
+  justify-content: center;
+  align-items: center;
+}
+
+.modal {
+  background: white;
+  border-radius: 16px;
+  padding: 20px;
+  width: 400px;
+}
+
+.modal-hd {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 16px;
+}
+
+.modal-body input,
+.modal-body select {
+  width: 100%;
+  padding: 10px;
+  margin-bottom: 10px;
+}
+
+/* =========================
+   TOAST
+========================= */
+.toast {
+  position: fixed;
+  bottom: 20px;
+  right: 20px;
+  background: #2f6f4e;
+  color: white;
+  padding: 12px 20px;
+  border-radius: 10px;
+}

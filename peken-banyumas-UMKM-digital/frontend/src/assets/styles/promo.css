@@ -1,0 +1,529 @@
+/* ============================================================
+   promo.css  —  Promo & Diskon page styles
+   Semua class diawali  pd-  agar tidak bentrok dengan CSS lain
+   ============================================================ */
+
+/* ── Page layout ─────────────────────────────────────────── */
+.pd-page {
+  padding: 0 0 40px;
+}
+
+/* ── Topbar ──────────────────────────────────────────────── */
+.pd-topbar {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  margin-bottom: 20px;
+}
+
+.pd-eyebrow {
+  font-size: 12px;
+  font-weight: 600;
+  color: #e5a82e;
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
+  margin-bottom: 4px;
+}
+
+.pd-title {
+  font-size: 28px;
+  font-weight: 800;
+  color: #1a3a2a;
+  line-height: 1.1;
+}
+
+.pd-title em {
+  font-style: italic;
+  color: #2f6f4e;
+}
+
+.pd-subtitle {
+  font-size: 13px;
+  color: #888;
+  margin-top: 4px;
+}
+
+/* ── Info banner ─────────────────────────────────────────── */
+.pd-info-banner {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  background: #eef7f1;
+  border: 1px solid #b7d7c4;
+  border-radius: 14px;
+  padding: 14px 18px;
+  margin-bottom: 24px;
+}
+
+.pd-info-left {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.pd-info-icon {
+  font-size: 22px;
+}
+
+.pd-info-left strong {
+  font-size: 14px;
+  color: #1a3a2a;
+}
+
+.pd-info-sub {
+  font-size: 12px;
+  color: #666;
+  margin-top: 2px;
+}
+
+/* ── Pills ───────────────────────────────────────────────── */
+.pd-pill-green {
+  background: #d4edda;
+  color: #2f6f4e;
+  font-size: 12px;
+  font-weight: 600;
+  padding: 5px 12px;
+  border-radius: 999px;
+  white-space: nowrap;
+}
+
+.pd-pill-gray {
+  background: #eee;
+  color: #666;
+  font-size: 12px;
+  font-weight: 600;
+  padding: 5px 12px;
+  border-radius: 999px;
+}
+
+/* ── Card grid ───────────────────────────────────────────── */
+.pd-card-grid {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 18px;
+}
+
+/* ── Promo card ──────────────────────────────────────────── */
+.pd-card {
+  width: 240px;
+  border-radius: 18px;
+  border: 1px solid #e0ece5;
+  background: #fff;
+  overflow: hidden;
+  box-shadow: 0 2px 8px rgba(0,0,0,0.05);
+  transition: transform 0.18s, box-shadow 0.18s;
+}
+
+.pd-card:hover {
+  transform: translateY(-3px);
+  box-shadow: 0 8px 24px rgba(0,0,0,0.09);
+}
+
+.pd-card-banner {
+  width: 100%;
+  height: 120px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  overflow: hidden;
+}
+
+.pd-card-poster {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.pd-card-icon {
+  font-size: 44px;
+}
+
+.pd-card-body {
+  padding: 14px 16px 12px;
+}
+
+.pd-card-name {
+  font-size: 15px;
+  font-weight: 700;
+  color: #1a3a2a;
+  margin: 0 0 4px;
+}
+
+.pd-card-value {
+  font-size: 24px;
+  font-weight: 800;
+  color: #2f6f4e;
+  line-height: 1.1;
+  margin-bottom: 6px;
+}
+
+.pd-card-date {
+  font-size: 11px;
+  color: #888;
+  margin-bottom: 10px;
+}
+
+.pd-card-footer {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.pd-card-actions {
+  display: flex;
+  gap: 6px;
+}
+
+.pd-icon-btn {
+  background: #f4f9f6;
+  border: 1px solid #e0ece5;
+  border-radius: 8px;
+  padding: 6px 8px;
+  cursor: pointer;
+  font-size: 14px;
+  transition: background 0.15s;
+}
+
+.pd-icon-btn:hover {
+  background: #dff0e6;
+}
+
+.pd-icon-btn-danger {
+  background: #fff5f5;
+  border-color: #fbd0cc;
+}
+
+.pd-icon-btn-danger:hover {
+  background: #ffe0dc;
+}
+
+/* ── Empty state ─────────────────────────────────────────── */
+.pd-empty {
+  text-align: center;
+  padding: 60px 20px;
+  color: #888;
+}
+
+.pd-empty-icon {
+  font-size: 48px;
+  margin-bottom: 10px;
+}
+
+/* ── Overlay & Modal ─────────────────────────────────────── */
+.pd-overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.45);
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  z-index: 9999;
+  padding: 16px;
+}
+
+.pd-modal {
+  background: #fff;
+  border-radius: 20px;
+  padding: 28px;
+  width: 520px;
+  max-width: 100%;
+  max-height: 90vh;
+  overflow-y: auto;
+  box-shadow: 0 20px 60px rgba(0,0,0,0.15);
+}
+
+/* ── Modal header ────────────────────────────────────────── */
+.pd-modal-hd {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 14px;
+}
+
+.pd-modal-title {
+  font-size: 20px;
+  font-weight: 800;
+  color: #1a3a2a;
+  margin: 0;
+}
+
+.pd-modal-hd-right {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.pd-kios-tag {
+  background: #dcefe2;
+  color: #2f6f4e;
+  font-size: 12px;
+  font-weight: 600;
+  padding: 4px 10px;
+  border-radius: 999px;
+}
+
+.pd-modal-x {
+  background: #e6efe9;
+  border: none;
+  padding: 6px 10px;
+  border-radius: 8px;
+  cursor: pointer;
+  font-size: 14px;
+  transition: background 0.15s;
+}
+
+.pd-modal-x:hover {
+  background: #cce0d4;
+}
+
+/* ── Modal note ──────────────────────────────────────────── */
+.pd-modal-note {
+  background: #f0f9f4;
+  border: 1px solid #c8e6d2;
+  border-radius: 10px;
+  padding: 10px 14px;
+  font-size: 13px;
+  color: #444;
+  margin-bottom: 18px;
+}
+
+/* ── Form grid ───────────────────────────────────────────── */
+.pd-form-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 14px;
+}
+
+.pd-fg {
+  display: flex;
+  flex-direction: column;
+  gap: 5px;
+}
+
+.pd-full {
+  grid-column: span 2;
+}
+
+.pd-fg label {
+  font-size: 12px;
+  font-weight: 600;
+  color: #444;
+}
+
+.pd-label-opt {
+  font-weight: 400;
+  color: #aaa;
+  margin-left: 4px;
+}
+
+.pd-fg input,
+.pd-fg select {
+  padding: 10px 12px;
+  border-radius: 10px;
+  border: 1px solid #dde8e2;
+  font-size: 14px;
+  color: #222;
+  background: #fafafa;
+  transition: border-color 0.15s, box-shadow 0.15s;
+  outline: none;
+}
+
+.pd-fg input:focus,
+.pd-fg select:focus {
+  border-color: #2f6f4e;
+  box-shadow: 0 0 0 3px rgba(47,111,78,0.1);
+  background: #fff;
+}
+
+/* ── Upload zone ─────────────────────────────────────────── */
+.pd-upload-zone {
+  border: 2px dashed #b7d7c4;
+  border-radius: 12px;
+  padding: 20px;
+  text-align: center;
+  cursor: pointer;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 4px;
+  color: #666;
+  font-size: 13px;
+  transition: background 0.15s, border-color 0.15s;
+  background: #f8fdf9;
+}
+
+.pd-upload-zone:hover {
+  background: #eef7f1;
+  border-color: #2f6f4e;
+}
+
+.pd-upload-icon {
+  font-size: 28px;
+  margin-bottom: 4px;
+}
+
+.pd-upload-hint {
+  font-size: 11px;
+  color: #aaa;
+}
+
+/* ── Poster preview ──────────────────────────────────────── */
+.pd-poster-preview {
+  position: relative;
+  border-radius: 12px;
+  overflow: hidden;
+  border: 1px solid #dde8e2;
+}
+
+.pd-poster-preview img {
+  width: 100%;
+  max-height: 160px;
+  object-fit: cover;
+  display: block;
+}
+
+.pd-poster-remove {
+  position: absolute;
+  top: 8px;
+  right: 8px;
+  background: rgba(0,0,0,0.55);
+  color: #fff;
+  border: none;
+  border-radius: 8px;
+  padding: 5px 10px;
+  font-size: 12px;
+  cursor: pointer;
+}
+
+/* ── Form actions ────────────────────────────────────────── */
+.pd-form-act {
+  display: flex;
+  justify-content: flex-end;
+  gap: 10px;
+  margin-top: 22px;
+}
+
+/* ── Buttons ─────────────────────────────────────────────── */
+.pd-btn-primary {
+  background: #2f6f4e;
+  color: #fff;
+  border: none;
+  padding: 10px 22px;
+  border-radius: 10px;
+  font-size: 14px;
+  font-weight: 700;
+  cursor: pointer;
+  transition: background 0.15s, transform 0.1s;
+}
+
+.pd-btn-primary:hover {
+  background: #245c40;
+  transform: translateY(-1px);
+}
+
+.pd-btn-outline {
+  background: transparent;
+  color: #2f6f4e;
+  border: 1px solid #b7d7c4;
+  padding: 10px 22px;
+  border-radius: 10px;
+  font-size: 14px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: background 0.15s;
+}
+
+.pd-btn-outline:hover {
+  background: #f0f9f4;
+}
+
+.pd-btn-danger {
+  background: #e53935;
+  color: #fff;
+  border: none;
+  padding: 10px 22px;
+  border-radius: 10px;
+  font-size: 14px;
+  font-weight: 700;
+  cursor: pointer;
+  transition: background 0.15s;
+}
+
+.pd-btn-danger:hover {
+  background: #c62828;
+}
+
+/* ── Confirm delete modal ────────────────────────────────── */
+.pd-modal-confirm {
+  text-align: center;
+  max-width: 380px;
+}
+
+.pd-confirm-icon {
+  font-size: 48px;
+  margin-bottom: 10px;
+}
+
+.pd-confirm-title {
+  font-size: 18px;
+  font-weight: 700;
+  color: #1a3a2a;
+  margin: 0 0 8px;
+}
+
+.pd-confirm-desc {
+  font-size: 13px;
+  color: #666;
+  margin-bottom: 20px;
+}
+
+.pd-confirm-actions {
+  display: flex;
+  justify-content: center;
+  gap: 12px;
+}
+
+/* ── Toast stack ─────────────────────────────────────────── */
+.pd-toast-stack {
+  position: fixed;
+  bottom: 24px;
+  right: 24px;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  z-index: 99999;
+}
+
+.pd-toast {
+  padding: 12px 20px;
+  border-radius: 12px;
+  font-size: 14px;
+  font-weight: 600;
+  box-shadow: 0 4px 20px rgba(0,0,0,0.12);
+  opacity: 0;
+  transform: translateY(12px);
+  transition: opacity 0.25s ease, transform 0.25s ease;
+  min-width: 220px;
+}
+
+.pd-toast-in {
+  opacity: 1;
+  transform: translateY(0);
+}
+
+.pd-toast-success {
+  background: #1a3a2a;
+  color: #fff;
+}
+
+.pd-toast-warning {
+  background: #fff3cd;
+  color: #856404;
+  border: 1px solid #ffd25a;
+}
+
+.pd-toast-danger {
+  background: #fdecea;
+  color: #b71c1c;
+  border: 1px solid #f5a7a3;
+}

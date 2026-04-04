@@ -1,0 +1,318 @@
+/* ============================================================
+   riwayat.css  —  Riwayat Transaksi page styles
+   Semua class diawali  rw-  agar tidak bentrok dengan CSS lain
+   ============================================================ */
+
+/* ── Page ────────────────────────────────────────────────── */
+.rw-page {
+  padding: 0 0 40px;
+}
+
+/* ── Topbar ──────────────────────────────────────────────── */
+.rw-topbar {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  margin-bottom: 20px;
+  gap: 16px;
+  flex-wrap: wrap;
+}
+
+.rw-eyebrow {
+  font-size: 12px;
+  font-weight: 600;
+  color: #e5a82e;
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
+  margin-bottom: 4px;
+}
+
+.rw-title {
+  font-size: 28px;
+  font-weight: 800;
+  color: #1a3a2a;
+  line-height: 1.1;
+}
+
+.rw-title em {
+  font-style: italic;
+  color: #2f6f4e;
+}
+
+.rw-subtitle {
+  font-size: 13px;
+  color: #888;
+  margin-top: 4px;
+}
+
+/* ── Topbar actions (search + export) ────────────────────── */
+.rw-topbar-actions {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  flex-shrink: 0;
+}
+
+.rw-search-box {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  background: #fff;
+  border: 1px solid #dde8e2;
+  border-radius: 10px;
+  padding: 9px 14px;
+  min-width: 220px;
+  transition: border-color 0.15s, box-shadow 0.15s;
+}
+
+.rw-search-box:focus-within {
+  border-color: #2f6f4e;
+  box-shadow: 0 0 0 3px rgba(47,111,78,0.1);
+}
+
+.rw-search-icon {
+  font-size: 14px;
+  opacity: 0.5;
+}
+
+.rw-search-box input {
+  border: none;
+  outline: none;
+  font-size: 14px;
+  background: transparent;
+  color: #222;
+  width: 100%;
+}
+
+.rw-btn-export {
+  background: #fff;
+  border: 1px solid #dde8e2;
+  padding: 9px 18px;
+  border-radius: 10px;
+  font-size: 14px;
+  font-weight: 600;
+  color: #2f6f4e;
+  cursor: pointer;
+  transition: background 0.15s, border-color 0.15s;
+  white-space: nowrap;
+}
+
+.rw-btn-export:hover {
+  background: #f0f9f4;
+  border-color: #b7d7c4;
+}
+
+/* ── Info banner ─────────────────────────────────────────── */
+.rw-info-banner {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  background: #eef7f1;
+  border: 1px solid #b7d7c4;
+  border-radius: 14px;
+  padding: 14px 18px;
+  margin-bottom: 20px;
+  flex-wrap: wrap;
+  gap: 12px;
+}
+
+.rw-info-left {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.rw-info-icon {
+  font-size: 22px;
+}
+
+.rw-info-left strong {
+  font-size: 14px;
+  color: #1a3a2a;
+}
+
+.rw-info-sub {
+  font-size: 12px;
+  color: #666;
+  margin-top: 2px;
+}
+
+.rw-badges {
+  display: flex;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+
+.rw-badge-green {
+  background: #d4edda;
+  color: #2f6f4e;
+  font-size: 12px;
+  font-weight: 600;
+  padding: 5px 12px;
+  border-radius: 999px;
+  white-space: nowrap;
+}
+
+.rw-badge-orange {
+  background: #ffedd5;
+  color: #c05621;
+  font-size: 12px;
+  font-weight: 600;
+  padding: 5px 12px;
+  border-radius: 999px;
+  white-space: nowrap;
+}
+
+/* ── Table card ──────────────────────────────────────────── */
+.rw-table-card {
+  background: #fff;
+  border-radius: 16px;
+  border: 1px solid #e8f0eb;
+  overflow: hidden;
+  box-shadow: 0 2px 8px rgba(0,0,0,0.04);
+}
+
+/* ── Table ───────────────────────────────────────────────── */
+.rw-table {
+  width: 100%;
+  border-collapse: collapse;
+}
+
+.rw-table thead tr {
+  background: #f7faf8;
+}
+
+.rw-table th {
+  padding: 14px 16px;
+  text-align: left;
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: #9cb4a8;
+}
+
+.rw-table td {
+  padding: 15px 16px;
+  font-size: 14px;
+  color: #333;
+  border-top: 1px solid #f0f5f2;
+}
+
+/* ── Row ─────────────────────────────────────────────────── */
+.rw-row {
+  transition: background 0.12s;
+}
+
+.rw-row:hover {
+  background: #f8fdf9;
+}
+
+.rw-td-id {
+  color: #b0c4b8;
+  font-size: 13px;
+}
+
+.rw-td-customer {
+  font-weight: 700;
+  color: #1a3a2a;
+}
+
+.rw-td-total {
+  font-weight: 700;
+  color: #2f6f4e;
+}
+
+.rw-td-time {
+  color: #888;
+  font-size: 13px;
+}
+
+/* ── Status badges ───────────────────────────────────────── */
+.rw-status {
+  display: inline-block;
+  font-size: 12px;
+  font-weight: 600;
+  padding: 5px 12px;
+  border-radius: 999px;
+  white-space: nowrap;
+}
+
+.rw-status-selesai {
+  background: #d4edda;
+  color: #2f6f4e;
+}
+
+.rw-status-proses {
+  background: #fff3cd;
+  color: #a16207;
+}
+
+/* ── Detail button ───────────────────────────────────────── */
+.rw-btn-detail {
+  background: #fff;
+  border: 1px solid #dde8e2;
+  padding: 6px 14px;
+  border-radius: 9px;
+  font-size: 13px;
+  font-weight: 600;
+  color: #444;
+  cursor: pointer;
+  transition: background 0.15s, border-color 0.15s;
+  white-space: nowrap;
+}
+
+.rw-btn-detail:hover {
+  background: #f0f9f4;
+  border-color: #b7d7c4;
+}
+
+.rw-btn-detail-active {
+  background: #f0f9f4;
+  border-color: #b7d7c4;
+  color: #2f6f4e;
+}
+
+/* ── Detail expanded row ─────────────────────────────────── */
+.rw-detail-row td {
+  padding: 0;
+  border-top: none;
+}
+
+.rw-detail {
+  background: #f0f9f4;
+  border-top: 1px solid #d4edd9;
+  border-bottom: 1px solid #d4edd9;
+  padding: 20px 24px;
+}
+
+.rw-detail-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  row-gap: 10px;
+}
+
+.rw-detail-label {
+  font-size: 13px;
+  color: #9cad9f;
+}
+
+.rw-detail-value {
+  font-size: 14px;
+  color: #1a3a2a;
+  font-weight: 500;
+  text-align: right;
+}
+
+.rw-detail-highlight {
+  color: #2f6f4e;
+  font-weight: 700;
+}
+
+/* ── Empty state ─────────────────────────────────────────── */
+.rw-empty {
+  text-align: center;
+  color: #aaa;
+  padding: 48px !important;
+  font-size: 14px;
+}

@@ -1,0 +1,285 @@
+/* ============================================================
+   profile.css  —  Profile & Logout modal styles
+   Semua class diawali  pf-
+   ============================================================ */
+
+/* ── Page ────────────────────────────────────────────────── */
+.pf-page {
+  padding: 0 0 40px;
+  max-width: 760px;
+}
+
+/* ── Header ──────────────────────────────────────────────── */
+.pf-eyebrow {
+  font-size: 12px;
+  font-weight: 600;
+  color: #e5a82e;
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
+  margin-bottom: 4px;
+}
+
+.pf-title {
+  font-size: 28px;
+  font-weight: 800;
+  color: #1a3a2a;
+  line-height: 1.1;
+  margin-bottom: 20px;
+}
+
+.pf-title em {
+  font-style: italic;
+  color: #2f6f4e;
+}
+
+/* ── Profile card ────────────────────────────────────────── */
+.pf-card {
+  background: #fff;
+  border: 1px solid #e0ece5;
+  border-radius: 20px;
+  padding: 36px 24px 28px;
+  text-align: center;
+  margin-bottom: 16px;
+  box-shadow: 0 2px 10px rgba(0,0,0,0.04);
+}
+
+.pf-avatar {
+  width: 76px;
+  height: 76px;
+  border-radius: 50%;
+  background: linear-gradient(135deg, #3d7a56, #6aab82);
+  color: #fff;
+  font-size: 26px;
+  font-weight: 800;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin: 0 auto 16px;
+  box-shadow: 0 4px 16px rgba(47,111,78,0.3);
+}
+
+.pf-name {
+  font-size: 20px;
+  font-weight: 800;
+  color: #1a3a2a;
+  margin-bottom: 6px;
+}
+
+.pf-role {
+  font-size: 13px;
+  color: #888;
+  margin-bottom: 24px;
+}
+
+/* Stats row */
+.pf-stats {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  gap: 0;
+  border-top: 1px solid #f0f5f2;
+  padding-top: 20px;
+}
+
+.pf-stat {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 4px;
+}
+
+.pf-stat-num {
+  font-size: 22px;
+  font-weight: 800;
+  color: #2f6f4e;
+}
+
+.pf-stat-label {
+  font-size: 12px;
+  color: #aaa;
+}
+
+.pf-stat-divider {
+  width: 1px;
+  height: 36px;
+  background: #e8f0eb;
+}
+
+/* ── Info kios card ──────────────────────────────────────── */
+.pf-info-card {
+  background: #fff;
+  border: 1px solid #e0ece5;
+  border-radius: 20px;
+  padding: 22px 24px;
+  margin-bottom: 16px;
+  box-shadow: 0 2px 10px rgba(0,0,0,0.04);
+}
+
+.pf-info-title {
+  font-size: 16px;
+  font-weight: 800;
+  color: #1a3a2a;
+  margin-bottom: 16px;
+}
+
+.pf-info-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 12px;
+}
+
+.pf-info-item {
+  background: #f4faf6;
+  border-radius: 12px;
+  padding: 14px 16px;
+  display: flex;
+  flex-direction: column;
+  gap: 5px;
+}
+
+.pf-info-label {
+  font-size: 10px;
+  font-weight: 700;
+  color: #9cad9f;
+  letter-spacing: 0.08em;
+}
+
+.pf-info-value {
+  font-size: 14px;
+  font-weight: 700;
+  color: #1a3a2a;
+}
+
+.pf-status-pill {
+  display: inline-block;
+  background: #d4edda;
+  color: #2f6f4e;
+  font-size: 13px;
+  font-weight: 600;
+  padding: 3px 10px;
+  border-radius: 999px;
+  width: fit-content;
+}
+
+/* ── Action buttons ──────────────────────────────────────── */
+.pf-actions {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 12px;
+}
+
+.pf-btn-settings {
+  background: #fff;
+  border: 1px solid #dde8e2;
+  border-radius: 14px;
+  padding: 14px;
+  font-size: 14px;
+  font-weight: 700;
+  color: #1a3a2a;
+  cursor: pointer;
+  transition: background 0.15s, border-color 0.15s;
+}
+
+.pf-btn-settings:hover {
+  background: #f0f9f4;
+  border-color: #b7d7c4;
+}
+
+.pf-btn-logout {
+  background: #fff5f5;
+  border: 1px solid #fbd0cc;
+  border-radius: 14px;
+  padding: 14px;
+  font-size: 14px;
+  font-weight: 700;
+  color: #c0392b;
+  cursor: pointer;
+  transition: background 0.15s, border-color 0.15s;
+}
+
+.pf-btn-logout:hover {
+  background: #ffe8e5;
+  border-color: #f5a7a3;
+}
+
+/* ── Overlay & Modal logout ──────────────────────────────── */
+.pf-overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(0,0,0,0.4);
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  z-index: 9999;
+  padding: 16px;
+}
+
+.pf-modal-logout {
+  background: #fff;
+  border-radius: 20px;
+  padding: 36px 32px;
+  width: 100%;
+  max-width: 360px;
+  text-align: center;
+  box-shadow: 0 20px 60px rgba(0,0,0,0.15);
+  animation: pf-pop 0.2s cubic-bezier(0.34,1.56,0.64,1);
+}
+
+@keyframes pf-pop {
+  from { opacity: 0; transform: scale(0.92); }
+  to   { opacity: 1; transform: scale(1); }
+}
+
+.pf-logout-icon {
+  font-size: 48px;
+  margin-bottom: 12px;
+}
+
+.pf-logout-title {
+  font-size: 18px;
+  font-weight: 800;
+  color: #1a3a2a;
+  margin-bottom: 8px;
+}
+
+.pf-logout-desc {
+  font-size: 13px;
+  color: #888;
+  margin-bottom: 24px;
+  line-height: 1.6;
+}
+
+.pf-logout-actions {
+  display: flex;
+  gap: 10px;
+  justify-content: center;
+}
+
+.pf-btn-kembali {
+  background: #fff;
+  border: 1px solid #dde8e2;
+  border-radius: 12px;
+  padding: 10px 24px;
+  font-size: 14px;
+  font-weight: 600;
+  color: #444;
+  cursor: pointer;
+  transition: background 0.15s;
+}
+
+.pf-btn-kembali:hover { background: #f5f5f5; }
+
+.pf-btn-confirm-logout {
+  background: #ffe8e5;
+  border: 1px solid #fbd0cc;
+  border-radius: 12px;
+  padding: 10px 24px;
+  font-size: 14px;
+  font-weight: 700;
+  color: #c0392b;
+  cursor: pointer;
+  transition: background 0.15s;
+}
+
+.pf-btn-confirm-logout:hover { background: #fdd5d1; }

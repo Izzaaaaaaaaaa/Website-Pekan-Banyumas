@@ -1,0 +1,594 @@
+/* ==============================================
+   MANAJEMEN STOK — manajemen-stok.css
+   ============================================== */
+
+/* ── TOPBAR ── */
+.ms-topbar {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  margin-bottom: 24px;
+}
+
+.ms-topbar-right {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.ms-search svg {
+  color: #9ca3af;
+}
+
+.ms-search {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  background: white;
+  border: 1.5px solid #e5e7eb;
+  border-radius: 12px;
+  padding: 9px 14px;
+  font-size: 14px;
+  color: #374151;
+  width: 220px;
+  transition: border-color 0.2s, box-shadow 0.2s;
+  box-shadow: 0 1px 4px rgba(0,0,0,0.04);
+}
+
+.ms-search:focus-within {
+  border-color: #2f6f4e;
+  box-shadow: 0 0 0 3px rgba(47,111,78,0.1);
+}
+
+.ms-search input {
+  border: none;
+  outline: none;
+  font-size: 14px;
+  background: transparent;
+  width: 100%;
+  color: #374151;
+}
+
+.ms-search input::placeholder {
+  color: #9ca3af;
+}
+
+/* ── KIOS INFO BANNER ── */
+.kios-banner {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  background: linear-gradient(135deg, #f0f7f3 0%, #e8f4ed 100%);
+  border: 1.5px solid #c3dece;
+  border-radius: 18px;
+  padding: 18px 24px;
+  margin-bottom: 20px;
+}
+
+.kios-banner-left {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+}
+
+.kios-avatar {
+  color: white;
+  width: 48px;
+  height: 48px;
+  background: linear-gradient(135deg, #2f6f4e, #4a9b6e);
+  border-radius: 14px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 22px;
+  box-shadow: 0 4px 12px rgba(47,111,78,0.25);
+}
+
+.kios-banner-name {
+  font-size: 16px;
+  font-weight: 700;
+  color: #1a2e22;
+}
+
+.kios-banner-sub {
+  font-size: 12px;
+  color: #6b7280;
+  margin-top: 2px;
+}
+
+.kios-banner-right {
+  display: flex;
+  gap: 10px;
+  align-items: center;
+}
+
+.kios-badge-warn {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.kios-badge-active {
+  background: #dcfce7;
+  color: #166534;
+  border: 1px solid #bbf7d0;
+  padding: 5px 12px;
+  border-radius: 99px;
+  font-size: 12px;
+  font-weight: 600;
+}
+
+.kios-badge-warn {
+  background: #fef3c7;
+  color: #92400e;
+  border: 1px solid #fde68a;
+  padding: 5px 12px;
+  border-radius: 99px;
+  font-size: 12px;
+  font-weight: 600;
+}
+
+/* ── TABLE WRAPPER ── */
+.ms-card {
+  background: white;
+  border-radius: 18px;
+  border: 1px solid #f0f0f0;
+  box-shadow: 0 4px 14px rgba(0,0,0,0.04);
+  overflow: hidden;
+}
+
+.ms-tbl-wrap {
+  overflow-x: auto;
+}
+
+.ms-table {
+  width: 100%;
+  border-collapse: collapse;
+}
+
+.ms-table thead tr {
+  background: #f9fafb;
+}
+
+.ms-table th {
+  padding: 13px 16px;
+  text-align: center;
+  font-size: 11px;
+  font-weight: 700;
+  color: #9ca3af;
+  letter-spacing: 0.8px;
+  text-transform: uppercase;
+  border-bottom: 1px solid #f0f0f0;
+  white-space: nowrap;
+}
+
+.ms-table th:first-child,
+.ms-table td:first-child {
+  padding-left: 24px;
+  width: 40px;
+}
+
+.ms-table th:last-child,
+.ms-table td:last-child {
+  padding-right: 24px;
+}
+
+.ms-table tbody tr {
+  border-bottom: 1px solid #f6f7f8;
+  transition: background 0.15s;
+}
+
+.ms-table tbody tr:last-child {
+  border-bottom: none;
+}
+
+.ms-table tbody tr:hover {
+  background: #fafcfb;
+}
+
+.ms-table td {
+  padding: 16px;
+  vertical-align: middle;
+}
+
+.ms-idx {
+  font-size: 13px;
+  font-weight: 600;
+  color: #d1d5db;
+}
+
+/* ── TD NAMA ── */
+.ms-td-name {
+  font-size: 14px;
+  font-weight: 600;
+  color: #1a2e22;
+}
+
+.ms-td-sub {
+  font-size: 12px;
+  color: #9ca3af;
+  margin-top: 2px;
+}
+
+/* ── KATEGORI PILL ── */
+.ms-kategori {
+  display: inline-block;
+  padding: 4px 12px;
+  border-radius: 99px;
+  font-size: 12px;
+  font-weight: 600;
+}
+
+.ms-kat-makanan  { background: #dcfce7; color: #166534; }
+.ms-kat-minuman  { background: #dbeafe; color: #1e40af; }
+.ms-kat-camilan  { background: #fef3c7; color: #92400e; }
+.ms-kat-lainnya  { background: #f3f4f6; color: #6b7280; }
+
+/* ── STOK PROGRESS ── */
+.ms-stok-wrap {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.ms-track {
+  height: 7px;
+  width: 90px;
+  background: #f0f0f0;
+  border-radius: 99px;
+  overflow: hidden;
+  flex-shrink: 0;
+}
+
+.ms-fill {
+  height: 100%;
+  border-radius: 99px;
+  transition: width 0.4s ease;
+}
+
+.ms-fill-ok   { background: #22c55e; }
+.ms-fill-warn { background: #f59e0b; }
+.ms-fill-low  { background: #ef4444; }
+
+.ms-stok-num {
+  font-size: 12px;
+  font-weight: 600;
+  color: #374151;
+  white-space: nowrap;
+}
+
+/* ── HARGA ── */
+.ms-harga {
+  font-size: 14px;
+  font-weight: 700;
+  color: #1a2e22;
+  white-space: nowrap;
+}
+
+/* ── STATUS BADGE ── */
+.ms-status {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  padding: 5px 12px;
+  border-radius: 99px;
+  font-size: 12px;
+  font-weight: 600;
+  white-space: nowrap;
+}
+
+.ms-status-ok   { background: #dcfce7; color: #166534; }
+.ms-status-warn { background: #fef3c7; color: #92400e; }
+.ms-status-low  { background: #fee2e2; color: #991b1b; }
+
+/* ── AKSI BUTTONS ── */
+.ms-aksi {
+  display: flex;
+  gap: 8px;
+  align-items: center;
+}
+
+.btn svg {
+  margin-right: 6px;
+}
+
+.ms-btn-edit {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 34px;
+  height: 34px;
+  border-radius: 10px;
+  font-size: 12px;
+  font-weight: 600;
+  border: 1.5px solid #e5e7eb;
+  background: white;
+  color: #374151;
+  cursor: pointer;
+  transition: background 0.15s, border-color 0.15s;
+}
+
+.ms-btn-edit:hover {
+  background: #f3f4f6;
+  border-color: #d1d5db;
+}
+
+.ms-btn-del {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 34px;
+  height: 34px;
+  border-radius: 10px;
+  font-size: 15px;
+  border: 1.5px solid #fee2e2;
+  background: #fff5f5;
+  color: #ef4444;
+  cursor: pointer;
+  transition: background 0.15s, border-color 0.15s;
+}
+
+.ms-btn-del:hover {
+  background: #fee2e2;
+  border-color: #fca5a5;
+}
+
+/* ── EMPTY STATE ── */
+.ms-empty {
+  text-align: center;
+  padding: 48px 20px;
+  color: #9ca3af;
+  font-size: 14px;
+}
+
+.ms-empty-icon {
+  font-size: 40px;
+  margin-bottom: 12px;
+}
+
+/* ══════════════════════════════════════════════
+   MODALS
+══════════════════════════════════════════════ */
+.ms-overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.35);
+  backdrop-filter: blur(2px);
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  z-index: 9999;
+  animation: ms-fade-in 0.15s ease;
+}
+
+@keyframes ms-fade-in {
+  from { opacity: 0; }
+  to   { opacity: 1; }
+}
+
+.ms-modal {
+  background: white;
+  border-radius: 20px;
+  padding: 28px;
+  width: 500px;
+  max-width: 92vw;
+  box-shadow: 0 20px 60px rgba(0,0,0,0.15);
+  animation: ms-slide-up 0.2s ease;
+}
+
+.ms-modal-sm {
+  width: 380px;
+}
+
+@keyframes ms-slide-up {
+  from { transform: translateY(16px); opacity: 0; }
+  to   { transform: translateY(0);    opacity: 1; }
+}
+
+/* MODAL HEADER */
+.ms-modal-hd {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 20px;
+}
+
+.ms-modal-hd h3 {
+  font-size: 20px;
+  font-weight: 800;
+  color: #1a2e22;
+  margin: 0;
+}
+
+.ms-modal-hd-left {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.ms-stand-tag {
+  background: #dcfce7;
+  color: #166534;
+  border: 1px solid #bbf7d0;
+  padding: 4px 11px;
+  border-radius: 99px;
+  font-size: 12px;
+  font-weight: 600;
+}
+
+.ms-modal-close {
+  width: 34px;
+  height: 34px;
+  background: #f3f4f6;
+  border: none;
+  border-radius: 10px;
+  font-size: 14px;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: #6b7280;
+  transition: background 0.15s;
+  flex-shrink: 0;
+}
+
+.ms-modal-close:hover {
+  background: #e5e7eb;
+}
+
+/* INFO BANNER IN MODAL */
+.ms-modal-info {
+  background: #f0f9f4;
+  border: 1px solid #c3dece;
+  border-radius: 10px;
+  padding: 10px 14px;
+  font-size: 13px;
+  color: #374151;
+  margin-bottom: 18px;
+}
+
+.ms-modal-info strong {
+  color: #2f6f4e;
+}
+
+/* FORM GRID */
+.ms-form-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 14px;
+}
+
+.ms-fg {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.ms-fg.full {
+  grid-column: span 2;
+}
+
+.ms-fg label {
+  font-size: 12px;
+  font-weight: 600;
+  color: #6b7280;
+  letter-spacing: 0.3px;
+}
+
+.ms-fg input,
+.ms-fg select,
+.ms-fg textarea {
+  padding: 10px 13px;
+  border-radius: 10px;
+  border: 1.5px solid #e5e7eb;
+  font-size: 14px;
+  color: #1a2e22;
+  outline: none;
+  transition: border-color 0.2s, box-shadow 0.2s;
+  background: white;
+  font-family: inherit;
+}
+
+.ms-fg input:focus,
+.ms-fg select:focus,
+.ms-fg textarea:focus {
+  border-color: #2f6f4e;
+  box-shadow: 0 0 0 3px rgba(47,111,78,0.1);
+}
+
+.ms-fg textarea {
+  resize: vertical;
+  min-height: 80px;
+}
+
+/* FORM ACTIONS */
+.ms-form-act {
+  display: flex;
+  justify-content: flex-end;
+  gap: 10px;
+  margin-top: 22px;
+}
+
+/* ── MODAL BUTTONS ── */
+.ms-btn-batal {
+  padding: 10px 22px;
+  border-radius: 11px;
+  border: 1.5px solid #e5e7eb;
+  background: white;
+  font-size: 14px;
+  font-weight: 600;
+  color: #374151;
+  cursor: pointer;
+  transition: background 0.15s;
+}
+
+.ms-btn-batal:hover {
+  background: #f3f4f6;
+}
+
+.ms-btn-save {
+  padding: 10px 22px;
+  border-radius: 11px;
+  border: none;
+  background: #2f6f4e;
+  font-size: 14px;
+  font-weight: 600;
+  color: white;
+  cursor: pointer;
+  transition: background 0.15s, transform 0.1s;
+  box-shadow: 0 3px 10px rgba(47,111,78,0.25);
+}
+
+.ms-btn-save:hover {
+  background: #245840;
+  transform: translateY(-1px);
+}
+
+.ms-btn-hapus {
+  padding: 10px 22px;
+  border-radius: 11px;
+  border: none;
+  background: #ef4444;
+  font-size: 14px;
+  font-weight: 600;
+  color: white;
+  cursor: pointer;
+  transition: background 0.15s, transform 0.1s;
+  box-shadow: 0 3px 10px rgba(239,68,68,0.25);
+}
+
+.ms-btn-hapus:hover {
+  background: #dc2626;
+  transform: translateY(-1px);
+}
+
+/* ── CONFIRM DELETE MODAL ── */
+.ms-del-body {
+  text-align: center;
+  padding: 8px 0 4px;
+}
+
+.ms-del-icon {
+  font-size: 48px;
+  line-height: 1;
+  margin-bottom: 16px;
+}
+
+.ms-del-title {
+  font-size: 18px;
+  font-weight: 800;
+  color: #1a2e22;
+  margin-bottom: 8px;
+}
+
+.ms-del-sub {
+  font-size: 13px;
+  color: #9ca3af;
+  margin-bottom: 24px;
+}
+
+.ms-del-actions {
+  display: flex;
+  gap: 12px;
+  justify-content: center;
+}

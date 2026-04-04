@@ -1,0 +1,198 @@
+/* ============================================================
+   settings.css  —  Pengaturan Akun page styles
+   Semua class diawali  st-  agar tidak bentrok dengan CSS lain
+   ============================================================ */
+
+/* ── Page ────────────────────────────────────────────────── */
+.st-page {
+  padding: 0 0 40px;
+}
+
+/* ── Header ──────────────────────────────────────────────── */
+.st-eyebrow {
+  font-size: 12px;
+  font-weight: 600;
+  color: #e5a82e;
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
+  margin-bottom: 4px;
+}
+
+.st-title {
+  font-size: 28px;
+  font-weight: 800;
+  color: #1a3a2a;
+  line-height: 1.1;
+}
+
+.st-title em {
+  font-style: italic;
+  color: #2f6f4e;
+}
+
+.st-subtitle {
+  font-size: 13px;
+  color: #888;
+  margin-top: 4px;
+  margin-bottom: 24px;
+}
+
+/* ── Grid ────────────────────────────────────────────────── */
+.st-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 20px;
+}
+
+@media (max-width: 800px) {
+  .st-grid {
+    grid-template-columns: 1fr;
+  }
+}
+
+/* ── Card ────────────────────────────────────────────────── */
+.st-card {
+  background: #fff;
+  border: 1px solid #e0ece5;
+  border-radius: 18px;
+  padding: 24px;
+  box-shadow: 0 2px 8px rgba(0,0,0,0.04);
+}
+
+.st-card-hd {
+  margin-bottom: 20px;
+}
+
+.st-card-hd h2 {
+  font-size: 17px;
+  font-weight: 800;
+  color: #1a3a2a;
+  margin: 0 0 3px;
+}
+
+.st-card-hd p {
+  font-size: 13px;
+  color: #888;
+  margin: 0;
+}
+
+/* ── Form layout ─────────────────────────────────────────── */
+.st-form {
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+}
+
+.st-row {
+  display: flex;
+  gap: 12px;
+}
+
+.st-row .st-fg {
+  flex: 1;
+}
+
+.st-fg {
+  display: flex;
+  flex-direction: column;
+  gap: 5px;
+}
+
+.st-full {
+  width: 100%;
+}
+
+.st-fg label {
+  font-size: 12px;
+  font-weight: 600;
+  color: #444;
+}
+
+.st-fg input {
+  padding: 10px 12px;
+  border-radius: 10px;
+  border: 1px solid #dde8e2;
+  font-size: 14px;
+  color: #222;
+  background: #fafafa;
+  width: 100%;
+  box-sizing: border-box;
+  transition: border-color 0.15s, box-shadow 0.15s;
+  outline: none;
+}
+
+.st-fg input:focus {
+  border-color: #2f6f4e;
+  box-shadow: 0 0 0 3px rgba(47,111,78,0.1);
+  background: #fff;
+}
+
+/* ── Password field with eye toggle ─────────────────────── */
+.st-pass-wrap {
+  position: relative;
+  display: flex;
+  align-items: center;
+}
+
+.st-pass-wrap input {
+  padding-right: 42px;
+}
+
+.st-eye-btn {
+  position: absolute;
+  right: 10px;
+  background: none;
+  border: none;
+  cursor: pointer;
+  font-size: 16px;
+  line-height: 1;
+  padding: 2px;
+  opacity: 0.6;
+  transition: opacity 0.15s;
+}
+
+.st-eye-btn:hover {
+  opacity: 1;
+}
+
+/* ── Form actions ────────────────────────────────────────── */
+.st-form-act {
+  display: flex;
+  justify-content: flex-end;
+  gap: 10px;
+  margin-top: 6px;
+}
+
+/* ── Buttons ─────────────────────────────────────────────── */
+.st-btn-primary {
+  background: #2f6f4e;
+  color: #fff;
+  border: none;
+  padding: 10px 22px;
+  border-radius: 10px;
+  font-size: 14px;
+  font-weight: 700;
+  cursor: pointer;
+  transition: background 0.15s, transform 0.1s;
+}
+
+.st-btn-primary:hover {
+  background: #245c40;
+  transform: translateY(-1px);
+}
+
+.st-btn-outline {
+  background: transparent;
+  color: #2f6f4e;
+  border: 1px solid #b7d7c4;
+  padding: 10px 22px;
+  border-radius: 10px;
+  font-size: 14px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: background 0.15s;
+}
+
+.st-btn-outline:hover {
+  background: #f0f9f4;
+}
