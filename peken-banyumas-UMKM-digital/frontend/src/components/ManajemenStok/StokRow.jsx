@@ -1,4 +1,4 @@
-import {Pencil, Trash} from "lucide-react";
+import {Pencil, Trash2} from "lucide-react";
 export default function StokRow({ item, index, onEdit, onDelete }) {
   const max     = item.max || 50;
   const percent = Math.min(Math.round((item.stok / max) * 100), 100);
@@ -67,7 +67,7 @@ export default function StokRow({ item, index, onEdit, onDelete }) {
             <Pencil size={12} />
           </button>
           <button className="ms-btn-del" onClick={() => onDelete(item)} title="Hapus">
-            <Trash size={12}/>
+            <Trash2 size={12}/>
           </button>
         </div>
       </td>

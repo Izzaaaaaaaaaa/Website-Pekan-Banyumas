@@ -19,12 +19,25 @@
 }
 
 .rw-eyebrow {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+
   font-size: 12px;
   font-weight: 600;
   color: #e5a82e;
   letter-spacing: 0.05em;
   text-transform: uppercase;
   margin-bottom: 4px;
+}
+
+.rw-eyebrow svg,
+.rw-search-icon svg,
+.rw-info-icon svg,
+.rw-btn-export svg,
+.rw-btn-detail svg,
+.rw-status svg {
+  vertical-align: middle;
 }
 
 .rw-title {
@@ -82,6 +95,18 @@
   background: transparent;
   color: #222;
   width: 100%;
+}
+
+.rw-status {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+}
+
+.rw-btn-detail {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
 }
 
 .rw-btn-export {

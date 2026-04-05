@@ -5,12 +5,17 @@
 
 /* ── Page ────────────────────────────────────────────────── */
 .pf-page {
-  padding: 0 0 40px;
+  padding: 0 16px 40px;
   max-width: 760px;
+  margin: 0 auto;
 }
 
 /* ── Header ──────────────────────────────────────────────── */
 .pf-eyebrow {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+
   font-size: 12px;
   font-weight: 600;
   color: #e5a82e;
@@ -96,6 +101,9 @@
 }
 
 .pf-stat-label {
+  display: flex;
+  align-items: center;
+  gap: 8px;
   font-size: 12px;
   color: #aaa;
 }
@@ -146,13 +154,18 @@
 }
 
 .pf-info-value {
+  display: flex;
+  align-items: center;
+  gap: 8px;
   font-size: 14px;
   font-weight: 700;
   color: #1a3a2a;
 }
 
 .pf-status-pill {
-  display: inline-block;
+  display: flex;
+  align-items: center;
+  gap: 8px;
   background: #d4edda;
   color: #2f6f4e;
   font-size: 13px;
@@ -170,6 +183,10 @@
 }
 
 .pf-btn-settings {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
   background: #fff;
   border: 1px solid #dde8e2;
   border-radius: 14px;
@@ -187,6 +204,10 @@
 }
 
 .pf-btn-logout {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
   background: #fff5f5;
   border: 1px solid #fbd0cc;
   border-radius: 14px;

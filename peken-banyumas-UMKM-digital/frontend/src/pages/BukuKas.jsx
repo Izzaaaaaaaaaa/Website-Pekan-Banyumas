@@ -101,18 +101,28 @@ export default function BukuKas() {
         </div>
 
         <div className="bk-topbar-right">
-          {/* Filter */}
+          {/* Semua */}
           <button
-            className={`bk-filter-btn ${filter === "semua" ? "active" : ""}`}
+            className={`bk-filter-btn ${filter === "semua" ? "active-semua" : ""}`}
             onClick={() => setFilter("semua")}
           >
             Semua
           </button>
-          <button className={`bk-filter-btn ${filter === "masuk" ? "active-masuk" : ""}`}>
+
+          {/* Masuk */}
+          <button
+            className={`bk-filter-btn ${filter === "masuk" ? "active-masuk" : ""}`}
+            onClick={() => setFilter("masuk")}
+          >
             <ArrowDownCircle size={14} />
             Masuk
           </button>
-          <button className={`bk-filter-btn ${filter === "keluar" ? "active-keluar" : ""}`}>
+
+          {/* Keluar */}
+          <button
+            className={`bk-filter-btn ${filter === "keluar" ? "active-keluar" : ""}`}
+            onClick={() => setFilter("keluar")}
+          >
             <ArrowUpCircle size={14} />
             Keluar
           </button>
@@ -157,7 +167,7 @@ export default function BukuKas() {
             <h3><FileText size={16} />Daftar Transaksi Kas</h3>
             <p>Sate Blengong Bu Yati · Stand A-12</p>
           </div>
-          <button className="bk-btn-export">
+          <button className="bk-btn-export" onClick={handleExport}>
             <Download size={14} />
             Export
           </button>

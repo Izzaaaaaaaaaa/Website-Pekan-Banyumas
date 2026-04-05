@@ -1,4 +1,5 @@
 import { useState } from "react";
+import { ClipboardList, Search, Download, Utensils, Eye, X, Check, Hourglass } from "lucide-react";
 import "../assets/styles/riwayat.css";
 
 const transactions = [
@@ -41,7 +42,7 @@ export default function Riwayat() {
       {/* TOPBAR */}
       <div className="rw-topbar">
         <div>
-          <div className="rw-eyebrow">📋 Kios Saya</div>
+          <div className="rw-eyebrow"><ClipboardList size={14} /> Kios Saya</div>
           <div className="rw-title">
             Riwayat <em>Transaksi</em>
           </div>
@@ -52,7 +53,7 @@ export default function Riwayat() {
 
         <div className="rw-topbar-actions">
           <div className="rw-search-box">
-            <span className="rw-search-icon">🔍</span>
+            <span className="rw-search-icon"><Search size={14} /></span>
             <input
               type="text"
               placeholder="Cari..."
@@ -61,7 +62,7 @@ export default function Riwayat() {
             />
           </div>
           <button className="rw-btn-export" onClick={handleExport}>
-            ⬇ Export
+            <Download size={14} /> Export
           </button>
         </div>
       </div>
@@ -69,7 +70,7 @@ export default function Riwayat() {
       {/* INFO KIOS */}
       <div className="rw-info-banner">
         <div className="rw-info-left">
-          <div className="rw-info-icon">🥢</div>
+          <div className="rw-info-icon"><Utensils size={18} /></div>
           <div>
             <strong>Sate Blengong Bu Yati · Stand A-12</strong>
             <div className="rw-info-sub">Menampilkan transaksi kios kamu saja</div>
@@ -108,7 +109,7 @@ export default function Riwayat() {
                     <td className="rw-td-time">{trx.time}</td>
                     <td>
                       <span className={`rw-status ${trx.status === "Selesai" ? "rw-status-selesai" : "rw-status-proses"}`}>
-                        {trx.status === "Selesai" ? "✓" : "⏳"} {trx.status}
+                        {trx.status === "Selesai" ? <Check size={14} /> : <Hourglass size={14} />} {trx.status}
                       </span>
                     </td>
                     <td>
@@ -116,7 +117,15 @@ export default function Riwayat() {
                         className={`rw-btn-detail ${isOpen ? "rw-btn-detail-active" : ""}`}
                         onClick={() => setOpenId(isOpen ? null : trx.id)}
                       >
-                        {isOpen ? "✕ Tutup" : "👁 Lihat"}
+                        {isOpen ? (
+                          <>
+                            <X size={14} />
+                          </>
+                        ) : (
+                          <>
+                            <Eye size={14} />
+                          </>
+                        )}
                       </button>
                     </td>
                   </tr>

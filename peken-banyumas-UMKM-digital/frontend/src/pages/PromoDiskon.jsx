@@ -1,4 +1,5 @@
 import { useState } from "react";
+import { Tag, Utensils, PartyPopper } from "lucide-react";
 import PromoCard from "../components/PromoDiskon/PromoCard";
 import TambahPromoModal from "../components/modals/TambahPromoModal";
 import EditPromoModal from "../components/modals/EditPromoModal";
@@ -66,7 +67,7 @@ export default function PromoDiskon() {
       {/* TOPBAR */}
       <div className="pd-topbar">
         <div>
-          <div className="pd-eyebrow">🏷️ Kios Saya</div>
+          <div className="pd-eyebrow"><Tag size={16} /> Kios Saya</div>
           <div className="pd-title">
             Promo <em>&amp; Diskon</em>
           </div>
@@ -80,7 +81,7 @@ export default function PromoDiskon() {
       {/* INFO BANNER */}
       <div className="pd-info-banner">
         <div className="pd-info-left">
-          <div className="pd-info-icon">🥢</div>
+          <div className="pd-info-icon"><Utensils size={18} /></div>
           <div>
             <strong>Sate Blengong Bu Yati · Stand A-12</strong>
             <div className="pd-info-sub">Promo hanya berlaku untuk kios ini</div>
@@ -92,7 +93,7 @@ export default function PromoDiskon() {
       {/* CARDS */}
       {promos.length === 0 ? (
         <div className="pd-empty">
-          <div className="pd-empty-icon">🎉</div>
+          <div className="pd-empty-icon"><PartyPopper size={32} /></div>
           <p>Belum ada promo. Yuk tambah promo pertamamu!</p>
         </div>
       ) : (

@@ -1,4 +1,5 @@
 import { useState } from "react";
+import { Settings } from "lucide-react";
 import ProfileForm from "../components/pengaturan/ProfileForm";
 import SecurityForm from "../components/pengaturan/SecurityForm";
 import PromoToast from "../components/PromoDiskon/PromoToast";
@@ -17,7 +18,7 @@ export default function Pengaturan() {
     <div className="st-page">
       {/* HEADER */}
       <div className="st-header">
-        <div className="st-eyebrow">⚙️ Akun</div>
+        <div className="st-eyebrow"><Settings size={16} />Akun</div>
         <div className="st-title">
           Pengaturan <em>Akun</em>
         </div>

@@ -17,6 +17,10 @@
 }
 
 .pd-eyebrow {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+
   font-size: 12px;
   font-weight: 600;
   color: #e5a82e;
@@ -191,6 +195,7 @@
 .pd-icon-btn-danger {
   background: #fff5f5;
   border-color: #fbd0cc;
+  color: #ef4444;
 }
 
 .pd-icon-btn-danger:hover {
