@@ -23,11 +23,7 @@ dist-ssr
 *.sln
 *.sw?
 
-# Environment Variable
 .env
-.env.*
-!.env.example
-
-# Testing
-coverage/
-.eslintcache
+.DS_Store
+venv/
+env/
