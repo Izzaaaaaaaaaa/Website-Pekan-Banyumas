@@ -3,6 +3,7 @@ import { Toaster } from "react-hot-toast";
 
 import SelectRole from "./pages/auth/SelectRole";
 import Login from "./pages/auth/Login";
+import LupaPass from "./pages/auth/LupaPass"
 import Register from "./pages/auth/Register";
 import Status from "./pages/auth/Status";
 import Layout from "./components/Layout";
@@ -23,6 +24,7 @@ function App() {
       <Routes>
           <Route path="/select-role" element={<SelectRole />} />
           <Route path="/login" element={<Login />} />
+          <Route path="/lupa-pass" element={<LupaPass />} />
           <Route path="/register" element={<Register />} />
           <Route path="/status" element={<Status />} />
         <Route path="/" element={<Layout />}>

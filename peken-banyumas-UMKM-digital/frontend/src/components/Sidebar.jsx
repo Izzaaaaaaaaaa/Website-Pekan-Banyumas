@@ -38,7 +38,7 @@ export default function Sidebar({ open, setOpen }) {
           <div className="sb-brand">
             <span className="sb-brand-icon"><Store size={20} /></span>
             <span className="sb-brand-dashboard">Dashboard</span>
-            <span className="sb-brand-umkm">UMKM</span>
+            <span className="sb-brand-umkm">ARTISAN</span>
           </div>
 
           <div className="sb-kios">

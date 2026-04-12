@@ -1,150 +1,121 @@
-import { useState } from "react";
+import { useState, useRef } from "react";
 import { useNavigate } from "react-router-dom";
+import {
+  Store, ClipboardList, MapPin, CheckCircle2,
+  Check, AlertCircle, ChevronLeft, ChevronRight,
+  Send, Lightbulb, Home, Loader2, Eye, EyeOff,
+  ImagePlus, X, User, Mail, Lock, Filter, Search,
+} from "lucide-react";
+import "../../assets/styles/register.css";
+
+/* ─── CONSTANTS ─── */
 
 const STEPS = [
-  { id: 1, label: "Data Usaha",  icon: "🏪" },
-  { id: 2, label: "Dokumen",     icon: "📄" },
-  { id: 3, label: "S & K",       icon: "📋" },
-  { id: 4, label: "Pilih Kios",  icon: "🗺️" },
-  { id: 5, label: "Konfirmasi",  icon: "✅" },
+  { id: 1, label: "Data Artisan", Icon: Store },
+  { id: 2, label: "S & K",        Icon: ClipboardList },
+  { id: 3, label: "Pilih Kios",   Icon: MapPin },
+  { id: 4, label: "Konfirmasi",   Icon: CheckCircle2 },
 ];
+
+const KATEGORI_OPTIONS = [
+  { value: "fnb",     label: "F&B" },
+  { value: "kriya",   label: "Kriya" },
+  { value: "fashion", label: "Fashion" },
+  { value: "lainnya", label: "Lainnya" },
+];
+
+const KATEGORI_LABEL = { fnb: "F&B", kriya: "Kriya", fashion: "Fashion", lainnya: "Lainnya" };
+
+const VENUE_OPTIONS = ["Semua", "Zona Utama", "Zona Tengah", "Zona Pojok"];
 
 const KIOS_DATA = [
-  { id: "A-01", zona: "A", harga: 500000, status: "available", ukuran: "3×3m" },
-  { id: "A-02", zona: "A", harga: 500000, status: "full",      ukuran: "3×3m" },
-  { id: "A-03", zona: "A", harga: 500000, status: "available", ukuran: "3×3m" },
-  { id: "A-04", zona: "A", harga: 500000, status: "full",      ukuran: "3×3m" },
-  { id: "A-05", zona: "A", harga: 500000, status: "available", ukuran: "3×3m" },
-  { id: "A-06", zona: "A", harga: 500000, status: "available", ukuran: "3×3m" },
-  { id: "B-01", zona: "B", harga: 600000, status: "available", ukuran: "4×3m" },
-  { id: "B-02", zona: "B", harga: 600000, status: "full",      ukuran: "4×3m" },
-  { id: "B-03", zona: "B", harga: 600000, status: "available", ukuran: "4×3m" },
-  { id: "B-04", zona: "B", harga: 600000, status: "available", ukuran: "4×3m" },
-  { id: "C-01", zona: "C", harga: 450000, status: "available", ukuran: "2×3m" },
-  { id: "C-02", zona: "C", harga: 450000, status: "full",      ukuran: "2×3m" },
-  { id: "C-03", zona: "C", harga: 450000, status: "available", ukuran: "2×3m" },
+  { id: "U-01", venue: "Zona Utama",  kategori: "fnb",     harga: 600000, status: "available", ukuran: "3×3m" },
+  { id: "U-02", venue: "Zona Utama",  kategori: "fnb",     harga: 600000, status: "full",      ukuran: "3×3m" },
+  { id: "U-03", venue: "Zona Utama",  kategori: "fashion", harga: 600000, status: "available", ukuran: "3×3m" },
+  { id: "U-04", venue: "Zona Utama",  kategori: "kriya",   harga: 600000, status: "available", ukuran: "3×3m" },
+  { id: "T-01", venue: "Zona Tengah", kategori: "fnb",     harga: 500000, status: "available", ukuran: "3×3m" },
+  { id: "T-02", venue: "Zona Tengah", kategori: "kriya",   harga: 500000, status: "full",      ukuran: "3×3m" },
+  { id: "T-03", venue: "Zona Tengah", kategori: "fashion", harga: 500000, status: "available", ukuran: "4×3m" },
+  { id: "T-04", venue: "Zona Tengah", kategori: "lainnya", harga: 500000, status: "available", ukuran: "4×3m" },
+  { id: "P-01", venue: "Zona Pojok",  kategori: "kriya",   harga: 400000, status: "available", ukuran: "2×3m" },
+  { id: "P-02", venue: "Zona Pojok",  kategori: "fnb",     harga: 400000, status: "available", ukuran: "2×3m" },
+  { id: "P-03", venue: "Zona Pojok",  kategori: "fashion", harga: 400000, status: "full",      ukuran: "2×3m" },
+  { id: "P-04", venue: "Zona Pojok",  kategori: "lainnya", harga: 400000, status: "available", ukuran: "2×3m" },
 ];
 
-const ZONA_INFO = {
-  A: { label: "Zona Kuliner",   color: "#d97706", bg: "#fffbeb", border: "#fde68a" },
-  B: { label: "Zona Fashion",   color: "#7c3aed", bg: "#f5f3ff", border: "#ddd6fe" },
-  C: { label: "Zona Kerajinan", color: "#0369a1", bg: "#f0f9ff", border: "#bae6fd" },
-};
-
-const CSS = `
-@import url('https://fonts.googleapis.com/css2?family=Lora:wght@500;600;700&family=DM+Sans:wght@300;400;500;600&display=swap');
-*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
-.reg-root{min-height:100vh;background:#f0ede6;display:flex;align-items:flex-start;justify-content:center;padding:40px 16px 60px;font-family:'DM Sans',sans-serif;position:relative}
-.reg-root::before{content:'';position:fixed;inset:0;background-image:radial-gradient(circle at 20% 20%,rgba(47,133,90,.06) 0%,transparent 50%),radial-gradient(circle at 80% 80%,rgba(217,119,6,.06) 0%,transparent 50%);pointer-events:none}
-.reg-wrapper{width:100%;max-width:680px;animation:fadeUp .5s cubic-bezier(.22,1,.36,1) both}
-@keyframes fadeUp{from{opacity:0;transform:translateY(20px)}to{opacity:1;transform:translateY(0)}}
-.reg-brand{display:flex;align-items:center;gap:12px;margin-bottom:28px}
-.reg-brand-mark{width:42px;height:42px;background:linear-gradient(135deg,#2f855a,#48bb78);border-radius:12px;display:flex;align-items:center;justify-content:center;box-shadow:0 4px 12px rgba(47,133,90,.3);font-size:18px}
-.reg-brand-name{font-family:'Lora',serif;font-size:18px;font-weight:700;color:#1a2e1f}
-.reg-brand-sub{font-size:12px;color:#6b7280;margin-top:1px}
-.stepper{display:flex;align-items:center;margin-bottom:20px}
-.step-item{display:flex;flex-direction:column;align-items:center;flex:1;position:relative}
-.step-item:not(:last-child)::after{content:'';position:absolute;top:18px;left:50%;width:100%;height:2px;background:#e5e7eb;z-index:0;transition:background .3s}
-.step-item.done:not(:last-child)::after{background:#2f855a}
-.step-circle{width:36px;height:36px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:13px;font-weight:700;position:relative;z-index:1;transition:all .3s;border:2px solid #e5e7eb;background:white;color:#9ca3af}
-.step-item.active .step-circle{border-color:#2f855a;background:#2f855a;color:white;box-shadow:0 0 0 4px rgba(47,133,90,.15)}
-.step-item.done .step-circle{border-color:#2f855a;background:#2f855a;color:white}
-.step-label{font-size:10px;font-weight:600;margin-top:6px;color:#9ca3af;letter-spacing:.03em;text-align:center}
-.step-item.active .step-label,.step-item.done .step-label{color:#2f855a}
-.progress-bar-wrap{height:3px;background:#e5e7eb;border-radius:99px;margin-bottom:28px;overflow:hidden}
-.progress-bar-fill{height:100%;background:linear-gradient(90deg,#2f855a,#48bb78);border-radius:99px;transition:width .4s cubic-bezier(.22,1,.36,1)}
-.reg-card{background:white;border-radius:24px;padding:40px 44px;box-shadow:0 0 0 1px rgba(0,0,0,.05),0 8px 32px rgba(0,0,0,.07);animation:slideIn .35s cubic-bezier(.22,1,.36,1) both}
-@keyframes slideIn{from{opacity:0;transform:translateX(12px)}to{opacity:1;transform:translateX(0)}}
-@media(max-width:600px){.reg-card{padding:28px 20px}}
-.step-chip{display:inline-flex;align-items:center;gap:6px;background:#f0fdf4;border:1px solid #bbf7d0;color:#166534;font-size:11px;font-weight:700;letter-spacing:.08em;text-transform:uppercase;padding:4px 12px;border-radius:999px;margin-bottom:12px}
-.step-title{font-family:'Lora',serif;font-size:22px;font-weight:700;color:#1a2e1f;margin-bottom:4px}
-.step-desc{font-size:13.5px;color:#6b7280;margin-bottom:28px}
-.field{margin-bottom:20px}
-.field-label{display:block;font-size:13px;font-weight:600;color:#374151;margin-bottom:7px}
-.field-label span{color:#ef4444;margin-left:2px}
-.reg-input,.reg-select,.reg-textarea{width:100%;padding:12px 16px;border:1.5px solid #e5e7eb;border-radius:12px;font-size:14px;font-family:'DM Sans',sans-serif;background:#fafafa;color:#1a2e1f;transition:border-color .2s,background .2s,box-shadow .2s;outline:none;-webkit-appearance:none}
-.reg-input::placeholder,.reg-textarea::placeholder{color:#b0b7c3}
-.reg-input:focus,.reg-select:focus,.reg-textarea:focus{border-color:#2f855a;background:#fff;box-shadow:0 0 0 3px rgba(47,133,90,.1)}
-.reg-input.err,.reg-select.err,.reg-textarea.err{border-color:#ef4444;background:#fff8f8}
-.reg-textarea{resize:vertical;min-height:90px}
-.err-msg{display:flex;align-items:center;gap:5px;margin-top:5px;font-size:12px;color:#ef4444;font-weight:500}
-.upload-zone{border:2px dashed #d1d5db;border-radius:14px;padding:24px;text-align:center;background:#fafafa;transition:border-color .2s,background .2s;cursor:pointer;display:block}
-.upload-zone:hover{border-color:#2f855a;background:#f0fdf4}
-.upload-zone.uploaded{border-color:#2f855a;background:#f0fdf4}
-.upload-zone.err{border-color:#ef4444}
-.upload-icon{font-size:32px;margin-bottom:8px}
-.upload-title{font-size:13.5px;font-weight:600;color:#374151;margin-bottom:4px}
-.upload-sub{font-size:12px;color:#9ca3af;margin-bottom:14px}
-.upload-btn{display:inline-flex;align-items:center;gap:6px;background:#2f855a;color:white;font-size:13px;font-weight:600;font-family:'DM Sans',sans-serif;padding:8px 20px;border-radius:99px;transition:background .2s;border:none}
-.terms-box{border:1.5px solid #e5e7eb;border-radius:14px;padding:20px;max-height:180px;overflow-y:auto;background:#fafafa;font-size:13.5px;color:#4b5563;line-height:1.75;margin-bottom:20px}
-.terms-box ul{padding-left:18px}
-.terms-box li{margin-bottom:6px}
-.checkbox-row{display:flex;align-items:flex-start;gap:12px;padding:14px 16px;border-radius:12px;border:1.5px solid #e5e7eb;background:#fafafa;cursor:pointer;transition:border-color .2s,background .2s}
-.checkbox-row.checked{border-color:#2f855a;background:#f0fdf4}
-.checkbox-row.err{border-color:#ef4444}
-.zona-section{margin-bottom:24px}
-.zona-badge{display:inline-flex;align-items:center;gap:6px;font-size:12px;font-weight:700;padding:4px 12px;border-radius:999px;letter-spacing:.04em;margin-bottom:12px}
-.zona-dot{width:8px;height:8px;border-radius:50%}
-.kios-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(110px,1fr));gap:10px}
-.kios-card{border:2px solid #e5e7eb;border-radius:14px;padding:14px 10px;text-align:center;cursor:pointer;transition:all .2s;background:white;position:relative}
-.kios-card:hover:not(.kios-full){border-color:#2f855a;transform:translateY(-2px);box-shadow:0 6px 16px rgba(47,133,90,.15)}
-.kios-card.kios-full{background:#f9fafb;cursor:not-allowed;opacity:.55}
-.kios-card.kios-selected{border-color:#2f855a;background:#f0fdf4;box-shadow:0 0 0 3px rgba(47,133,90,.15)}
-.kios-id{font-family:'Lora',serif;font-size:18px;font-weight:700;color:#1a2e1f;margin-bottom:3px}
-.kios-size{font-size:10px;color:#9ca3af;margin-bottom:5px}
-.kios-price{font-size:11px;font-weight:600;color:#374151}
-.kios-status{font-size:10px;margin-top:4px;font-weight:600}
-.kios-status.available{color:#2f855a}
-.kios-status.full{color:#9ca3af}
-.kios-check{position:absolute;top:-8px;right:-8px;width:22px;height:22px;background:#2f855a;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:11px;color:white;box-shadow:0 2px 6px rgba(47,133,90,.4)}
-.selected-banner{display:flex;align-items:center;gap:12px;background:linear-gradient(90deg,#f0fdf4,#dcfce7);border:1.5px solid #86efac;border-radius:14px;padding:14px 18px;margin-top:20px}
-.confirm-section{border:1.5px solid #e9eaeb;border-radius:16px;overflow:hidden;margin-bottom:16px}
-.confirm-header{display:flex;align-items:center;gap:10px;padding:12px 18px;background:#f9fafb;border-bottom:1px solid #e9eaeb}
-.confirm-header-title{font-size:13px;font-weight:700;color:#374151;letter-spacing:.02em}
-.confirm-body{padding:16px 18px}
-.confirm-row{display:flex;gap:12px;font-size:13.5px;margin-bottom:8px;align-items:flex-start}
-.confirm-row:last-child{margin-bottom:0}
-.confirm-key{color:#9ca3af;font-weight:500;min-width:100px;flex-shrink:0}
-.confirm-val{color:#1a2e1f;font-weight:600}
-.nav-row{display:flex;justify-content:space-between;align-items:center;margin-top:36px;gap:12px}
-.btn-back{display:inline-flex;align-items:center;gap:8px;padding:12px 22px;border:1.5px solid #e5e7eb;border-radius:12px;background:white;font-size:14px;font-weight:600;font-family:'DM Sans',sans-serif;color:#4b5563;cursor:pointer;transition:all .2s}
-.btn-back:hover{border-color:#9ca3af;background:#f9fafb}
-.btn-next{display:inline-flex;align-items:center;gap:8px;padding:12px 28px;background:linear-gradient(135deg,#276749,#2f855a);color:white;border:none;border-radius:12px;font-size:14px;font-weight:600;font-family:'DM Sans',sans-serif;cursor:pointer;transition:all .2s;box-shadow:0 4px 14px rgba(47,133,90,.35);margin-left:auto}
-.btn-next:hover{transform:translateY(-1px);box-shadow:0 8px 20px rgba(47,133,90,.4)}
-.btn-submit{display:inline-flex;align-items:center;gap:8px;padding:14px 28px;background:linear-gradient(135deg,#15803d,#2f855a);color:white;border:none;border-radius:12px;font-size:15px;font-weight:700;font-family:'DM Sans',sans-serif;cursor:pointer;transition:all .2s;box-shadow:0 6px 20px rgba(47,133,90,.4);margin-left:auto}
-.btn-submit:hover{transform:translateY(-1px);box-shadow:0 10px 28px rgba(47,133,90,.45)}
-.btn-submit:disabled{opacity:.6;cursor:not-allowed;transform:none}
-`;
+/* ─── COMPONENT ─── */
 
 export default function Register() {
-  const navigate = useNavigate();
-  const [step, setStep]           = useState(1);
-  const [errors, setErrors]       = useState({});
-  const [submitting, setSubmitting] = useState(false);
-  const [formData, setFormData]   = useState({
-    namaUsaha: "", alamat: "", kategori: "", deskripsi: "",
-    ktp: null, nib: null, setuju: false, kios: null,
+  const navigate   = useNavigate();
+  const photoRef   = useRef(null);
+
+  const [step, setStep]               = useState(1);
+  const [errors, setErrors]           = useState({});
+  const [submitting, setSubmitting]   = useState(false);
+  const [showPass, setShowPass]       = useState(false);
+  const [showConfirm, setShowConfirm] = useState(false);
+
+  /* filter state */
+  const [filterVenue,    setFilterVenue]    = useState("Semua");
+  const [filterKategori, setFilterKategori] = useState("Semua");
+  const [filterStatus,   setFilterStatus]   = useState("Semua");
+  const [filterHarga,    setFilterHarga]    = useState("Semua");
+
+  const [formData, setFormData] = useState({
+    namaArtisan: "", email: "", username: "",
+    password: "", konfirmPassword: "",
+    kategori: "", kategoriCustom: "",
+    deskripsi: "",
+    photos: [],   // { file, preview }[]
+    setuju: false,
+    kios: null,
   });
 
-  const handleChange = (e) => {
-    const { name, value, type, checked, files } = e.target;
-    setFormData({ ...formData, [name]: type === "checkbox" ? checked : type === "file" ? files[0] : value });
-    if (errors[name]) setErrors({ ...errors, [name]: "" });
+  /* helpers */
+  const set = (key, val) => {
+    setFormData((p) => ({ ...p, [key]: val }));
+    if (errors[key]) setErrors((p) => ({ ...p, [key]: "" }));
   };
 
+  const handleChange = (e) => {
+    const { name, value, type, checked } = e.target;
+    set(name, type === "checkbox" ? checked : value);
+  };
+
+  const handlePhotoAdd = (e) => {
+    const files = Array.from(e.target.files);
+    const next  = files.map((f) => ({ file: f, preview: URL.createObjectURL(f) }));
+    setFormData((p) => ({ ...p, photos: [...p.photos, ...next].slice(0, 5) }));
+    if (errors.photos) setErrors((p) => ({ ...p, photos: "" }));
+    e.target.value = "";
+  };
+
+  const handlePhotoRemove = (idx) => {
+    setFormData((p) => {
+      const arr = [...p.photos];
+      URL.revokeObjectURL(arr[idx].preview);
+      arr.splice(idx, 1);
+      return { ...p, photos: arr };
+    });
+  };
+
+  /* validation */
   const validate = () => {
     const e = {};
     if (step === 1) {
-      if (!formData.namaUsaha.trim()) e.namaUsaha = "Nama usaha wajib diisi";
-      if (!formData.alamat.trim())    e.alamat    = "Alamat wajib diisi";
-      if (!formData.kategori)         e.kategori  = "Pilih kategori usaha";
+      if (!formData.namaArtisan.trim()) e.namaArtisan = "Nama artisan wajib diisi";
+      if (!formData.email.trim())       e.email       = "Email wajib diisi";
+      else if (!/\S+@\S+\.\S+/.test(formData.email)) e.email = "Format email tidak valid";
+      if (!formData.username.trim())    e.username    = "Username wajib diisi";
+      if (!formData.password)           e.password    = "Password wajib diisi";
+      else if (formData.password.length < 6) e.password = "Password minimal 6 karakter";
+      if (formData.password !== formData.konfirmPassword) e.konfirmPassword = "Password tidak cocok";
+      if (!formData.kategori)           e.kategori    = "Pilih kategori usaha";
+      if (formData.kategori === "lainnya" && !formData.kategoriCustom.trim())
+        e.kategoriCustom = "Isi kategori kamu";
     }
-    if (step === 2) {
-      if (!formData.ktp) e.ktp = "KTP wajib diupload";
-      if (!formData.nib) e.nib = "NIB wajib diupload";
-    }
-    if (step === 3 && !formData.setuju) e.setuju = "Anda harus menyetujui syarat & ketentuan";
-    if (step === 4 && !formData.kios)   e.kios   = "Silakan pilih kios terlebih dahulu";
+    if (step === 2 && !formData.setuju) e.setuju = "Anda harus menyetujui syarat & ketentuan";
+    if (step === 3 && !formData.kios)   e.kios   = "Silakan pilih kios terlebih dahulu";
     setErrors(e);
     return Object.keys(e).length === 0;
   };
@@ -155,305 +126,478 @@ export default function Register() {
   const handleSubmit = () => {
     setSubmitting(true);
     const phone   = "6282192058122";
-    const message = `Halo Admin Peken Banyumas 👋\n\nSaya ingin mendaftarkan usaha:\n\n🏪 *Nama Usaha:* ${formData.namaUsaha}\n📍 *Alamat:* ${formData.alamat}\n🏷️ *Kategori:* ${formData.kategori}\n📝 *Deskripsi:* ${formData.deskripsi}\n\n🏠 *Kios Dipilih:* ${formData.kios?.id}\n💰 *Harga:* Rp ${formData.kios?.harga.toLocaleString("id-ID")}/bulan\n\nMohon konfirmasinya. Terima kasih!`;
+    const kat     = formData.kategori === "lainnya" ? formData.kategoriCustom : KATEGORI_LABEL[formData.kategori];
+    const message = `Halo Admin Peken Banyumas 👋\n\nPendaftaran Artisan Baru:\n\n🏪 *Nama Artisan:* ${formData.namaArtisan}\n👤 *Username:* @${formData.username}\n📧 *Email:* ${formData.email}\n🏷️ *Kategori:* ${kat}\n📝 *Deskripsi:* ${formData.deskripsi}\n\n🏠 *Kios:* ${formData.kios?.id} · ${formData.kios?.venue}\n💰 *Harga:* Rp ${formData.kios?.harga.toLocaleString("id-ID")}/bulan\n\nMohon konfirmasinya. Terima kasih!`;
     localStorage.setItem("status", "pending");
     window.open(`https://wa.me/${phone}?text=${encodeURIComponent(message)}`, "_blank");
     setTimeout(() => navigate("/status"), 800);
   };
 
-  const zonas = [...new Set(KIOS_DATA.map((k) => k.zona))];
+  /* kios filter */
+  const filteredKios = KIOS_DATA.filter((k) => {
+    if (filterVenue    !== "Semua" && k.venue    !== filterVenue)    return false;
+    if (filterKategori !== "Semua" && k.kategori !== filterKategori) return false;
+    if (filterStatus === "Tersedia" && k.status !== "available")     return false;
+    if (filterStatus === "Terisi"   && k.status !== "full")          return false;
+    if (filterHarga === "< 500rb"   && k.harga  >= 500000)           return false;
+    if (filterHarga === "500rb+"    && k.harga  <  500000)           return false;
+    return true;
+  });
+
+  const displayKategori = formData.kategori === "lainnya"
+    ? (formData.kategoriCustom || "Lainnya")
+    : KATEGORI_LABEL[formData.kategori] || "—";
 
   return (
-    <>
-      <style>{CSS}</style>
-      <div className="reg-root">
-        <div className="reg-wrapper">
+    <div className="reg-root">
+      <div className="reg-wrapper">
 
-          {/* Brand */}
-          <div className="reg-brand">
-            <div className="reg-brand-mark">🎪</div>
-            <div>
-              <div className="reg-brand-name">Peken Banyumas 2026</div>
-              <div className="reg-brand-sub">Pendaftaran UMKM · 22–24 Maret 2026</div>
-            </div>
+        {/* Brand */}
+        <div className="reg-brand">
+          <div className="reg-brand-mark">
+            <Store size={20} color="white" strokeWidth={2} />
           </div>
+          <div>
+            <div className="reg-brand-name">Peken Banyumas 2026</div>
+            <div className="reg-brand-sub">Pendaftaran Artisan · 22–24 Maret 2026</div>
+          </div>
+        </div>
 
-          {/* Stepper */}
-          <div className="stepper">
-            {STEPS.map((s) => (
-              <div key={s.id} className={`step-item ${step > s.id ? "done" : ""} ${step === s.id ? "active" : ""}`}>
-                <div className="step-circle">{step > s.id ? "✓" : s.id}</div>
-                <div className="step-label">{s.label}</div>
+        {/* Stepper */}
+        <div className="stepper">
+          {STEPS.map(({ id, label, Icon }) => {
+            const isDone   = step > id;
+            const isActive = step === id;
+            return (
+              <div key={id} className={`step-item${isDone ? " done" : ""}${isActive ? " active" : ""}`}>
+                <div className="step-circle">
+                  {isDone ? <Check size={14} strokeWidth={2.5} /> : <Icon size={14} strokeWidth={2} />}
+                </div>
+                <div className="step-label">{label}</div>
               </div>
-            ))}
-          </div>
+            );
+          })}
+        </div>
 
-          {/* Progress */}
-          <div className="progress-bar-wrap">
-            <div className="progress-bar-fill" style={{ width: `${((step - 1) / (STEPS.length - 1)) * 100}%` }} />
-          </div>
+        {/* Progress */}
+        <div className="progress-bar-wrap">
+          <div className="progress-bar-fill" style={{ width: `${((step - 1) / (STEPS.length - 1)) * 100}%` }} />
+        </div>
 
-          {/* Card */}
-          <div className="reg-card" key={step}>
+        {/* Card */}
+        <div className="reg-card" key={step}>
 
-            {/* STEP 1 */}
-            {step === 1 && (
-              <>
-                <div className="step-chip">🏪 Langkah 1 dari 5</div>
-                <h2 className="step-title">Data Usaha</h2>
-                <p className="step-desc">Ceritakan tentang usaha yang akan kamu daftarkan</p>
+          {/* ══════════════════════════════ */}
+          {/* STEP 1 — Data Artisan          */}
+          {/* ══════════════════════════════ */}
+          {step === 1 && (
+            <>
+              <div className="step-chip"><Store size={12} /> Langkah 1 dari 4</div>
+              <h2 className="step-title">Data Artisan</h2>
+              <p className="step-desc">Isi informasi usahamu untuk mendaftar sebagai artisan Peken Banyumas</p>
 
-                <div className="field">
-                  <label className="field-label">Nama Usaha <span>*</span></label>
-                  <input type="text" name="namaUsaha" value={formData.namaUsaha} onChange={handleChange}
-                    placeholder="Contoh: Sate Blengong Bu Yati" className={`reg-input${errors.namaUsaha ? " err" : ""}`} />
-                  {errors.namaUsaha && <div className="err-msg">⚠ {errors.namaUsaha}</div>}
+              {/* Nama Artisan */}
+              <div className="field">
+                <label className="field-label">Nama Artisan / Usaha <span>*</span></label>
+                <div className="input-wrap">
+                  <span className="input-icon"><Store size={16} /></span>
+                  <input type="text" name="namaArtisan" value={formData.namaArtisan}
+                    onChange={handleChange} placeholder="Contoh: Batik Nusantara Bu Siti"
+                    className={`reg-input with-icon${errors.namaArtisan ? " err" : ""}`} />
                 </div>
+                {errors.namaArtisan && <div className="err-msg"><AlertCircle size={12} />{errors.namaArtisan}</div>}
+              </div>
 
-                <div className="field">
-                  <label className="field-label">Alamat Usaha <span>*</span></label>
-                  <input type="text" name="alamat" value={formData.alamat} onChange={handleChange}
-                    placeholder="Jl. Contoh No.1, Banyumas" className={`reg-input${errors.alamat ? " err" : ""}`} />
-                  {errors.alamat && <div className="err-msg">⚠ {errors.alamat}</div>}
+              {/* Email */}
+              <div className="field">
+                <label className="field-label">Email <span>*</span></label>
+                <div className="input-wrap">
+                  <span className="input-icon"><Mail size={16} /></span>
+                  <input type="email" name="email" value={formData.email}
+                    onChange={handleChange} placeholder="nama@email.com"
+                    className={`reg-input with-icon${errors.email ? " err" : ""}`} />
                 </div>
+                {errors.email && <div className="err-msg"><AlertCircle size={12} />{errors.email}</div>}
+              </div>
 
-                <div className="field">
-                  <label className="field-label">Kategori Usaha <span>*</span></label>
-                  <select name="kategori" value={formData.kategori} onChange={handleChange}
-                    className={`reg-select${errors.kategori ? " err" : ""}`}>
-                    <option value="">-- Pilih Kategori --</option>
-                    <option value="Kuliner">🍱 Kuliner</option>
-                    <option value="Fashion">👗 Fashion</option>
-                    <option value="Kerajinan">🎨 Kerajinan</option>
-                    <option value="Lainnya">✨ Lainnya</option>
-                  </select>
-                  {errors.kategori && <div className="err-msg">⚠ {errors.kategori}</div>}
+              {/* Username */}
+              <div className="field">
+                <label className="field-label">Username Artisan <span>*</span></label>
+                <div className="input-wrap">
+                  <span className="input-icon at-sign">@</span>
+                  <input type="text" name="username" value={formData.username}
+                    onChange={handleChange} placeholder="batiknusantara"
+                    className={`reg-input with-icon${errors.username ? " err" : ""}`} />
                 </div>
+                {errors.username && <div className="err-msg"><AlertCircle size={12} />{errors.username}</div>}
+              </div>
 
+              {/* Password pair */}
+              <div className="field-row-2">
                 <div className="field">
-                  <label className="field-label">Deskripsi Usaha</label>
-                  <textarea name="deskripsi" value={formData.deskripsi} onChange={handleChange}
-                    placeholder="Ceritakan produk atau layanan yang kamu tawarkan..." className="reg-textarea" />
-                </div>
-              </>
-            )}
-
-            {/* STEP 2 */}
-            {step === 2 && (
-              <>
-                <div className="step-chip">📄 Langkah 2 dari 5</div>
-                <h2 className="step-title">Upload Dokumen</h2>
-                <p className="step-desc">Dokumen diperlukan untuk verifikasi identitas dan legalitas usaha</p>
-
-                {[
-                  { key: "ktp", label: "KTP Pemilik", desc: "Kartu Tanda Penduduk", emoji: "🪪" },
-                  { key: "nib", label: "NIB",         desc: "Nomor Induk Berusaha",  emoji: "📑" },
-                ].map(({ key, label, desc, emoji }) => (
-                  <div className="field" key={key}>
-                    <label className="field-label">{label} <span>*</span></label>
-                    <label className={`upload-zone${errors[key] ? " err" : ""}${formData[key] ? " uploaded" : ""}`}>
-                      <input type="file" name={key} onChange={handleChange} style={{ display: "none" }} accept=".jpg,.jpeg,.png,.pdf" />
-                      {formData[key] ? (
-                        <>
-                          <div className="upload-icon">✅</div>
-                          <div className="upload-title" style={{ color: "#166534" }}>{formData[key].name}</div>
-                          <div className="upload-sub">Klik untuk ganti file</div>
-                        </>
-                      ) : (
-                        <>
-                          <div className="upload-icon">{emoji}</div>
-                          <div className="upload-title">Upload {label}</div>
-                          <div className="upload-sub">{desc} · JPG, PNG, atau PDF · Maks. 5MB</div>
-                          <span className="upload-btn">📎 Pilih File</span>
-                        </>
-                      )}
-                    </label>
-                    {errors[key] && <div className="err-msg">⚠ {errors[key]}</div>}
+                  <label className="field-label">Password <span>*</span></label>
+                  <div className="input-wrap">
+                    <span className="input-icon"><Lock size={16} /></span>
+                    <input type={showPass ? "text" : "password"} name="password"
+                      value={formData.password} onChange={handleChange}
+                      placeholder="Min. 6 karakter"
+                      className={`reg-input with-icon with-toggle${errors.password ? " err" : ""}`} />
+                    <button type="button" className="toggle-btn" onClick={() => setShowPass((p) => !p)}>
+                      {showPass ? <EyeOff size={16} /> : <Eye size={16} />}
+                    </button>
                   </div>
-                ))}
-              </>
-            )}
+                  {errors.password && <div className="err-msg"><AlertCircle size={12} />{errors.password}</div>}
+                </div>
+                <div className="field">
+                  <label className="field-label">Konfirmasi Password <span>*</span></label>
+                  <div className="input-wrap">
+                    <span className="input-icon"><Lock size={16} /></span>
+                    <input type={showConfirm ? "text" : "password"} name="konfirmPassword"
+                      value={formData.konfirmPassword} onChange={handleChange}
+                      placeholder="Ulangi password"
+                      className={`reg-input with-icon with-toggle${errors.konfirmPassword ? " err" : ""}`} />
+                    <button type="button" className="toggle-btn" onClick={() => setShowConfirm((p) => !p)}>
+                      {showConfirm ? <EyeOff size={16} /> : <Eye size={16} />}
+                    </button>
+                  </div>
+                  {errors.konfirmPassword && <div className="err-msg"><AlertCircle size={12} />{errors.konfirmPassword}</div>}
+                </div>
+              </div>
 
-            {/* STEP 3 */}
-            {step === 3 && (
-              <>
-                <div className="step-chip">📋 Langkah 3 dari 5</div>
-                <h2 className="step-title">Syarat & Ketentuan</h2>
-                <p className="step-desc">Baca dan setujui ketentuan sebelum melanjutkan pendaftaran</p>
+              {/* Kategori chips */}
+              <div className="field">
+                <label className="field-label">Kategori Usaha <span>*</span></label>
+                <div className="kategori-grid">
+                  {KATEGORI_OPTIONS.map(({ value, label }) => (
+                    <button type="button" key={value}
+                      className={`kategori-chip${formData.kategori === value ? " selected" : ""}`}
+                      onClick={() => { set("kategori", value); if (value !== "lainnya") set("kategoriCustom", ""); }}>
+                      {formData.kategori === value && <Check size={12} strokeWidth={3} />}
+                      {label}
+                    </button>
+                  ))}
+                </div>
+                {errors.kategori && <div className="err-msg"><AlertCircle size={12} />{errors.kategori}</div>}
+              </div>
 
-                <div className="terms-box">
-                  <p style={{ marginBottom: 12, fontWeight: 600, color: "#1a2e1f" }}>Ketentuan Pendaftaran UMKM — Peken Banyumas 2026</p>
-                  <ul>
-                    <li>Data usaha yang diberikan adalah benar, akurat, dan dapat dipertanggungjawabkan.</li>
-                    <li>Dokumen yang diunggah (KTP & NIB) akan diverifikasi oleh tim admin Peken Banyumas.</li>
-                    <li>Harga sewa kios dapat berubah sewaktu-waktu sesuai kebijakan pengelola.</li>
-                    <li>Pembayaran sewa kios dilakukan melalui admin resmi dan tidak melalui pihak ketiga.</li>
-                    <li>Peserta wajib menjaga kebersihan dan ketertiban area kios selama acara berlangsung.</li>
-                    <li>Peserta dilarang menjual produk yang tidak sesuai dengan kategori yang didaftarkan.</li>
-                    <li>Segala pelanggaran dapat mengakibatkan pembatalan pendaftaran tanpa pengembalian dana.</li>
-                    <li>Pengelola berhak melakukan inspeksi kios sewaktu-waktu selama periode acara.</li>
-                  </ul>
+              {/* Custom kategori */}
+              {formData.kategori === "lainnya" && (
+                <div className="field">
+                  <label className="field-label">Isi Kategori Kamu <span>*</span></label>
+                  <input type="text" name="kategoriCustom" value={formData.kategoriCustom}
+                    onChange={handleChange} placeholder="Contoh: Tanaman Hias, Aksesori, dll."
+                    className={`reg-input${errors.kategoriCustom ? " err" : ""}`} />
+                  {errors.kategoriCustom && <div className="err-msg"><AlertCircle size={12} />{errors.kategoriCustom}</div>}
+                </div>
+              )}
+
+              {/* Deskripsi */}
+              <div className="field">
+                <label className="field-label">Deskripsi Usaha</label>
+                <textarea name="deskripsi" value={formData.deskripsi} onChange={handleChange}
+                  placeholder="Ceritakan produk atau layanan yang kamu tawarkan..."
+                  className="reg-textarea" />
+              </div>
+
+              {/* Photo upload */}
+              <div className="field">
+                <label className="field-label">
+                  Foto Produk / Logo
+                  <span className="field-note"> — opsional, maks. 5 foto</span>
+                </label>
+
+                {formData.photos.length > 0 ? (
+                  <div className="photo-grid">
+                    {formData.photos.map((p, i) => (
+                      <div className="photo-thumb" key={i}>
+                        <img src={p.preview} alt={`foto-${i}`} />
+                        <button type="button" className="photo-remove" onClick={() => handlePhotoRemove(i)}>
+                          <X size={10} strokeWidth={3} />
+                        </button>
+                      </div>
+                    ))}
+                    {formData.photos.length < 5 && (
+                      <label className="photo-add-slot">
+                        <input type="file" multiple accept="image/*" onChange={handlePhotoAdd} style={{ display: "none" }} />
+                        <ImagePlus size={20} color="#9ca3af" />
+                        <span>Tambah</span>
+                      </label>
+                    )}
+                  </div>
+                ) : (
+                  <label className="upload-zone">
+                    <input ref={photoRef} type="file" multiple accept="image/*"
+                      onChange={handlePhotoAdd} style={{ display: "none" }} />
+                    <div className="upload-icon-wrap">
+                      <ImagePlus size={26} strokeWidth={1.5} />
+                    </div>
+                    <div className="upload-title">Upload Foto Produk / Logo</div>
+                    <div className="upload-sub">JPG atau PNG · Maks. 5 foto · 5MB per foto</div>
+                    <span className="upload-btn">
+                      <ImagePlus size={13} /> Pilih Foto
+                    </span>
+                  </label>
+                )}
+              </div>
+            </>
+          )}
+
+          {/* ══════════════════════════════ */}
+          {/* STEP 2 — Syarat & Ketentuan   */}
+          {/* ══════════════════════════════ */}
+          {step === 2 && (
+            <>
+              <div className="step-chip"><ClipboardList size={12} /> Langkah 2 dari 4</div>
+              <h2 className="step-title">Syarat & Ketentuan</h2>
+              <p className="step-desc">Baca dan setujui ketentuan sebelum melanjutkan pendaftaran</p>
+
+              <div className="terms-box">
+                <p className="terms-heading">Ketentuan Pendaftaran Artisan — Peken Banyumas 2026</p>
+                <ul>
+                  <li>Data artisan yang diberikan adalah benar, akurat, dan dapat dipertanggungjawabkan.</li>
+                  <li>Harga sewa kios dapat berubah sewaktu-waktu sesuai kebijakan pengelola.</li>
+                  <li>Pembayaran sewa kios dilakukan melalui admin resmi dan tidak melalui pihak ketiga.</li>
+                  <li>Peserta wajib menjaga kebersihan dan ketertiban area kios selama acara berlangsung.</li>
+                  <li>Peserta dilarang menjual produk yang tidak sesuai kategori yang didaftarkan.</li>
+                  <li>Segala pelanggaran dapat mengakibatkan pembatalan pendaftaran tanpa pengembalian dana.</li>
+                  <li>Pengelola berhak melakukan inspeksi kios sewaktu-waktu selama periode acara.</li>
+                  <li>Ketentuan lebih lanjut akan diinformasikan oleh pihak pengelola Peken Banyumas.</li>
+                </ul>
+              </div>
+
+              <label
+                className={`checkbox-row${formData.setuju ? " checked" : ""}${errors.setuju ? " err" : ""}`}
+                onClick={() => set("setuju", !formData.setuju)}
+              >
+                <div className={`custom-checkbox${formData.setuju ? " checked" : ""}`}>
+                  {formData.setuju && <Check size={11} strokeWidth={3} color="white" />}
+                </div>
+                <span className="checkbox-label">
+                  Saya telah membaca dan <strong>menyetujui seluruh syarat & ketentuan</strong> yang berlaku untuk Peken Banyumas 2026
+                </span>
+              </label>
+              {errors.setuju && <div className="err-msg" style={{ marginTop: 8 }}><AlertCircle size={12} />{errors.setuju}</div>}
+            </>
+          )}
+
+          {/* ══════════════════════════════ */}
+          {/* STEP 3 — Pilih Kios            */}
+          {/* ══════════════════════════════ */}
+          {step === 3 && (
+            <>
+              <div className="step-chip"><MapPin size={12} /> Langkah 3 dari 4</div>
+              <h2 className="step-title">Pilih Kios</h2>
+              <p className="step-desc">Pilih lokasi kios yang tersedia. Harga per bulan selama acara.</p>
+
+              {/* Filter bar */}
+              <div className="filter-bar">
+                <div className="filter-bar-title"><Filter size={13} /> Filter Kios</div>
+
+                <div className="filter-group">
+                  <span className="filter-group-label">Venue</span>
+                  <div className="filter-chips">
+                    {VENUE_OPTIONS.map((v) => (
+                      <button key={v} type="button"
+                        className={`filter-chip${filterVenue === v ? " active" : ""}`}
+                        onClick={() => setFilterVenue(v)}>{v}</button>
+                    ))}
+                  </div>
                 </div>
 
-                <label
-                  className={`checkbox-row${formData.setuju ? " checked" : ""}${errors.setuju ? " err" : ""}`}
-                  onClick={() => {
-                    setFormData({ ...formData, setuju: !formData.setuju });
-                    if (errors.setuju) setErrors({ ...errors, setuju: "" });
-                  }}
-                >
-                  <input type="checkbox" checked={formData.setuju} onChange={() => {}}
-                    style={{ width: 18, height: 18, accentColor: "#2f855a", flexShrink: 0, marginTop: 1, cursor: "pointer" }} />
-                  <span style={{ fontSize: 13.5, color: "#374151", fontWeight: 500, lineHeight: 1.5, cursor: "pointer" }}>
-                    Saya telah membaca dan <strong>menyetujui seluruh syarat & ketentuan</strong> yang berlaku
-                  </span>
-                </label>
-                {errors.setuju && <div className="err-msg" style={{ marginTop: 8 }}>⚠ {errors.setuju}</div>}
-              </>
-            )}
+                <div className="filter-group">
+                  <span className="filter-group-label">Kategori</span>
+                  <div className="filter-chips">
+                    {["Semua", ...Object.keys(KATEGORI_LABEL)].map((v) => (
+                      <button key={v} type="button"
+                        className={`filter-chip${filterKategori === v ? " active" : ""}`}
+                        onClick={() => setFilterKategori(v)}>
+                        {v === "Semua" ? "Semua" : KATEGORI_LABEL[v]}
+                      </button>
+                    ))}
+                  </div>
+                </div>
 
-            {/* STEP 4 */}
-            {step === 4 && (
-              <>
-                <div className="step-chip">🗺️ Langkah 4 dari 5</div>
-                <h2 className="step-title">Pilih Kios</h2>
-                <p className="step-desc">Pilih lokasi kios yang tersedia. Harga ditampilkan per bulan.</p>
+                <div className="filter-row-2">
+                  <div className="filter-group">
+                    <span className="filter-group-label">Status</span>
+                    <div className="filter-chips">
+                      {["Semua", "Tersedia", "Terisi"].map((v) => (
+                        <button key={v} type="button"
+                          className={`filter-chip${filterStatus === v ? " active" : ""}`}
+                          onClick={() => setFilterStatus(v)}>{v}</button>
+                      ))}
+                    </div>
+                  </div>
+                  <div className="filter-group">
+                    <span className="filter-group-label">Harga</span>
+                    <div className="filter-chips">
+                      {["Semua", "< 500rb", "500rb+"].map((v) => (
+                        <button key={v} type="button"
+                          className={`filter-chip${filterHarga === v ? " active" : ""}`}
+                          onClick={() => setFilterHarga(v)}>{v}</button>
+                      ))}
+                    </div>
+                  </div>
+                </div>
+              </div>
 
-                {/* Legend */}
-                <div style={{ display: "flex", gap: 16, flexWrap: "wrap", marginBottom: 20 }}>
+              {/* Legend */}
+              <div className="kios-legend">
+                <div className="legend-item"><div className="legend-dot available" /><span>Tersedia</span></div>
+                <div className="legend-item"><div className="legend-dot full" /><span>Terisi</span></div>
+                <div className="legend-item"><div className="legend-dot selected-dot" /><span>Dipilih</span></div>
+              </div>
+
+              {/* Seat grid */}
+              {filteredKios.length === 0 ? (
+                <div className="kios-empty">
+                  <Search size={28} color="#9ca3af" />
+                  <p>Tidak ada kios yang sesuai filter</p>
+                </div>
+              ) : (
+                <div className="kios-seat-grid">
+                  {filteredKios.map((kios) => {
+                    const isFull = kios.status === "full";
+                    const isSel  = formData.kios?.id === kios.id;
+                    return (
+                      <button type="button" key={kios.id}
+                        className={`seat-btn${isFull ? " full" : ""}${isSel ? " selected" : ""}`}
+                        onClick={() => { if (!isFull) set("kios", kios); }}
+                        title={`${kios.id} · ${kios.venue} · ${KATEGORI_LABEL[kios.kategori]} · Rp ${kios.harga.toLocaleString("id-ID")}`}>
+                        {isSel && <Check size={10} strokeWidth={3} color="white" style={{ marginBottom: 2 }} />}
+                        <span className="seat-id">{kios.id}</span>
+                        <span className="seat-venue">{kios.venue.replace("Zona ", "")}</span>
+                        <span className="seat-price">Rp {(kios.harga / 1000).toFixed(0)}rb</span>
+                      </button>
+                    );
+                  })}
+                </div>
+              )}
+
+              {errors.kios && <div className="err-msg" style={{ marginTop: 12 }}><AlertCircle size={12} />{errors.kios}</div>}
+
+              {formData.kios && (
+                <div className="selected-banner">
+                  <div className="selected-banner-icon">
+                    <Home size={20} color="#166534" strokeWidth={2} />
+                  </div>
+                  <div>
+                    <div className="selected-banner-name">Kios {formData.kios.id} dipilih</div>
+                    <div className="selected-banner-detail">
+                      {formData.kios.venue} · {KATEGORI_LABEL[formData.kios.kategori]} · {formData.kios.ukuran} · Rp {formData.kios.harga.toLocaleString("id-ID")}/bulan
+                    </div>
+                  </div>
+                </div>
+              )}
+            </>
+          )}
+
+          {/* ══════════════════════════════ */}
+          {/* STEP 4 — Konfirmasi            */}
+          {/* ══════════════════════════════ */}
+          {step === 4 && (
+            <>
+              <div className="step-chip"><CheckCircle2 size={12} /> Langkah 4 dari 4</div>
+              <h2 className="step-title">Konfirmasi Data</h2>
+              <p className="step-desc">Periksa kembali sebelum mengirimkan pendaftaran</p>
+
+              {/* Data Artisan */}
+              <div className="confirm-section">
+                <div className="confirm-header">
+                  <Store size={14} color="#6b7280" strokeWidth={2} />
+                  <span className="confirm-header-title">DATA ARTISAN</span>
+                </div>
+                <div className="confirm-body">
                   {[
-                    { label: "Tersedia", border: "#2f855a", bg: "#f0fdf4" },
-                    { label: "Terisi",   border: "#e5e7eb", bg: "#f9fafb", opacity: 0.5 },
-                    { label: "Dipilih",  border: "#2f855a", bg: "#f0fdf4", shadow: "0 0 0 3px rgba(47,133,90,.2)" },
-                  ].map(({ label, border, bg, opacity, shadow }) => (
-                    <div key={label} style={{ display: "flex", alignItems: "center", gap: 6, fontSize: 12, color: "#4b5563" }}>
-                      <div style={{ width: 12, height: 12, borderRadius: 3, background: bg, border: `2px solid ${border}`, opacity, boxShadow: shadow }} />
-                      {label}
+                    ["Nama Artisan", formData.namaArtisan],
+                    ["Email",        formData.email],
+                    ["Username",     `@${formData.username}`],
+                    ["Kategori",     displayKategori],
+                    ["Deskripsi",    formData.deskripsi || "—"],
+                  ].map(([k, v]) => (
+                    <div className="confirm-row" key={k}>
+                      <span className="confirm-key">{k}</span>
+                      <span className="confirm-val">{v}</span>
                     </div>
                   ))}
                 </div>
+              </div>
 
-                {zonas.map((zona) => {
-                  const info  = ZONA_INFO[zona];
-                  const kiosZ = KIOS_DATA.filter((k) => k.zona === zona);
-                  return (
-                    <div className="zona-section" key={zona}>
-                      <span className="zona-badge" style={{ background: info.bg, color: info.color, border: `1px solid ${info.border}` }}>
-                        <span className="zona-dot" style={{ background: info.color }} />
-                        Zona {zona} — {info.label}
-                      </span>
-                      <div className="kios-grid">
-                        {kiosZ.map((kios) => {
-                          const isFull = kios.status === "full";
-                          const isSel  = formData.kios?.id === kios.id;
-                          return (
-                            <div key={kios.id}
-                              className={`kios-card${isFull ? " kios-full" : ""}${isSel ? " kios-selected" : ""}`}
-                              onClick={() => {
-                                if (isFull) return;
-                                setFormData({ ...formData, kios });
-                                if (errors.kios) setErrors({ ...errors, kios: "" });
-                              }}>
-                              {isSel && <div className="kios-check">✓</div>}
-                              <div className="kios-id">{kios.id}</div>
-                              <div className="kios-size">{kios.ukuran}</div>
-                              <div className="kios-price">Rp {(kios.harga / 1000).toFixed(0)}rb</div>
-                              <div className={`kios-status ${kios.status}`}>{isFull ? "Terisi" : "Tersedia"}</div>
-                            </div>
-                          );
-                        })}
-                      </div>
-                    </div>
-                  );
-                })}
-
-                {errors.kios && <div className="err-msg">⚠ {errors.kios}</div>}
-                {formData.kios && (
-                  <div className="selected-banner">
-                    <span style={{ fontSize: 24 }}>🏠</span>
-                    <div>
-                      <div style={{ fontWeight: 700, color: "#166534", fontSize: 14 }}>Kios {formData.kios.id} dipilih</div>
-                      <div style={{ fontSize: 12, color: "#4b7a5e" }}>
-                        {ZONA_INFO[formData.kios.zona]?.label} · {formData.kios.ukuran} · Rp {formData.kios.harga.toLocaleString("id-ID")}/bulan
-                      </div>
-                    </div>
+              {/* Foto */}
+              {formData.photos.length > 0 && (
+                <div className="confirm-section">
+                  <div className="confirm-header">
+                    <ImagePlus size={14} color="#6b7280" strokeWidth={2} />
+                    <span className="confirm-header-title">FOTO PRODUK / LOGO</span>
                   </div>
-                )}
-              </>
-            )}
-
-            {/* STEP 5 */}
-            {step === 5 && (
-              <>
-                <div className="step-chip">✅ Langkah 5 dari 5</div>
-                <h2 className="step-title">Konfirmasi Data</h2>
-                <p className="step-desc">Periksa kembali sebelum mengirimkan pendaftaran</p>
-
-                {[
-                  {
-                    icon: "🏪", title: "DATA USAHA",
-                    rows: [["Nama Usaha", formData.namaUsaha], ["Alamat", formData.alamat], ["Kategori", formData.kategori], ["Deskripsi", formData.deskripsi || "—"]],
-                  },
-                  {
-                    icon: "📄", title: "DOKUMEN",
-                    rows: [["KTP", formData.ktp?.name], ["NIB", formData.nib?.name]],
-                    green: true,
-                  },
-                  {
-                    icon: "🏠", title: "KIOS DIPILIH",
-                    rows: [
-                      ["ID Kios",  formData.kios?.id],
-                      ["Zona",     formData.kios ? ZONA_INFO[formData.kios.zona]?.label : "—"],
-                      ["Ukuran",   formData.kios?.ukuran],
-                      ["Harga",    formData.kios ? `Rp ${formData.kios.harga.toLocaleString("id-ID")}/bulan` : "—"],
-                    ],
-                  },
-                ].map(({ icon, title, rows, green }) => (
-                  <div className="confirm-section" key={title}>
-                    <div className="confirm-header">
-                      <span style={{ fontSize: 16 }}>{icon}</span>
-                      <span className="confirm-header-title">{title}</span>
-                    </div>
-                    <div className="confirm-body">
-                      {rows.map(([k, v]) => (
-                        <div className="confirm-row" key={k}>
-                          <span className="confirm-key">{k}</span>
-                          <span className="confirm-val" style={green ? { color: "#2f855a" } : {}}>
-                            {green ? `✓ ${v}` : v}
-                          </span>
+                  <div className="confirm-body">
+                    <div className="photo-grid">
+                      {formData.photos.map((p, i) => (
+                        <div className="photo-thumb readonly" key={i}>
+                          <img src={p.preview} alt={`foto-${i}`} />
                         </div>
                       ))}
                     </div>
                   </div>
-                ))}
-
-                <div style={{ background: "#fffbeb", border: "1.5px solid #fde68a", borderRadius: 12, padding: "12px 16px", fontSize: 13, color: "#92400e", display: "flex", gap: 10 }}>
-                  <span style={{ flexShrink: 0 }}>💡</span>
-                  <span>Setelah submit, Anda akan diarahkan ke <strong>WhatsApp admin</strong> untuk konfirmasi pembayaran.</span>
                 </div>
-              </>
+              )}
+
+              {/* Kios */}
+              <div className="confirm-section">
+                <div className="confirm-header">
+                  <Home size={14} color="#6b7280" strokeWidth={2} />
+                  <span className="confirm-header-title">KIOS DIPILIH</span>
+                </div>
+                <div className="confirm-body">
+                  {[
+                    ["ID Kios",  formData.kios?.id],
+                    ["Venue",    formData.kios?.venue],
+                    ["Kategori", KATEGORI_LABEL[formData.kios?.kategori]],
+                    ["Ukuran",   formData.kios?.ukuran],
+                    ["Harga",    formData.kios ? `Rp ${formData.kios.harga.toLocaleString("id-ID")}/bulan` : "—"],
+                  ].map(([k, v]) => (
+                    <div className="confirm-row" key={k}>
+                      <span className="confirm-key">{k}</span>
+                      <span className="confirm-val">{v}</span>
+                    </div>
+                  ))}
+                </div>
+              </div>
+
+              <div className="info-banner">
+                <Lightbulb size={15} color="#92400e" strokeWidth={2} className="info-banner-icon" />
+                <span>Setelah submit, Anda akan diarahkan ke <strong>WhatsApp admin</strong> untuk konfirmasi pembayaran sewa kios.</span>
+              </div>
+            </>
+          )}
+
+          {/* Navigation */}
+          <div className="nav-row">
+            {step > 1 && (
+              <button className="btn-back" onClick={prevStep}>
+                <ChevronLeft size={16} /> Kembali
+              </button>
             )}
-
-            {/* Navigation */}
-            <div className="nav-row">
-              {step > 1 && <button className="btn-back" onClick={prevStep}>← Kembali</button>}
-              {step < 5
-                ? <button className="btn-next" onClick={nextStep}>Lanjut →</button>
-                : <button className="btn-submit" onClick={handleSubmit} disabled={submitting}>
-                    {submitting ? "⏳ Mengirim..." : "📲 Submit & Hubungi Admin"}
-                  </button>
-              }
-            </div>
+            {step < 4 ? (
+              <button className="btn-next" onClick={nextStep}>
+                Lanjut <ChevronRight size={16} />
+              </button>
+            ) : (
+              <button className="btn-submit" onClick={handleSubmit} disabled={submitting}>
+                {submitting
+                  ? <><Loader2 size={16} className="spin" /> Mengirim...</>
+                  : <><Send size={15} /> Submit & Hubungi Admin</>
+                }
+              </button>
+            )}
           </div>
-
-          <p style={{ textAlign: "center", marginTop: 24, fontSize: 13.5, color: "#6b7280" }}>
-            Sudah punya akun?{" "}
-            <span onClick={() => navigate("/login")} style={{ color: "#2f855a", fontWeight: 600, cursor: "pointer" }}>
-              Masuk di sini
-            </span>
-          </p>
         </div>
+
+        <p className="reg-footer">
+          Sudah punya akun?{" "}
+          <span className="reg-footer-link" onClick={() => navigate("/login")}>Masuk di sini</span>
+        </p>
       </div>
-    </>
+    </div>
   );
 }
