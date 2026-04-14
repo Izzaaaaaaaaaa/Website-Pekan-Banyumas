@@ -1,22 +1,34 @@
 import { useState } from "react";
+import QrisUploadSection from "../../components/pengaturan/QrisUploadSection";
 import "../../assets/styles/settings.css";
 
 export default function ProfileForm({ onToast }) {
   const [form, setForm] = useState({
+    kios: "Sate Blengong Bu Yati",
     nama: "Bu Yati Wulandari",
     telepon: "0812-3456-7890",
     email: "yati@email.com",
+
+    kategori: "Kuliner",
+    deskripsi: ""
   });
   const [original] = useState({ ...form });
 
   const set = (key, val) => setForm((prev) => ({ ...prev, [key]: val }));
 
   const handleSave = () => {
-    if (!form.nama || !form.telepon || !form.email) {
+    if (!form.nama || !form.telepon || !form.email || !form.kios) {
       onToast("⚠️ Semua field wajib diisi!", "warning");
       return;
     }
     onToast("✅ Data diri berhasil disimpan!");
+  };
+
+  const handleChange = (e) => {
+    setForm({
+      ...form,
+      [e.target.name]: e.target.value
+    });
   };
 
   const handleCancel = () => setForm({ ...original });
@@ -29,6 +41,17 @@ export default function ProfileForm({ onToast }) {
       </div>
 
       <div className="st-form">
+        {/* 🔥 NAMA KIOS */}
+        <div className="st-fg st-full">
+          <label>Nama Kios</label>
+          <input
+            value={form.kios}
+            onChange={(e) => set("kios", e.target.value)}
+            placeholder="Nama usaha kamu"
+          />
+        </div>
+        
+        {/* NAMA */}
         <div className="st-fg st-full">
           <label>Nama Lengkap</label>
           <input
@@ -38,6 +61,7 @@ export default function ProfileForm({ onToast }) {
           />
         </div>
 
+        {/* TELEPON & EMAIL */}
         <div className="st-row">
           <div className="st-fg">
             <label>No. Telepon</label>
@@ -58,6 +82,34 @@ export default function ProfileForm({ onToast }) {
           </div>
         </div>
 
+        {/* 🔥 KATEGORI */}
+        <div className="st-fg st-full">
+          <label>Kategori Usaha</label>
+          <select
+            value={form.kategori}
+            onChange={(e) => set("kategori", e.target.value)}
+          >
+            <option value="Kuliner">Kuliner</option>
+            <option value="Fashion">Fashion</option>
+            <option value="Kriya">Kriya</option>
+            <option value="Lainnya">Lainnya</option>
+          </select>
+        </div>
+
+        {/* 🔥 DESKRIPSI */}
+        <div className="st-fg st-full">
+          <label>Deskripsi Usaha</label>
+          <textarea
+            value={form.deskripsi}
+            onChange={(e) => set("deskripsi", e.target.value)}
+            placeholder="Ceritakan usaha kamu..."
+            rows={3}
+          />
+        </div>
+
+        <QrisUploadSection />
+
+        {/* BUTTON */}
         <div className="st-form-act">
           <button className="st-btn-outline" onClick={handleCancel}>Batal</button>
           <button className="st-btn-primary" onClick={handleSave}>Simpan</button>

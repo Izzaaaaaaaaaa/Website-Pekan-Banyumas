@@ -31,26 +31,24 @@ const trxData = [
 
 // ── COUNTDOWN ───────────────────────────────────────────
 function Countdown() {
-  const [time, setTime] = useState({ d: "00", j: "00", m: "00" });
+  const [time, setTime] = useState({ d: "00"});
 
   useEffect(() => {
     function tick() {
       const diff = new Date("2026-03-22T08:00:00+07:00") - new Date();
       if (diff <= 0) return;
       setTime({
-        d: String(Math.floor(diff / 86400000)).padStart(2, "0"),
-        j: String(Math.floor((diff % 86400000) / 3600000)).padStart(2, "0"),
-        m: String(Math.floor((diff % 3600000) / 60000)).padStart(2, "0"),
+        d: String(Math.floor(diff / 86400000)).padStart(2, "0")
       });
     }
     tick();
-    const id = setInterval(tick, 60000);
+    const id = setInterval(tick, 3600000);
     return () => clearInterval(id);
   }, []);
 
   return (
     <div className="cd-boxes">
-      {[["d", "HARI"], ["j", "JAM"], ["m", "MENIT"]].map(([k, u]) => (
+      {[["d", "HARI"]].map(([k, u]) => (
         <div className="cd-box" key={k}>
           <div className="cd-num">{time[k]}</div>
           <div className="cd-unit">{u}</div>
@@ -99,10 +97,6 @@ export default function Dashboard() {
             title="Notifikasi"
           >
             <Bell size={18} />
-          </button>
-
-          <button className="btn btn-primary" onClick={() => navigate("/stok")}>
-            ＋ Tambah Barang
           </button>
         </div>
       </div>

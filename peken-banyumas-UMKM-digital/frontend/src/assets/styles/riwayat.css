@@ -1,6 +1,5 @@
 /* ============================================================
    riwayat.css  —  Riwayat Transaksi page styles
-   Semua class diawali  rw-  agar tidak bentrok dengan CSS lain
    ============================================================ */
 
 /* ── Page ────────────────────────────────────────────────── */
@@ -64,37 +63,6 @@
   align-items: center;
   gap: 10px;
   flex-shrink: 0;
-}
-
-.rw-search-box {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  background: #fff;
-  border: 1px solid #dde8e2;
-  border-radius: 10px;
-  padding: 9px 14px;
-  min-width: 220px;
-  transition: border-color 0.15s, box-shadow 0.15s;
-}
-
-.rw-search-box:focus-within {
-  border-color: #2f6f4e;
-  box-shadow: 0 0 0 3px rgba(47,111,78,0.1);
-}
-
-.rw-search-icon {
-  font-size: 14px;
-  opacity: 0.5;
-}
-
-.rw-search-box input {
-  border: none;
-  outline: none;
-  font-size: 14px;
-  background: transparent;
-  color: #222;
-  width: 100%;
 }
 
 .rw-status {
@@ -340,4 +308,31 @@
   color: #aaa;
   padding: 48px !important;
   font-size: 14px;
+}
+
+/* ══════════════════════════════════════════
+   Badge Metode — tambahkan ke riwayat.css
+   ══════════════════════════════════════════ */
+.rw-metode-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  font-size: 11px;
+  font-weight: 700;
+  padding: 3px 9px;
+  border-radius: 999px;
+  letter-spacing: 0.3px;
+}
+.rw-metode-tunai {
+  background: #f0fdf4;
+  color: #16a34a;
+  border: 1px solid #bbf7d0;
+}
+.rw-metode-qris {
+  background: #eff6ff;
+  color: #2563eb;
+  border: 1px solid #bfdbfe;
+}
+.rw-dash {
+  color: #d1d5db;
 }

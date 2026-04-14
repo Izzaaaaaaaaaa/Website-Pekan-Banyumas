@@ -70,7 +70,7 @@ export default function Login() {
 
           {/* Sub */}
           <p className="left-sub">
-            Platform khusus artisan Peken Banyumas — kelola kios, pantau penjualan,
+            Platform khusus artisan Peken Banyumas kelola kios, pantau penjualan,
             dan tampilkan produk terbaikmu dalam satu dasbor yang simpel dan intuitif.
           </p>
 

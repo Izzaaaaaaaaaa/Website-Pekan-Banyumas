@@ -49,20 +49,17 @@ const STATUS_CONFIG = {
     icon:   "⏳",
     badge:  "Menunggu Konfirmasi",
     title:  "Sedang Diproses",
-    desc:   "Pendaftaranmu sudah kami terima. Admin sedang memverifikasi data dan akan segera menghubungimu melalui WhatsApp.",
+    desc:   "Admin sedang memverifikasi data pendaftaranmu. Silakan tunggu hingga status diperbarui.",
     infos: [
       { dot: "#f59e0b", text: "Proses verifikasi biasanya 1×24 jam" },
-      { dot: "#f59e0b", text: "Pastikan WhatsApp kamu aktif" },
-      { dot: "#f59e0b", text: "Cek berkala untuk update status" },
     ],
   },
   rejected: {
     icon:   "❌",
     badge:  "Tidak Disetujui",
     title:  "Pendaftaran Ditolak",
-    desc:   "Maaf, pendaftaranmu belum bisa diproses. Kemungkinan karena kios tidak cocok atau ada kendala lain. Silakan pilih kios lain dan coba lagi.",
+    desc:   "Kios telah penuh, pendaftaranmu belum bisa diproses.",
     infos: [
-      { dot: "#ef4444", text: "Kamu bisa pilih kios lain yang tersedia" },
       { dot: "#ef4444", text: "Hubungi admin untuk informasi lebih lanjut" },
     ],
   },
@@ -72,7 +69,7 @@ const STATUS_CONFIG = {
     title:  "Selamat, Berhasil!",
     desc:   "Pendaftaranmu telah disetujui oleh admin. Kamu sekarang bisa mengakses dashboard UMKM dan mulai mengelola kiosmu.",
     infos: [
-      { dot: "#22c55e", text: "Kios kamu sudah siap digunakan" },
+      { dot: "#22c55e", text: "Kamu mendapat kios 22" },
       { dot: "#22c55e", text: "Pantau stok & transaksi di dashboard" },
       { dot: "#22c55e", text: "Acara dimulai 22 Maret 2026" },
     ],
@@ -133,12 +130,7 @@ export default function Status() {
           )}
           {status === "rejected" && (
             <button className="btn-danger" onClick={() => navigate("/register")}>
-              🔄 Pilih Kios Lain
-            </button>
-          )}
-          {status === "pending" && (
-            <button className="btn-primary" style={{ background: "linear-gradient(135deg,#a16207,#d97706)", boxShadow: "0 6px 20px rgba(217,119,6,.35)" }}>
-              💬 Hubungi Admin WA
+              🔄 Daftar Ulang
             </button>
           )}
 

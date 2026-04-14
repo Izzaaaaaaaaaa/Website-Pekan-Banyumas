@@ -644,3 +644,282 @@
     align-items: flex-start;
   }
 }
+
+/* ══════════════════════════════════════════════
+   JENIS TRANSAKSI CARD PICKER
+══════════════════════════════════════════════ */
+.bk-jenis-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 14px;
+  margin: 8px 0 4px;
+}
+
+.bk-jenis-card {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+
+  padding: 24px 16px;
+  border-radius: 16px;
+  border: 2px solid #e5e7eb;
+  background: #fafafa;
+  cursor: pointer;
+  transition: all 0.18s ease;
+  text-align: center;
+}
+
+.bk-jenis-card:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 6px 20px rgba(0,0,0,0.08);
+}
+
+.bk-jenis-card.masuk:hover {
+  border-color: #86efac;
+  background: #f0fdf4;
+  box-shadow: 0 6px 20px rgba(22,163,74,0.12);
+}
+
+.bk-jenis-card.keluar:hover {
+  border-color: #fca5a5;
+  background: #fff5f5;
+  box-shadow: 0 6px 20px rgba(239,68,68,0.1);
+}
+
+.bk-jenis-card-icon {
+  font-size: 32px;
+  line-height: 1;
+}
+
+.bk-jenis-card-title {
+  font-size: 16px;
+  font-weight: 800;
+  color: #1a2e22;
+}
+
+.bk-jenis-card.masuk .bk-jenis-card-title  { color: #166534; }
+.bk-jenis-card.keluar .bk-jenis-card-title { color: #991b1b; }
+
+.bk-jenis-card-desc {
+  font-size: 12px;
+  color: #9ca3af;
+  line-height: 1.4;
+}
+
+/* ═══════════════════════════════════════════════
+   QRIS INNER MODAL  (tambahkan ke bawah kas.css)
+   ═══════════════════════════════════════════════ */
+
+/* Wrapper METODE — select + tombol lihat QRIS sejajar */
+.bk-metode-group {
+  display: flex;
+  gap: 8px;
+  align-items: center;
+}
+.bk-metode-group select {
+  flex: 1;
+}
+.bk-qris-preview-btn {
+  white-space: nowrap;
+  padding: 0 14px;
+  height: 40px;
+  border-radius: 8px;
+  border: 1.5px solid #16a34a;
+  background: #f0fdf4;
+  color: #16a34a;
+  font-size: 13px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: background 0.15s, color 0.15s;
+}
+.bk-qris-preview-btn:hover {
+  background: #16a34a;
+  color: #fff;
+}
+
+/* Overlay gelap di DALAM bk-modal */
+.bk-qris-overlay {
+  position: absolute;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.45);
+  border-radius: inherit;           /* ikut radius modal */
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 10;
+  animation: bkQrisFadeIn 0.18s ease;
+}
+@keyframes bkQrisFadeIn {
+  from { opacity: 0; }
+  to   { opacity: 1; }
+}
+
+/* Panel QRIS */
+.bk-qris-modal {
+  background: #fff;
+  border-radius: 16px;
+  width: 92%;
+  max-width: 340px;
+  box-shadow: 0 8px 32px rgba(0,0,0,0.18);
+  overflow: hidden;
+  animation: bkQrisSlideUp 0.2s ease;
+}
+@keyframes bkQrisSlideUp {
+  from { transform: translateY(20px); opacity: 0; }
+  to   { transform: translateY(0);    opacity: 1; }
+}
+
+/* Header QRIS */
+.bk-qris-hd {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 16px 18px 12px;
+  border-bottom: 1px solid #e5e7eb;
+}
+.bk-qris-hd-text {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+.bk-qris-icon {
+  font-size: 22px;
+  line-height: 1;
+}
+.bk-qris-hd h4 {
+  margin: 0;
+  font-size: 15px;
+  font-weight: 700;
+  color: #111827;
+}
+.bk-qris-hd p {
+  margin: 2px 0 0;
+  font-size: 12px;
+  color: #6b7280;
+}
+.bk-qris-close {
+  background: #f3f4f6;
+  border: none;
+  border-radius: 8px;
+  width: 30px;
+  height: 30px;
+  font-size: 14px;
+  cursor: pointer;
+  color: #374151;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: background 0.15s;
+}
+.bk-qris-close:hover { background: #e5e7eb; }
+
+/* Body — gambar QRIS */
+.bk-qris-body {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  padding: 20px 18px;
+  min-height: 200px;
+  background: #fafafa;
+}
+.bk-qris-img {
+  width: 200px;
+  height: 200px;
+  object-fit: contain;
+  border-radius: 8px;
+  border: 1px solid #e5e7eb;
+}
+.bk-qris-empty {
+  text-align: center;
+  color: #9ca3af;
+}
+.bk-qris-empty span { font-size: 36px; }
+.bk-qris-empty p {
+  margin: 8px 0 4px;
+  font-size: 14px;
+  font-weight: 600;
+  color: #374151;
+}
+.bk-qris-empty small {
+  font-size: 12px;
+  color: #9ca3af;
+}
+
+/* Footer QRIS */
+.bk-qris-foot {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 12px 18px 16px;
+  border-top: 1px solid #e5e7eb;
+  gap: 10px;
+  flex-wrap: wrap;
+}
+.bk-qris-nominal {
+  font-size: 13px;
+  color: #374151;
+}
+.bk-qris-nominal strong {
+  color: #16a34a;
+  font-weight: 700;
+}
+.bk-qris-confirm {
+  flex: 1;
+  height: 38px;
+  border-radius: 8px;
+  border: none;
+  background: #16a34a;
+  color: #fff;
+  font-size: 13px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: background 0.15s;
+  white-space: nowrap;
+}
+.bk-qris-confirm:hover { background: #15803d; }
+
+/* ════════════════════════════════════════════
+   KasRow — tambahan CSS (paste ke kas.css)
+   ════════════════════════════════════════════ */
+
+/* Wrapper kolom Keterangan */
+.bk-td-ket-wrap {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+/* Baris meta (badge + sub-info) */
+.bk-td-ket-meta {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  flex-wrap: wrap;
+}
+
+/* Teks sub-info (nama pelanggan) */
+.bk-td-ket-sub {
+  font-size: 11px;
+  color: #9ca3af;
+}
+
+/* Badge metode pembayaran */
+.bk-metode-badge {
+  font-size: 10px;
+  font-weight: 700;
+  padding: 2px 7px;
+  border-radius: 999px;
+  letter-spacing: 0.4px;
+}
+.bk-metode-tunai {
+  background: #f0fdf4;
+  color: #16a34a;
+  border: 1px solid #bbf7d0;
+}
+.bk-metode-qris {
+  background: #eff6ff;
+  color: #2563eb;
+  border: 1px solid #bfdbfe;
+}

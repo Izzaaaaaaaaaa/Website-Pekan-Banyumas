@@ -10,7 +10,7 @@ import Layout from "./components/Layout";
 import Dashboard from "./pages/Dashboard";
 import ManajemenStok from "./pages/ManajemenStok";
 import BukuKas from "./pages/BukuKas";
-import PromoDiskon from "./pages/PromoDiskon";
+import Event from "./pages/Event";
 import Riwayat from "./pages/Riwayat";
 import Pengaturan from "./pages/Pengaturan";
 import Profile from "./pages/Profile";
@@ -32,7 +32,7 @@ function App() {
           <Route path="/notifikasi" element={<Notifikasi />} />
           <Route path="stok" element={<ManajemenStok />} />
           <Route path="kas" element={<BukuKas />} />
-          <Route path="promo" element={<PromoDiskon />} />
+          <Route path="event" element={<Event />} />
           <Route path="riwayat" element={<Riwayat />} />
           <Route path="pengaturan" element={<Pengaturan />} />
           <Route path="profile" element={<Profile />} />

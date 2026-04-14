@@ -1,4 +1,5 @@
 import StokRow from "./StokRow";
+import {Inbox} from "lucide-react"
 
 export default function StokTable({ items, onEdit, onDelete }) {
   return (
@@ -21,7 +22,7 @@ export default function StokTable({ items, onEdit, onDelete }) {
             <tr>
               <td colSpan={7}>
                 <div className="ms-empty">
-                  <div className="ms-empty-icon">📭</div>
+                  <div className="ms-empty-icon"><Inbox size={20} /></div>
                   Tidak ada barang ditemukan
                 </div>
               </td>

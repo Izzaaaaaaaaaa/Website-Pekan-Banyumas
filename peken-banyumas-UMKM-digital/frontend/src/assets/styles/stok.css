@@ -333,6 +333,20 @@
   border-color: #fca5a5;
 }
 
+.btn-primary {
+  padding: 10px 20px;
+  border-radius: 12px;
+  border: none;
+  background: #2f6f4e;
+  color: white;
+  font-size: 14px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: background 0.15s, transform 0.1s;
+  box-shadow: 0 3px 10px rgba(47,111,78,0.25);
+  white-space: nowrap;
+}
+
 /* ── EMPTY STATE ── */
 .ms-empty {
   text-align: center;

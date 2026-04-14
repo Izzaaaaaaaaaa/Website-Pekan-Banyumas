@@ -1,4 +1,5 @@
 import { useState } from "react";
+import { useRef } from "react";
 import { User,
   Settings,
   LogOut,
@@ -18,6 +19,9 @@ export default function Profile() {
   const navigate = useNavigate();
   const [showLogout, setShowLogout] = useState(false);
 
+  const fileInputRef = useRef(null);
+  const [photo, setPhoto] = useState(null);
+
   const user = {
     nama: "Bu Yati Wulandari",
     role: "Pemilik Kios",
@@ -27,7 +31,7 @@ export default function Profile() {
     kategori: "Kuliner Tradisional",
     status: "Aktif",
     inisial: "BY",
-    stats: { produk: 6, transaksi: 134, rating: 4.9 },
+    stats: { produk: 6, transaksi: 134 },
   };
 
   return (
@@ -40,7 +44,66 @@ export default function Profile() {
       </div>
 
       <div className="pf-card">
-        <div className="pf-avatar">{user.inisial}</div>
+        <div className="pf-avatar-wrap" onClick={() => fileInputRef.current.click()}>
+          <div className="pf-avatar">
+            {photo ? (
+              <img src={photo} alt="profile" className="pf-avatar-img" />
+            ) : (
+              user.inisial
+            )}
+          </div>
+          <div className="pf-avatar-overlay">
+          </div>
+        </div>
+
+        <input
+          ref={fileInputRef}
+          type="file"
+          accept="image/*"
+          style={{ display: "none" }}
+          onChange={(e) => {
+          const file = e.target.files[0];
+          if (!file) return;
+
+          const img = new Image();
+          const reader = new FileReader();
+
+          reader.onload = (ev) => {
+            img.src = ev.target.result;
+            img.onload = () => {
+            const SIZE = 300; 
+            const canvas = document.createElement("canvas");
+            canvas.width = SIZE;
+            canvas.height = SIZE;
+
+            const ctx = canvas.getContext("2d");
+
+            // hitung crop center
+            const srcSize = Math.min(img.width, img.height); // ambil sisi terpendek
+            const srcX = (img.width  - srcSize) / 2;         // center horizontal
+            const srcY = (img.height - srcSize) / 2;         // center vertical
+
+            // gambar dengan center-crop → dipaksa jadi kotak 200x200
+            ctx.drawImage(
+              img,
+              srcX, srcY, srcSize, srcSize, // source: crop tengah
+              0,    0,    SIZE,   SIZE      // dest: 200x200
+            );
+
+            const compressed = canvas.toDataURL("image/jpeg", 0.7);
+            setPhoto(compressed);
+          };
+          };
+
+          reader.readAsDataURL(file);
+        }}
+        />
+
+        {photo && (
+          <button className="pf-remove-photo" onClick={() => setPhoto(null)}>
+            Hapus Foto
+          </button>
+        )}
         <div className="pf-name">{user.nama}</div>
         <div className="pf-role">
           {user.role} · {user.kios} · Stand {user.stand}
@@ -57,10 +120,6 @@ export default function Profile() {
             <span className="pf-stat-label"><Receipt size={16} />Transaksi</span>
           </div>
           <div className="pf-stat-divider" />
-          <div className="pf-stat">
-            <span className="pf-stat-num">{user.stats.rating}</span>
-            <span className="pf-stat-label"><Star size={16} />Rating</span>
-          </div>
         </div>
       </div>
 

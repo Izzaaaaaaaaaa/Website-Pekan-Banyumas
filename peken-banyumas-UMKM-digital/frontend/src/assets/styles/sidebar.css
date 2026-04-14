@@ -34,6 +34,7 @@
 ========================= */
 .sb-top {
   flex-shrink: 0;
+  padding-top: 8px;
 }
 
 /* EVENT BADGE */
@@ -52,7 +53,7 @@
   letter-spacing: 0.3px;
 
   width: fit-content;
-  margin-bottom: 14px;
+  margin-bottom: 20px;
 }
 
 .sb-event img {
@@ -67,11 +68,12 @@
   display: flex;
   align-items: baseline;
   gap: 6px;
-  margin-bottom: 18px;
+  margin-bottom: 24px;
+  padding-left: 2px;
 }
 
 .sb-brand-dashboard {
-  font-size: 22px;
+  font-size: 24px;
   font-weight: 800;
   color: #1a3a2a;
   letter-spacing: -0.5px;
@@ -79,19 +81,12 @@
 }
 
 .sb-brand-umkm {
-  font-size: 22px;
-  font-weight: 800;
+  font-size: 24px;
+  font-weight: 600;
   color: #2f6f4e;
   font-style: italic;
   letter-spacing: -0.5px;
   line-height: 1;
-}
-
-.sb-brand-icon {
-  display: flex;
-  align-items: center;
-  color: #2f6f4e;
-  opacity: 0.85;
 }
 
 /* KIOS BOX */
@@ -99,11 +94,12 @@
   background: #ffffff;
   border: 1px solid #d4eadc;
   border-radius: 14px;
-  padding: 12px 14px;
+  padding: 14px 16px; 
+  margin-bottom: 4px;
 }
 
 .sb-kios h3 {
-  margin: 4px 0 4px;
+  margin: 4px 0 6px;
   font-size: 14px;
   font-weight: 700;
   color: #1a3a2a;

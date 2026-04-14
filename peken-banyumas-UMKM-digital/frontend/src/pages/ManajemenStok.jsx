@@ -1,4 +1,5 @@
 import { useState } from "react";
+import { useEffect } from "react";
 import {Search, Box, AlertTriangle, Utensils, Plus} from "lucide-react";
 import StokTable from "../components/ManajemenStok/StokTable";
 import StokRow from "../components/ManajemenStok/StokRow";
@@ -8,14 +9,14 @@ import ConfirmDeleteModal from "../components/modals/ConfirmDeleteModal";
 import "../assets/styles/stok.css";
 
 export default function ManajemenStok() {
-  const [items, setItems] = useState([
-    { id: 1, nama: "Sate Blengong Spesial", stok: 24, max: 50, harga: 25000, kategori: "Makanan", satuan: "porsi" },
-    { id: 2, nama: "Sate Campur",           stok: 18, max: 50, harga: 30000, kategori: "Makanan", satuan: "porsi" },
-    { id: 3, nama: "Mendoan Jumbo",         stok: 4,  max: 100, harga: 5000, kategori: "Camilan", satuan: "pcs"   },
-    { id: 4, nama: "Lontong Sate",          stok: 30, max: 50, harga: 8000,  kategori: "Makanan", satuan: "porsi" },
-    { id: 5, nama: "Minuman Jahe Hangat",   stok: 3,  max: 60, harga: 8000,  kategori: "Minuman", satuan: "cup"   },
-    { id: 6, nama: "Es Teh Manis",          stok: 40, max: 60, harga: 5000,  kategori: "Minuman", satuan: "cup"   },
-  ]);
+  const [items, setItems] = useState(() => {
+    const saved = localStorage.getItem("items");
+    return saved ? JSON.parse(saved) : [];
+  });
+
+  useEffect(() => {
+    localStorage.setItem("items", JSON.stringify(items));
+  }, [items]);
  
   const [search, setSearch] = useState("");
  
@@ -28,7 +29,7 @@ export default function ManajemenStok() {
   // ── TAMBAH ──
   const [showModal, setShowModal] = useState(false);
   const [form, setForm] = useState({
-    nama: "", stok: "", harga: "", kategori: "Makanan", satuan: "", deskripsi: "",
+    nama: "", stok: "", harga: "", kategori: "", satuan: "", deskripsi: "",
   });
  
   const handleChange = (e) =>
@@ -45,14 +46,14 @@ export default function ManajemenStok() {
         id: Date.now(),
         nama: form.nama,
         stok: Number(form.stok),
-        max: Number(form.stok) * 2 || 50,
+        max: Math.max(Number(form.stok) * 2, 50),
         harga: Number(form.harga),
-        kategori: form.kategori,
+        kategori: form.kategori || "Lainnya",
         satuan: form.satuan,
         deskripsi: form.deskripsi,
       },
     ]);
-    setForm({ nama: "", stok: "", harga: "", kategori: "Makanan", satuan: "", deskripsi: "" });
+    setForm({ nama: "", stok: "", harga: "", kategori: "", satuan: "", deskripsi: "" });
     setShowModal(false);
   };
  
@@ -98,8 +99,8 @@ export default function ManajemenStok() {
             />
           </div>
  
-          <button className="btn btn-primary" onClick={() => setShowModal(true)}>
-            <Plus size={16} /> Tambah Barang
+          <button className="btn-primary" onClick={() => setShowModal(true)}>
+            ＋ Tambah Barang
           </button>
         </div>
       </div>

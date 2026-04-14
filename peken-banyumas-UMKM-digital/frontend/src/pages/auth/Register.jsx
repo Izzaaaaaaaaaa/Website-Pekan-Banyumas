@@ -13,8 +13,7 @@ import "../../assets/styles/register.css";
 const STEPS = [
   { id: 1, label: "Data Artisan", Icon: Store },
   { id: 2, label: "S & K",        Icon: ClipboardList },
-  { id: 3, label: "Pilih Kios",   Icon: MapPin },
-  { id: 4, label: "Konfirmasi",   Icon: CheckCircle2 },
+  { id: 3, label: "Konfirmasi",   Icon: CheckCircle2 },
 ];
 
 const KATEGORI_OPTIONS = [
@@ -114,9 +113,12 @@ export default function Register() {
       if (formData.kategori === "lainnya" && !formData.kategoriCustom.trim())
         e.kategoriCustom = "Isi kategori kamu";
     }
-    if (step === 2 && !formData.setuju) e.setuju = "Anda harus menyetujui syarat & ketentuan";
-    if (step === 3 && !formData.kios)   e.kios   = "Silakan pilih kios terlebih dahulu";
+    if (step === 2 && !formData.setuju) {
+      e.setuju = "Anda harus menyetujui syarat & ketentuan";
+    }
+
     setErrors(e);
+
     return Object.keys(e).length === 0;
   };
 
@@ -125,12 +127,12 @@ export default function Register() {
 
   const handleSubmit = () => {
     setSubmitting(true);
-    const phone   = "6282192058122";
-    const kat     = formData.kategori === "lainnya" ? formData.kategoriCustom : KATEGORI_LABEL[formData.kategori];
-    const message = `Halo Admin Peken Banyumas 👋\n\nPendaftaran Artisan Baru:\n\n🏪 *Nama Artisan:* ${formData.namaArtisan}\n👤 *Username:* @${formData.username}\n📧 *Email:* ${formData.email}\n🏷️ *Kategori:* ${kat}\n📝 *Deskripsi:* ${formData.deskripsi}\n\n🏠 *Kios:* ${formData.kios?.id} · ${formData.kios?.venue}\n💰 *Harga:* Rp ${formData.kios?.harga.toLocaleString("id-ID")}/bulan\n\nMohon konfirmasinya. Terima kasih!`;
+
     localStorage.setItem("status", "pending");
-    window.open(`https://wa.me/${phone}?text=${encodeURIComponent(message)}`, "_blank");
-    setTimeout(() => navigate("/status"), 800);
+
+    setTimeout(() => {
+      navigate("/status");
+    }, 800);
   };
 
   /* kios filter */
@@ -192,7 +194,7 @@ export default function Register() {
           {/* ══════════════════════════════ */}
           {step === 1 && (
             <>
-              <div className="step-chip"><Store size={12} /> Langkah 1 dari 4</div>
+              <div className="step-chip"><Store size={12} /> Langkah 1 dari 3</div>
               <h2 className="step-title">Data Artisan</h2>
               <p className="step-desc">Isi informasi usahamu untuk mendaftar sebagai artisan Peken Banyumas</p>
 
@@ -347,7 +349,7 @@ export default function Register() {
           {/* ══════════════════════════════ */}
           {step === 2 && (
             <>
-              <div className="step-chip"><ClipboardList size={12} /> Langkah 2 dari 4</div>
+              <div className="step-chip"><ClipboardList size={12} /> Langkah 2 dari 3</div>
               <h2 className="step-title">Syarat & Ketentuan</h2>
               <p className="step-desc">Baca dan setujui ketentuan sebelum melanjutkan pendaftaran</p>
 
@@ -355,13 +357,12 @@ export default function Register() {
                 <p className="terms-heading">Ketentuan Pendaftaran Artisan — Peken Banyumas 2026</p>
                 <ul>
                   <li>Data artisan yang diberikan adalah benar, akurat, dan dapat dipertanggungjawabkan.</li>
-                  <li>Harga sewa kios dapat berubah sewaktu-waktu sesuai kebijakan pengelola.</li>
-                  <li>Pembayaran sewa kios dilakukan melalui admin resmi dan tidak melalui pihak ketiga.</li>
-                  <li>Peserta wajib menjaga kebersihan dan ketertiban area kios selama acara berlangsung.</li>
-                  <li>Peserta dilarang menjual produk yang tidak sesuai kategori yang didaftarkan.</li>
-                  <li>Segala pelanggaran dapat mengakibatkan pembatalan pendaftaran tanpa pengembalian dana.</li>
-                  <li>Pengelola berhak melakukan inspeksi kios sewaktu-waktu selama periode acara.</li>
-                  <li>Ketentuan lebih lanjut akan diinformasikan oleh pihak pengelola Peken Banyumas.</li>
+
+                  <li>
+                    Keikutsertaan dalam Peken Banyumas tidak dipungut biaya pendaftaran. 
+                    Namun, setiap artisan wajib memberikan kontribusi bagi hasil sebesar 
+                    <strong>10% dari total penjualan</strong> selama event berlangsung kepada pihak penyelenggara.
+                  </li>
                 </ul>
               </div>
 
@@ -381,123 +382,11 @@ export default function Register() {
           )}
 
           {/* ══════════════════════════════ */}
-          {/* STEP 3 — Pilih Kios            */}
+          {/* STEP 3 — Konfirmasi            */}
           {/* ══════════════════════════════ */}
           {step === 3 && (
             <>
-              <div className="step-chip"><MapPin size={12} /> Langkah 3 dari 4</div>
-              <h2 className="step-title">Pilih Kios</h2>
-              <p className="step-desc">Pilih lokasi kios yang tersedia. Harga per bulan selama acara.</p>
-
-              {/* Filter bar */}
-              <div className="filter-bar">
-                <div className="filter-bar-title"><Filter size={13} /> Filter Kios</div>
-
-                <div className="filter-group">
-                  <span className="filter-group-label">Venue</span>
-                  <div className="filter-chips">
-                    {VENUE_OPTIONS.map((v) => (
-                      <button key={v} type="button"
-                        className={`filter-chip${filterVenue === v ? " active" : ""}`}
-                        onClick={() => setFilterVenue(v)}>{v}</button>
-                    ))}
-                  </div>
-                </div>
-
-                <div className="filter-group">
-                  <span className="filter-group-label">Kategori</span>
-                  <div className="filter-chips">
-                    {["Semua", ...Object.keys(KATEGORI_LABEL)].map((v) => (
-                      <button key={v} type="button"
-                        className={`filter-chip${filterKategori === v ? " active" : ""}`}
-                        onClick={() => setFilterKategori(v)}>
-                        {v === "Semua" ? "Semua" : KATEGORI_LABEL[v]}
-                      </button>
-                    ))}
-                  </div>
-                </div>
-
-                <div className="filter-row-2">
-                  <div className="filter-group">
-                    <span className="filter-group-label">Status</span>
-                    <div className="filter-chips">
-                      {["Semua", "Tersedia", "Terisi"].map((v) => (
-                        <button key={v} type="button"
-                          className={`filter-chip${filterStatus === v ? " active" : ""}`}
-                          onClick={() => setFilterStatus(v)}>{v}</button>
-                      ))}
-                    </div>
-                  </div>
-                  <div className="filter-group">
-                    <span className="filter-group-label">Harga</span>
-                    <div className="filter-chips">
-                      {["Semua", "< 500rb", "500rb+"].map((v) => (
-                        <button key={v} type="button"
-                          className={`filter-chip${filterHarga === v ? " active" : ""}`}
-                          onClick={() => setFilterHarga(v)}>{v}</button>
-                      ))}
-                    </div>
-                  </div>
-                </div>
-              </div>
-
-              {/* Legend */}
-              <div className="kios-legend">
-                <div className="legend-item"><div className="legend-dot available" /><span>Tersedia</span></div>
-                <div className="legend-item"><div className="legend-dot full" /><span>Terisi</span></div>
-                <div className="legend-item"><div className="legend-dot selected-dot" /><span>Dipilih</span></div>
-              </div>
-
-              {/* Seat grid */}
-              {filteredKios.length === 0 ? (
-                <div className="kios-empty">
-                  <Search size={28} color="#9ca3af" />
-                  <p>Tidak ada kios yang sesuai filter</p>
-                </div>
-              ) : (
-                <div className="kios-seat-grid">
-                  {filteredKios.map((kios) => {
-                    const isFull = kios.status === "full";
-                    const isSel  = formData.kios?.id === kios.id;
-                    return (
-                      <button type="button" key={kios.id}
-                        className={`seat-btn${isFull ? " full" : ""}${isSel ? " selected" : ""}`}
-                        onClick={() => { if (!isFull) set("kios", kios); }}
-                        title={`${kios.id} · ${kios.venue} · ${KATEGORI_LABEL[kios.kategori]} · Rp ${kios.harga.toLocaleString("id-ID")}`}>
-                        {isSel && <Check size={10} strokeWidth={3} color="white" style={{ marginBottom: 2 }} />}
-                        <span className="seat-id">{kios.id}</span>
-                        <span className="seat-venue">{kios.venue.replace("Zona ", "")}</span>
-                        <span className="seat-price">Rp {(kios.harga / 1000).toFixed(0)}rb</span>
-                      </button>
-                    );
-                  })}
-                </div>
-              )}
-
-              {errors.kios && <div className="err-msg" style={{ marginTop: 12 }}><AlertCircle size={12} />{errors.kios}</div>}
-
-              {formData.kios && (
-                <div className="selected-banner">
-                  <div className="selected-banner-icon">
-                    <Home size={20} color="#166534" strokeWidth={2} />
-                  </div>
-                  <div>
-                    <div className="selected-banner-name">Kios {formData.kios.id} dipilih</div>
-                    <div className="selected-banner-detail">
-                      {formData.kios.venue} · {KATEGORI_LABEL[formData.kios.kategori]} · {formData.kios.ukuran} · Rp {formData.kios.harga.toLocaleString("id-ID")}/bulan
-                    </div>
-                  </div>
-                </div>
-              )}
-            </>
-          )}
-
-          {/* ══════════════════════════════ */}
-          {/* STEP 4 — Konfirmasi            */}
-          {/* ══════════════════════════════ */}
-          {step === 4 && (
-            <>
-              <div className="step-chip"><CheckCircle2 size={12} /> Langkah 4 dari 4</div>
+              <div className="step-chip"><CheckCircle2 size={12} /> Langkah 3 dari 3</div>
               <h2 className="step-title">Konfirmasi Data</h2>
               <p className="step-desc">Periksa kembali sebelum mengirimkan pendaftaran</p>
 
@@ -541,33 +430,6 @@ export default function Register() {
                   </div>
                 </div>
               )}
-
-              {/* Kios */}
-              <div className="confirm-section">
-                <div className="confirm-header">
-                  <Home size={14} color="#6b7280" strokeWidth={2} />
-                  <span className="confirm-header-title">KIOS DIPILIH</span>
-                </div>
-                <div className="confirm-body">
-                  {[
-                    ["ID Kios",  formData.kios?.id],
-                    ["Venue",    formData.kios?.venue],
-                    ["Kategori", KATEGORI_LABEL[formData.kios?.kategori]],
-                    ["Ukuran",   formData.kios?.ukuran],
-                    ["Harga",    formData.kios ? `Rp ${formData.kios.harga.toLocaleString("id-ID")}/bulan` : "—"],
-                  ].map(([k, v]) => (
-                    <div className="confirm-row" key={k}>
-                      <span className="confirm-key">{k}</span>
-                      <span className="confirm-val">{v}</span>
-                    </div>
-                  ))}
-                </div>
-              </div>
-
-              <div className="info-banner">
-                <Lightbulb size={15} color="#92400e" strokeWidth={2} className="info-banner-icon" />
-                <span>Setelah submit, Anda akan diarahkan ke <strong>WhatsApp admin</strong> untuk konfirmasi pembayaran sewa kios.</span>
-              </div>
             </>
           )}
 
@@ -578,7 +440,7 @@ export default function Register() {
                 <ChevronLeft size={16} /> Kembali
               </button>
             )}
-            {step < 4 ? (
+            {step < 3 ? (
               <button className="btn-next" onClick={nextStep}>
                 Lanjut <ChevronRight size={16} />
               </button>
@@ -586,7 +448,7 @@ export default function Register() {
               <button className="btn-submit" onClick={handleSubmit} disabled={submitting}>
                 {submitting
                   ? <><Loader2 size={16} className="spin" /> Mengirim...</>
-                  : <><Send size={15} /> Submit & Hubungi Admin</>
+                  : <><Send size={15} /> Submit Pendaftaran</>
                 }
               </button>
             )}
