@@ -1,45 +1,40 @@
 import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
-import { Bell, Plus, Package, Banknote, ShoppingCart, AlertTriangle, ChevronRight, ShoppingBasket, Tag, ClipboardList, BookText, AlertCircle, AlertOctagon, Box, Book, Tags, FileText } from "lucide-react";
+import {
+  Bell, Package, Banknote, ShoppingBasket,
+  AlertOctagon, ChevronRight, Ticket, FileText,
+  Book, Box, AlertTriangle, Inbox
+} from "lucide-react";
 import "../assets/styles/dashboard.css";
 
-// ── DATA ────────────────────────────────────────────────
-const chartData = [
-  { l: "Sen", g: 55, w: 8 },
-  { l: "Sel", g: 70, w: 10 },
-  { l: "Rab", g: 45, w: 7 },
-  { l: "Kam", g: 90, w: 14 },
-  { l: "Jum", g: 100, w: 16 },
-  { l: "Sab", g: 80, w: 12 },
-  { l: "Min", g: 65, w: 10 },
-];
+// ── FORMAT RUPIAH ────────────────────────────────────────
+const fmt = (n) => new Intl.NumberFormat("id-ID").format(n);
 
-const stokData = [
-  { id: 1, nama: "Sate Blengong Spesial", stok: 24, max: 30, satuan: "porsi" },
-  { id: 2, nama: "Sate Campur",           stok: 18, max: 30, satuan: "porsi" },
-  { id: 3, nama: "Mendoan Jumbo",         stok: 4,  max: 30, satuan: "pcs"   },
-  { id: 4, nama: "Lontong Sate",          stok: 30, max: 30, satuan: "porsi" },
-  { id: 5, nama: "Minuman Jahe Hangat",   stok: 3,  max: 30, satuan: "cup"   },
-];
+// ── GREETING ─────────────────────────────────────────────
+function getGreeting() {
+  const h = new Date().getHours();
+  if (h < 11) return "Selamat Pagi";
+  if (h < 15) return "Selamat Siang";
+  if (h < 18) return "Selamat Sore";
+  return "Selamat Malam";
+}
 
-const trxData = [
-  { id: 1, dot: "#2f6f4e", pelanggan: "Pak Budi",  barang: "Sate Blengong × 2", waktu: "10 Mar, 11:24", total: "Rp 50.000"  },
-  { id: 2, dot: "#2f6f4e", pelanggan: "Ibu Rina",  barang: "Mendoan Jumbo × 5", waktu: "10 Mar, 10:58", total: "Rp 25.000"  },
-  { id: 3, dot: "#2f6f4e", pelanggan: "Kak Doni",  barang: "Sate Campur × 1",   waktu: "10 Mar, 09:45", total: "Rp 30.000"  },
-  { id: 4, dot: "#2f6f4e", pelanggan: "Online",    barang: "Sate Blengong × 4", waktu: "9 Mar, 19:12",  total: "Rp 100.000" },
-];
+// ── TANGGAL ──────────────────────────────────────────────
+function getTanggalHari() {
+  return new Date().toLocaleDateString("id-ID", {
+    weekday: "long", day: "numeric", month: "long", year: "numeric"
+  });
+}
 
-// ── COUNTDOWN ───────────────────────────────────────────
+// ── COUNTDOWN ────────────────────────────────────────────
 function Countdown() {
-  const [time, setTime] = useState({ d: "00"});
+  const [hari, setHari] = useState("00");
 
   useEffect(() => {
     function tick() {
       const diff = new Date("2026-03-22T08:00:00+07:00") - new Date();
-      if (diff <= 0) return;
-      setTime({
-        d: String(Math.floor(diff / 86400000)).padStart(2, "0")
-      });
+      if (diff <= 0) { setHari("00"); return; }
+      setHari(String(Math.floor(diff / 86400000)).padStart(2, "0"));
     }
     tick();
     const id = setInterval(tick, 3600000);
@@ -48,17 +43,15 @@ function Countdown() {
 
   return (
     <div className="cd-boxes">
-      {[["d", "HARI"]].map(([k, u]) => (
-        <div className="cd-box" key={k}>
-          <div className="cd-num">{time[k]}</div>
-          <div className="cd-unit">{u}</div>
-        </div>
-      ))}
+      <div className="cd-box">
+        <div className="cd-num">{hari}</div>
+        <div className="cd-unit">HARI</div>
+      </div>
     </div>
   );
 }
 
-// ── STAT CARD ────────────────────────────────────────────
+// ── STAT CARD ─────────────────────────────────────────────
 function StatCard({ icon, label, value, unit, badge, badgeType }) {
   return (
     <div className="stat">
@@ -73,10 +66,94 @@ function StatCard({ icon, label, value, unit, badge, badgeType }) {
   );
 }
 
-// ── MAIN DASHBOARD ───────────────────────────────────────
+// ── CHART BAR MINI ────────────────────────────────────────
+function MiniChart({ data }) {
+  const mx = Math.max(...data.map(d => d.omzet), 1);
+  return (
+    <div className="chart-wrap">
+      {data.map((d, i) => (
+        <div className="bc" key={i}>
+          <div className="bars">
+            <div className="bar omzet" style={{ height: `${(d.omzet / mx) * 100}%` }} />
+            <div className="bar trx"   style={{ height: `${(d.trx   / mx) * 100}%` }} />
+          </div>
+          <span>{d.label}</span>
+        </div>
+      ))}
+    </div>
+  );
+}
+
+// ── MAIN ─────────────────────────────────────────────────
 export default function Dashboard() {
   const navigate = useNavigate();
-  const mx = Math.max(...chartData.map((d) => d.g));
+
+  // ── STATE ──────────────────────────────────────────────
+  const [items,   setItems]   = useState([]);
+  const [kasData, setKasData] = useState([]);
+  const [riwayat, setRiwayat] = useState([]);
+
+  // ── LOAD DATA ──────────────────────────────────────────
+  useEffect(() => {
+    const loadAll = () => {
+      setItems  (JSON.parse(localStorage.getItem("items")   || "[]"));
+      setKasData(JSON.parse(localStorage.getItem("kas")     || "[]"));
+      setRiwayat(JSON.parse(localStorage.getItem("riwayat") || "[]"));
+    };
+    loadAll();
+    window.addEventListener("storage", loadAll);
+    return () => window.removeEventListener("storage", loadAll);
+  }, []);
+
+  // ── DERIVED: STOK ──────────────────────────────────────
+  const stokKritis   = items.filter(i => i.stok <= (i.stokMin ?? 5));
+  const namaKritis   = stokKritis.slice(0, 2).map(i => i.nama).join(" & ");
+
+  // ── DERIVED: OMSET HARI INI ────────────────────────────
+  const todayStr = new Date().toLocaleDateString("id-ID", {
+    day: "numeric", month: "short", year: "numeric"
+  });
+  const omsetHariIni = kasData
+    .filter(k => k.jenis === "masuk" && k.tgl === todayStr)
+    .reduce((a, b) => a + b.nominal, 0);
+
+  // ── DERIVED: TRANSAKSI HARI INI ────────────────────────
+  const trxHariIni = riwayat.filter(r => r.tgl === todayStr).length;
+
+  // ── DERIVED: SALDO KAS ─────────────────────────────────
+  const totalMasuk  = kasData.filter(k => k.jenis === "masuk" ).reduce((a, b) => a + b.nominal, 0);
+  const totalKeluar = kasData.filter(k => k.jenis === "keluar").reduce((a, b) => a + b.nominal, 0);
+  const saldo       = totalMasuk - totalKeluar;
+
+  // ── DERIVED: CHART 7 HARI ──────────────────────────────
+  const chartData = (() => {
+    const days = ["Min","Sen","Sel","Rab","Kam","Jum","Sab"];
+    return Array.from({ length: 7 }, (_, i) => {
+      const d   = new Date();
+      d.setDate(d.getDate() - (6 - i));
+      const tgl = d.toLocaleDateString("id-ID", {
+        day: "numeric", month: "short", year: "numeric"
+      });
+      return {
+        label: days[d.getDay()],
+        omzet: kasData
+          .filter(k => k.jenis === "masuk" && k.tgl === tgl)
+          .reduce((a, b) => a + b.nominal, 0),
+        trx: riwayat.filter(r => r.tgl === tgl).length,
+      };
+    });
+  })();
+
+  // ── DERIVED: TRANSAKSI TERAKHIR (5 terakhir) ───────────
+  const trxTerakhir = riwayat.slice(0, 5);
+
+  // ── FORMAT OMSET ──────────────────────────────────────
+  const fmtOmset = (n) => {
+    if (n >= 1_000_000) return { val: (n / 1_000_000).toFixed(1), unit: "jt" };
+    if (n >= 1_000)     return { val: (n / 1_000).toFixed(0),     unit: "rb" };
+    return { val: String(n), unit: "" };
+  };
+  const omset = fmtOmset(omsetHariIni);
 
   return (
     <div className="dashboard">
@@ -84,19 +161,16 @@ export default function Dashboard() {
       {/* ── TOPBAR ── */}
       <div className="topbar">
         <div>
-          <div className="pg-eye">SELAMAT DATANG</div>
-          <div className="pg-title">Halo, <em> Bu Yati</em></div>
-          <div className="pg-sub">Selasa, 10 Maret 2026 · H-12 menuju Peken Banyumas</div>
+          <div className="pg-eye">{getGreeting()}</div>
+          <div className="pg-title">Halo, <em>Bu Yati</em></div>
+          <div className="pg-sub">{getTanggalHari()} · H-12 menuju Peken Banyumas</div>
         </div>
-
         <div className="topbar-actions">
-          {/* Notifikasi Bell */}
-          <button
-            className="btn-bell"
-            onClick={() => navigate("/notifikasi")}
-            title="Notifikasi"
-          >
+          <button className="btn-bell" onClick={() => navigate("/notifikasi")} title="Notifikasi">
             <Bell size={18} />
+            {stokKritis.length > 0 && (
+              <span className="bell-dot">{stokKritis.length}</span>
+            )}
           </button>
         </div>
       </div>
@@ -111,58 +185,62 @@ export default function Dashboard() {
         <Countdown />
       </div>
 
-      {/* ── ALERT ── */}
-      <div className="alert" onClick={() => navigate("/stok")}>
-        <span className="alert-icon">
-          <AlertTriangle size={18} />
-        </span>
-        <div>
-          <div className="alert-title">2 barang stok hampir habis — Mendoan Jumbo &amp; Minuman Jahe</div>
-          <div className="alert-sub">Segera update stok sebelum acara dimulai → klik untuk kelola</div>
+      {/* ── ALERT STOK KRITIS ── */}
+      {stokKritis.length > 0 && (
+        <div className="alert" onClick={() => navigate("/stok")}>
+          <span className="alert-icon"><AlertTriangle size={18} /></span>
+          <div>
+            <div className="alert-title">
+              {stokKritis.length} barang stok hampir habis
+              {namaKritis ? ` — ${namaKritis}` : ""}
+            </div>
+            <div className="alert-sub">
+              Segera update stok sebelum acara dimulai → klik untuk kelola
+            </div>
+          </div>
         </div>
-        <span className="alert-arrow"></span>
-      </div>
+      )}
 
       {/* ── STATS ── */}
       <div className="stats">
-        <StatCard 
-          icon={<Package size={20} className="icon-stats"/>} 
-          label="Total Produk Kios" 
-          value="6" 
-          unit="item"  
-          badge="▲ +1 item baru"   
-          badgeType="green" 
-        />
-        <StatCard 
-          icon={<Banknote size={20} className="icon-stats"/>} 
-          label="Omset Hari Ini" 
-          value="Rp 320" 
-          unit="rb"  
-          badge="▲ dari kemarin"   
-          badgeType="green" 
-        />
         <StatCard
-          icon={<ShoppingBasket size={20} className="icon-stats"/>}
-          label="Transaksi Hari Ini" 
-          value="12"  
-          unit="trx" 
-          badge="▲ +3 dari kemarin" 
+          icon={<Package size={20} className="icon-stats" />}
+          label="Total Produk Kios"
+          value={String(items.length)}
+          unit="item"
+          badge={items.length > 0 ? `${items.length} produk aktif` : "Belum ada produk"}
           badgeType="green"
         />
-        <StatCard 
-          icon={<AlertOctagon size={20} className="icon-stats"/>} 
+        <StatCard
+          icon={<Banknote size={20} className="icon-stats" />}
+          label="Omset Hari Ini"
+          value={omsetHariIni > 0 ? `Rp ${omset.val}` : "Rp 0"}
+          unit={omset.unit || undefined}
+          badge={omsetHariIni > 0 ? "▲ dari kemarin" : "Belum ada"}
+          badgeType={omsetHariIni > 0 ? "green" : "warn"}
+        />
+        <StatCard
+          icon={<ShoppingBasket size={20} className="icon-stats" />}
+          label="Transaksi Hari Ini"
+          value={String(trxHariIni)}
+          unit="trx"
+          badge={trxHariIni > 0 ? `${trxHariIni} transaksi` : "Belum ada"}
+          badgeType={trxHariIni > 0 ? "green" : "warn"}
+        />
+        <StatCard
+          icon={<AlertOctagon size={20} className="icon-stats" />}
           label="Stok Kritis"
-          value="2"   
-          unit="item" 
-          badge="Perlu restok"    
-          badgeType="warn"  
-          />
+          value={String(stokKritis.length)}
+          unit="item"
+          badge={stokKritis.length > 0 ? "Perlu restok" : "Aman"}
+          badgeType={stokKritis.length > 0 ? "warn" : "green"}
+        />
       </div>
 
       {/* ── MID GRID ── */}
       <div className="mid-grid">
 
-        {/* CHART */}
+        {/* CHART PENJUALAN */}
         <div className="card">
           <div className="card-head">
             <div>
@@ -172,38 +250,53 @@ export default function Dashboard() {
             <span className="link" onClick={() => navigate("/riwayat")}>Riwayat →</span>
           </div>
 
-          <div className="chart-wrap">
-            {chartData.map((d) => (
-              <div className="bc" key={d.l}>
-                <div className="bars">
-                  <div className="bar omzet" style={{ height: `${(d.g / mx) * 100}%` }} />
-                  <div className="bar trx"   style={{ height: `${(d.w / mx) * 100}%` }} />
-                </div>
-                <span>{d.l}</span>
-              </div>
-            ))}
-          </div>
+          {kasData.length === 0 ? (
+            <div className="dash-empty">
+              <Inbox size={32} />
+              <p>Belum ada data transaksi</p>
+            </div>
+          ) : (
+            <MiniChart data={chartData} />
+          )}
 
           <div className="legend">
             <div><span className="dot g" /> Pendapatan</div>
             <div><span className="dot w" /> Jml Transaksi</div>
+          </div>
+
+          {/* Ringkasan saldo kas */}
+          <div className="kas-summary-row">
+            <div className="kas-sum-item">
+              <span className="kas-sum-lbl">Total Masuk</span>
+              <span className="kas-sum-val masuk">Rp {fmt(totalMasuk)}</span>
+            </div>
+            <div className="kas-sum-sep" />
+            <div className="kas-sum-item">
+              <span className="kas-sum-lbl">Total Keluar</span>
+              <span className="kas-sum-val keluar">Rp {fmt(totalKeluar)}</span>
+            </div>
+            <div className="kas-sum-sep" />
+            <div className="kas-sum-item">
+              <span className="kas-sum-lbl">Saldo Kas</span>
+              <span className="kas-sum-val saldo">Rp {fmt(saldo)}</span>
+            </div>
           </div>
         </div>
 
         {/* AKSI CEPAT */}
         <div className="card">
           <h3>Aksi Cepat</h3>
-          <button className="quick-btn primary" onClick={() => navigate("/stok")}>
-            <Box size={18}/> Tambah Barang ke Stok
+          <button className="quick-btn primary"   onClick={() => navigate("/stok")}>
+            <Box size={18} /> Tambah Barang ke Stok
           </button>
-          <button className="quick-btn secondary" onClick={() => navigate("/promo")}>
-            <Tags size={18}/>Buat Promo Baru
+          <button className="quick-btn secondary" onClick={() => navigate("/evento")}>
+            <Ticket size={18} /> Daftar Event Baru
           </button>
-          <button className="quick-btn ghost" onClick={() => navigate("/riwayat")}>
-            <FileText size={18}/>Lihat Riwayat Transaksi
+          <button className="quick-btn ghost"     onClick={() => navigate("/riwayat")}>
+            <FileText size={18} /> Lihat Riwayat Transaksi
           </button>
-          <button className="quick-btn ghost" onClick={() => navigate("/kas")}>
-            <Book size={18}/>Buku Kas Saya
+          <button className="quick-btn ghost"     onClick={() => navigate("/kas")}>
+            <Book size={18} /> Buku Kas Saya
           </button>
         </div>
       </div>
@@ -216,25 +309,30 @@ export default function Dashboard() {
           <div className="card-head">
             <div>
               <h3>Transaksi Terakhir</h3>
-              <p className="card-sub">Dari kios kamu hari ini</p>
+              <p className="card-sub">Dari riwayat pemasukan kios kamu</p>
             </div>
             <span className="link" onClick={() => navigate("/riwayat")}>Semua →</span>
           </div>
 
-          {trxData.map((t) => (
-            <div
-              key={t.id}
-              className="trx"
-              onClick={() => navigate("/riwayat")}
-            >
-              <span className="trx-dot" />
-              <div className="trx-info">
-                <span className="trx-name">{t.pelanggan} · {t.barang}</span>
-                <span className="trx-time">{t.waktu}</span>
-              </div>
-              <span className="trx-total">{t.total}</span>
+          {trxTerakhir.length === 0 ? (
+            <div className="dash-empty">
+              <Inbox size={28} />
+              <p>Belum ada transaksi</p>
             </div>
-          ))}
+          ) : (
+            trxTerakhir.map((t) => (
+              <div key={t.id} className="trx" onClick={() => navigate("/riwayat")}>
+                <span className="trx-dot" />
+                <div className="trx-info">
+                  <span className="trx-name">
+                    {t.pelanggan ? `${t.pelanggan} · ` : ""}{t.barang} × {t.qty}
+                  </span>
+                  <span className="trx-time">{t.tgl}</span>
+                </div>
+                <span className="trx-total">Rp {fmt(t.total)}</span>
+              </div>
+            ))
+          )}
         </div>
 
         {/* RINGKASAN STOK */}
@@ -247,30 +345,34 @@ export default function Dashboard() {
             <span className="link" onClick={() => navigate("/stok")}>Kelola →</span>
           </div>
 
-          {stokData.map((item) => {
-            const pct = (item.stok / item.max) * 100;
-            const isLow = pct <= 20;
-            return (
-              <div
-                key={item.id}
-                className="stok-row"
-                onClick={() => navigate("/stok")}
-              >
-                <div className="stok-label">
-                  <span>{item.nama}</span>
-                  <span className={`stok-count ${isLow ? "low" : ""}`}>
-                    {item.stok} {item.satuan}
-                  </span>
+          {items.length === 0 ? (
+            <div className="dash-empty">
+              <Inbox size={28} />
+              <p>Belum ada produk di stok</p>
+            </div>
+          ) : (
+            items.slice(0, 5).map((item) => {
+              const max   = item.stokAwal ?? item.stok ?? 1;
+              const pct   = Math.min((item.stok / max) * 100, 100);
+              const isLow = item.stok <= (item.stokMin ?? 5);
+              return (
+                <div key={item.id} className="stok-row" onClick={() => navigate("/stok")}>
+                  <div className="stok-label">
+                    <span>{item.nama}</span>
+                    <span className={`stok-count ${isLow ? "low" : ""}`}>
+                      {item.stok} {item.satuan || "pcs"}
+                    </span>
+                  </div>
+                  <div className="track">
+                    <div
+                      className={`fill ${isLow ? "fill-low" : ""}`}
+                      style={{ width: `${pct}%` }}
+                    />
+                  </div>
                 </div>
-                <div className="track">
-                  <div
-                    className={`fill ${isLow ? "fill-low" : ""}`}
-                    style={{ width: `${pct}%` }}
-                  />
-                </div>
-              </div>
-            );
-          })}
+              );
+            })
+          )}
         </div>
       </div>
 
