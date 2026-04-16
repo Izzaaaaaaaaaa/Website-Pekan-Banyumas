@@ -1,43 +1,44 @@
+import React from "react";
 // lib/notifications.js — Event-driven notification queue
 // Works in dummy/offline mode via localStorage
 // Replace addNotif() with API POST when backend ready
 // Auto-triggers when actions happen (approve, assign, register, etc.)
 
 export const NotifType = {
-  // Member receives
-  MEMBER_APPROVED:      'member_approved',      // admin setujui akun baru
+  // Kolaborator receives
+  KOLABORATOR_APPROVED:      'kolaborator_approved',      // admin setujui akun baru
   EVENT_ASSIGNED:       'event_assigned',       // admin assign ke event
   EVENT_STATUS_CHANGE:  'event_status_change',  // event berlangsung/selesai
-  STORY_DELETED:        'story_deleted',         // admin hapus story
-  // UMKM receives
-  UMKM_APPROVED:        'umkm_approved',         // admin setujui pendaftaran
-  UMKM_EVENT_APPROVED:  'umkm_event_approved',   // admin setujui request event
-  UMKM_EVENT_ASSIGNED:  'umkm_event_assigned',   // admin assign langsung
+  AKTIVITAS_DELETED:        'aktivitas_deleted',         // admin hapus aktivitas
+  // Artisan receives
+  ARTISAN_APPROVED:        'artisan_approved',         // admin setujui pendaftaran
+  ARTISAN_EVENT_APPROVED:  'artisan_event_approved',   // admin setujui request event
+  ARTISAN_EVENT_ASSIGNED:  'artisan_event_assigned',   // admin assign langsung
   // Admin receives
-  NEW_MEMBER_REQUEST:   'new_member_request',    // member baru daftar
-  NEW_UMKM_REQUEST:     'new_umkm_request',      // umkm baru daftar
-  EVENT_REGISTER:       'event_register',         // member daftar mandiri ke event
-  UMKM_EVENT_REQUEST:   'umkm_event_request',    // umkm request ikut event
+  NEW_KOLABORATOR_REQUEST:   'new_kolaborator_request',    // kolaborator baru daftar
+  NEW_ARTISAN_REQUEST:     'new_artisan_request',      // artisan baru daftar
+  EVENT_REGISTER:       'event_register',         // kolaborator daftar mandiri ke event
+  ARTISAN_EVENT_REQUEST:   'artisan_event_request',    // artisan request ikut event
 };
 
 const ICONS = {
-  member_approved:      '✅',
+  kolaborator_approved:      '✅',
   event_assigned:       '📅',
   event_status_change:  '🔔',
-  story_deleted:        '🗑️',
-  umkm_approved:        '✅',
-  umkm_event_approved:  '📅',
-  umkm_event_assigned:  '📍',
-  new_member_request:   '👤',
-  new_umkm_request:     '🏪',
+  aktivitas_deleted:        '🗑️',
+  artisan_approved:        '✅',
+  artisan_event_approved:  '📅',
+  artisan_event_assigned:  '📍',
+  new_kolaborator_request:   '👤',
+  new_artisan_request:     '🏪',
   event_register:       '📋',
-  umkm_event_request:   '🏬',
+  artisan_event_request:   '🏬',
 };
 
-const key = (role) => `pekan_notif_${role}`;
-const DISPATCH_EVENT = 'pekan_notif_update';
+const key = (role) => `peken_notif_${role}`;
+const DISPATCH_EVENT = 'peken_notif_update';
 
-/** Get notifications for a role (member | umkm | admin) */
+/** Get notifications for a role (kolaborator | artisan | admin) */
 export function getNotifs(role) {
   try { return JSON.parse(localStorage.getItem(key(role)) || '[]'); } catch { return []; }
 }
@@ -81,10 +82,12 @@ export function unreadCount(role) {
 
 /** React hook — subscribes to realtime notification updates */
 export function useNotifCount(role) {
-  const { useState, useEffect } = require('react');
-  const [count, setCount] = useState(() => unreadCount(role));
+  // Note: This hook must be used in a React component context
+  // Import useState and useEffect at the top of this file is not possible
+  // since this is a utility module. Consumers should use the raw functions instead.
+  const [count, setCount] = React.useState(() => unreadCount(role));
 
-  useEffect(() => {
+  React.useEffect(() => {
     const handler = (e) => {
       if (!e.detail?.role || e.detail.role === role) {
         setCount(unreadCount(role));
@@ -100,74 +103,74 @@ export function useNotifCount(role) {
 
 // ── Pre-built trigger helpers ─────────────────────────────────────────────────
 
-export const triggerMemberApproved = (memberNama) =>
-  addNotif('member', {
-    type: NotifType.MEMBER_APPROVED,
+export const triggerKolaboratorApproved = (nama) =>
+  addNotif('kolaborator', {
+    type: NotifType.KOLABORATOR_APPROVED,
     title: 'Akun Diverifikasi ✅',
-    message: `Selamat ${memberNama}! Akun Kreator kamu telah diverifikasi admin. Profil kamu kini tampil di direktori publik.`,
+    message: `Selamat ${nama}! Akun kolaborator kamu telah diverifikasi admin. Profil kamu kini tampil di direktori publik.`,
     link: '/dashboard/profil',
   });
 
-export const triggerEventAssignedToMember = (eventNama, peran) =>
-  addNotif('member', {
+export const triggerEventAssignedToKolaborator = (eventNama, peran) =>
+  addNotif('kolaborator', {
     type: NotifType.EVENT_ASSIGNED,
     title: 'Kamu Ditugaskan ke Event 📅',
     message: `Admin menugaskan kamu sebagai ${peran} di "${eventNama}".`,
     link: '/dashboard/event',
   });
 
-export const triggerUmkmApproved = (namaUsaha) =>
-  addNotif('umkm', {
-    type: NotifType.UMKM_APPROVED,
+export const triggerArtisanApproved = (namaUsaha) =>
+  addNotif('artisan', {
+    type: NotifType.ARTISAN_APPROVED,
     title: 'Usaha Disetujui ✅',
-    message: `"${namaUsaha}" berhasil didaftarkan. Kamu bisa mulai menggunakan dashboard UMKM.`,
+    message: `"${namaUsaha}" berhasil didaftarkan. Kamu bisa mulai menggunakan dashboard artisan.`,
     link: '/dashboard',
   });
 
-export const triggerUmkmEventApproved = (namaUsaha, eventNama, posisi) =>
-  addNotif('umkm', {
-    type: NotifType.UMKM_EVENT_APPROVED,
+export const triggerArtisanEventApproved = (namaUsaha, eventNama, posisi) =>
+  addNotif('artisan', {
+    type: NotifType.ARTISAN_EVENT_APPROVED,
     title: 'Permintaan Event Disetujui 📅',
     message: `"${namaUsaha}" disetujui untuk "${eventNama}" di posisi ${posisi}.`,
     link: '/dashboard/event',
   });
 
-export const triggerUmkmEventAssigned = (eventNama, posisi) =>
-  addNotif('umkm', {
-    type: NotifType.UMKM_EVENT_ASSIGNED,
+export const triggerArtisanEventAssigned = (eventNama, posisi) =>
+  addNotif('artisan', {
+    type: NotifType.ARTISAN_EVENT_ASSIGNED,
     title: 'Usahamu Dijadwalkan ke Event 📍',
     message: `Admin menambahkan usahamu ke "${eventNama}" di posisi ${posisi}.`,
     link: '/dashboard/event',
   });
 
-export const triggerNewMemberRequest = (memberNama) =>
+export const triggerNewKolaboratorRequest = (nama) =>
   addNotif('admin', {
-    type: NotifType.NEW_MEMBER_REQUEST,
-    title: 'Pendaftaran Member Baru 👤',
-    message: `${memberNama} mendaftar sebagai Kreator. Perlu verifikasi.`,
-    link: '/members',
+    type: NotifType.NEW_KOLABORATOR_REQUEST,
+    title: 'Pendaftaran Kolaborator Baru 👤',
+    message: `${nama} mendaftar sebagai kolaborator. Perlu verifikasi.`,
+    link: '/kolaborator',
   });
 
-export const triggerNewUmkmRequest = (namaUsaha) =>
+export const triggerNewArtisanRequest = (namaUsaha) =>
   addNotif('admin', {
-    type: NotifType.NEW_UMKM_REQUEST,
-    title: 'Pendaftaran UMKM Baru 🏪',
-    message: `"${namaUsaha}" mendaftar sebagai UMKM. Perlu verifikasi.`,
-    link: '/tenants',
+    type: NotifType.NEW_ARTISAN_REQUEST,
+    title: 'Pendaftaran Artisan Baru 🏪',
+    message: `"${namaUsaha}" mendaftar sebagai artisan. Perlu verifikasi.`,
+    link: '/artisan',
   });
 
-export const triggerUmkmEventRequest = (namaUsaha, eventNama, posisi) =>
+export const triggerArtisanEventRequest = (namaUsaha, eventNama, posisi) =>
   addNotif('admin', {
-    type: NotifType.UMKM_EVENT_REQUEST,
+    type: NotifType.ARTISAN_EVENT_REQUEST,
     title: 'Permintaan Ikut Event 🏬',
     message: `"${namaUsaha}" ingin bergabung ke "${eventNama}" di posisi ${posisi}. Menunggu persetujuan.`,
     link: '/events',
   });
 
-export const triggerMemberEventRegister = (memberNama, eventNama) =>
+export const triggerKolaboratorEventRegister = (nama, eventNama) =>
   addNotif('admin', {
     type: NotifType.EVENT_REGISTER,
-    title: 'Member Daftar Event 📋',
-    message: `${memberNama} mendaftar mandiri ke "${eventNama}".`,
+    title: 'Kolaborator Daftar Event 📋',
+    message: `${nama} mendaftar mandiri ke "${eventNama}".`,
     link: '/events',
   });

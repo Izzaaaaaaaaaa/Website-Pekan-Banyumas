@@ -15,10 +15,10 @@ const SUBSEKTORS_ALL = [
 ];
 
 const DUMMY_EVENTS = [
-  { id:'e1', nama:'Festival Budaya Banyumasan 2025', tanggal:'2025-05-17', jam_mulai:'08:00', jam_selesai:'22:00', tanggal_selesai:'2025-05-19', lokasi:'Alun-Alun Purwokerto', deskripsi:'Festival tahunan menampilkan seni, kuliner, dan kerajinan khas Banyumas.', konten_lengkap:'', status:'published', peserta:34, kapasitas:200, subsektor:['Kriya','Musik','Kuliner'], banner_url:'', galeri:[] },
-  { id:'e2', nama:'Workshop Batik & Tenun Nusantara', tanggal:'2025-04-26', jam_mulai:'09:00', jam_selesai:'17:00', tanggal_selesai:'2025-04-27', lokasi:'Gedung Kebudayaan Cilacap', deskripsi:'Pelatihan intensif 2 hari teknik batik tulis dan tenun lurik.', konten_lengkap:'', status:'published', peserta:18, kapasitas:30, subsektor:['Kriya','Fashion'], banner_url:'', galeri:[] },
-  { id:'e3', nama:'Pameran Kriya Ekraf Regional', tanggal:'2025-06-10', jam_mulai:'10:00', jam_selesai:'21:00', tanggal_selesai:'2025-06-12', lokasi:'Mall Cilacap Raya', deskripsi:'Pameran dan bazaar produk ekonomi kreatif se-eks Karesidenan Banyumas.', konten_lengkap:'', status:'draft', peserta:0, kapasitas:500, subsektor:['Kriya','Desain Produk'], banner_url:'', galeri:[] },
-  { id:'e4', nama:'Peken Banyumasan #12', tanggal:'2025-03-20', jam_mulai:'16:00', jam_selesai:'22:00', tanggal_selesai:'2025-03-20', lokasi:'Amphitheater GOR Satria', deskripsi:'Pasar budaya mingguan dengan penampilan seniman lokal.', konten_lengkap:'', status:'selesai', peserta:145, kapasitas:500, subsektor:['Musik','Kuliner'], banner_url:'', galeri:[] },
+  { id:'e1', nama:'Festival Budaya Banyumasan 2025', tanggal:'2025-05-17', jam_mulai:'08:00', jam_selesai:'22:00', tanggal_selesai:'2025-05-19', lokasi:'Alun-Alun Purwokerto', deskripsi:'Festival tahunan menampilkan seni, kuliner, dan kerajinan khas Banyumas.', konten_lengkap:'', status:'published', peserta_count:34, kapasitas:200, subsektor:['Kriya','Musik','Kuliner'], banner_url:'', galeri:[] },
+  { id:'e2', nama:'Workshop Batik & Tenun Nusantara', tanggal:'2025-04-26', jam_mulai:'09:00', jam_selesai:'17:00', tanggal_selesai:'2025-04-27', lokasi:'Gedung Kebudayaan Cilacap', deskripsi:'Pelatihan intensif 2 hari teknik batik tulis dan tenun lurik.', konten_lengkap:'', status:'published', peserta_count:18, kapasitas:30, subsektor:['Kriya','Fashion'], banner_url:'', galeri:[] },
+  { id:'e3', nama:'Pameran Kriya Ekraf Regional', tanggal:'2025-06-10', jam_mulai:'10:00', jam_selesai:'21:00', tanggal_selesai:'2025-06-12', lokasi:'Mall Cilacap Raya', deskripsi:'Pameran dan bazaar produk ekonomi kreatif se-eks Karesidenan Banyumas.', konten_lengkap:'', status:'draft', peserta_count:0, kapasitas:500, subsektor:['Kriya','Desain Produk'], banner_url:'', galeri:[] },
+  { id:'e4', nama:'Peken Banyumasan #12', tanggal:'2025-03-20', jam_mulai:'16:00', jam_selesai:'22:00', tanggal_selesai:'2025-03-20', lokasi:'Amphitheater GOR Satria', deskripsi:'Pasar budaya mingguan dengan penampilan seniman lokal.', konten_lengkap:'', status:'selesai', peserta_count:145, kapasitas:500, subsektor:['Musik','Kuliner'], banner_url:'', galeri:[] },
 ];
 
 const EMPTY = { nama:'', tanggal:'', jam_mulai:'08:00', jam_selesai:'22:00', tanggal_selesai:'', lokasi:'', deskripsi:'', konten_lengkap:'', kapasitas:100, status:'draft', subsektor:[], banner_url:'', galeri:[] };
@@ -167,7 +167,7 @@ export default function Events() {
       setEvents(l => l.map(e => e.id === editItem.id ? {...e,...form} : e));
       toast.success('Event diperbarui');
     } else {
-      setEvents(l => [{ id:'e'+Date.now(), ...form, peserta:0 }, ...l]);
+      setEvents(l => [{ id:'e'+Date.now(), ...form, peserta_count:0 }, ...l]);
       toast.success('Event dibuat');
     }
   };
@@ -235,11 +235,11 @@ export default function Events() {
               <p className="text-gray-500 text-xs leading-relaxed line-clamp-2">{ev.deskripsi}</p>
               <div className="mt-3">
                 <div className="flex items-center justify-between mb-1">
-                  <span className="text-xs text-gray-500 flex items-center gap-1"><Users size={11}/>{ev.peserta} / {ev.kapasitas} peserta</span>
-                  <span className="text-xs font-semibold text-green-700">{Math.round(ev.peserta/ev.kapasitas*100)}%</span>
+                  <span className="text-xs text-gray-500 flex items-center gap-1"><Users size={11}/>{ev.peserta_count} / {ev.kapasitas} peserta</span>
+                  <span className="text-xs font-semibold text-green-700">{Math.round(ev.peserta_count/ev.kapasitas*100)}%</span>
                 </div>
                 <div className="h-1.5 bg-gray-100 rounded-full overflow-hidden">
-                  <div className="h-full bg-green-500 rounded-full" style={{width:`${Math.min(100,ev.peserta/ev.kapasitas*100)}%`}}/>
+                  <div className="h-full bg-green-500 rounded-full" style={{width:`${Math.min(100,ev.peserta_count/ev.kapasitas*100)}%`}}/>
                 </div>
               </div>
             </div>

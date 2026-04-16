@@ -22,6 +22,53 @@ import api from '../services/api';
 import { useToast } from '../components/Toast';
 import { supabaseRealtime } from '../lib/supabase';
 
+// ── Event countdown hook (shared: HARI · JAM · MENIT) ────────────────────────
+function useEventCountdown(tanggal, jamMulai) {
+  const [time, setTime] = React.useState({ d:"00", j:"00", m:"00" });
+  const [selesai, setSelesai] = React.useState(false);
+
+  React.useEffect(() => {
+    if (!tanggal) return;
+    const target = tanggal
+      ? new Date(`${tanggal}T${jamMulai || '08:00'}:00+07:00`)
+      : null;
+
+    function tick() {
+      const diff = target - new Date();
+      if (diff <= 0) { setTime({ d:"00", j:"00", m:"00" }); setSelesai(true); return; }
+      setSelesai(false);
+      setTime({
+        d: String(Math.floor(diff / 86400000)).padStart(2,"0"),
+        j: String(Math.floor((diff % 86400000) / 3600000)).padStart(2,"0"),
+        m: String(Math.floor((diff % 3600000) / 60000)).padStart(2,"0"),
+      });
+    }
+    tick();
+    const id = setInterval(tick, 60000);
+    return () => clearInterval(id);
+  }, [tanggal]);
+
+  return { time, selesai };
+}
+
+// Compact inline countdown badge for event cards (Tailwind)
+function EventCountdownBadge({ tanggal, jamMulai }) {
+  const { time, selesai } = useEventCountdown(tanggal, jamMulai);
+  if (selesai) return (
+    <span className="text-[10px] font-semibold text-gray-400">Selesai</span>
+  );
+  return (
+    <div className="flex items-center gap-1 mt-2">
+      {[["d","H"],["j","J"],["m","M"]].map(([k,u]) => (
+        <div key={k} className="bg-green-700 text-white rounded-lg px-1.5 py-0.5 text-center min-w-[28px]">
+          <div className="text-[11px] font-black leading-none">{time[k]}</div>
+          <div className="text-[8px] opacity-70 font-semibold leading-none mt-0.5">{u}</div>
+        </div>
+      ))}
+    </div>
+  );
+}
+
 const Dashboard = () => {
   const navigate = useNavigate();
   const toast = useToast();
@@ -83,15 +130,15 @@ const Dashboard = () => {
         setActiveEventId(data.event_id);
         activeEventIdRef.current = data.event_id;
         setNamaEvent(data.nama_event || null);
-        localStorage.setItem('pekan_active_event', JSON.stringify({ id: data.event_id, nama: data.nama_event || null }));
+        localStorage.setItem('peken_active_event', JSON.stringify({ id: data.event_id, nama: data.nama_event || null }));
       } else {
         setActiveEventId(null);
         activeEventIdRef.current = null;
         setNamaEvent(null);
-        localStorage.removeItem('pekan_active_event');
+        localStorage.removeItem('peken_active_event');
       }
 
-      window.dispatchEvent(new CustomEvent('pekan_event_update'));
+      window.dispatchEvent(new CustomEvent('peken_event_update'));
       if (silent) setFlashKey((k) => k + 1);
     } catch (error) {
       console.error('Gagal mengambil statistik:', error);
@@ -209,8 +256,8 @@ const Dashboard = () => {
       setScannerResult({ ok: true, ...payload.data });
       toast.success(
         aksi === 'keluar'
-          ? `${payload.data?.nama_member || 'Member'} berhasil tap keluar.`
-          : `${payload.data?.nama_member || 'Member'} berhasil tap masuk.`
+          ? 'Pengunjung berhasil tap keluar.'
+          : 'Pengunjung berhasil tap masuk.'
       );
 
       await Promise.all([fetchStats(true), fetchActivities(true)]);
@@ -249,8 +296,8 @@ const Dashboard = () => {
 
   const getScannerHeadline = () => {
     if (scannerState === 'error') return 'Tap gagal diproses';
-    if (scannerState === 'scanning') return 'Membaca kartu member…';
-    return scannerResult?.nama_member || 'Menunggu tap member';
+    if (scannerState === 'scanning') return 'Membaca kartu NFC…';
+    return scannerResult?.ok ? ('UID: ' + (scannerResult?.uid || '').substring(0,8)) : 'Menunggu tap pengunjung';
   };
 
   const getScannerSubtext = () => {
@@ -258,7 +305,7 @@ const Dashboard = () => {
     if (scannerState === 'success-keluar') return 'Tercatat keluar';
     if (scannerState === 'success-masuk') return 'Tercatat masuk';
     if (scannerState === 'scanning') return 'Reader aktif';
-    return 'Siap menerima tap member';
+    return 'Siap menerima tap pengunjung';
   };
 
   const scannerTone =
@@ -365,6 +412,38 @@ const Dashboard = () => {
         })}
       </div>
 
+      {/* 🆕 Event Mendatang */}
+      <div className="bg-white rounded-2xl border border-gray-100 p-5">
+        <div className="flex items-center justify-between mb-4">
+          <h3 className="font-bold text-gray-800 flex items-center gap-2">
+            <CalendarCheck size={16} className="text-green-600"/> Event Mendatang
+          </h3>
+          <button onClick={() => navigate('/events')} className="text-xs text-green-600 hover:underline font-medium">Lihat Semua →</button>
+        </div>
+        <div className="grid sm:grid-cols-3 gap-3">
+          {[
+            { nama:'Festival Budaya Banyumasan 2025', tanggal:'2025-05-17', jam_mulai:'08:00', jam_selesai:'22:00', lokasi:'Alun-Alun Purwokerto', peserta_count:34, kapasitas:200 },
+            { nama:'Workshop Batik & Tenun Nusantara', tanggal:'2025-04-26', jam_mulai:'09:00', jam_selesai:'17:00', lokasi:'Gedung Kebudayaan Cilacap', peserta_count:18, kapasitas:30 },
+            { nama:'Pameran Kriya Ekraf Regional', tanggal:'2025-06-10', jam_mulai:'10:00', jam_selesai:'21:00', lokasi:'Mall Cilacap Raya', peserta_count:0, kapasitas:500 },
+          ].map(ev => (
+            <div key={ev.nama} className="bg-gray-50 border border-gray-100 rounded-xl p-4 hover:border-green-200 transition cursor-pointer" onClick={() => navigate('/events')}>
+              <p className="font-semibold text-gray-800 text-sm leading-snug line-clamp-2 mb-1">{ev.nama}</p>
+              <p className="text-gray-400 text-xs">{ev.lokasi}</p>
+              {/* Countdown badges: H / J / M */}
+              <EventCountdownBadge tanggal={ev.tanggal} jamMulai={ev.jam_mulai}/>
+              <div className="mt-2">
+                <div className="flex justify-between text-[10px] text-gray-400 mb-1">
+                  <span>{ev.peserta_count} peserta</span><span>{Math.round(ev.peserta_count/ev.kapasitas*100)}%</span>
+                </div>
+                <div className="h-1 bg-gray-200 rounded-full overflow-hidden">
+                  <div className="h-full bg-green-500 rounded-full" style={{width:`${Math.min(100,ev.peserta_count/ev.kapasitas*100)}%`}}/>
+                </div>
+              </div>
+            </div>
+          ))}
+        </div>
+      </div>
+
       <div className="grid grid-cols-1 lg:grid-cols-[236px,minmax(0,1fr)] gap-4 lg:items-stretch">
         <div className="space-y-4">
           <input
@@ -381,7 +460,7 @@ const Dashboard = () => {
 
           <div className={`p-2.5 rounded-2xl shadow-sm border transition-colors ${scannerTone}`} onClick={() => scannerInputRef.current?.focus()}>
             <div className="flex items-center justify-between gap-2 mb-2">
-              <h3 className="text-sm font-bold text-gray-800">Tap Member NFC</h3>
+              <h3 className="text-sm font-bold text-gray-800">Tap NFC Pengunjung</h3>
               <div className="w-7 h-7 rounded-2xl bg-green-100 text-green-700 flex items-center justify-center shrink-0">
                 <ScanLine size={14} />
               </div>
@@ -403,7 +482,7 @@ const Dashboard = () => {
           </div>
 
           <div className="bg-white p-3.5 rounded-2xl shadow-sm border border-gray-100">
-            <h3 className="text-sm font-bold text-gray-800 mb-3">Input Pengunjung Biasa</h3>
+            <h3 className="text-sm font-bold text-gray-800 mb-3">Input Manual</h3>
             <div className="space-y-3">
               <button
                 onClick={() => handleManualInput('masuk')}
@@ -474,25 +553,25 @@ const Dashboard = () => {
                           {getActivityTime(activity).toLocaleTimeString('id-ID', { hour: '2-digit', minute: '2-digit', second: '2-digit' })} WIB
                         </td>
                         <td className="px-5 py-3 whitespace-nowrap">
-                          {activity.tipe_pengunjung === 'member' ? (
+                          {activity.tipe_pengunjung === 'nfc' ? (
                             <span className="inline-flex items-center gap-1.5 bg-green-50 text-green-800 px-2.5 py-1 rounded-md text-xs font-semibold border border-green-100">
-                              <CreditCard size={12} /> Member
+                              <CreditCard size={12} /> NFC
                             </span>
                           ) : (
                             <span className="inline-flex items-center gap-1.5 bg-gray-100 text-gray-600 px-2.5 py-1 rounded-md text-xs font-semibold border border-gray-200">
-                              <User size={12} /> Biasa
+                              <User size={12} /> Manual
                             </span>
                           )}
                         </td>
                         <td className="px-5 py-3 min-w-[220px]">
-                          {activity.tipe_pengunjung === 'member' ? (
+                          {activity.tipe_pengunjung === 'nfc' ? (
                             <>
-                              <div className="font-semibold text-gray-800 leading-snug">{activity.member?.nama || activity.nama_member || 'Member'}</div>
-                              <div className="text-[11px] text-gray-400 font-mono mt-1">ID: {activity.member_id?.substring(0, 8)}...</div>
+                              <div className="font-semibold text-gray-800 leading-snug">{activity.nama_pengunjung || 'Pengunjung'}</div>
+                              <div className="text-[11px] text-gray-400 font-mono mt-1">UID: {activity.nfc_uid?.substring(0, 8)}...</div>
                             </>
                           ) : (
                             <>
-                              <div className="font-semibold text-gray-800">Pengunjung Biasa</div>
+                              <div className="font-semibold text-gray-800">Pengunjung</div>
                               <div className="text-[11px] text-gray-400 font-mono mt-1">Input Manual</div>
                             </>
                           )}

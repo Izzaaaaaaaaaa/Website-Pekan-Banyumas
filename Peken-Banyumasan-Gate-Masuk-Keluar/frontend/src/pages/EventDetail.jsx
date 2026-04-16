@@ -1,4 +1,4 @@
-// EventDetail.jsx — Detail Event + Kelola Member, UMKM, dan Zona
+// EventDetail.jsx — Detail Event + Kelola Kolaborator, Artisan, dan Zona
 import React, { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import {
@@ -8,14 +8,14 @@ import {
 import { useToast } from '../components/Toast';
 import ZoneSelector from '../components/ZoneSelector';
 import ZoneEditor from '../components/ZoneEditor';
-import { getEventZones, syncOccupiedFromTenants } from '../lib/eventZones';
+import { getEventZones, syncOccupiedFromArtisans } from '../lib/eventZones';
 
 // ── DUMMY DATA ────────────────────────────────────────────────────────────────
 const DUMMY_EVENTS = {
   e1: {
     id:'e1', nama:'Festival Budaya Banyumasan 2025',
     tanggal:'2025-05-17', jam_mulai:'08:00', jam_selesai:'22:00', tanggal_selesai:'2025-05-19',
-    lokasi:'Alun-Alun Purwokerto', status:'published', kapasitas:200, peserta:34,
+    lokasi:'Alun-Alun Purwokerto', status:'published', kapasitas:200, peserta_count:34,
     deskripsi:'Festival tahunan menampilkan seni, kuliner, dan kerajinan khas Banyumas.',
     konten_lengkap:'Festival Budaya Banyumasan mempertemukan seniman, pengrajin, dan pelaku kuliner dari seluruh eks-Karesidenan Banyumas.',
     banner_url:null, galeri:[], subsektor:['Kriya','Musik','Seni Pertunjukan','Kuliner'],
@@ -23,7 +23,7 @@ const DUMMY_EVENTS = {
   e2: {
     id:'e2', nama:'Workshop Batik & Tenun Nusantara',
     tanggal:'2025-04-26', jam_mulai:'09:00', jam_selesai:'17:00', tanggal_selesai:'2025-04-27',
-    lokasi:'Gedung Kebudayaan Cilacap', status:'published', kapasitas:30, peserta:18,
+    lokasi:'Gedung Kebudayaan Cilacap', status:'published', kapasitas:30, peserta_count:18,
     deskripsi:'Pelatihan intensif 2 hari teknik batik tulis dan tenun lurik.',
     konten_lengkap:'Workshop intensif dibimbing maestro batik dari Banyumas.',
     banner_url:null, galeri:[], subsektor:['Kriya','Fashion'],
@@ -31,7 +31,7 @@ const DUMMY_EVENTS = {
   e3: {
     id:'e3', nama:'Pameran Kriya Ekraf Regional',
     tanggal:'2025-06-10', jam_mulai:'10:00', jam_selesai:'21:00', tanggal_selesai:'2025-06-12',
-    lokasi:'Mall Cilacap Raya', status:'draft', kapasitas:500, peserta:0,
+    lokasi:'Mall Cilacap Raya', status:'draft', kapasitas:500, peserta_count:0,
     deskripsi:'Pameran dan bazaar produk ekonomi kreatif se-eks Karesidenan Banyumas.',
     konten_lengkap:'Pameran terbesar menampilkan lebih dari 100 produk unggulan.',
     banner_url:null, galeri:[], subsektor:['Kriya','Desain Produk','Fashion'],
@@ -39,41 +39,41 @@ const DUMMY_EVENTS = {
   e4: {
     id:'e4', nama:'Peken Banyumasan #12',
     tanggal:'2025-03-20', jam_mulai:'16:00', jam_selesai:'22:00', tanggal_selesai:'2025-03-20',
-    lokasi:'Amphitheater GOR Satria', status:'selesai', kapasitas:500, peserta:145,
+    lokasi:'Amphitheater GOR Satria', status:'selesai', kapasitas:500, peserta_count:145,
     deskripsi:'Pasar budaya mingguan dengan penampilan seniman lokal.',
     konten_lengkap:'Peken Banyumasan edisi ke-12 sukses digelar.',
     banner_url:null, galeri:[], subsektor:['Musik','Kuliner','Seni Pertunjukan'],
   },
 };
 
-const DUMMY_MEMBERS_ALL = [
+const DUMMY_KOLABORATOR_ALL = [
   { id:'m1', nama:'Sari Dewi Rahayu',  subsektor:['Kriya','Fashion'] },
   { id:'m2', nama:'Ahmad Fauzi',        subsektor:['Musik'] },
   { id:'m4', nama:'Nurul Hidayah',      subsektor:['Kuliner'] },
   { id:'m7', nama:'Budi Santoso',       subsektor:['Film & Animasi'] },
 ];
-const DUMMY_TENANTS_ALL = [
+const DUMMY_ARTISAN_ALL = [
   { id:'t1', nama_usaha:'Batik Sari Rahayu',  kategori:'Kriya & Fashion' },
   { id:'t2', nama_usaha:'Calung Mas',          kategori:'Seni Pertunjukan' },
   { id:'t4', nama_usaha:'Tenun Lurik Cilacap', kategori:'Kriya & Fashion' },
   { id:'t5', nama_usaha:'Keripik Tempe Mrisi', kategori:'Kuliner' },
 ];
-const DUMMY_MEMBERS_EVENT = {
+const DUMMY_KOLABORATOR_EVENT = {
   e1: [
-    { id:'em1', member_id:'m1', nama:'Sari Dewi Rahayu', subsektor:['Kriya'], peran:'performer', status_kehadiran:'terdaftar', assigned_by:'admin' },
-    { id:'em2', member_id:'m2', nama:'Ahmad Fauzi',       subsektor:['Musik'], peran:'performer', status_kehadiran:'terdaftar', assigned_by:'self'  },
+    { id:'em1', kolaborator_id:'m1', nama:'Sari Dewi Rahayu', subsektor:['Kriya'], peran:'performer', status_kehadiran:'terdaftar', assigned_by:'admin' },
+    { id:'em2', kolaborator_id:'m2', nama:'Ahmad Fauzi',       subsektor:['Musik'], peran:'performer', status_kehadiran:'terdaftar', assigned_by:'self'  },
   ],
-  e2: [{ id:'em4', member_id:'m1', nama:'Sari Dewi Rahayu', subsektor:['Kriya'], peran:'panitia', status_kehadiran:'hadir', assigned_by:'admin' }],
+  e2: [{ id:'em4', kolaborator_id:'m1', nama:'Sari Dewi Rahayu', subsektor:['Kriya'], peran:'panitia', status_kehadiran:'hadir', assigned_by:'admin' }],
   e3: [], e4: [],
 };
-const DUMMY_TENANTS_EVENT = {
+const DUMMY_ARTISAN_EVENT = {
   e1: [
-    { id:'et1', tenant_id:'t1', nama_usaha:'Batik Sari Rahayu',  kategori:'Kriya & Fashion', posisi_event:'A-3', assigned_by:'admin' },
-    { id:'et2', tenant_id:'t5', nama_usaha:'Keripik Tempe Mrisi', kategori:'Kuliner',         posisi_event:'B-1', assigned_by:'self'  },
+    { id:'et1', artisan_id:'t1', nama_usaha:'Batik Sari Rahayu',  kategori:'Kriya & Fashion', posisi_event:'A-3', assigned_by:'admin' },
+    { id:'et2', artisan_id:'t5', nama_usaha:'Keripik Tempe Mrisi', kategori:'Kuliner',         posisi_event:'B-1', assigned_by:'self'  },
   ],
   e2: [],
-  e3: [{ id:'et3', tenant_id:'t4', nama_usaha:'Tenun Lurik Cilacap', kategori:'Kriya & Fashion', posisi_event:'A-1', assigned_by:'admin' }],
-  e4: [{ id:'et4', tenant_id:'t1', nama_usaha:'Batik Sari Rahayu', kategori:'Kriya & Fashion', posisi_event:'A-2', assigned_by:'admin' }],
+  e3: [{ id:'et3', artisan_id:'t4', nama_usaha:'Tenun Lurik Cilacap', kategori:'Kriya & Fashion', posisi_event:'A-1', assigned_by:'admin' }],
+  e4: [{ id:'et4', artisan_id:'t1', nama_usaha:'Batik Sari Rahayu', kategori:'Kriya & Fashion', posisi_event:'A-2', assigned_by:'admin' }],
 };
 
 const fmtDate = d => d ? new Date(d).toLocaleDateString('id-ID',{day:'numeric',month:'long',year:'numeric'}) : '—';
@@ -87,12 +87,12 @@ const HADIR_CLS = { terdaftar:'text-gray-500', hadir:'text-green-600', tidak_had
 
 // ── Modals — semua terima `zones` sebagai prop, tidak akses closure luar ──────
 
-function AssignMemberModal({ onClose, onAssign, existingIds }) {
+function AssignKolaboratorModal({ onClose, onAssign, existingIds }) {
   const [search, setSearch] = useState('');
   const [sel, setSel] = useState(null);
   const [peran, setPeran] = useState('peserta');
   const [saving, setSaving] = useState(false);
-  const list = DUMMY_MEMBERS_ALL.filter(m => !existingIds.includes(m.id) &&
+  const list = DUMMY_KOLABORATOR_ALL.filter(m => !existingIds.includes(m.id) &&
     m.nama.toLowerCase().includes(search.toLowerCase()));
   const save = async () => {
     if (!sel) return;
@@ -105,13 +105,13 @@ function AssignMemberModal({ onClose, onAssign, existingIds }) {
     <div className="fixed inset-0 bg-black/40 z-50 flex items-center justify-center p-4" onClick={onClose}>
       <div className="bg-white rounded-2xl w-full max-w-md shadow-2xl" onClick={e=>e.stopPropagation()}>
         <div className="flex items-center justify-between p-5 border-b border-gray-100">
-          <h3 className="font-bold text-gray-800">Assign Kreator</h3>
+          <h3 className="font-bold text-gray-800">Assign Kolaborator</h3>
           <button onClick={onClose}><X size={18} className="text-gray-400 hover:text-gray-600"/></button>
         </div>
         <div className="p-5 space-y-4">
           <div className="relative">
             <Search size={13} className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400"/>
-            <input value={search} onChange={e=>setSearch(e.target.value)} placeholder="Cari member..."
+            <input value={search} onChange={e=>setSearch(e.target.value)} placeholder="Cari kolaborator..."
               className="w-full pl-8 pr-3 py-2 border border-gray-200 rounded-xl text-sm focus:outline-none focus:border-green-400"/>
           </div>
           <div className="max-h-44 overflow-y-auto space-y-1.5">
@@ -146,14 +146,14 @@ function AssignMemberModal({ onClose, onAssign, existingIds }) {
   );
 }
 
-function AssignTenantModal({ onClose, onAssign, existingIds, zones }) {
+function AssignArtisanModal({ onClose, onAssign, existingIds, zones }) {
   const [search, setSearch] = useState('');
   const [sel, setSel]       = useState(null);
   const [posisi, setPosisi] = useState('');
   const [useMap, setUseMap] = useState(true);
   const [saving, setSaving] = useState(false);
   const safeZones = Array.isArray(zones) ? zones : [];
-  const list = DUMMY_TENANTS_ALL.filter(t => !existingIds.includes(t.id) &&
+  const list = DUMMY_ARTISAN_ALL.filter(t => !existingIds.includes(t.id) &&
     t.nama_usaha.toLowerCase().includes(search.toLowerCase()));
   const save = async () => {
     if (!sel) return;
@@ -166,7 +166,7 @@ function AssignTenantModal({ onClose, onAssign, existingIds, zones }) {
     <div className="fixed inset-0 bg-black/40 z-50 flex items-center justify-center p-4" onClick={onClose}>
       <div className="bg-white rounded-2xl w-full max-w-md shadow-2xl max-h-[88vh] flex flex-col" onClick={e=>e.stopPropagation()}>
         <div className="flex items-center justify-between p-5 border-b border-gray-100 shrink-0">
-          <h3 className="font-bold text-gray-800">Assign UMKM ke Event</h3>
+          <h3 className="font-bold text-gray-800">Assign Artisan ke Event</h3>
           <button onClick={onClose}><X size={18} className="text-gray-400 hover:text-gray-600"/></button>
         </div>
         <div className="overflow-y-auto flex-1 p-5 space-y-4">
@@ -275,7 +275,7 @@ export default function EventDetail() {
 
   const [event,    setEvent]    = useState(null);
   const [members,  setMembers]  = useState([]);
-  const [tenants,  setTenants]  = useState([]);
+  const [Artisan,  setArtisans]  = useState([]);
   const [zones,    setZones]    = useState([]);
   const [tab,      setTab]      = useState('members');
   const [showAddM, setShowAddM] = useState(false);
@@ -286,14 +286,14 @@ export default function EventDetail() {
   useEffect(() => {
     const t = setTimeout(() => {
       const ev = DUMMY_EVENTS[id] || null;
-      const ms = DUMMY_MEMBERS_EVENT[id] || [];
-      const ts = DUMMY_TENANTS_EVENT[id]  || [];
+      const ms = DUMMY_KOLABORATOR_EVENT[id] || [];
+      const ts = DUMMY_ARTISAN_EVENT[id]  || [];
       setEvent(ev);
       setMembers(ms);
-      setTenants(ts);
+      setArtisans(ts);
       // Load global zones merged with this event's occupied state
       try {
-        const z = syncOccupiedFromTenants(id, ts.map(t => ({ posisi_event: t.posisi_event })));
+        const z = syncOccupiedFromArtisans(id, ts.map(t => ({ posisi_event: t.posisi_event })));
         setZones(z);
       } catch {
         setZones(getEventZones(id));
@@ -303,16 +303,16 @@ export default function EventDetail() {
     return () => clearTimeout(t);
   }, [id]);
 
-  // Re-sync zones when tenants change
-  const refreshZones = (updatedTenants) => {
+  // Re-sync zones when Artisan change
+  const refreshZones = (updatedArtisans) => {
     try {
-      const z = syncOccupiedFromTenants(id, updatedTenants.map(t => ({ posisi_event: t.posisi_event })));
+      const z = syncOccupiedFromArtisans(id, updatedArtisans.map(t => ({ posisi_event: t.posisi_event })));
       setZones(z);
     } catch {}
   };
 
   const assignMember = async (data) => {
-    const updated = [...members, { ...data, member_id: data.id }];
+    const updated = [...members, { ...data, kolaborator_id: data.id }];
     setMembers(updated);
     toast.success(`${data.nama} di-assign sebagai ${data.peran}`);
     try {
@@ -324,12 +324,12 @@ export default function EventDetail() {
   const removeMember = (emId) => {
     if (!confirm('Hapus dari event ini?')) return;
     setMembers(l => l.filter(m => m.id !== emId));
-    toast.success('Member dihapus');
+    toast.success('Kolaborator dihapus');
   };
 
-  const assignTenant = async (data) => {
-    const updated = [...tenants, { ...data, tenant_id: data.id }];
-    setTenants(updated);
+  const assignArtisan = async (data) => {
+    const updated = [...Artisan, { ...data, artisan_id: data.id }];
+    setArtisans(updated);
     refreshZones(updated);
     toast.success(`${data.nama_usaha} berhasil di-assign`);
     try {
@@ -338,17 +338,17 @@ export default function EventDetail() {
     } catch {}
   };
 
-  const removeTenant = (etId) => {
+  const removeArtisan = (etId) => {
     if (!confirm('Hapus dari event ini?')) return;
-    const updated = tenants.filter(t => t.id !== etId);
-    setTenants(updated);
+    const updated = Artisan.filter(t => t.id !== etId);
+    setArtisans(updated);
     refreshZones(updated);
-    toast.success('UMKM dihapus');
+    toast.success('Artisan dihapus');
   };
 
   const updateTenantStand = (etId, val) => {
-    const updated = tenants.map(t => t.id === etId ? { ...t, posisi_event: val } : t);
-    setTenants(updated);
+    const updated = Artisan.map(t => t.id === etId ? { ...t, posisi_event: val } : t);
+    setArtisans(updated);
     refreshZones(updated);
   };
 
@@ -453,8 +453,8 @@ export default function EventDetail() {
           {/* Tab bar */}
           <div className="flex border-b border-gray-100">
             {[
-              { v:'members', l:'Kreator', n:members.length },
-              { v:'tenants', l:'UMKM',            n:tenants.length },
+              { v:'members', l:'Kolaborator', n:members.length },
+              { v:'Artisan', l:'Artisan',            n:Artisan.length },
               { v:'zones',   l:'Kelola Zona',     n:zones.length   },
             ].map(({ v, l, n }) => (
               <button key={v} onClick={()=>setTab(v)}
@@ -465,11 +465,11 @@ export default function EventDetail() {
             ))}
           </div>
 
-          {/* ── Tab: Kreator ── */}
+          {/* ── Tab: Kolaborator ── */}
           {tab === 'members' && (
             <div>
               <div className="px-5 py-4 flex items-center justify-between border-b border-gray-50">
-                <p className="text-sm text-gray-500">{members.length} kreator</p>
+                <p className="text-sm text-gray-500">{members.length} kolaborator</p>
                 <button onClick={()=>setShowAddM(true)}
                   className="flex items-center gap-1.5 bg-green-700 hover:bg-green-800 text-white px-3.5 py-2 rounded-xl text-xs font-semibold transition">
                   <Plus size={13}/> Assign
@@ -477,7 +477,7 @@ export default function EventDetail() {
               </div>
               {members.length === 0
                 ? <div className="py-16 text-center text-gray-400 text-sm">
-                    <Users size={32} className="text-gray-200 mx-auto mb-3"/>Belum ada kreator
+                    <Users size={32} className="text-gray-200 mx-auto mb-3"/>Belum ada kolaborator
                   </div>
                 : <div className="divide-y divide-gray-50">
                     {members.map(m=>(
@@ -516,22 +516,22 @@ export default function EventDetail() {
             </div>
           )}
 
-          {/* ── Tab: UMKM ── */}
-          {tab === 'tenants' && (
+          {/* ── Tab: Artisan ── */}
+          {tab === 'Artisan' && (
             <div>
               <div className="px-5 py-4 flex items-center justify-between border-b border-gray-50">
-                <p className="text-sm text-gray-500">{tenants.length} UMKM</p>
+                <p className="text-sm text-gray-500">{Artisan.length} Artisan</p>
                 <button onClick={()=>setShowAddT(true)}
                   className="flex items-center gap-1.5 bg-green-700 hover:bg-green-800 text-white px-3.5 py-2 rounded-xl text-xs font-semibold transition">
-                  <Plus size={13}/> Assign UMKM
+                  <Plus size={13}/> Assign Artisan
                 </button>
               </div>
-              {tenants.length === 0
+              {Artisan.length === 0
                 ? <div className="py-16 text-center text-gray-400 text-sm">
-                    <Plus size={32} className="text-gray-200 mx-auto mb-3"/>Belum ada UMKM
+                    <Plus size={32} className="text-gray-200 mx-auto mb-3"/>Belum ada Artisan
                   </div>
                 : <div className="divide-y divide-gray-50">
-                    {tenants.map(t=>(
+                    {Artisan.map(t=>(
                       <div key={t.id} className="px-5 py-3.5 flex items-center gap-3 group hover:bg-gray-50/60 transition">
                         <div className="w-9 h-9 rounded-xl bg-green-100 flex items-center justify-center text-green-700 font-bold text-sm shrink-0">
                           {t.nama_usaha.charAt(0)}
@@ -547,7 +547,7 @@ export default function EventDetail() {
                             onChange={val=>updateTenantStand(t.id, val)}
                             zones={zones}
                           />
-                          <button onClick={()=>removeTenant(t.id)}
+                          <button onClick={()=>removeArtisan(t.id)}
                             className="p-1.5 rounded-lg text-gray-300 hover:text-red-500 hover:bg-red-50 transition opacity-0 group-hover:opacity-100">
                             <Trash2 size={13}/>
                           </button>
@@ -576,17 +576,17 @@ export default function EventDetail() {
 
       {/* Modals */}
       {showAddM && (
-        <AssignMemberModal
+        <AssignKolaboratorModal
           onClose={()=>setShowAddM(false)}
           onAssign={assignMember}
-          existingIds={members.map(m=>m.member_id)}
+          existingIds={members.map(m=>m.kolaborator_id)}
         />
       )}
       {showAddT && (
-        <AssignTenantModal
+        <AssignArtisanModal
           onClose={()=>setShowAddT(false)}
-          onAssign={assignTenant}
-          existingIds={tenants.map(t=>t.tenant_id)}
+          onAssign={assignArtisan}
+          existingIds={Artisan.map(t=>t.artisan_id)}
           zones={zones}
         />
       )}

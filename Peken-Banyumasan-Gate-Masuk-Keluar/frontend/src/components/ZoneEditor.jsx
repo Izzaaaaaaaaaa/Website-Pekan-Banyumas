@@ -57,7 +57,7 @@ export default function ZoneEditor({ zones = [], onZonesChange }) {
       {/* Info */}
       <div className="flex gap-2 bg-blue-50 border border-blue-100 rounded-xl p-3 text-xs text-blue-700">
         <Info size={13} className="shrink-0 mt-0.5"/>
-        <span>Layout zona <strong>berlaku untuk semua event</strong> (venue sama). Status stand terisi dikelola otomatis saat assign UMKM per event.</span>
+        <span>Layout zona <strong>berlaku untuk semua event</strong> (venue sama). Status stand terisi dikelola otomatis saat assign Artisan per event.</span>
       </div>
 
       {/* Header */}
