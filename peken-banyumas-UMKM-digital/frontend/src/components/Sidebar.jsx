@@ -12,7 +12,7 @@ export default function Sidebar({ open, setOpen }) {
 
   const menu = [
     { path: "/", label: "Dashboard", icon: <Home size={18} /> },
-    { path: "/stok", label: "Manajemen Stok", icon: <Box size={18} />, badge: 2 },
+    { path: "/stok", label: "Manajemen Stok", icon: <Box size={18} /> },
     { path: "/kas", label: "Buku Kas", icon: <Book size={18} /> },
     { path: "/event", label: "Event", icon: <Ticket size={18} /> },
     { path: "/riwayat", label: "Riwayat", icon: <FileText size={18} /> },
@@ -29,15 +29,16 @@ export default function Sidebar({ open, setOpen }) {
 
         {/* HEADER */}
         <div className="sb-top">
-          <div className="sb-event">
-            <img src={logo} />
-            <span>PEKEN BANYUMAS 2026</span>
-          </div>
 
-          {/* BRAND TITLE */}
-          <div className="sb-brand">
-            <span className="sb-brand-dashboard">Dashboard</span>
-            <span className="sb-brand-umkm">ARTISAN</span>
+          {/* BRAND HEADER — logo + nama app */}
+          <div className="sb-header">
+            <div className="sb-header-logo">
+              <img src={logo} alt="logo" />
+            </div>
+            <div className="sb-header-text">
+              <span className="sb-header-title">Dashboard <em>ARTISAN</em></span>
+              <span className="sb-header-sub">PEKEN BANYUMAS 2026</span>
+            </div>
           </div>
 
           <div className="sb-kios">

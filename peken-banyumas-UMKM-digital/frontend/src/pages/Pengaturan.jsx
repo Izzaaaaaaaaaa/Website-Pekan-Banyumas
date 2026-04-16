@@ -2,9 +2,16 @@ import { useState } from "react";
 import { Settings } from "lucide-react";
 import ProfileForm from "../components/pengaturan/ProfileForm";
 import SecurityForm from "../components/pengaturan/SecurityForm";
+import Toast from "../components/Toast";
 import "../assets/styles/settings.css";
 
 export default function Pengaturan() {
+
+  const [toast, setToast] = useState("");
+  const showToast = (msg) => {
+    setToast(msg);
+    setTimeout(() => setToast(""), 2500);
+  };
 
   return (
     <div className="st-page">
@@ -19,9 +26,11 @@ export default function Pengaturan() {
 
       {/* GRID */}
       <div className="st-grid">
-        <ProfileForm />
-        <SecurityForm />
+        <ProfileForm onToast={showToast} />
+        <SecurityForm onToast={showToast} />
       </div>
+
+      {toast && <Toast message={toast} />}
     </div>
   );
 }

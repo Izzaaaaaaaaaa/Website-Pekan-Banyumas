@@ -4,6 +4,7 @@ import {
   Wallet,
   ArrowDownCircle,
   ArrowUpCircle,
+  Search,
   Plus,
   Flame,
   Receipt,
@@ -15,7 +16,7 @@ import KasTable from "../components/BukuKas/KasTable";
 import TambahKasModal from "../components/modals/TambahKasModal";
 import EditKasModal from "../components/modals/EditKasModal";
 import ConfirmDeleteKasModal from "../components/modals/ConfirmDeleteKasModal";
-import Toast from "../components/BukuKas/Toast";
+import Toast from "../components/Toast";
 import "../assets/styles/kas.css";
 
 const fmt = (angka) => new Intl.NumberFormat("id-ID").format(angka);
@@ -69,8 +70,17 @@ export default function BukuKas() {
   const cntMasuk    = data.filter(d => d.jenis === "masuk" ).length;
   const cntKeluar   = data.filter(d => d.jenis === "keluar").length;
 
+  // ── SEARCH ──
+  const [search, setSearch] = useState("");
+
   // ── FILTER ──
-  const filteredData = filter === "semua" ? data : data.filter(d => d.jenis === filter);
+  const filteredData = data
+    .filter(d => filter === "semua" || d.jenis === filter)
+    .filter(d =>
+      d.ket?.toLowerCase().includes(search.toLowerCase()) ||
+      d.kategori?.toLowerCase().includes(search.toLowerCase()) ||
+      d.jenis?.toLowerCase().includes(search.toLowerCase())
+    );
 
   // ── TAMBAH ──
   const handleAdd = (item) => {
@@ -81,11 +91,11 @@ export default function BukuKas() {
 
       const newData = {
         id,
-        pelanggan : item.pelanggan || "",   // ← pastikan ikut
+        pelanggan : item.pelanggan || "",   
         barang    : item.barang    || "",
         qty       : item.qty,
         total     : item.nominal,
-        metode    : item.metode    || "tunai", // ← INI yang fix bug metode "-"
+        metode    : item.metode    || "tunai", 
         tgl       : item.tgl,
       };
 
@@ -99,21 +109,21 @@ export default function BukuKas() {
 
     setData([{ ...item, id, saldo: newSaldo }, ...data]);
     setShowModal(false);
-    showToast("✅ Transaksi berhasil disimpan!");
+    showToast("Transaksi berhasil disimpan!");
   };
 
   // ── EDIT ──
   const handleUpdate = (updated) => {
     setData(data.map(d => d.id === updated.id ? updated : d));
     setEditItem(null);
-    showToast("✏️ Data berhasil diupdate!");
+    showToast("Data berhasil diupdate!");
   };
 
   // ── HAPUS ──
   const handleDelete = () => {
     setData(data.filter(d => d.id !== deleteItem.id));
     setDeleteItem(null);
-    showToast("🗑️ Data berhasil dihapus!");
+    showToast("Data berhasil dihapus!");
   };
 
   // ── EXPORT CSV ──
@@ -145,35 +155,39 @@ export default function BukuKas() {
         </div>
 
         <div className="bk-topbar-right">
-          {/* Semua */}
-          <button
-            className={`bk-filter-btn ${filter === "semua" ? "active-semua" : ""}`}
-            onClick={() => setFilter("semua")}
-          >
-            Semua
-          </button>
+          {/* BARIS ATAS */}
+          <div className="bk-topbar-actions">
+            <button className={`bk-filter-btn ${filter === "semua" ? "active-semua" : ""}`}
+            onClick={() => setFilter("semua")}>
+              Semua
+            </button>
 
-          {/* Masuk */}
-          <button
-            className={`bk-filter-btn ${filter === "masuk" ? "active-masuk" : ""}`}
-            onClick={() => setFilter("masuk")}
-          >
-            <ArrowDownCircle size={14} />
-            Masuk
-          </button>
+            <button className={`bk-filter-btn ${filter === "masuk" ? "active-masuk" : ""}`}
+            onClick={() => setFilter("masuk")}>
+              Masuk
+            </button>
 
-          {/* Keluar */}
-          <button
-            className={`bk-filter-btn ${filter === "keluar" ? "active-keluar" : ""}`}
-            onClick={() => setFilter("keluar")}
-          >
-            <ArrowUpCircle size={14} />
-            Keluar
-          </button>
+            <button className={`bk-filter-btn ${filter === "keluar" ? "active-keluar" : ""}`}
+            onClick={() => setFilter("keluar")}>
+              Keluar
+            </button>
 
-          <button className="bk-btn-add" onClick={() => setShowModal(true)}>
-            ＋ Tambah Transaksi
-          </button>
+            <button className="bk-btn-add"
+            onClick={() => setShowModal(true)}>
+              + Tambah Transaksi
+            </button>
+          </div>
+
+          {/* BARIS BAWAH (SEARCH) */}
+          <div className="bk-search">
+            <Search size={16} />
+            <input
+              type="text"
+              placeholder="Cari transaksi..."
+              value={search}
+              onChange={(e) => setSearch(e.target.value)}
+            />
+          </div>
         </div>
       </div>
 
