@@ -2,14 +2,14 @@ import { useState, useEffect } from "react";
 
 export default function EditBarangModal({ show, onClose, item, onSave }) {
   const [form, setForm] = useState({
-    nama: "", kategori: "Makanan", harga: "", stok: "", satuan: "",
+    nama: "", kategori: "", harga: "", stok: "", satuan: "",
   });
 
   useEffect(() => {
     if (item) {
       setForm({
         nama     : item.nama,
-        kategori : item.kategori || "Makanan",
+        kategori : item.kategori || "",
         harga    : item.harga,
         stok     : item.stok,
         satuan   : item.satuan || "",
@@ -23,7 +23,13 @@ export default function EditBarangModal({ show, onClose, item, onSave }) {
     setForm({ ...form, [e.target.name]: e.target.value });
 
   const handleSubmit = () => {
-    onSave({ ...item, ...form, stok: Number(form.stok), harga: Number(form.harga) });
+    onSave({
+      ...item,
+      ...form,
+      kategori: form.kategori || "Lainnya",
+      stok: Number(form.stok),
+      harga: Number(form.harga),
+    });
     onClose();
   };
 
@@ -48,11 +54,24 @@ export default function EditBarangModal({ show, onClose, item, onSave }) {
 
           <div className="ms-fg">
             <label>Kategori</label>
-            <select name="kategori" value={form.kategori} onChange={handleChange}>
-              <option>Makanan</option>
-              <option>Minuman</option>
-              <option>Camilan</option>
-            </select>
+
+            <input
+              name="kategori"
+              list="kategori-list"
+              placeholder="Pilih / ketik kategori"
+              value={form.kategori}
+              onChange={handleChange}
+            />
+
+            <datalist id="kategori-list">
+              <option value="Makanan" />
+              <option value="Minuman" />
+              <option value="Camilan" />
+              <option value="Kriya" />
+              <option value="Fashion" />
+              <option value="Aksesoris" />
+              <option value="Lainnya" />
+            </datalist>
           </div>
 
           <div className="ms-fg">

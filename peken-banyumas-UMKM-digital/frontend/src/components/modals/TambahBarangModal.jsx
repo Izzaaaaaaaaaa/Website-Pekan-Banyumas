@@ -38,11 +38,24 @@ export default function TambahBarangModal({
 
           <div className="ms-fg">
             <label>Kategori</label>
-            <select name="kategori" value={form.kategori} onChange={handleChange}>
-              <option>Makanan</option>
-              <option>Minuman</option>
-              <option>Camilan</option>
-            </select>
+
+            <input
+              name="kategori"
+              list="kategori-list"
+              placeholder="Pilih / ketik kategori"
+              value={form.kategori}
+              onChange={handleChange}
+            />
+
+            <datalist id="kategori-list">
+              <option value="Makanan" />
+              <option value="Minuman" />
+              <option value="Camilan" />
+              <option value="Kriya" />
+              <option value="Fashion" />
+              <option value="Aksesoris" />
+              <option value="Lainnya" />
+            </datalist>
           </div>
 
           <div className="ms-fg">

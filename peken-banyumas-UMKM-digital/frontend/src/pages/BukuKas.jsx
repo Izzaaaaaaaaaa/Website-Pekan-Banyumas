@@ -1,4 +1,5 @@
 import { useState } from "react";
+import { useEffect } from "react";
 import {
   Wallet,
   ArrowDownCircle,
@@ -20,13 +21,35 @@ import "../assets/styles/kas.css";
 const fmt = (angka) => new Intl.NumberFormat("id-ID").format(angka);
 
 export default function BukuKas() {
-  const [data, setData] = useState([
-    { id: 1, tgl: "10 Mar 2026", ket: "Penjualan sate siang hari",   jenis: "masuk",  nominal: 320000, saldo: 1255000, kategori: "Penjualan"   },
-    { id: 2, tgl: "10 Mar 2026", ket: "Beli arang & tusuk sate",     jenis: "keluar", nominal: 50000,  saldo: 935000,  kategori: "Restok Bahan" },
-    { id: 3, tgl: "9 Mar 2026",  ket: "Penjualan sore s.d. malam",   jenis: "masuk",  nominal: 480000, saldo: 985000,  kategori: "Penjualan"   },
-    { id: 4, tgl: "9 Mar 2026",  ket: "Beli daging blengong segar",  jenis: "keluar", nominal: 250000, saldo: 505000,  kategori: "Restok Bahan" },
-    { id: 5, tgl: "8 Mar 2026",  ket: "Penjualan pagi & siang",      jenis: "masuk",  nominal: 275000, saldo: 755000,  kategori: "Penjualan"   },
-  ]);
+  const [items, setItems] = useState(() => {
+    const saved = localStorage.getItem("items");
+    return saved ? JSON.parse(saved) : [];
+  });
+
+  useEffect(() => {
+    const syncItems = () => {
+      const saved = localStorage.getItem("items");
+      if (saved) {
+        setItems(JSON.parse(saved));
+      }
+    };
+
+    syncItems(); // pertama load
+
+    window.addEventListener("storage", syncItems);
+
+    return () => {
+      window.removeEventListener("storage", syncItems);
+    };
+  }, []);
+
+  const [data, setData] = useState(() => {
+    const saved = localStorage.getItem("kas");
+    return saved ? JSON.parse(saved) : [];
+  });
+  useEffect(() => {
+    localStorage.setItem("kas", JSON.stringify(data));
+  }, [data]);
 
   const [filter,      setFilter]      = useState("semua");
   const [showModal,   setShowModal]   = useState(false);
@@ -51,9 +74,30 @@ export default function BukuKas() {
 
   // ── TAMBAH ──
   const handleAdd = (item) => {
-    const lastSaldo  = data.length > 0 ? data[0].saldo : 0;
-    const newSaldo   = item.jenis === "masuk" ? lastSaldo + item.nominal : lastSaldo - item.nominal;
-    setData([{ ...item, id: Date.now(), saldo: newSaldo }, ...data]);
+    const id = Date.now();
+
+    if (item.jenis === "masuk") {
+      const riwayat = JSON.parse(localStorage.getItem("riwayat")) || [];
+
+      const newData = {
+        id,
+        pelanggan : item.pelanggan || "",   // ← pastikan ikut
+        barang    : item.barang    || "",
+        qty       : item.qty,
+        total     : item.nominal,
+        metode    : item.metode    || "tunai", // ← INI yang fix bug metode "-"
+        tgl       : item.tgl,
+      };
+
+      localStorage.setItem("riwayat", JSON.stringify([newData, ...riwayat]));
+    }
+
+    const lastSaldo = data.length > 0 ? data[0].saldo : 0;
+    const newSaldo  = item.jenis === "masuk"
+      ? lastSaldo + item.nominal
+      : lastSaldo - item.nominal;
+
+    setData([{ ...item, id, saldo: newSaldo }, ...data]);
     setShowModal(false);
     showToast("✅ Transaksi berhasil disimpan!");
   };
@@ -141,7 +185,7 @@ export default function BukuKas() {
             SALDO SAAT INI
           </div>
           <div className="bk-sum-val">
-            Rp. 200.000
+            Rp {fmt(saldo)}
           </div>
           <div className="bk-sum-sub">Diperbarui otomatis</div>
         </div>
@@ -186,6 +230,7 @@ export default function BukuKas() {
         show={showModal}
         onClose={() => setShowModal(false)}
         onSave={handleAdd}
+        items={items}
       />
 
       <EditKasModal

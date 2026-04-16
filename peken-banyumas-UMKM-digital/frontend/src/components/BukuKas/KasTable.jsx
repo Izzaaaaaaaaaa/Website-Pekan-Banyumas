@@ -7,7 +7,7 @@ export default function KasTable({ data, formatRupiah, onEdit, onDelete }) {
       <table className="bk-table">
         <thead>
           <tr>
-            <th>#</th>
+            <th>No</th>
             <th>Tanggal</th>
             <th>Keterangan</th>
             <th>Kategori</th>
@@ -22,8 +22,8 @@ export default function KasTable({ data, formatRupiah, onEdit, onDelete }) {
           {data.length === 0 ? (
             <tr>
               <td colSpan={8}>
-                <div className="bk-empty">
-                  <div className="bk-empty-icon"><Inbox size={36} /></div>
+                <div className="ms-empty">
+                  <div className="ms-empty-icon"><Inbox size={20} /></div>
                   Belum ada transaksi
                 </div>
               </td>

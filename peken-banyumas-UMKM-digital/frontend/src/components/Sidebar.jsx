@@ -1,6 +1,6 @@
 import { useNavigate, useLocation } from "react-router-dom";
 import { useState } from "react";
-import { Home, Box, Book, Tag, FileText, Settings, User, Store } from "lucide-react";
+import { Home, Box, Book, Ticket, FileText, Settings, User } from "lucide-react";
 import "../assets/styles/sidebar.css";
 import logo from "../assets/images/logo.jpeg";
 import ConfirmLogoutModal from "./modals/ConfirmLogoutModal";
@@ -14,7 +14,7 @@ export default function Sidebar({ open, setOpen }) {
     { path: "/", label: "Dashboard", icon: <Home size={18} /> },
     { path: "/stok", label: "Manajemen Stok", icon: <Box size={18} />, badge: 2 },
     { path: "/kas", label: "Buku Kas", icon: <Book size={18} /> },
-    { path: "/promo", label: "Promo & Diskon", icon: <Tag size={18} /> },
+    { path: "/event", label: "Event", icon: <Ticket size={18} /> },
     { path: "/riwayat", label: "Riwayat", icon: <FileText size={18} /> },
   ];
 
@@ -36,7 +36,6 @@ export default function Sidebar({ open, setOpen }) {
 
           {/* BRAND TITLE */}
           <div className="sb-brand">
-            <span className="sb-brand-icon"><Store size={20} /></span>
             <span className="sb-brand-dashboard">Dashboard</span>
             <span className="sb-brand-umkm">ARTISAN</span>
           </div>

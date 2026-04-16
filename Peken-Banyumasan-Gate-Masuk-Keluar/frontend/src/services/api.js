@@ -92,3 +92,48 @@ api.interceptors.response.use(
 );
 
 export default api;
+// ── EVENT RELASI ENDPOINTS (stub — siap diganti saat backend ready) ──────────
+
+export const eventApi = {
+  // Event CRUD
+  list:   (params) => api.get('/api/events', { params }),
+  detail: (id)     => api.get(`/api/events/${id}`),
+  create: (data)   => api.post('/api/events', data),
+  update: (id, d)  => api.put(`/api/events/${id}`, d),
+  delete: (id)     => api.delete(`/api/events/${id}`),
+  status: (id, s)  => api.patch(`/api/events/${id}/status`, { status: s }),
+
+  // Event ↔ Member relasi
+  members:       (id)      => api.get(`/api/events/${id}/members`),
+  assignKolaborator:  (id, d)   => api.post(`/api/events/${id}/members`, d),
+  removeKolaborator:  (id, mid) => api.delete(`/api/events/${id}/members/${mid}`),
+  updateKolaborator:  (id, mid, d) => api.patch(`/api/events/${id}/members/${mid}`, d),
+
+  // Event ↔ Tenant relasi
+  tenants:       (id)      => api.get(`/api/events/${id}/tenants`),
+  assignArtisan:  (id, d)   => api.post(`/api/events/${id}/tenants`, d),
+  removeArtisan:  (id, tid) => api.delete(`/api/events/${id}/tenants/${tid}`),
+  updateArtisan:  (id, tid, d) => api.patch(`/api/events/${id}/tenants/${tid}`, d),
+};
+
+export const kolaboratorApi = {
+  list:       (params) => api.get('/api/kolaborator', { params }),
+  detail:     (id)     => api.get(`/api/kolaborator/${id}`),
+  status:     (id, s)  => api.patch(`/api/kolaborator/${id}/status`, { status: s }),
+  events:     (id)     => api.get(`/api/kolaborator/${id}/events`),
+  portfolio:  (id)     => api.get(`/api/kolaborator/${id}/portfolio`),
+  stories:    (id)     => api.get(`/api/kolaborator/${id}/stories`),
+};
+
+export const artisanApi = {
+  list:   (params) => api.get('/api/artisan', { params }),
+  detail: (id)     => api.get(`/api/artisan/${id}`),
+  update: (id, d)  => api.patch(`/api/artisan/${id}`, d),
+  status: (id, s)  => api.patch(`/api/artisan/${id}/status`, { status: s }),
+  events: (id)     => api.get(`/api/artisan/${id}/events`),
+};
+
+export const aktivitasApi = {
+  list:   (params) => api.get('/api/aktivitas', { params }),
+  delete: (id)     => api.delete(`/api/admin/stories/${id}`),
+};

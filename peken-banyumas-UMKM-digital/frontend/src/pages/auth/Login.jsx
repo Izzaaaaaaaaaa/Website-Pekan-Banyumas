@@ -70,7 +70,7 @@ export default function Login() {
 
           {/* Sub */}
           <p className="left-sub">
-            Platform khusus artisan Peken Banyumas — kelola kios, pantau penjualan,
+            Platform khusus artisan Peken Banyumas kelola kios, pantau penjualan,
             dan tampilkan produk terbaikmu dalam satu dasbor yang simpel dan intuitif.
           </p>
 
@@ -198,7 +198,7 @@ export default function Login() {
               <img src={logo} alt="Peken Banyumas" className="event-strip-logo" />
             </div>
             <div>
-              <div className="event-name">Peken Banyumas 2026</div>
+              <div className="event-name">Peken Banyumas</div>
               <div className="event-detail">22–24 Maret · Alun-alun Banyumas · Masuk Gratis</div>
             </div>
           </div>
