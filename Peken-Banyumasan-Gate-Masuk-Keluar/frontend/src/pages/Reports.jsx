@@ -23,7 +23,7 @@ const fmtTanggal = (s) => new Date(s + 'T00:00:00').toLocaleDateString('id-ID', 
 const Reports = () => {
     // ── Events list (untuk primary selector) ─────────────────────────────
     // ── Report tab ───────────────────────────────────────────────────────────
-    const [reportTab, setReportTab] = useState('pengunjung'); // pengunjung | tenant | akumulasi
+    const [reportTab, setReportTab] = useState('pengunjung'); // pengunjung | artisan_report | akumulasi
 
     const [events, setEvents]             = useState([]);
     const [isLoadingEvents, setLoadingEv] = useState(true);
@@ -33,7 +33,6 @@ const Reports = () => {
     const [selectedEventId, setSelectedEventId] = useState('');
     // selectedDate kosong = semua hari event; isi = drill-down ke hari itu
     const [selectedDate, setSelectedDate]       = useState('');
-    const [filterType, setFilterType]           = useState('Semua Tipe Pengunjung');
 
     // ── Report data ───────────────────────────────────────────────────────
     const [reportData, setReportData]           = useState(null);
@@ -113,7 +112,6 @@ const Reports = () => {
         setCurrentPage(1);
     }, [selectedEventId]);
 
-    useEffect(() => { setCurrentPage(1); }, [filterType]);
 
     const handleOpenExportModal = (format) => {
         setExportFormat(format);
@@ -134,7 +132,7 @@ const Reports = () => {
             });
 
             const ext = formatParam === 'excel' ? 'xlsx' : 'pdf';
-            const safeName = (reportData?.nama_event || 'laporan').replace(/[^a-zA-Z0-9]/g, '_').slice(0, 30);
+            const safeName = (reportData?.nama || 'laporan').replace(/[^a-zA-Z0-9]/g, '_').slice(0, 30);
             const suffix   = selectedDate || safeName;
             const url  = window.URL.createObjectURL(new Blob([response.data]));
             const link = document.createElement('a');
@@ -157,11 +155,7 @@ const Reports = () => {
 
     const allDetail = reportData?.detail || [];
 
-    const filteredReports = allDetail.filter(row => {
-        if (filterType === 'Semua Tipe Pengunjung') return true;
-        if (filterType === 'Hanya Member (NFC)') return row.tipe_pengunjung === 'member';
-        return row.tipe_pengunjung === 'biasa';
-    });
+    const filteredReports = allDetail; // semua pengunjung ter-scan NFC
 
     // [FIX] Hitung halaman dan slice data untuk halaman aktif
     const totalItems = filteredReports.length;
@@ -192,7 +186,7 @@ const Reports = () => {
           <div className="flex gap-1 bg-white rounded-2xl border border-gray-100 p-1 shadow-sm self-start">
             {[
               { v:'pengunjung', l:'Laporan Pengunjung', Icon:Users },
-              { v:'tenant',     l:'Laporan UMKM',       Icon:Store },
+              { v:'artisan_report',     l:'Laporan Artisan',       Icon:Store },
               { v:'akumulasi',  l:'Akumulasi Event',    Icon:BarChart2 },
             ].map(({ v, l, Icon }) => (
               <button key={v} onClick={() => setReportTab(v)}
@@ -223,8 +217,8 @@ const Reports = () => {
                             <UserCheck size={18} />
                         </div>
                         <div>
-                            <div className="text-2xl font-bold text-gray-800">{reportData.ringkasan.total_member}</div>
-                            <div className="text-xs text-gray-500">Pengunjung Member</div>
+                            <div className="text-2xl font-bold text-gray-800">{reportData.ringkasan.total_nfc}</div>
+                            <div className="text-xs text-gray-500">Pengunjung NFC</div>
                         </div>
                     </div>
                     <div className="bg-white rounded-2xl border border-gray-100 shadow-sm p-5 flex items-center gap-4">
@@ -232,8 +226,8 @@ const Reports = () => {
                             <TrendingUp size={18} />
                         </div>
                         <div>
-                            <div className="text-2xl font-bold text-gray-800">{reportData.ringkasan.total_biasa}</div>
-                            <div className="text-xs text-gray-500">Pengunjung Biasa</div>
+                            <div className="text-2xl font-bold text-gray-800">{reportData.ringkasan.total_unik ?? reportData.ringkasan.total_manual ?? "—"}</div>
+                            <div className="text-xs text-gray-500">Pengunjung Unik</div>
                         </div>
                     </div>
                 </div>
@@ -261,7 +255,7 @@ const Reports = () => {
                                     </option>
                                     {events.map(ev => (
                                         <option key={ev.id} value={ev.id}>
-                                            {ev.nama_event}
+                                            {ev.nama}
                                             {ev.status === 'aktif' ? ' ●' : ''}
                                         </option>
                                     ))}
@@ -271,21 +265,6 @@ const Reports = () => {
                                 </div>
                             </div>
 
-                            {/* Secondary: Filter tipe */}
-                            <div className="relative">
-                                <select
-                                    value={filterType}
-                                    onChange={(e) => setFilterType(e.target.value)}
-                                    className="appearance-none bg-white border border-gray-200 text-gray-700 py-2.5 pl-4 pr-10 rounded-xl focus:outline-none focus:ring-2 focus:ring-green-600 text-sm font-medium cursor-pointer shadow-sm w-full sm:w-auto"
-                                >
-                                    <option>Semua Tipe Pengunjung</option>
-                                    <option>Hanya Member (NFC)</option>
-                                    <option>Hanya Pengunjung Biasa</option>
-                                </select>
-                                <div className="pointer-events-none absolute inset-y-0 right-0 flex items-center px-3 text-gray-500">
-                                    <ChevronDown size={16} />
-                                </div>
-                            </div>
                         </div>
 
                         <div className="flex items-center gap-3 w-full lg:w-auto">
@@ -372,7 +351,7 @@ const Reports = () => {
                             </tr>
                         ) : (
                             pagedReports.map((row) => {
-                                const isMember = row.tipe_pengunjung === 'member';
+                                const isMember = row.tipe_pengunjung === 'nfc';
 
                                 const waktuMasuk = row.waktu_masuk ? new Date(row.waktu_masuk) : null;
                                 const waktuKeluar = row.waktu_keluar ? new Date(row.waktu_keluar) : null;
@@ -397,11 +376,11 @@ const Reports = () => {
                                         <td className="px-6 py-4">
                                             {isMember ? (
                                                 <span className="inline-flex items-center gap-1.5 bg-green-50 text-green-800 px-2.5 py-1 rounded-md text-xs font-semibold border border-green-100">
-                                                    <IdCard size={14} /> Member
+                                                    <IdCard size={14} /> NFC
                                                 </span>
                                             ) : (
                                                 <span className="inline-flex items-center gap-1.5 bg-gray-100 text-gray-600 px-2.5 py-1 rounded-md text-xs font-semibold border border-gray-200">
-                                                    <User size={14} /> Biasa
+                                                    <User size={14} /> Manual
                                                 </span>
                                             )}
                                         </td>
@@ -416,13 +395,13 @@ const Reports = () => {
                                                     </div>
                                                 </>
                                             ) : (
-                                                <div className="font-medium text-gray-400 italic">Pengunjung Biasa</div>
+                                                <div className="font-medium text-gray-400 italic">Pengunjung Manual</div>
                                             )}
                                         </td>
 
                                         {/* Waktu Keluar
-                                            Member   → akurat (tap NFC)
-                                            Non-member → FIFO, tidak merepresentasikan individu
+                                            NFC → akurat (tap NFC)
+                                            Manual → FIFO, tidak merepresentasikan individu
                                                          tampilkan dash + tooltip penjelasan */}
                                         <td className="px-6 py-4">
                                             {isMember ? (
@@ -445,7 +424,7 @@ const Reports = () => {
                                         </td>
 
                                         {/* Durasi
-                                            Member   → akurat
+                                            NFC → akurat
                                             Non-member → tidak bermakna (FIFO pairing) */}
                                         <td className="px-6 py-4">
                                             {isMember && row.durasi_menit != null ? (
@@ -498,9 +477,9 @@ const Reports = () => {
                                 ? 'Tidak ada data'
                                 : `Menampilkan ${indexOfFirst + 1}–${Math.min(indexOfLast, totalItems)} dari ${totalItems} entri`
                         }
-                        {reportData?.nama_event && (
+                        {reportData?.nama && (
                             <span className="ml-2 text-xs text-gray-400">
-                                — <strong className="text-gray-600">{reportData.nama_event}</strong>
+                                — <strong className="text-gray-600">{reportData.nama}</strong>
                                 {selectedDate
                                     ? ` · ${fmtTanggal(selectedDate)}`
                                     : eventTanggalRange.length > 1
@@ -588,10 +567,9 @@ const Reports = () => {
               onClose={() => setIsModalOpen(false)}
               subtitle="Laporan Kunjungan Event"
               details={[
-                ['Event', reportData?.nama_event || events.find(e => e.id === selectedEventId)?.nama_event || '—'],
+                ['Event', reportData?.nama || events.find(e => e.id === selectedEventId)?.nama || '—'],
                 ['Scope', selectedDate ? fmtTanggal(selectedDate) : eventTanggalRange.length > 1 ? `Seluruh Event (${eventTanggalRange.length} hari)` : 'Seluruh Event'],
-                ['Tipe Pengunjung', filterType],
-                ['Total Data', `${filteredReports.length} entri`],
+                      ['Total Data', `${filteredReports.length} entri`],
                 ['Format', exportFormat + ' Document'],
               ]}
               onExcel={() => { setExportFormat('Excel'); handleExport(); }}
@@ -600,8 +578,8 @@ const Reports = () => {
           </div>
           )} {/* end pengunjung tab */}
 
-          {/* ── Tab: Laporan UMKM ── */}
-          {reportTab === 'tenant' && <TenantReport events={events} isLoadingEvents={isLoadingEvents}/>}
+          {/* ── Tab: Laporan Artisan ── */}
+          {reportTab === 'artisan_report' && <ArtisanReport events={events} isLoadingEvents={isLoadingEvents}/>}
 
           {/* ── Tab: Akumulasi Event ── */}
           {reportTab === 'akumulasi' && <AccumulationReport events={events}/>}
@@ -703,32 +681,32 @@ function ExportModal({ open, onClose, subtitle, details, onExcel, onPdf }) {
     </div>
   );
 }
-// ── Tenant Report Tab ─────────────────────────────────────────────────────────
-const DEMO_TENANT_REPORT = [
-  { id:'t1', nama:'Batik Sari Rahayu',    kategori:'Kriya & Fashion', omset:4850000, komisi_persen:15, transaksi:42, event_count:3, stand_terakhir:'A-3' },
-  { id:'t2', nama:'Keripik Tempe Mrisi',  kategori:'Kuliner',         omset:2340000, komisi_persen:15, transaksi:98, event_count:2, stand_terakhir:'B-2' },
-  { id:'t3', nama:'Calung Mas',           kategori:'Seni Pertunjukan',omset:1200000, komisi_persen:10, transaksi:24, event_count:4, stand_terakhir:'C-1' },
-  { id:'t4', nama:'Tenun Lurik Cilacap',  kategori:'Kriya & Fashion', omset:3650000, komisi_persen:15, transaksi:31, event_count:2, stand_terakhir:'A-5' },
-  { id:'t5', nama:'Dawet Ayu Bu Tari',    kategori:'Kuliner',         omset:1980000, komisi_persen:12, transaksi:76, event_count:3, stand_terakhir:'B-7' },
-  { id:'t6', nama:'Anyam Bambu Banyumas', kategori:'Kriya & Fashion', omset:890000,  komisi_persen:15, transaksi:15, event_count:1, stand_terakhir:'A-2' },
+// ── Artisan Report Tab ─────────────────────────────────────────────────────────
+const DEMO_ARTISAN_REPORT = [
+  { id:'t1', nama_usaha:'Batik Sari Rahayu',    kategori:'Kriya & Fashion', omset:4850000, komisi_persen:15, transaksi:42, event_count:3, stand_terakhir:'A-3' },
+  { id:'t2', nama_usaha:'Keripik Tempe Mrisi',  kategori:'Kuliner',         omset:2340000, komisi_persen:15, transaksi:98, event_count:2, stand_terakhir:'B-2' },
+  { id:'t3', nama_usaha:'Calung Mas',           kategori:'Seni Pertunjukan',omset:1200000, komisi_persen:10, transaksi:24, event_count:4, stand_terakhir:'C-1' },
+  { id:'t4', nama_usaha:'Tenun Lurik Cilacap',  kategori:'Kriya & Fashion', omset:3650000, komisi_persen:15, transaksi:31, event_count:2, stand_terakhir:'A-5' },
+  { id:'t5', nama_usaha:'Dawet Ayu Bu Tari',    kategori:'Kuliner',         omset:1980000, komisi_persen:12, transaksi:76, event_count:3, stand_terakhir:'B-7' },
+  { id:'t6', nama_usaha:'Anyam Bambu Banyumas', kategori:'Kriya & Fashion', omset:890000,  komisi_persen:15, transaksi:15, event_count:1, stand_terakhir:'A-2' },
 ];
 const fmtRp = n => `Rp ${(n||0).toLocaleString('id-ID')}`;
 
-function TenantReport({ events = [] }) {
+function ArtisanReport({ events = [] }) {
   const [selEvent,   setSelEvent]   = React.useState('');
   const [sortBy,     setSortBy]     = React.useState('omset');
   const [search,     setSearch]     = React.useState('');
   const [showExport, setShowExport] = React.useState(false);
 
   const data = React.useMemo(() =>
-    DEMO_TENANT_REPORT
-      .filter(t => !search || t.nama.toLowerCase().includes(search.toLowerCase()))
+    DEMO_ARTISAN_REPORT
+      .filter(t => !search || t.nama_usaha.toLowerCase().includes(search.toLowerCase()))
       .sort((a, b) => {
         if (sortBy === 'omset')     return b.omset - a.omset;
         if (sortBy === 'komisi')    return (b.omset * b.komisi_persen / 100) - (a.omset * a.komisi_persen / 100);
         if (sortBy === 'transaksi') return b.transaksi - a.transaksi;
         if (sortBy === 'event')     return b.event_count - a.event_count;
-        return a.nama.localeCompare(b.nama);
+        return a.nama_usaha.localeCompare(b.nama_usaha);
       }),
     [sortBy, search]
   );
@@ -740,9 +718,9 @@ function TenantReport({ events = [] }) {
   const HDRS = ['Nama Usaha','Kategori','Stand Terakhir','Omset (Rp)','Komisi (Rp)','% Komisi','Netto (Rp)','Transaksi','Event Diikuti'];
   const makeRows = () => data.map(t => {
     const k = Math.round(t.omset * t.komisi_persen / 100);
-    return [t.nama, t.kategori, t.stand_terakhir, t.omset, k, t.komisi_persen + '%', t.omset - k, t.transaksi, t.event_count + 'x'];
+    return [t.nama_usaha, t.kategori, t.stand_terakhir, t.omset, k, t.komisi_persen + '%', t.omset - k, t.transaksi, t.event_count + 'x'];
   });
-  const makeTot = () => [['TOTAL (' + data.length + ' UMKM)', '', '', totalOmset, totalKomisi, '', totalOmset - totalKomisi, totalTrx, '']];
+  const makeTot = () => [['TOTAL (' + data.length + ' Artisan)', '', '', totalOmset, totalKomisi, '', totalOmset - totalKomisi, totalTrx, '']];
 
   return (
     <div className="space-y-4">
@@ -750,7 +728,7 @@ function TenantReport({ events = [] }) {
       {/* Summary cards */}
       <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
         {[
-          { label: 'Total Omset UMKM',   value: fmtRp(totalOmset),   cls: 'text-green-700', bg: 'bg-green-100' },
+          { label: 'Total Omset Artisan',   value: fmtRp(totalOmset),   cls: 'text-green-700', bg: 'bg-green-100' },
           { label: 'Total Komisi Masuk', value: fmtRp(totalKomisi),  cls: 'text-amber-700', bg: 'bg-amber-100' },
           { label: 'Total Transaksi',    value: totalTrx + ' trx',   cls: 'text-blue-700',  bg: 'bg-blue-100'  },
         ].map(s => (
@@ -771,7 +749,7 @@ function TenantReport({ events = [] }) {
         <select value={selEvent} onChange={e => setSelEvent(e.target.value)}
           className="px-3 py-2 border border-gray-200 rounded-xl text-sm text-gray-600 bg-gray-50 focus:outline-none focus:border-green-400">
           <option value="">Semua Event</option>
-          {events.map(e => <option key={e.id} value={e.id}>{e.nama_event || e.nama || 'Event'}</option>)}
+          {events.map(e => <option key={e.id} value={e.id}>{e.nama || 'Event'}</option>)}
         </select>
         <input value={search} onChange={e => setSearch(e.target.value)} placeholder="Cari nama usaha..."
           className="px-3 py-2 border border-gray-200 rounded-xl text-sm focus:outline-none focus:border-green-400 w-48" />
@@ -789,13 +767,13 @@ function TenantReport({ events = [] }) {
             className="flex items-center gap-1.5 px-3 py-2 bg-green-50 text-green-700 hover:bg-green-100 border border-green-200 rounded-xl text-xs font-semibold transition whitespace-nowrap">
             <FileSpreadsheet size={13} /> Export Excel
           </button>
-          <button onClick={() => exportPDF('Laporan UMKM – Peken Banyumasan', HDRS, makeRows(), makeTot())}
+          <button onClick={() => exportPDF('Laporan Artisan – Peken Banyumasan', HDRS, makeRows(), makeTot())}
             className="flex items-center gap-1.5 px-3 py-2 bg-red-50 text-red-700 hover:bg-red-100 border border-red-200 rounded-xl text-xs font-semibold transition whitespace-nowrap">
             <FileText size={13} /> Export PDF
           </button>
         </div>
         <p className="w-full text-[11px] text-gray-400 mt-1 flex items-center gap-1">
-          <Info size={11}/> Export mengikuti filter aktif — cari nama UMKM tertentu untuk export per-UMKM
+          <Info size={11}/> Export mengikuti filter aktif — cari nama Artisan tertentu untuk export per-Artisan
         </p>
       </div>
 
@@ -804,7 +782,7 @@ function TenantReport({ events = [] }) {
         <table className="w-full text-left text-sm min-w-[700px]">
           <thead>
             <tr className="border-b border-gray-100 bg-gray-50/80">
-              {['UMKM', 'Kategori', 'Omset', 'Komisi', 'Netto', 'Trx', 'Event'].map(h => (
+              {['Artisan', 'Kategori', 'Omset', 'Komisi', 'Netto', 'Trx', 'Event'].map(h => (
                 <th key={h} className="px-4 py-3 text-xs font-bold text-gray-400 uppercase tracking-wider">{h}</th>
               ))}
             </tr>
@@ -815,7 +793,7 @@ function TenantReport({ events = [] }) {
               return (
                 <tr key={t.id} className="border-b border-gray-50 hover:bg-gray-50/50 transition">
                   <td className="px-4 py-3">
-                    <p className="font-semibold text-gray-800">{t.nama}</p>
+                    <p className="font-semibold text-gray-800">{t.nama_usaha}</p>
                     <p className="text-xs text-gray-400">{t.stand_terakhir}</p>
                   </td>
                   <td className="px-4 py-3 text-xs text-gray-500">{t.kategori}</td>
@@ -836,7 +814,7 @@ function TenantReport({ events = [] }) {
           </tbody>
           <tfoot>
             <tr className="bg-gray-50 border-t border-gray-200">
-              <td className="px-4 py-3 font-bold text-gray-600 text-sm" colSpan={2}>Total ({data.length} UMKM)</td>
+              <td className="px-4 py-3 font-bold text-gray-600 text-sm" colSpan={2}>Total ({data.length} Artisan)</td>
               <td className="px-4 py-3 font-bold text-gray-800">{fmtRp(totalOmset)}</td>
               <td className="px-4 py-3 font-bold text-red-500">−{fmtRp(totalKomisi)}</td>
               <td className="px-4 py-3 font-bold text-green-700">{fmtRp(totalOmset - totalKomisi)}</td>
@@ -850,16 +828,16 @@ function TenantReport({ events = [] }) {
       <ExportModal
         open={showExport}
         onClose={() => setShowExport(false)}
-        subtitle="Laporan UMKM – Peken Banyumasan"
+        subtitle="Laporan Artisan – Peken Banyumasan"
         details={[
-          ['Total UMKM',      `${data.length} usaha`],
-          ['Filter Event',    selEvent ? (events.find(e => e.id === selEvent)?.nama_event || selEvent) : 'Semua Event'],
+          ['Total Artisan',      `${data.length} usaha`],
+          ['Filter Event',    selEvent ? (events.find(e => e.id === selEvent)?.nama || selEvent) : 'Semua Event'],
           ['Filter Nama',     search || '—'],
           ['Total Omset',     `Rp ${totalOmset.toLocaleString('id-ID')}`],
           ['Total Transaksi', `${totalTrx} trx`],
         ]}
-        onExcel={() => exportExcel('laporan_umkm', HDRS, makeRows())}
-        onPdf={()   => exportPDF('Laporan UMKM – Peken Banyumasan', HDRS, makeRows(), makeTot())}
+        onExcel={() => exportExcel('laporan_artisan', HDRS, makeRows())}
+        onPdf={()   => exportPDF('Laporan Artisan – Peken Banyumasan', HDRS, makeRows(), makeTot())}
       />
     </div>
   );
@@ -867,9 +845,9 @@ function TenantReport({ events = [] }) {
 
 // ── Accumulation Report Tab ───────────────────────────────────────────────────
 const DEMO_ACCUM = [
-  { id:'e1', nama:'Festival Budaya Banyumasan 2025', tanggal:'2025-05-17', status:'mendatang',  pengunjung:0,    member_hadir:0,  umkm_count:8,  kreator_count:12, omset_umkm:0,        komisi:0 },
-  { id:'e2', nama:'Workshop Batik & Tenun Nusantara', tanggal:'2025-04-26', status:'mendatang', pengunjung:0,    member_hadir:0,  umkm_count:3,  kreator_count:5,  omset_umkm:0,        komisi:0 },
-  { id:'e4', nama:'Peken Banyumasan #12',             tanggal:'2025-03-20', status:'selesai',   pengunjung:1247, member_hadir:89, umkm_count:24, kreator_count:18, omset_umkm:28450000, komisi:4267500 },
+  { id:'e1', nama:'Festival Budaya Banyumasan 2025', tanggal:'2025-05-17', status:'mendatang',  pengunjung:0,    artisan_count:8,  kolaborator_count:12, omset_artisan:0,        komisi:0 },
+  { id:'e2', nama:'Workshop Batik & Tenun Nusantara', tanggal:'2025-04-26', status:'mendatang', pengunjung:0,    artisan_count:3,  kolaborator_count:5,  omset_artisan:0,        komisi:0 },
+  { id:'e4', nama:'Peken Banyumasan #12',             tanggal:'2025-03-20', status:'selesai',   pengunjung:1247, artisan_count:24, kolaborator_count:18, omset_artisan:28450000, komisi:4267500 },
 ];
 
 function AccumulationReport({ events = [] }) {
@@ -877,13 +855,13 @@ function AccumulationReport({ events = [] }) {
   const data    = DEMO_ACCUM;
   const selesai = data.filter(e => e.status === 'selesai');
   const totP    = selesai.reduce((s,e) => s + e.pengunjung, 0);
-  const totO    = selesai.reduce((s,e) => s + e.omset_umkm, 0);
+  const totO    = selesai.reduce((s,e) => s + e.omset_artisan, 0);
   const totK    = selesai.reduce((s,e) => s + e.komisi, 0);
 
-  const HDRS = ['Nama Event','Tanggal','Status','Pengunjung','Kreator Hadir','UMKM','Omset UMKM (Rp)','Komisi (Rp)'];
-  const ROWS = data.map(e => [e.nama, new Date(e.tanggal).toLocaleDateString('id-ID'), e.status, e.pengunjung||0, e.kreator_count, e.umkm_count, e.omset_umkm||0, e.komisi||0]);
+  const HDRS = ['Nama Event','Tanggal','Status','Pengunjung','Kolaborator Hadir','Artisan','Omset Artisan (Rp)','Komisi (Rp)'];
+  const ROWS = data.map(e => [e.nama, new Date(e.tanggal).toLocaleDateString('id-ID'), e.status, e.pengunjung||0, e.kolaborator_count, e.artisan_count, e.omset_artisan||0, e.komisi||0]);
   const TOT  = selesai.length > 0
-    ? [['TOTAL (selesai)','','', totP, selesai.reduce((s,e)=>s+e.kreator_count,0), selesai.reduce((s,e)=>s+e.umkm_count,0), totO, totK]]
+    ? [['TOTAL (selesai)','','', totP, selesai.reduce((s,e)=>s+e.kolaborator_count,0), selesai.reduce((s,e)=>s+e.artisan_count,0), totO, totK]]
     : [];
 
   return (
@@ -893,7 +871,7 @@ function AccumulationReport({ events = [] }) {
         {[
           { label:'Event Selesai',     value: selesai.length + ' event', cls:'text-gray-700' },
           { label:'Total Pengunjung',  value: totP.toLocaleString('id-ID'), cls:'text-green-700' },
-          { label:'Total Omset UMKM',  value: fmtRp(totO), cls:'text-amber-700' },
+          { label:'Total Omset Artisan',  value: fmtRp(totO), cls:'text-amber-700' },
           { label:'Komisi Terkumpul',  value: fmtRp(totK), cls:'text-blue-700' },
         ].map(s => (
           <div key={s.label} className="bg-white rounded-2xl border border-gray-100 shadow-sm p-5">
@@ -926,7 +904,7 @@ function AccumulationReport({ events = [] }) {
         </div>
         <table className="w-full text-left text-sm min-w-[800px]">
           <thead><tr className="border-b border-gray-100 bg-gray-50/80">
-            {['Event','Tanggal','Pengunjung','Kreator','UMKM','Omset UMKM','Komisi','Status'].map(h => (
+            {['Event','Tanggal','Pengunjung','Kolaborator','Artisan','Omset Artisan','Komisi','Status'].map(h => (
               <th key={h} className="px-4 py-3 text-xs font-bold text-gray-400 uppercase tracking-wider">{h}</th>
             ))}
           </tr></thead>
@@ -936,9 +914,9 @@ function AccumulationReport({ events = [] }) {
                 <td className="px-4 py-3 font-semibold text-gray-800 max-w-[180px]"><p className="truncate">{e.nama}</p></td>
                 <td className="px-4 py-3 text-xs text-gray-500 whitespace-nowrap">{new Date(e.tanggal).toLocaleDateString('id-ID',{day:'numeric',month:'short',year:'numeric'})}</td>
                 <td className="px-4 py-3 font-semibold text-gray-800">{e.pengunjung ? e.pengunjung.toLocaleString('id-ID') : '—'}</td>
-                <td className="px-4 py-3 text-gray-600">{e.kreator_count}</td>
-                <td className="px-4 py-3 text-gray-600">{e.umkm_count}</td>
-                <td className="px-4 py-3 text-gray-700">{e.omset_umkm ? fmtRp(e.omset_umkm) : '—'}</td>
+                <td className="px-4 py-3 text-gray-600">{e.kolaborator_count}</td>
+                <td className="px-4 py-3 text-gray-600">{e.artisan_count}</td>
+                <td className="px-4 py-3 text-gray-700">{e.omset_artisan ? fmtRp(e.omset_artisan) : '—'}</td>
                 <td className="px-4 py-3 text-green-700 font-medium">{e.komisi ? fmtRp(e.komisi) : '—'}</td>
                 <td className="px-4 py-3">
                   <span className={`px-2 py-0.5 rounded-full text-[10px] font-bold ${e.status==='selesai' ? 'bg-green-50 text-green-700' : 'bg-yellow-50 text-yellow-700'}`}>
@@ -952,8 +930,8 @@ function AccumulationReport({ events = [] }) {
             <tfoot><tr className="bg-gray-50 border-t border-gray-200">
               <td className="px-4 py-3 font-bold text-gray-600 text-sm" colSpan={2}>Total (selesai)</td>
               <td className="px-4 py-3 font-bold text-gray-800">{totP.toLocaleString('id-ID')}</td>
-              <td className="px-4 py-3 font-bold text-gray-800">{selesai.reduce((s,e)=>s+e.kreator_count,0)}</td>
-              <td className="px-4 py-3 font-bold text-gray-800">{selesai.reduce((s,e)=>s+e.umkm_count,0)}</td>
+              <td className="px-4 py-3 font-bold text-gray-800">{selesai.reduce((s,e)=>s+e.kolaborator_count,0)}</td>
+              <td className="px-4 py-3 font-bold text-gray-800">{selesai.reduce((s,e)=>s+e.artisan_count,0)}</td>
               <td className="px-4 py-3 font-bold text-amber-700">{fmtRp(totO)}</td>
               <td className="px-4 py-3 font-bold text-green-700">{fmtRp(totK)}</td>
               <td/>
@@ -970,7 +948,7 @@ function AccumulationReport({ events = [] }) {
           ['Total Event', `${data.length} event`],
           ['Event Selesai', `${selesai.length} event`],
           ['Total Pengunjung', totP.toLocaleString('id-ID')],
-          ['Total Omset UMKM', fmtRp(totO)],
+          ['Total Omset Artisan', fmtRp(totO)],
           ['Total Komisi', fmtRp(totK)],
         ]}
         onExcel={() => exportExcel('akumulasi_event', HDRS, ROWS)}

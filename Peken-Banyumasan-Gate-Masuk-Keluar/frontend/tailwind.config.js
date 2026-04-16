@@ -7,7 +7,7 @@ export default {
     theme: {
         extend: {
             fontFamily: {
-                sans: ['Plus Jakarta Sans', 'system-ui', 'sans-serif'],
+                sans: ['DM Sans', 'system-ui', 'sans-serif'],
                 serif: ['Lora', 'Georgia', 'serif'],
                 dm: ['DM Sans', 'system-ui', 'sans-serif'],
             },

@@ -4,8 +4,8 @@ import { HashRouter as Router, Routes, Route, Navigate } from 'react-router-dom'
 import AdminLayout from './layouts/AdminLayout';
 import Login from './pages/Login';
 import Dashboard from './pages/Dashboard';
-import Members from './pages/Members';
-import Tenants from './pages/Tenants';
+import Kolaborator from './pages/Kolaborator';
+import Artisan from './pages/Artisan';
 import Reports from './pages/Reports';
 import Events from './pages/Events';
 import EventDetail from './pages/EventDetail';
@@ -56,10 +56,10 @@ function App() {
                     }>
                         <Route index element={<Dashboard />} />
                         <Route path="settings" element={<Settings />} />
-                        <Route path="members"  element={<AdminRoute><Members /></AdminRoute>} />
-                        <Route path="tenants"  element={<AdminRoute><Tenants /></AdminRoute>} />
-                        <Route path="reports"  element={<AdminRoute><Reports /></AdminRoute>} />
-                        <Route path="events"   element={<AdminRoute><Events /></AdminRoute>} />
+                        <Route path="kolaborator" element={<AdminRoute><Kolaborator /></AdminRoute>} />
+                        <Route path="artisan" element={<AdminRoute><Artisan /></AdminRoute>} />
+                        <Route path="reports" element={<AdminRoute><Reports /></AdminRoute>} />
+                        <Route path="events" element={<AdminRoute><Events /></AdminRoute>} />
                         <Route path="events/:id" element={<AdminRoute><EventDetail /></AdminRoute>} />
                     </Route>
 

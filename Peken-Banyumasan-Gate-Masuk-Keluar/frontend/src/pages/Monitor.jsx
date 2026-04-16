@@ -385,7 +385,7 @@ const BASE = {
         position: 'fixed', inset: 0,
         display: 'flex', flexDirection: 'column',
         overflow: 'hidden', userSelect: 'none', WebkitUserSelect: 'none',
-        fontFamily: 'Plus Jakarta Sans, sans-serif',
+        fontFamily: 'DM Sans, sans-serif',
         transition: 'background 2s ease',
     },
     bgDot: {
@@ -571,7 +571,7 @@ const GLOBAL_STYLES = `
     
 
     .mon * { box-sizing: border-box; }
-    .mon   { font-family: 'Plus Jakarta Sans', sans-serif; }
+    .mon   { font-family: 'DM Sans', sans-serif; }
 
     @keyframes spin      { to { transform: rotate(360deg); } }
     @keyframes pulseDot  { 0%,100%{opacity:1;transform:scale(1)} 50%{opacity:.5;transform:scale(.85)} }

@@ -134,7 +134,7 @@ const Settings = () => {
             localStorage.setItem('user', JSON.stringify(newUser));
             setUserData(newUser);
             // Broadcast ke AdminLayout agar nama di sidebar ikut berubah
-            window.dispatchEvent(new CustomEvent('pekan_user_update', { detail: newUser }));
+            window.dispatchEvent(new CustomEvent('peken_user_update', { detail: newUser }));
             toast.success('Nama berhasil diperbarui');
         } catch (error) {
             toast.error(error.message || 'Gagal memperbarui nama');

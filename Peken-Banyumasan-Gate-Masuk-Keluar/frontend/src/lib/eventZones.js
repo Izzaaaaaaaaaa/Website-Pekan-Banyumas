@@ -187,12 +187,12 @@ export function getEventZones(eventId) {
 }
 
 /**
- * Sync occupied stands from the list of assigned tenants.
- * Called whenever a tenant is assigned or removed.
+ * Sync occupied stands from the list of assigned artisans.
+ * Called whenever a artisan is assigned or removed.
  */
-export function syncOccupiedFromTenants(eventId, tenants) {
+export function syncOccupiedFromArtisans(eventId, artisans) {
   const occupiedIds = new Set(
-    tenants.map(t => t.posisi_event).filter(Boolean)
+    artisans.map(t => t.posisi_event).filter(Boolean)
   );
   saveOccupied(eventId, occupiedIds);
   return getEventZones(eventId);

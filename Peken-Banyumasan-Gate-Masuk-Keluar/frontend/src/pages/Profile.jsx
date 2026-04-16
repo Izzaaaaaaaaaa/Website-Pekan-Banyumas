@@ -15,7 +15,7 @@ const normalizePublicUrl = (value) => {
 const resolvePublicEventUrl = () => {
     return normalizePublicUrl(
         import.meta.env.VITE_PUBLIC_EVENT_URL ||
-        import.meta.env.VITE_UMKM_PUBLIC_URL ||
+        import.meta.env.VITE_Artisan_PUBLIC_URL ||
         '/'
     );
 };
@@ -58,7 +58,7 @@ export default function Profile() {
                 }} />
                 <h1 style={{ margin: '0 0 8px', fontSize: '24px', lineHeight: 1.2 }}>Mengalihkan ke halaman publik event</h1>
                 <p style={{ margin: '0 0 20px', color: '#6b7280', lineHeight: 1.7 }}>
-                    Anda akan langsung diarahkan ke halaman publik UMKM dan event Peken Banyumasan.
+                    Anda akan langsung diarahkan ke halaman publik Artisan dan event Peken Banyumasan.
                 </p>
                 <a
                     href={targetUrl}

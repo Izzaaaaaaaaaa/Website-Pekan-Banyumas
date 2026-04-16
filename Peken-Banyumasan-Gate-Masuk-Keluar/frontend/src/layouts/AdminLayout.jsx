@@ -2,7 +2,7 @@
 // CHANGELOG:
 // [NEW] Link "Pengaturan Akun" di sidebar → /settings (semua role)
 // [NEW] Avatar user di header bisa diklik → /settings
-// [NEW] Listen CustomEvent 'pekan_user_update' dari Settings.jsx
+// [NEW] Listen CustomEvent 'peken_user_update' dari Settings.jsx
 //       agar nama di sidebar/header langsung berubah tanpa reload
 import React, { useState, useEffect, useMemo } from 'react';
 import logoImg from '../assets/logo.png';
@@ -35,20 +35,20 @@ const AdminLayout = () => {
 
     const [activeEventBadge, setActiveEventBadge] = useState(() => {
         try {
-            const stored = localStorage.getItem('pekan_active_event');
+            const stored = localStorage.getItem('peken_active_event');
             return stored ? JSON.parse(stored) : null;
         } catch { return null; }
     });
 
-    const [pendingUmkmCount, setPendingUmkmCount] = useState(() => {
+    const [pendingArtisanCount, setPendingUmkmCount] = useState(() => {
         try {
-            const stored = localStorage.getItem('pekan_pending_umkm');
+            const stored = localStorage.getItem('peken_pending_artisan');
             return stored ? parseInt(stored, 10) : 0;
         } catch { return 0; }
     });
 
     const publicCompanyProfileUrl = useMemo(() => normalizeExternalUrl(
-        import.meta.env.VITE_PUBLIC_EVENT_URL || import.meta.env.VITE_UMKM_PUBLIC_URL || '/',
+        import.meta.env.VITE_PUBLIC_EVENT_URL || import.meta.env.VITE_Artisan_PUBLIC_URL || '/',
         '/'
     ), []);
 
@@ -56,19 +56,19 @@ const AdminLayout = () => {
     useEffect(() => {
         const handler = () => {
             try {
-                const stored = localStorage.getItem('pekan_active_event');
+                const stored = localStorage.getItem('peken_active_event');
                 setActiveEventBadge(stored ? JSON.parse(stored) : null);
             } catch { setActiveEventBadge(null); }
         };
-        window.addEventListener('pekan_event_update', handler);
-        return () => window.removeEventListener('pekan_event_update', handler);
+        window.addEventListener('peken_event_update', handler);
+        return () => window.removeEventListener('peken_event_update', handler);
     }, []);
 
-    // Sync pending UMKM count dari Tenants page
+    // Sync pending Artisan count dari Tenants page
     useEffect(() => {
         const handler = (e) => setPendingUmkmCount(e?.detail?.count ?? 0);
-        window.addEventListener('pekan_pending_umkm_update', handler);
-        return () => window.removeEventListener('pekan_pending_umkm_update', handler);
+        window.addEventListener('peken_pending_artisan_update', handler);
+        return () => window.removeEventListener('peken_pending_artisan_update', handler);
     }, []);
 
     // Load user dari localStorage
@@ -84,8 +84,8 @@ const AdminLayout = () => {
                 setUserData(e.detail);
             }
         };
-        window.addEventListener('pekan_user_update', handler);
-        return () => window.removeEventListener('pekan_user_update', handler);
+        window.addEventListener('peken_user_update', handler);
+        return () => window.removeEventListener('peken_user_update', handler);
     }, []);
 
     const handleLogout = () => setShowLogoutConfirm(true);
@@ -98,8 +98,8 @@ const AdminLayout = () => {
 
     const allNavItems = [
         { path: '/',         label: 'Dashboard',       icon: PieChart,  roles: ['admin', 'petugas'] },
-        { path: '/members',  label: 'Kreator', icon: Users,     roles: ['admin'] },
-        { path: '/tenants',  label: 'Tenant UMKM',     icon: Store,     roles: ['admin'], badge: pendingUmkmCount },
+        { path: '/kolaborator', label: 'Kolaborator', icon: Users,     roles: ['admin'] },
+        { path: '/artisan',  label: 'Artisan',     icon: Store,     roles: ['admin'], badge: pendingArtisanCount },
         { path: '/reports',  label: 'Laporan',         icon: FileText,  roles: ['admin'] },
         { path: '/events',   label: 'Kelola Event',    icon: Calendar,  roles: ['admin'] },
         { path: '/settings', label: 'Pengaturan Akun', icon: Settings,  roles: ['admin', 'petugas'] },
@@ -127,13 +127,13 @@ const AdminLayout = () => {
     const getPageInfo = () => {
         switch (location.pathname) {
             case '/':         return { title: 'Dashboard Real-time',  subtitle: 'Pantau pergerakan pengunjung event hari ini' };
-            case '/members':  return { title: 'Kreator',      subtitle: 'Kelola dan verifikasi pegiat kebudayaan Peken Banyumasan' };
-            case '/tenants':  return { title: 'Tenant & Revenue Sharing', subtitle: 'Kelola UMKM, set posisi, persentase komisi, dan monitoring revenue' };
+            case '/kolaborator':  return { title: 'Kolaborator',      subtitle: 'Kelola dan verifikasi kolaborator kreatif Peken Banyumasan' };
+            case '/artisan':  return { title: 'Artisan & Revenue Sharing', subtitle: 'Kelola artisan, set posisi, persentase komisi, dan monitoring revenue' };
             case '/reports':  return { title: 'Laporan Kunjungan',    subtitle: 'Rekapitulasi data pengunjung selama event' };
             case '/events':   return { title: 'Kelola Event',         subtitle: 'Buat, aktifkan, dan nonaktifkan event Peken Banyumasan' };
             case '/settings': return { title: 'Pengaturan Akun',      subtitle: 'Kelola nama tampilan dan password akun Anda' };
             default:
-                if (location.pathname.startsWith('/events/')) return { title: 'Detail Event', subtitle: 'Kelola relasi kreator & UMKM di event ini' };
+                if (location.pathname.startsWith('/events/')) return { title: 'Detail Event', subtitle: 'Kelola relasi kolaborator & artisan di event ini' };
                 return { title: 'Sistem Admin',         subtitle: 'Peken Banyumasan' };
         }
     };
@@ -174,7 +174,7 @@ const AdminLayout = () => {
                     <div className="flex items-center gap-3">
                         <img src={logoImg} alt="Logo Peken Banyumasan" className="w-10 h-10 rounded-lg object-cover" />
                         <div>
-                            <h2 className="text-lg font-bold text-gray-800 leading-tight">Pekan</h2>
+                            <h2 className="text-lg font-bold text-gray-800 leading-tight">Peken</h2>
                             <p className="text-xs text-gray-500 font-medium">Banyumasan</p>
                         </div>
                     </div>
@@ -286,10 +286,10 @@ const AdminLayout = () => {
                                         {activeEventBadge.nama}
                                     </span>
                                 )}
-                                {location.pathname === '/tenants' && pendingUmkmCount > 0 && (
+                                {location.pathname === '/artisan' && pendingArtisanCount > 0 && (
                                     <span className="hidden sm:inline-flex items-center gap-1.5 bg-amber-50 border border-amber-200 text-amber-700 text-xs font-semibold px-2.5 py-1 rounded-full">
                                         <span className="w-1.5 h-1.5 rounded-full bg-amber-500 shrink-0"></span>
-                                        {pendingUmkmCount} menunggu persetujuan
+                                        {pendingArtisanCount} menunggu persetujuan
                                     </span>
                                 )}
                             </div>

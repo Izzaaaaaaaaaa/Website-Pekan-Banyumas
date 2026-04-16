@@ -49,7 +49,7 @@ const Login = () => {
                 <div className="relative z-10 flex items-center gap-3">
                     <img src={logoImg} alt="Logo Peken Banyumasan" className="w-12 h-12 rounded-xl object-cover shadow-lg" />
                     <div>
-                        <h1 className="text-2xl font-bold text-white tracking-wide"> Banyumasan</h1>
+                        <h1 className="text-2xl font-bold text-white tracking-wide"> Peken Banyumasan</h1>
                         <p className="text-green-200 text-sm font-medium">Sistem Manajemen Event</p>
                     </div>
                 </div>
@@ -57,7 +57,7 @@ const Login = () => {
                 <div className="relative z-10 max-w-md">
                     <h2 className="text-4xl font-bold text-white mb-6 leading-tight">Kelola pengunjung event dengan lebih cerdas.</h2>
                     <p className="text-green-100 text-lg leading-relaxed">
-                        Pantau data real-time, kelola member NFC, dan optimalkan operasional event Peken Banyumasan dalam satu platform terintegrasi.
+                        Pantau data real-time, kelola pengunjung dan optimalkan operasional event Peken Banyumasan dalam satu platform terintegrasi.
                     </p>
                 </div>
 
@@ -101,7 +101,7 @@ const Login = () => {
                                 <input
                                     type="email" name="email" required
                                     value={formData.email} onChange={handleChange}
-                                    placeholder="admin@Pekanbanyumas.com"
+                                    placeholder="admin@Pekenbanyumas.com"
                                     className="w-full pl-11 pr-4 py-3 bg-white border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-green-600 transition shadow-sm text-sm"
                                 />
                             </div>
