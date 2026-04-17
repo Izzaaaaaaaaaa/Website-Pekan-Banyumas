@@ -9,7 +9,7 @@ import Register  from './pages/auth/Register';
 import Dashboard from './pages/Dashboard';
 import Profil    from './pages/Profil';
 import Portofolio from './pages/Portofolio';
-import Aktivitas from './pages/Aktivitas';
+import Story     from './pages/Story';
 import Event     from './pages/Event';
 import Notifikasi from './pages/Notifikasi';
 import Pengaturan from './pages/Pengaturan';
@@ -29,7 +29,7 @@ export default function App() {
             <Route index                  element={<Dashboard/>}/>
             <Route path="profil"          element={<Profil/>}/>
             <Route path="portofolio"      element={<Portofolio/>}/>
-            <Route path="aktivitas"           element={<Aktivitas/>}/>
+            <Route path="story"           element={<Story/>}/>
             <Route path="event"           element={<Event/>}/>
             <Route path="notifikasi"      element={<Notifikasi/>}/>
             <Route path="pengaturan"      element={<Pengaturan/>}/>

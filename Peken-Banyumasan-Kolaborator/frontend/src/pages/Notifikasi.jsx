@@ -4,10 +4,10 @@ import { getNotifs, markRead, markAllRead } from '../lib/notifications';
 import api from '../services/api';
 
 const TYPE_ICON = {
-  kolaborator_approved:     { icon:Users,    cls:'bg-green-50 text-green-600'  },
+  member_approved:     { icon:Users,    cls:'bg-green-50 text-green-600'  },
   event_assigned:      { icon:Calendar, cls:'bg-brand-50 text-brand-600'  },
   event_status_change: { icon:Bell,     cls:'bg-blue-50 text-blue-600'    },
-  aktivitas_deleted:       { icon:Trash2,   cls:'bg-red-50 text-red-500'      },
+  story_deleted:       { icon:Trash2,   cls:'bg-red-50 text-red-500'      },
   event:               { icon:Calendar, cls:'bg-brand-50 text-brand-600'  },
   system:              { icon:Info,     cls:'bg-earth-100 text-earth-600' },
 };
@@ -27,7 +27,7 @@ export default function Notifikasi() {
   const [filter, setFilter] = useState('semua'); // semua | belum | sudah
 
   const refresh = () => {
-    const local = getNotifs('kolaborator');
+    const local = getNotifs('member');
     // Merge with dummy if local is empty (first visit)
     if (local.length === 0) {
       api.notifikasi.list().then(r => {
@@ -48,8 +48,8 @@ export default function Notifikasi() {
     return () => window.removeEventListener('pekan_notif_update', refresh);
   }, []);
 
-  const baca = (id) => { markRead('kolaborator', id); refresh(); };
-  const bacaSemua = () => { markAllRead('kolaborator'); refresh(); };
+  const baca = (id) => { markRead('member', id); refresh(); };
+  const bacaSemua = () => { markAllRead('member'); refresh(); };
   const unread = list.filter(n => !n.read && !n.dibaca).length;
 
   const filtered = list.filter(n => {
