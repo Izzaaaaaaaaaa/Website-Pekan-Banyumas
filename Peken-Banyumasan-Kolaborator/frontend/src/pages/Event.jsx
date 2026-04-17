@@ -3,6 +3,7 @@ import React, { useState, useEffect } from 'react';
 import { Calendar, MapPin, CheckCircle, Clock, Loader2, Users, Tag, X, Image, Mic2, Store } from 'lucide-react';
 import api from '../services/api';
 import { useToast } from '../components/Toast';
+import { triggerKolaboratorEventRegister } from '../lib/notifications';
 
 const STATUS_CLS = {
   upcoming:    'bg-brand-50 text-brand-700 border-brand-200',
@@ -231,10 +232,8 @@ export default function Event() {
       toast.success(`Berhasil mendaftar sebagai ${peran}!`);
       try {
         const user = JSON.parse(localStorage.getItem('user') || '{}');
-        import('../lib/notifications').then(({ triggerKolaboratorEventRegister }) => {
-          const ev = list.find(e => e.id === eventId);
-          if (ev) triggerKolaboratorEventRegister(user.nama || 'Kolaborator', ev.nama);
-        });
+        const ev = list.find(e => e.id === eventId);
+        if (ev) triggerKolaboratorEventRegister(user.nama || 'Kolaborator', ev.nama);
       } catch {}
     } catch { toast.error('Gagal mendaftar'); }
     finally { setLoadingId(null); }
