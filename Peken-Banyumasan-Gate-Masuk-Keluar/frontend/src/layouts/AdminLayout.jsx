@@ -2,8 +2,9 @@
 // CHANGELOG:
 // [NEW] Link "Pengaturan Akun" di sidebar → /settings (semua role)
 // [NEW] Avatar user di header bisa diklik → /settings
-// [NEW] Listen CustomEvent 'peken_user_update' dari Settings.jsx
-//       agar nama di sidebar/header langsung berubah tanpa reload
+// [NEW] Listen CustomEvent 'pekan_user_update' dari Settings.jsx
+// agar nama di sidebar/header langsung berubah tanpa reload
+
 import React, { useState, useEffect, useMemo } from 'react';
 import logoImg from '../assets/logo.png';
 import { Outlet, Link, useLocation, useNavigate } from 'react-router-dom';
