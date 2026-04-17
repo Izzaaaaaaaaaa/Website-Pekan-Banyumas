@@ -12,7 +12,7 @@ export const currentUser = {
   status: 'aktif',
   tanggal_daftar: '2024-03-15',
   total_karya: 18,
-  total_aktivitas: 24,
+  total_story: 24,
   total_event: 6,
 };
 
@@ -26,12 +26,12 @@ export const dummyPortofolio = [
   { id:'p1', judul:'Batik Sekar Jagad Kontemporer', subsektor:'Kriya', deskripsi:'Karya batik tulis dengan motif sekar jagad yang dipadukan dengan warna-warna natural dari tumbuhan lokal.', tahun:2024, gambar:null, featured:true },
   { id:'p2', judul:'Koleksi Tenun Banyumas Vol.3', subsektor:'Fashion', deskripsi:'Tenun lurik dengan motif diagonal hasil kolaborasi dengan pengrajin dari Cilacap.', tahun:2024, gambar:null, featured:false },
   { id:'p3', judul:'Instalasi Bambu Gedek', subsektor:'Kriya', deskripsi:'Instalasi seni dari bambu gedek dengan pola anyaman yang terinspirasi ornamen candi.', tahun:2023, gambar:null, featured:false },
-  { id:'p4', judul:'Kain Jumputan Banyumasan Fusion', subsektor:'Fashion', deskripsi:'Eksplorasi teknik shibori Jepang pada kain katun lokal dengan pewarna alam.', tahun:2023, gambar:null, featured:false },
+  { id:'p4', judul:'Kain Jumputan Pekanbaru Fusion', subsektor:'Fashion', deskripsi:'Eksplorasi teknik shibori Jepang pada kain katun lokal dengan pewarna alam.', tahun:2023, gambar:null, featured:false },
   { id:'p5', judul:'Lukisan Wayang Kontemporer', subsektor:'Seni Rupa', deskripsi:'Interpretasi ulang tokoh wayang Arjuna dalam gaya lukisan ekspresionistik.', tahun:2022, gambar:null, featured:false },
   { id:'p6', judul:'Aksesori Kayu Jati Minimalis', subsektor:'Kriya', deskripsi:'Rangkaian aksesori dari kayu jati sisa produksi dengan finishing natural oil.', tahun:2022, gambar:null, featured:false },
 ];
 
-export const dummyAktivitas = [
+export const dummyStory = [
   { id:'s1', konten:'Proses pembuatan batik tulis memang panjang, tapi setiap tetes malam di atas kain adalah bentuk meditasi bagi saya. Hari ini mengerjakan pesanan dari Jakarta — motif kawung dengan sentuhan warna indigo tua. 🌿', created_at:'2025-04-10', tags:['Kriya','Batik'], like_count:34 },
   { id:'s2', konten:'Workshop batik shibori bersama 15 siswa SMA kemarin luar biasa! Mereka sangat antusias belajar teknik ikat-celup. Senang sekali bisa berbagi pengetahuan kerajinan leluhur kepada generasi muda.', created_at:'2025-04-07', tags:['Kriya','Workshop'], like_count:61 },
   { id:'s3', konten:'Bahan-bahan alami untuk pewarna: daun indigo, kulit kayu mahoni, dan buah mangrove. Sudah seminggu mengeksplorasi campuran baru. Hasilnya... tunggu karya terbaru saya di galeri bulan depan! 🎨', created_at:'2025-04-02', tags:['Kriya','Riset'], like_count:45 },
@@ -48,12 +48,12 @@ export const dummyEvents = [
     status:'upcoming',                   // upcoming | berlangsung | selesai
     terdaftar:true, peran:'performer', assigned_by:'admin',
     deskripsi:'Festival tahunan menampilkan seni, kuliner, dan kerajinan khas Banyumas.',
-    konten_lengkap:'Festival Budaya Banyumasan menghadirkan lebih dari 80 penampil dan 50 stand Artisan dari seluruh eks-Karesidenan Banyumas.',
+    konten_lengkap:'Festival Budaya Banyumasan menghadirkan lebih dari 80 penampil dan 50 stand UMKM dari seluruh eks-Karesidenan Banyumas.',
     kapasitas:200, peserta_count:34,
     subsektor:['Kriya','Musik','Kuliner'],
     banner_url: null,
     lineup:[ {id:'m1', nama:'Sari Dewi'}, {id:'m2', nama:'Ahmad Fauzi'} ],
-    artisan:[ {id:'t1', nama_usaha:'Batik Sari Rahayu', kategori:'Kriya & Fashion'} ],
+    umkm:[ {id:'t1', nama_usaha:'Batik Sari Rahayu', kategori:'Kriya & Fashion'} ],
     galeri:[],
   },
   {
@@ -63,11 +63,11 @@ export const dummyEvents = [
     status:'upcoming',
     terdaftar:true, peran:'panitia', assigned_by:'admin',
     deskripsi:'Pelatihan intensif 2 hari teknik batik tulis dan tenun lurik.',
-    konten_lengkap:'Workshop ini dirancang untuk kolaborator yang ingin memperdalam teknik batik tulis dan tenun.',
+    konten_lengkap:'Workshop ini dirancang untuk kreator yang ingin memperdalam teknik batik tulis dan tenun.',
     kapasitas:30, peserta_count:18,
     subsektor:['Kriya','Fashion'],
     banner_url: null,
-    lineup:[], artisan:[], galeri:[],
+    lineup:[], umkm:[], galeri:[],
   },
   {
     id:'e3', nama:'Pameran Kriya Ekraf Regional',
@@ -80,7 +80,7 @@ export const dummyEvents = [
     kapasitas:500, peserta_count:12,
     subsektor:['Kriya','Desain Produk'],
     banner_url: null,
-    lineup:[], artisan:[], galeri:[],
+    lineup:[], umkm:[], galeri:[],
   },
   {
     id:'e4', nama:'Peken Banyumasan #12',
@@ -93,7 +93,7 @@ export const dummyEvents = [
     kapasitas:500, peserta_count:145,
     subsektor:['Musik','Kuliner'],
     banner_url: null,
-    lineup:[], artisan:[], galeri:[],
+    lineup:[], umkm:[], galeri:[],
   },
 ];
 

@@ -42,13 +42,13 @@ const AdminLayout = () => {
 
     const [pendingUmkmCount, setPendingUmkmCount] = useState(() => {
         try {
-            const stored = localStorage.getItem('pekan_pending_artisan');
+            const stored = localStorage.getItem('pekan_pending_umkm');
             return stored ? parseInt(stored, 10) : 0;
         } catch { return 0; }
     });
 
     const publicCompanyProfileUrl = useMemo(() => normalizeExternalUrl(
-        import.meta.env.VITE_PUBLIC_EVENT_URL || import.meta.env.VITE_Artisan_PUBLIC_URL || '/',
+        import.meta.env.VITE_PUBLIC_EVENT_URL || import.meta.env.VITE_UMKM_PUBLIC_URL || '/',
         '/'
     ), []);
 
@@ -64,11 +64,11 @@ const AdminLayout = () => {
         return () => window.removeEventListener('pekan_event_update', handler);
     }, []);
 
-    // Sync pending Artisan count dari Tenants page
+    // Sync pending UMKM count dari Tenants page
     useEffect(() => {
         const handler = (e) => setPendingUmkmCount(e?.detail?.count ?? 0);
-        window.addEventListener('pekan_pending_artisan_update', handler);
-        return () => window.removeEventListener('pekan_pending_artisan_update', handler);
+        window.addEventListener('pekan_pending_umkm_update', handler);
+        return () => window.removeEventListener('pekan_pending_umkm_update', handler);
     }, []);
 
     // Load user dari localStorage
@@ -99,7 +99,7 @@ const AdminLayout = () => {
     const allNavItems = [
         { path: '/',         label: 'Dashboard',       icon: PieChart,  roles: ['admin', 'petugas'] },
         { path: '/members',  label: 'Kelola Member',   icon: Users,     roles: ['admin'] },
-        { path: '/Artisan',  label: 'Tenant Artisan',     icon: Store,     roles: ['admin'], badge: pendingUmkmCount },
+        { path: '/tenants',  label: 'Tenant UMKM',     icon: Store,     roles: ['admin'], badge: pendingUmkmCount },
         { path: '/reports',  label: 'Laporan',         icon: FileText,  roles: ['admin'] },
         { path: '/events',   label: 'Kelola Event',    icon: Calendar,  roles: ['admin'] },
         { path: '/settings', label: 'Pengaturan Akun', icon: Settings,  roles: ['admin', 'petugas'] },
@@ -128,7 +128,7 @@ const AdminLayout = () => {
         switch (location.pathname) {
             case '/':         return { title: 'Dashboard Real-time',  subtitle: 'Pantau pergerakan pengunjung event hari ini' };
             case '/members':  return { title: 'Manajemen Member',     subtitle: 'Registrasi member baru dan kelola data keychain NFC' };
-            case '/Artisan':  return { title: 'Data Tenant Artisan',     subtitle: 'Integrasi data tenant, promo diskon, dan persetujuan pendaftaran' };
+            case '/tenants':  return { title: 'Data Tenant UMKM',     subtitle: 'Integrasi data tenant, promo diskon, dan persetujuan pendaftaran' };
             case '/reports':  return { title: 'Laporan Kunjungan',    subtitle: 'Rekapitulasi data pengunjung selama event' };
             case '/events':   return { title: 'Kelola Event',         subtitle: 'Buat, aktifkan, dan nonaktifkan event Peken Banyumasan' };
             case '/settings': return { title: 'Pengaturan Akun',      subtitle: 'Kelola nama tampilan dan password akun Anda' };
@@ -172,7 +172,7 @@ const AdminLayout = () => {
                     <div className="flex items-center gap-3">
                         <img src={logoImg} alt="Logo Peken Banyumasan" className="w-10 h-10 rounded-lg object-cover" />
                         <div>
-                            <h2 className="text-lg font-bold text-gray-800 leading-tight">Peken</h2>
+                            <h2 className="text-lg font-bold text-gray-800 leading-tight">Pekan</h2>
                             <p className="text-xs text-gray-500 font-medium">Banyumasan</p>
                         </div>
                     </div>
@@ -284,7 +284,7 @@ const AdminLayout = () => {
                                         {activeEventBadge.nama}
                                     </span>
                                 )}
-                                {location.pathname === '/Artisan' && pendingUmkmCount > 0 && (
+                                {location.pathname === '/tenants' && pendingUmkmCount > 0 && (
                                     <span className="hidden sm:inline-flex items-center gap-1.5 bg-amber-50 border border-amber-200 text-amber-700 text-xs font-semibold px-2.5 py-1 rounded-full">
                                         <span className="w-1.5 h-1.5 rounded-full bg-amber-500 shrink-0"></span>
                                         {pendingUmkmCount} menunggu persetujuan
