@@ -1,10 +1,10 @@
-// Register.jsx — Kolaborator registration — matches Artisan register style (light, stepper)
+// Register.jsx — Member registration — matches UMKM register style (light, stepper)
 import React, { useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { Loader2, Eye, EyeOff, Check, ChevronRight } from 'lucide-react';
 import api from '../../services/api';
 import { SUBSEKTORS } from '../../data/dummy';
-import { triggerNewKolaboratorRequest } from '../../lib/notifications';
+import { triggerNewMemberRequest } from '../../lib/notifications';
 
 const STEPS = [
   { id:1, label:'Akun',      icon:'👤' },
@@ -46,7 +46,7 @@ export default function Register() {
     try {
       await api.auth.register(form);
       // Notify admin
-      triggerNewKolaboratorRequest(form.nama);
+      triggerNewMemberRequest(form.nama);
       nav('/login', { state: { registered: true } });
     } catch(err) { setError(err.message || 'Gagal mendaftar. Coba lagi.'); }
     finally { setLoading(false); }
@@ -68,14 +68,14 @@ export default function Register() {
   const strength = passStrength();
 
   const CSS = `
-    @import url('https://fonts.googleapis.com/css2?family=DM+Sans:wght@300;400;500;600&family=Lora:wght@500;600;700&display=swap');
+    @import url('https://fonts.googleapis.com/css2?family=DM+Sans:wght@300;400;500;600&family=Playfair+Display:wght@500;600;700&display=swap');
     *,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
-    .reg-root{min-height:100vh;background:#f0ede6;display:flex;align-items:flex-start;justify-content:center;padding:40px 16px 60px;font-family:'DM Sans',system-ui,sans-serif}
+    .reg-root{min-height:100vh;background:#f0ede6;display:flex;align-items:flex-start;justify-content:center;padding:40px 16px 60px;font-family:'Plus Jakarta Sans',system-ui,sans-serif}
     .reg-root::before{content:'';position:fixed;inset:0;background-image:radial-gradient(circle at 20% 20%,rgba(47,111,78,.06) 0%,transparent 50%),radial-gradient(circle at 80% 80%,rgba(196,137,48,.06) 0%,transparent 50%);pointer-events:none}
     .reg-wrap{width:100%;max-width:560px}
     .reg-brand{display:flex;align-items:center;gap:12px;margin-bottom:28px;cursor:pointer;text-decoration:none}
     .reg-brand-mark{width:42px;height:42px;background:linear-gradient(135deg,#2f6f4e,#4a9b6e);border-radius:12px;display:flex;align-items:center;justify-content:center;box-shadow:0 4px 12px rgba(47,111,78,.25);font-size:18px}
-    .reg-brand-name{font-family:'Lora',serif;font-size:18px;font-weight:700;color:#1a2e1f}
+    .reg-brand-name{font-family:'Playfair Display',serif;font-size:18px;font-weight:700;color:#1a2e1f}
     .reg-brand-sub{font-size:12px;color:#6b7280;margin-top:1px}
     .stepper{display:flex;align-items:center;margin-bottom:24px;gap:0}
     .step-item{display:flex;flex-direction:column;align-items:center;flex:1;position:relative}
@@ -88,11 +88,11 @@ export default function Register() {
     .step-item.active .step-label{color:#2f6f4e}
     .step-item.done .step-label{color:#2f6f4e}
     .reg-card{background:#fff;border-radius:20px;padding:28px;box-shadow:0 4px 24px rgba(0,0,0,.07);border:1px solid rgba(0,0,0,.04)}
-    .reg-card-title{font-family:'Lora',serif;font-size:20px;font-weight:700;color:#1a2e1f;margin-bottom:6px}
+    .reg-card-title{font-family:'Playfair Display',serif;font-size:20px;font-weight:700;color:#1a2e1f;margin-bottom:6px}
     .reg-card-sub{font-size:13px;color:#6b7280;margin-bottom:22px;line-height:1.5}
     .reg-field{margin-bottom:16px}
     .reg-label{font-size:12px;font-weight:600;color:#374151;margin-bottom:6px;display:block}
-    .reg-input{width:100%;padding:11px 14px;border:1.5px solid #e5e7eb;border-radius:12px;font-size:14px;outline:none;transition:border .15s;font-family:'DM Sans',system-ui,sans-serif;color:#1f2937;background:#fafafa}
+    .reg-input{width:100%;padding:11px 14px;border:1.5px solid #e5e7eb;border-radius:12px;font-size:14px;outline:none;transition:border .15s;font-family:'Plus Jakarta Sans',system-ui,sans-serif;color:#1f2937;background:#fafafa}
     .reg-input:focus{border-color:#2f6f4e;background:#fff}
     .reg-input.err{border-color:#ef4444}
     .reg-input-wrap{position:relative}
@@ -100,9 +100,9 @@ export default function Register() {
     .pass-bar{height:4px;background:#e5e7eb;border-radius:99px;overflow:hidden;margin-top:6px}
     .pass-fill{height:100%;border-radius:99px;transition:all .3s}
     .pass-label{font-size:11px;margin-top:4px}
-    .reg-select{width:100%;padding:11px 14px;border:1.5px solid #e5e7eb;border-radius:12px;font-size:14px;outline:none;background:#fafafa;color:#1f2937;font-family:'DM Sans',system-ui,sans-serif;cursor:pointer}
+    .reg-select{width:100%;padding:11px 14px;border:1.5px solid #e5e7eb;border-radius:12px;font-size:14px;outline:none;background:#fafafa;color:#1f2937;font-family:'Plus Jakarta Sans',system-ui,sans-serif;cursor:pointer}
     .reg-select:focus{border-color:#2f6f4e}
-    .reg-textarea{width:100%;padding:11px 14px;border:1.5px solid #e5e7eb;border-radius:12px;font-size:14px;outline:none;resize:none;font-family:'DM Sans',system-ui,sans-serif;color:#1f2937;background:#fafafa;line-height:1.6}
+    .reg-textarea{width:100%;padding:11px 14px;border:1.5px solid #e5e7eb;border-radius:12px;font-size:14px;outline:none;resize:none;font-family:'Plus Jakarta Sans',system-ui,sans-serif;color:#1f2937;background:#fafafa;line-height:1.6}
     .reg-textarea:focus{border-color:#2f6f4e}
     .sub-grid{display:flex;flex-wrap:wrap;gap:8px}
     .sub-chip{padding:7px 14px;border-radius:20px;font-size:12px;font-weight:600;border:1.5px solid #e5e7eb;cursor:pointer;transition:all .15s;background:#fff;color:#374151}
@@ -113,7 +113,7 @@ export default function Register() {
     .confirm-row:last-child{border-bottom:none}
     .confirm-label{color:#6b7280}
     .confirm-val{font-weight:600;color:#1a2e1f;text-align:right;max-width:60%}
-    .reg-btn{width:100%;padding:13px;border-radius:14px;font-size:15px;font-weight:700;cursor:pointer;transition:all .15s;display:flex;align-items:center;justify-content:center;gap:8px;font-family:'DM Sans',system-ui,sans-serif}
+    .reg-btn{width:100%;padding:13px;border-radius:14px;font-size:15px;font-weight:700;cursor:pointer;transition:all .15s;display:flex;align-items:center;justify-content:center;gap:8px;font-family:'Plus Jakarta Sans',system-ui,sans-serif}
     .reg-btn-primary{background:#2f6f4e;color:#fff;border:none}
     .reg-btn-primary:hover{background:#245840}
     .reg-btn-primary:disabled{opacity:.6;cursor:not-allowed}
@@ -131,9 +131,9 @@ export default function Register() {
       <style>{CSS}</style>
       <div className="reg-wrap">
         {/* Brand */}
-        <a href={import.meta.env.VITE_Artisan_URL || 'http://localhost:5174'} className="reg-brand">
+        <a href={import.meta.env.VITE_UMKM_URL || 'http://localhost:5174'} className="reg-brand">
           <div className="reg-brand-mark">🎨</div>
-          <div><div className="reg-brand-name">Peken Banyumasan</div><div className="reg-brand-sub">Daftar sebagai Kolaborator</div></div>
+          <div><div className="reg-brand-name">Peken Banyumasan</div><div className="reg-brand-sub">Daftar sebagai Kreator</div></div>
         </a>
 
         {/* Stepper */}
@@ -155,7 +155,7 @@ export default function Register() {
           {step === 1 && (
             <>
               <div className="reg-card-title">Data Akun</div>
-              <div className="reg-card-sub">Isi informasi dasar untuk membuat akun Kolaborator</div>
+              <div className="reg-card-sub">Isi informasi dasar untuk membuat akun Kreator</div>
 
               <div className="reg-field">
                 <label className="reg-label">Nama Lengkap *</label>
@@ -256,8 +256,8 @@ export default function Register() {
             Sudah punya akun? <Link to="/login">Masuk</Link>
           </div>
           <div className="reg-crosslink">
-            Punya usaha Artisan?{' '}
-            <a href={import.meta.env.VITE_Artisan_URL || 'http://localhost:5174/daftar'}>Daftar sebagai Artisan →</a>
+            Punya usaha UMKM?{' '}
+            <a href={import.meta.env.VITE_UMKM_URL || 'http://localhost:5174/daftar'}>Daftar sebagai UMKM →</a>
           </div>
         </div>
       </div>
