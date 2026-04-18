@@ -37,8 +37,8 @@ const api = {
     delete: async (id)     => { await delay(300); return { data: {} }; },
   },
 
-  aktivitas: {
-    list:   async ()  => { await delay(); return { data: dummy.dummyAktivitas }; },
+  story: {
+    list:   async ()  => { await delay(); return { data: dummy.dummyStory }; },
     create: async (d) => {
       await delay(500);
       return { data: { id:'s'+Date.now(), like_count:0, created_at:new Date().toISOString(), ...d } };

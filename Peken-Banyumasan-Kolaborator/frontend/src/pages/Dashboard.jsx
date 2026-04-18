@@ -1,4 +1,4 @@
-// Dashboard.jsx — Kolaborator dashboard — consistent with gate/Artisan green palette
+// Dashboard.jsx — Member dashboard — consistent with gate/UMKM green palette
 import React, { useState, useEffect } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import {
@@ -80,7 +80,7 @@ function QuickCompose({ user, onPost }) {
     try {
       await onPost({ konten: text, tags: [] });
       setText(''); setOpen(false);
-      toast.success('Aktivitas berhasil diposting!');
+      toast.success('Story berhasil diposting!');
     } catch { toast.error('Gagal posting'); }
     finally { setSaving(false); }
   };
@@ -132,14 +132,14 @@ export default function Dashboard() {
   const [events, setEvents] = useState([]);
 
   useEffect(() => {
-    api.aktivitas.list().then(r => setStories(r.data.slice(0, 4)));
+    api.story.list().then(r => setStories(r.data.slice(0, 4)));
     api.event.list().then(r => {
       setEvents(r.data.filter(e => ['upcoming','berlangsung'].includes(e.status)));
     });
   }, []);
 
-  const postAktivitas = async (data) => {
-    const res = await api.aktivitas.create(data);
+  const postStory = async (data) => {
+    const res = await api.story.create(data);
     setStories(l => [{ ...res.data, like_count: 0 }, ...l.slice(0, 3)]);
   };
 
@@ -164,7 +164,7 @@ export default function Dashboard() {
             }
             <div className="flex-1 min-w-0">
               <p className="text-white/60 text-xs mb-0.5">Selamat datang 👋</p>
-              <h1 className="text-white font-display font-bold text-lg leading-tight truncate">{user.nama||'Kolaborator'}</h1>
+              <h1 className="text-white font-display font-bold text-lg leading-tight truncate">{user.nama||'Kreator'}</h1>
               <p className="text-white/50 text-xs flex items-center gap-1 mt-0.5"><MapPin size={10}/>{user.kota||'—'}</p>
             </div>
             <Link to="/dashboard/profil" className="shrink-0 px-3 py-1.5 bg-white/15 hover:bg-white/25 text-white text-xs font-semibold rounded-xl transition border border-white/10">
@@ -179,7 +179,7 @@ export default function Dashboard() {
             </div>
           )}
           <div className="grid grid-cols-3 gap-2 mt-4">
-            {[['🎨',user.total_karya||18,'Karya'],['✍️',user.total_aktivitas||24,'Aktivitas'],['📅',user.total_event||6,'Event']].map(([e,v,l]) => (
+            {[['🎨',user.total_karya||18,'Karya'],['✍️',user.total_story||24,'Story'],['📅',user.total_event||6,'Event']].map(([e,v,l]) => (
               <div key={l} className="bg-white/8 rounded-xl px-2 py-2 text-center">
                 <div className="text-sm">{e}</div>
                 <div className="text-white font-bold text-base leading-tight">{v}</div>
@@ -197,7 +197,7 @@ export default function Dashboard() {
         </p>
         <div className="grid grid-cols-3 gap-2.5">
           {[
-            { to:'/dashboard/aktivitas',      e:'✍️', l:'Tulis Story',    cls:'bg-white border-earth-200 hover:border-primary-300 hover:bg-primary-50/20' },
+            { to:'/dashboard/story',      e:'✍️', l:'Tulis Story',    cls:'bg-white border-earth-200 hover:border-primary-300 hover:bg-primary-50/20' },
             { to:'/dashboard/portofolio', e:'🎨', l:'Tambah Karya',   cls:'bg-white border-earth-200 hover:border-primary-300 hover:bg-primary-50/20' },
             { to:'/dashboard/event',      e:'📅', l:'Cari Event',     cls:'bg-white border-earth-200 hover:border-primary-300 hover:bg-primary-50/20' },
           ].map(a => (
@@ -210,8 +210,8 @@ export default function Dashboard() {
         </div>
       </div>
 
-      {/* ── Quick aktivitas compose ── */}
-      <QuickCompose user={user} onPost={postAktivitas}/>
+      {/* ── Quick story compose ── */}
+      <QuickCompose user={user} onPost={postStory}/>
 
       {/* ── Event Saya ── */}
       {myEvents.length > 0 && (
@@ -275,14 +275,14 @@ export default function Dashboard() {
         </div>
       )}
 
-      {/* ── Aktivitas feed ── */}
+      {/* ── Story feed ── */}
       {stories.length > 0 && (
         <div>
           <div className="flex items-center justify-between mb-2.5">
             <h2 className="text-sm font-bold text-earth-900 flex items-center gap-1.5">
-              <BookOpen size={13} className="text-primary-600"/> Aktivitas Terbaru
+              <BookOpen size={13} className="text-primary-600"/> Story Terbaru
             </h2>
-            <Link to="/dashboard/aktivitas" className="text-primary-600 text-xs font-semibold hover:underline flex items-center gap-1">
+            <Link to="/dashboard/story" className="text-primary-600 text-xs font-semibold hover:underline flex items-center gap-1">
               Semua <ChevronRight size={12}/>
             </Link>
           </div>

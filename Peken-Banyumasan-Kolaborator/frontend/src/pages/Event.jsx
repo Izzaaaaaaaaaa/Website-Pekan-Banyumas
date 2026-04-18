@@ -56,12 +56,12 @@ function EventDetailModal({ event, onClose, onDaftar, loadingId }) {
               </div>
             </div>
           )}
-          {/* Artisan */}
-          {event.artisan?.length > 0 && (
+          {/* UMKM */}
+          {event.umkm?.length > 0 && (
             <div>
-              <p className="text-xs font-semibold text-earth-400 uppercase tracking-wider mb-2 flex items-center gap-1.5"><Store size={11}/>Artisan Peserta</p>
+              <p className="text-xs font-semibold text-earth-400 uppercase tracking-wider mb-2 flex items-center gap-1.5"><Store size={11}/>UMKM Peserta</p>
               <div className="flex flex-wrap gap-1.5">
-                {event.artisan.map(u => (
+                {event.umkm.map(u => (
                   <span key={u.id} className="px-2.5 py-1 bg-green-50 border border-green-100 text-green-700 rounded-full text-xs">{u.nama_usaha}</span>
                 ))}
               </div>
@@ -144,7 +144,7 @@ const EventCard = ({ event, onDaftar, loadingId, onClick, showPeran }) => {
 };
 
 // ── Main ─────────────────────────────────────────────────────────────────────
-// ── RoleRegisterModal — kolaborator picks role before registering ──────────────────
+// ── RoleRegisterModal — member picks role before registering ──────────────────
 function RoleRegisterModal({ event, onClose, onConfirm, loading }) {
   const [peran, setPeran] = useState('peserta');
 
@@ -231,9 +231,9 @@ export default function Event() {
       toast.success(`Berhasil mendaftar sebagai ${peran}!`);
       try {
         const user = JSON.parse(localStorage.getItem('user') || '{}');
-        import('../lib/notifications').then(({ triggerKolaboratorEventRegister }) => {
+        import('../lib/notifications').then(({ triggerMemberEventRegister }) => {
           const ev = list.find(e => e.id === eventId);
-          if (ev) triggerKolaboratorEventRegister(user.nama || 'Kolaborator', ev.nama);
+          if (ev) triggerMemberEventRegister(user.nama || 'Member', ev.nama);
         });
       } catch {}
     } catch { toast.error('Gagal mendaftar'); }

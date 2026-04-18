@@ -116,7 +116,7 @@ export default function Pengaturan() {
 
       {/* Danger zone */}
       <Section icon={Shield} title="Zona Berbahaya">
-        <p className="text-earth-500 text-sm mb-3">Menghapus akun akan menghapus semua data profil, portofolio, dan aktivitas secara permanen.</p>
+        <p className="text-earth-500 text-sm mb-3">Menghapus akun akan menghapus semua data profil, portofolio, dan story secara permanen.</p>
         <button className="w-full border border-red-200 text-red-500 py-2.5 rounded-xl text-sm font-semibold hover:bg-red-50 transition"
           onClick={() => toast.error('Fitur hapus akun hanya tersedia melalui admin. Hubungi tim Peken Banyumasan.')}>
           Hapus Akun

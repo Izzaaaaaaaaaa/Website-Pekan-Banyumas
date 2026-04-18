@@ -130,7 +130,7 @@ export default function Profil() {
       {/* Stats */}
       <div className="grid grid-cols-3 gap-3">
         {[['Karya', user.total_karya||18, 'bg-brand-50 text-brand-700 border-brand-100'],
-          ['Aktivitas', user.total_aktivitas||24, 'bg-batik-50 text-batik-700 border-batik-100'],
+          ['Story', user.total_story||24, 'bg-batik-50 text-batik-700 border-batik-100'],
           ['Event', user.total_event||6,  'bg-earth-50 text-earth-700 border-earth-100']].map(([l,v,cls]) => (
           <div key={l} className={`rounded-2xl p-4 border text-center ${cls}`}>
             <p className="text-2xl font-bold font-display">{v}</p>

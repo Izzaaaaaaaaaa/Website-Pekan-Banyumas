@@ -2,15 +2,11 @@
 @tailwind components;
 @tailwind utilities;
 
-@import url('https://fonts.googleapis.com/css2?family=Lora:wght@500;600;700&family=DM+Sans:wght@300;400;500;600&display=swap');
-
 @layer base {
   body {
-    font-family: 'DM Sans', system-ui, sans-serif;
-    -webkit-font-smoothing: antialiased;
-    -moz-osx-font-smoothing: grayscale;
+    @apply font-sans antialiased bg-brand-50 text-earth-900;
   }
-  h1,h2,h3 { font-family: 'Lora', serif; }
+  h1,h2,h3 { @apply font-display; }
 }
 
 @layer utilities {

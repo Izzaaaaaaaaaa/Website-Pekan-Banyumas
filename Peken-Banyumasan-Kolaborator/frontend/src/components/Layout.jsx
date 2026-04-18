@@ -12,13 +12,13 @@ const navItems = [
   { to:'/dashboard',             label:'Dashboard',   icon:LayoutDashboard, exact:true },
   { to:'/dashboard/profil',      label:'Profil',      icon:User             },
   { to:'/dashboard/portofolio',  label:'Portofolio',  icon:Image            },
-  { to:'/dashboard/aktivitas',    label:'Aktivitas',   icon:BookOpen         },
+  { to:'/dashboard/story',       label:'Story',       icon:BookOpen         },
   { to:'/dashboard/event',       label:'Event',       icon:Calendar         },
   { to:'/dashboard/notifikasi',  label:'Notifikasi',  icon:Bell, badge:true },
   { to:'/dashboard/pengaturan',  label:'Pengaturan',  icon:Settings         },
 ];
 
-const Artisan_URL = import.meta.env.VITE_Artisan_URL || 'http://localhost:5174';
+const UMKM_URL = import.meta.env.VITE_UMKM_URL || 'http://localhost:5174';
 
 export default function Layout() {
   const loc  = useLocation();
@@ -28,10 +28,10 @@ export default function Layout() {
   const [notifCount, setNotifCount] = useState(0);
 
   useEffect(() => {
-    const refresh = () => setNotifCount(getNotifs('kolaborator').filter(n=>!n.read).length);
+    const refresh = () => setNotifCount(getNotifs('member').filter(n=>!n.read).length);
     refresh();
-    window.addEventListener('peken_notif_update', refresh);
-    return () => window.removeEventListener('peken_notif_update', refresh);
+    window.addEventListener('pekan_notif_update', refresh);
+    return () => window.removeEventListener('pekan_notif_update', refresh);
   }, []);
 
   const logout = () => { clearAuth(); nav('/login'); };
@@ -57,7 +57,7 @@ export default function Layout() {
               <Palette size={14} className="text-white"/>
             </div>
             <div>
-              <p className="font-display font-bold text-gray-900 text-sm leading-tight">Peken</p>
+              <p className="font-display font-bold text-gray-900 text-sm leading-tight">Pekan</p>
               <p className="text-[9px] font-semibold uppercase tracking-widest text-gray-400">Banyumasan</p>
             </div>
           </Link>
@@ -75,8 +75,8 @@ export default function Layout() {
                 style={{background:'#2f6f4e'}}>{initial}</div>
           }
           <div className="min-w-0 flex-1">
-            <p className="text-gray-800 text-xs font-semibold truncate leading-tight">{user.nama||'Kolaborator'}</p>
-            <p className="text-gray-400 text-[9px] truncate mt-0.5">{(user.subsektor||[]).slice(0,2).join(', ')||'Kolaborator'}</p>
+            <p className="text-gray-800 text-xs font-semibold truncate leading-tight">{user.nama||'Kreator'}</p>
+            <p className="text-gray-400 text-[9px] truncate mt-0.5">{(user.subsektor||[]).slice(0,2).join(', ')||'Kreator'}</p>
           </div>
           <span className="w-1.5 h-1.5 rounded-full shrink-0" style={{background:'#22c55e'}}/>
         </Link>
@@ -108,7 +108,7 @@ export default function Layout() {
 
         {/* Footer links */}
         <div className="px-3 pb-3 shrink-0 border-t border-gray-100 pt-3 space-y-0.5">
-          <a href={Artisan_URL} target="_blank" rel="noopener noreferrer"
+          <a href={UMKM_URL} target="_blank" rel="noopener noreferrer"
             className="flex items-center gap-2.5 px-3 py-2 rounded-xl text-xs text-gray-500 hover:bg-gray-50 hover:text-green-700 transition font-medium w-full">
             <Globe size={14} className="text-gray-400 shrink-0"/>
             Beranda Publik
