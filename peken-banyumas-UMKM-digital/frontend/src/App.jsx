@@ -1,5 +1,6 @@
 import { BrowserRouter, Routes, Route } from "react-router-dom";
 import { Toaster } from "react-hot-toast";
+import { Navigate } from "react-router-dom";
 
 import SelectRole from "./pages/auth/SelectRole";
 import Login from "./pages/auth/Login";
@@ -16,6 +17,11 @@ import Pengaturan from "./pages/Pengaturan";
 import Profile from "./pages/Profile";
 import Notifikasi from "./pages/Notifikasi";
 
+function ProtectedRoute({ children }) {
+  const isLogin = localStorage.getItem("isLogin") === "true";
+  return isLogin ? children : <Navigate to="/login" />;
+}
+
 function App() {
   return (
     <BrowserRouter>
@@ -23,7 +29,14 @@ function App() {
 
       <Routes>
           <Route path="/select-role" element={<SelectRole />} />
-          <Route path="/login" element={<Login />} />
+          <Route 
+            path="/login" 
+            element={
+              localStorage.getItem("isLogin") === "true"
+                ? <Navigate to="/" />
+                : <Login />
+            } 
+          />
           <Route path="/lupa-pass" element={<LupaPass />} />
           <Route path="/register" element={<Register />} />
           <Route path="/status" element={<Status />} />

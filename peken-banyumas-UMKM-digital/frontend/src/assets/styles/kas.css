@@ -9,7 +9,7 @@
 .bk-topbar {
   display: flex;
   justify-content: space-between;
-  align-items: flex-start;
+  align-items: center;
   margin-bottom: 24px;
   gap: 16px;
   flex-wrap: wrap;
@@ -17,9 +17,54 @@
 
 .bk-topbar-right {
   display: flex;
-  align-items: center;
+  flex-direction: column; 
+  align-items: flex-end;
+  gap: 10px;
+  margin-left: auto;
+}
+
+.bk-topbar-actions {
+  display: flex;
   gap: 10px;
   flex-wrap: wrap;
+  justify-content: flex-end;
+}
+
+.bk-search svg {
+  color: #9ca3af;
+}
+
+.bk-search {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  background: white;
+  border: 1.5px solid #e5e7eb;
+  border-radius: 12px;
+  padding: 9px 14px;
+  font-size: 14px;
+  color: #374151;
+  width: 260px;
+  transition: border-color 0.2s, box-shadow 0.2s;
+  box-shadow: 0 1px 4px rgba(0,0,0,0.04);
+}
+
+.bk-search:focus-within {
+  border-color: #2f6f4e;
+  box-shadow: 0 0 0 3px rgba(47,111,78,0.1);
+}
+
+.bk-search input {
+  border: none;
+  outline: none;
+  font-size: 14px;
+  background: transparent;
+  width: 100%;
+  color: #374151;
+}
+
+.bk-search input::placeholder {
+  color: #9ca3af;
 }
 
 /* Filter buttons */
@@ -612,7 +657,7 @@
   position: fixed;
   bottom: 28px;
   right: 28px;
-  background: #1a2e22;
+  background: #166534;
   color: white;
   padding: 13px 20px;
   border-radius: 14px;
@@ -923,3 +968,136 @@
   color: #2563eb;
   border: 1px solid #bfdbfe;
 }
+
+/* ══════════════════════════════════════════════════════
+   Bukti Pembayaran + Jenis Toggle — paste ke kas.css
+   ══════════════════════════════════════════════════════ */
+
+/* Label opsional */
+.bk-label-opt {
+  font-size: 11px;
+  font-weight: 400;
+  color: #9ca3af;
+}
+
+/* ── Bukti dropzone ── */
+.bk-bukti-dropzone {
+  border: 2px dashed #d1d5db;
+  border-radius: 10px;
+  padding: 20px 16px;
+  text-align: center;
+  cursor: pointer;
+  background: #fafafa;
+  transition: border-color 0.15s, background 0.15s;
+}
+.bk-bukti-dropzone:hover {
+  border-color: #16a34a;
+  background: #f0fdf4;
+}
+.bk-bukti-dz-icon {
+  color: #9ca3af;
+  margin-bottom: 8px;
+}
+.bk-bukti-dropzone:hover .bk-bukti-dz-icon {
+  color: #16a34a;
+}
+.bk-bukti-dropzone p {
+  margin: 0 0 4px;
+  font-size: 13px;
+  font-weight: 600;
+  color: #374151;
+}
+.bk-bukti-dropzone small {
+  font-size: 11px;
+  color: #9ca3af;
+}
+
+/* ── Bukti preview ── */
+.bk-bukti-preview {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 10px;
+}
+.bk-bukti-img {
+  width: 100%;
+  max-height: 180px;
+  object-fit: contain;
+  border-radius: 8px;
+  border: 1px solid #e5e7eb;
+  background: #f9fafb;
+}
+.bk-bukti-actions {
+  display: flex;
+  gap: 8px;
+}
+.bk-bukti-btn-change,
+.bk-bukti-btn-del {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  font-size: 12px;
+  font-weight: 600;
+  padding: 6px 12px;
+  border-radius: 7px;
+  cursor: pointer;
+  border: none;
+  transition: background 0.15s;
+}
+.bk-bukti-btn-change {
+  background: #f3f4f6;
+  color: #374151;
+  border: 1px solid #e5e7eb;
+}
+.bk-bukti-btn-change:hover { background: #e5e7eb; }
+.bk-bukti-btn-del {
+  background: #fff1f2;
+  color: #e11d48;
+  border: 1px solid #fecdd3;
+}
+.bk-bukti-btn-del:hover { background: #ffe4e6; }
+
+/* ── Jenis toggle (Edit modal) ── */
+.bk-jenis-toggle {
+  display: flex;
+  gap: 8px;
+}
+.bk-jenis-toggle-btn {
+  flex: 1;
+  height: 38px;
+  border-radius: 8px;
+  border: 1.5px solid #e5e7eb;
+  background: #f9fafb;
+  color: #6b7280;
+  font-size: 13px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.15s;
+}
+.bk-jenis-toggle-btn.masuk.active {
+  background: #f0fdf4;
+  border-color: #16a34a;
+  color: #16a34a;
+}
+.bk-jenis-toggle-btn.keluar.active {
+  background: #fff1f2;
+  border-color: #e11d48;
+  color: #e11d48;
+}
+.bk-jenis-toggle-btn:hover:not(.active) {
+  background: #f3f4f6;
+  border-color: #d1d5db;
+}
+
+/* ── QRIS icon svg (ganti emoji) ── */
+.bk-qris-icon-svg {
+  color: #16a34a;
+  flex-shrink: 0;
+}
+
+/* ── Jenis card icon svg (ganti emoji span) ── */
+.bk-jenis-card-icon-svg {
+  margin-bottom: 8px;
+}
+.bk-jenis-card-icon-svg.masuk  { color: #16a34a; }
+.bk-jenis-card-icon-svg.keluar { color: #e11d48; }

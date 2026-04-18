@@ -6,6 +6,7 @@ import StokRow from "../components/ManajemenStok/StokRow";
 import TambahBarangModal from "../components/modals/TambahBarangModal";
 import EditBarangModal from "../components/modals/EditBarangModal";
 import ConfirmDeleteModal from "../components/modals/ConfirmDeleteModal";
+import Toast from "../components/Toast";
 import "../assets/styles/stok.css";
 
 export default function ManajemenStok() {
@@ -55,12 +56,17 @@ export default function ManajemenStok() {
     ]);
     setForm({ nama: "", stok: "", harga: "", kategori: "", satuan: "", deskripsi: "" });
     setShowModal(false);
+    showToast("Barang berhasil ditambahkan!");
   };
  
   // ── EDIT ──
   const [editItem, setEditItem] = useState(null);
   const handleUpdate = (updatedItem) => {
-    setItems(items.map((item) => (item.id === updatedItem.id ? updatedItem : item)));
+    setItems(items.map((item) =>
+      item.id === updatedItem.id ? updatedItem : item
+    ));
+    setEditItem(null);
+    showToast("Barang berhasil diupdate!");
   };
  
   // ── HAPUS ──
@@ -68,10 +74,18 @@ export default function ManajemenStok() {
   const handleConfirmDelete = () => {
     setItems(items.filter((item) => item.id !== deleteItem.id));
     setDeleteItem(null);
+    showToast("Barang berhasil dihapus!");
   };
  
   // ── SUMMARY ──
   const kritisCount = items.filter((i) => i.stok <= 5).length;
+  
+  // ── TOAST ──
+  const [toast, setToast] = useState("");
+  const showToast = (msg) => {
+    setToast(msg);
+    setTimeout(() => setToast(""), 2500);
+  };
  
   return (
     <div>
@@ -156,6 +170,7 @@ export default function ManajemenStok() {
         onClose={() => setDeleteItem(null)}
         onConfirm={handleConfirmDelete}
       />
+      {toast && <Toast message={toast} />}
     </div>
   );
 }

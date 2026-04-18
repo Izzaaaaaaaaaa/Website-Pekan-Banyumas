@@ -12,7 +12,7 @@ export default function Layout() {
     if (localStorage.getItem("isLogin") !== "true") {
       navigate("/login");
     }
-  }, []);
+  }, [navigate]);
 
   const [open, setOpen] = useState(false);
 

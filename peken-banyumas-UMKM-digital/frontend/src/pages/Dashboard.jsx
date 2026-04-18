@@ -179,7 +179,7 @@ export default function Dashboard() {
       <div className="cd-banner">
         <div>
           <div className="cd-lbl">Acara Dimulai Dalam</div>
-          <div className="cd-title">Peken Banyumas 2026</div>
+          <div className="cd-title">Peken Banyumas</div>
           <div className="cd-sub">Stand A-12 · Zona Kuliner · Masuk Gratis</div>
         </div>
         <Countdown />

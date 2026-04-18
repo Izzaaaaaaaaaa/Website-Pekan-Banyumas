@@ -361,7 +361,7 @@ export default function Register() {
                   <li>
                     Keikutsertaan dalam Peken Banyumas tidak dipungut biaya pendaftaran. 
                     Namun, setiap artisan wajib memberikan kontribusi bagi hasil sebesar 
-                    <strong>10% dari total penjualan</strong> selama event berlangsung kepada pihak penyelenggara.
+                    <strong> 10% dari total penjualan</strong> selama event berlangsung kepada pihak penyelenggara.
                   </li>
                 </ul>
               </div>

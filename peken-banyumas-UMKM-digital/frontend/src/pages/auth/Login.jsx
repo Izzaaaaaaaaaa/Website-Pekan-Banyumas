@@ -36,6 +36,8 @@ export default function Login() {
     }, 800);
   };
 
+  console.log("LOGIN RENDER");
+  
   return (
     <div className="login-root">
 
@@ -60,7 +62,7 @@ export default function Login() {
           {/* Badge */}
           <div className="left-badge">
             <span className="badge-dot" />
-            Peken Banyumas 2026
+            Peken Banyumas
           </div>
 
           {/* Headline */}
@@ -77,17 +79,17 @@ export default function Login() {
           {/* Stats */}
           <div className="stat-row">
             <div className="stat-card">
-              <div className="stat-icon"><Users    size={15} color="#86efac" strokeWidth={2} /></div>
+              <div className="stat-icon"><Users    size={15} color="#1e5c3a" strokeWidth={2} /></div>
               <div className="stat-num">320+</div>
               <div className="stat-label">Artisan Terdaftar</div>
             </div>
             <div className="stat-card">
-              <div className="stat-icon"><Calendar size={15} color="#86efac" strokeWidth={2} /></div>
+              <div className="stat-icon"><Calendar size={15} color="#1e5c3a" strokeWidth={2} /></div>
               <div className="stat-num">3 Hari</div>
               <div className="stat-label">22–24 Maret 2026</div>
             </div>
             <div className="stat-card">
-              <div className="stat-icon"><Ticket   size={15} color="#86efac" strokeWidth={2} /></div>
+              <div className="stat-icon"><Ticket   size={15} color="#1e5c3a" strokeWidth={2} /></div>
               <div className="stat-num">100%</div>
               <div className="stat-label">Masuk Gratis</div>
             </div>
@@ -96,7 +98,7 @@ export default function Login() {
           {/* Venue */}
           <div className="venue-pill">
             <MapPin size={13} color="#86efac" strokeWidth={2} />
-            Alun-alun Banyumas, Jawa Tengah
+            Taman Sari Kota Lama, Banyumas, Jawa Tengah
           </div>
         </div>
       </div>
@@ -199,7 +201,7 @@ export default function Login() {
             </div>
             <div>
               <div className="event-name">Peken Banyumas</div>
-              <div className="event-detail">22–24 Maret · Alun-alun Banyumas · Masuk Gratis</div>
+              <div className="event-detail">22–24 Maret · Taman Sari Kota Lama Banyumas · Masuk Gratis</div>
             </div>
           </div>
 
