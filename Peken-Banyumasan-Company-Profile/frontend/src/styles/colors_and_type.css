@@ -1,0 +1,448 @@
+/* =============================================================
+   Peken Banyumasan — Color & Type tokens
+   Source of truth for the design system.
+
+   Import this file AFTER /fonts/fonts.css to get webfonts loaded.
+   ============================================================= */
+
+/* Fonts loaded via <link> in index.html (Google Fonts + Fontshare CDN). */
+
+:root {
+  /* ---------- BRAND PRIMITIVES ---------------------------------
+     These are the raw pigments that appear in the Figma file,
+     lifted 1:1. Never theme an interface off of these directly —
+     always go through the semantic tokens below.
+     ----------------------------------------------------------- */
+  --peken-sage:        rgb(195, 202, 150);  /* #C3CA96 — sole accent */
+  --peken-sage-52:     rgba(195, 202, 150, 0.519);
+  --peken-sage-66:     rgba(195, 202, 150, 0.6621);
+  --peken-sage-84:     rgba(195, 202, 150, 0.8364);
+
+  --peken-ink:         rgb(13, 13, 13);    /* #0D0D0D — deepest black */
+  --peken-ink-90:      rgba(13, 13, 13, 0.9);
+  --peken-ink-23:      rgba(13, 13, 13, 0.2282);
+  --peken-ink-88:      rgba(13, 13, 13, 0.8806);
+  --peken-charcoal:    rgb(27, 27, 27);    /* #1B1B1B — page bg */
+  --peken-carbon:      rgb(17, 17, 17);    /* #111111 — gallery bg */
+  --peken-coal:        rgb(26, 27, 26);
+
+  --peken-white:       rgb(255, 255, 255);
+  --peken-mist:        rgb(178, 178, 178); /* muted label grey */
+  --peken-smoke:       rgb(91, 91, 91);    /* dark-on-sage footer */
+  --peken-smoke-2:     rgb(90, 90, 90);
+
+  /* ---------- SEMANTIC COLOR TOKENS ----------------------------
+     Use these in product code. They are organised around the
+     dark-mode-by-default nature of the site, with sage as the
+     ONLY chromatic accent.
+     ----------------------------------------------------------- */
+  --bg-page:        var(--peken-charcoal);  /* the default page */
+  --bg-elevated:    var(--peken-carbon);    /* gallery / modal */
+  --bg-deep:        var(--peken-ink);       /* hero ticker, footer bar */
+  --bg-inverse:     var(--peken-sage);      /* sage bands */
+
+  --fg-primary:     var(--peken-white);
+  --fg-secondary:   var(--peken-mist);
+  --fg-muted:       var(--peken-smoke);
+  --fg-on-sage:     var(--peken-ink);       /* text when sitting on sage */
+  --fg-accent:      var(--peken-sage);      /* "cta" colour */
+
+  --accent:         var(--peken-sage);
+  --accent-ink:     var(--peken-ink);       /* text that sits on --accent */
+
+  --gradient-sage-up: linear-gradient(
+      rgba(195,202,150,0)    0%,
+      rgba(195,202,150,0.519)  25%,
+      rgba(195,202,150,0.6621) 36%,
+      rgba(195,202,150,0.8364) 58%,
+      rgb(195,202,150)       94%
+  );
+  --gradient-ink-down: linear-gradient(
+      rgba(13,13,13,0)     0%,
+      rgba(13,13,13,0.23)  12%,
+      rgba(13,13,13,0.88)  41%,
+      rgb(13,13,13)        64%
+  );
+
+  /* ---------- TYPE RAW ----------------------------------------- */
+  --font-display: "Clash Display", "Inter", system-ui, sans-serif;
+  --font-body:    "Montserrat", system-ui, -apple-system, sans-serif;
+  --font-italic:  "Playfair Display", "Bespoke Serif", Georgia, serif;
+
+  /* ---------- TYPE SCALE ---------------------------------------
+     Scales are *small* — the brand speaks quietly.
+     Hero "word-image" is delivered as a PNG pixel-art logotype,
+     NOT as big text. Everything else lives at 12–32px.
+     ----------------------------------------------------------- */
+  --fs-12: 12px;   /* Caption, footer, micro-label */
+  --fs-14: 14px;   /* Body default, nav link */
+  --fs-16: 16px;   /* Label (PEKEN BANYUMASAN), card titles */
+  --fs-20: 20px;   /* Section title (VISI, TUJUAN, SASARAN) */
+  --fs-32: 32px;   /* Editorial hero (Clash Display) */
+  --fs-96: 96px;   /* Monumental ticker number (Inter) */
+
+  /* line heights observed in Figma */
+  --lh-tight: 1;      /* 100% — labels, buttons */
+  --lh-snug:  1.3;    /* large body */
+  --lh-normal: 1.5;   /* body, captions */
+  --lh-relaxed: 1.7;  /* manifesto */
+  --lh-loose: 1.8;    /* centred body, legal */
+  --lh-reading: 1.9;  /* VISI/TUJUAN list */
+
+  /* letter-spacing — the brand barely tracks anything */
+  --ls-normal: 0;
+  --ls-label: 0.02em;    /* section labels */
+
+  /* ---------- LAYOUT -------------------------------------------
+     Figma canvas is 1440. Gutters are 120. Column gap is 24.
+     These are your only layout primitives — do not invent new ones.
+     ----------------------------------------------------------- */
+  --page-max:    1440px;
+  --gutter:      120px;   /* side padding on every section */
+  --gutter-sm:   80px;    /* vertical padding on sections */
+  --col-gap:     24px;
+
+  /* ---------- SPACING ------------------------------------------
+     The figma file uses a mostly 4/10/20/24/40/80 rhythm. No 8pt grid.
+     ----------------------------------------------------------- */
+  --sp-1:  4px;
+  --sp-2:  10px;
+  --sp-3:  20px;
+  --sp-4:  24px;
+  --sp-5:  30px;
+  --sp-6:  40px;
+  --sp-7:  60px;
+  --sp-8:  80px;
+
+  /* ---------- CORNERS ------------------------------------------
+     Peken is ZERO-radius by default. Only the CTA button (29px tall,
+     full squared) and a single dashed layout guide (5px) deviate.
+     ----------------------------------------------------------- */
+  --r-0:  0px;    /* DEFAULT — every card, every image */
+  --r-sm: 5px;    /* rarely used */
+
+  /* ---------- MOTION -------------------------------------------
+     No bounces. No springs. Opacity fades and subtle translations
+     at 250–400ms with an "out" curve. That's it.
+     ----------------------------------------------------------- */
+  --ease-out: cubic-bezier(0.22, 0.61, 0.36, 1);
+  --dur-fast: 180ms;
+  --dur-base: 320ms;
+  --dur-slow: 560ms;
+
+  /* ---------- ICON SIZES --------------------------------------
+     Peken puts its logo between words as punctuation. Sizes match
+     the surrounding type: 16px logo against 16px label, 30px for
+     bigger sage accents, 100px for protected standalone marks.
+     ----------------------------------------------------------- */
+  --icon-xs: 9px;    /* inside pill button (ding-dong) */
+  --icon-sm: 16px;   /* inline with 16px text */
+  --icon-md: 20px;   /* nav-corner + hover logo */
+  --icon-lg: 30px;   /* default logo mark */
+  --icon-xl: 100px;  /* section-hero logo */
+}
+
+/* ============================================================
+   BASE RESETS
+   ============================================================ */
+html { background: var(--bg-page); color: var(--fg-primary); }
+body {
+  margin: 0;
+  font-family: var(--font-body);
+  font-size: var(--fs-14);
+  line-height: var(--lh-normal);
+  font-weight: 400;
+  -webkit-font-smoothing: antialiased;
+  color: var(--fg-primary);
+  background: var(--bg-page);
+}
+* { box-sizing: border-box; }
+img { display: block; max-width: 100%; }
+
+/* ============================================================
+   SEMANTIC TYPE CLASSES
+   Name them by meaning, not size. Use these in UIs.
+   ============================================================ */
+.display-xl {      /* Editorial Clash 32 — section opener */
+  font-family: var(--font-display);
+  font-weight: 400;
+  font-size: var(--fs-32);
+  line-height: var(--lh-normal);
+  color: var(--fg-primary);
+  letter-spacing: var(--ls-normal);
+}
+.display-md {      /* Clash 20, medium — VISI/TUJUAN/SASARAN */
+  font-family: var(--font-display);
+  font-weight: 500;
+  font-size: var(--fs-20);
+  line-height: var(--lh-tight);
+  color: var(--fg-accent);
+}
+.label-lg {        /* Clash 16, medium — "PEKEN BANYUMASAN" */
+  font-family: var(--font-display);
+  font-weight: 500;
+  font-size: var(--fs-16);
+  line-height: var(--lh-tight);
+  color: var(--fg-primary);
+}
+.label-md {        /* Clash 14, medium — "Kawasan Kota Lama" row title */
+  font-family: var(--font-display);
+  font-weight: 500;
+  font-size: var(--fs-14);
+  line-height: var(--lh-normal);
+  color: var(--fg-primary);
+}
+.label-sm {        /* Clash 12, medium — pill button text */
+  font-family: var(--font-display);
+  font-weight: 500;
+  font-size: var(--fs-12);
+  line-height: var(--lh-tight);
+  color: var(--fg-primary);
+  text-transform: uppercase;
+}
+.eyebrow {         /* Montserrat 12, muted grey uppercase — "KEY PEOPLE" */
+  font-family: var(--font-body);
+  font-weight: 400;
+  font-size: var(--fs-12);
+  line-height: var(--lh-loose);
+  color: var(--fg-secondary);
+  text-transform: uppercase;
+}
+.body {            /* Montserrat 12/14 — primary reading */
+  font-family: var(--font-body);
+  font-weight: 400;
+  font-size: var(--fs-12);
+  line-height: var(--lh-normal);
+  color: var(--fg-primary);
+}
+.body-lg {
+  font-family: var(--font-body);
+  font-weight: 400;
+  font-size: var(--fs-14);
+  line-height: var(--lh-loose);
+  color: var(--fg-primary);
+}
+.body-quiet {      /* Montserrat 300 — footer fine print */
+  font-family: var(--font-body);
+  font-weight: 300;
+  font-size: var(--fs-12);
+  line-height: var(--lh-normal);
+  color: var(--fg-muted);
+}
+.caption {         /* italic serif accent — Bespoke/Playfair */
+  font-family: var(--font-italic);
+  font-style: italic;
+  font-weight: 400;
+  font-size: var(--fs-14);
+  color: var(--fg-primary);
+}
+.counter {         /* Inter 96 — monumental section numbers */
+  font-family: "Inter", system-ui, sans-serif;
+  font-weight: 400;
+  font-size: var(--fs-96);
+  line-height: 1;
+  color: var(--fg-accent);
+}
+
+/* ============================================================
+   UTILITY — pixel-art pattern band (sage squares on dark)
+   Used in hero + lokasi. The motif is 50x50 sage squares
+   arranged in a crenellated skyline. Hand-authored so it tiles.
+   ============================================================ */
+.pixel-band {
+  --pix: 50px;
+  background-image:
+    linear-gradient(var(--accent), var(--accent));
+  background-size: var(--pix) var(--pix);
+  background-repeat: no-repeat;
+  /* The real motif is painted with per-square bg positions — see
+     assets/pixel-skyline.svg for the canonical strip. */
+}
+
+/* ============================================================
+   MOTION KEYFRAMES & UTILITIES — v1.2
+   The licensed motion vocabulary is:
+     1. Pixel flicker (per-rect opacity wobble) — replaces the v1.1 drift.
+     2. Photo colourise (stepped pixelation cross-fade, scoped to
+        Home image-run + Program rows only).
+     3. Wipe-reveal scroll transition (sticky before + sage gradient
+        rising from bottom to cover it).
+   All three honour prefers-reduced-motion.
+   ============================================================ */
+/* v1.5 — calmer per-pixel blink, more visible-at-once.
+   14s cycle with a 4% off-window (= 560ms off per pixel per cycle).
+   Per-pixel rate is rare (every 14 seconds) but because the 50 pixels
+   have delays distributed tightly across the cycle (mod 14000ms), at
+   any given moment 5-7 pixels are mid-blink — feels alive without
+   feeling busy. step-end = hard snap, no fade. */
+@keyframes peken-pixel-blink {
+  0%   { opacity: 1; }
+  48%  { opacity: 0; }
+  52%  { opacity: 1; }
+  100% { opacity: 1; }
+}
+@keyframes peken-fade-in {
+  from { opacity: 0; transform: translateY(4px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+@keyframes peken-pixel-flash {
+  0%   { opacity: 0; }
+  35%  { opacity: 0.85; }
+  70%  { opacity: 0.4; }
+  100% { opacity: 0; }
+}
+
+/* ---------------------------------------------------------------
+   Pixel flicker band — sage skyline pixels that stay in place and
+   flicker individually (no horizontal drift). Bottom-anchored so
+   the band can sit flush against the sage section below — the
+   pixels' baselines and the sage bg merge seamlessly because both
+   are var(--accent).
+   --------------------------------------------------------------- */
+.pixel-flicker {
+  display: block;
+  width: 100%;
+  /* height set by JS prop */
+}
+.pixel-flicker rect {
+  /* step-end gives a hard cut between keyframe values — the pixel
+     snaps from visible to hidden and back, never interpolates.
+     v1.5: 14s cycle — calm per-pixel rate but tighter delay
+     distribution (mod 14000) so 5-7 pixels are visibly blinking
+     at any moment. */
+  animation: peken-pixel-blink 14s step-end infinite;
+  will-change: opacity;
+}
+
+/* ---------------------------------------------------------------
+   Photo tile — scoped to Home image-run + Program rows ONLY.
+   The default class is now intentionally non-hover; opt into the
+   hover treatment with .photo-tile--hover. Stepped timing on the
+   blur creates a more visible "pixelated" feel than smooth blur.
+   --------------------------------------------------------------- */
+.photo-tile {
+  position: relative;
+  overflow: hidden;
+  background: var(--bg-deep);
+}
+.photo-tile > img {
+  position: absolute; inset: 0;
+  width: 100%; height: 100%;
+  object-fit: cover;
+  display: block;
+}
+.photo-tile > img:first-of-type {
+  /* Default: grayscale "atmosphere" treatment for hover-enabled tiles,
+     overridden to colour for tiles without --hover modifier */
+  filter: none;
+  transition: filter 600ms cubic-bezier(.22,.61,.36,1);
+}
+.photo-tile--hover > img:first-of-type {
+  filter: grayscale(1) contrast(1.05);
+}
+.photo-tile__color {
+  opacity: 0;
+  filter: blur(10px) contrast(1.5) saturate(1.3);
+  image-rendering: pixelated;
+  /* steps() on opacity + filter gives the discrete-pixel feel — the
+     image jumps in 6 visible stages instead of smoothly blurring */
+  transition:
+    opacity 700ms steps(6),
+    filter 700ms steps(6);
+}
+.photo-tile--hover:hover > img:first-of-type,
+.photo-tile--hover:focus-within > img:first-of-type {
+  filter: grayscale(0) contrast(1);
+}
+.photo-tile--hover:hover .photo-tile__color,
+.photo-tile--hover:focus-within .photo-tile__color {
+  opacity: 1;
+  filter: blur(0) contrast(1) saturate(1);
+}
+/* Optional pixel-grid flash overlay — adds a brief checker visual
+   during the cross-fade so the eye reads "pixelated" not just "blur". */
+.photo-tile--hover .photo-tile__pixelgrid {
+  position: absolute; inset: 0;
+  pointer-events: none;
+  opacity: 0;
+  z-index: 3;
+  background-image:
+    repeating-linear-gradient(0deg,  rgba(0,0,0,.18) 0 1px, transparent 1px 10px),
+    repeating-linear-gradient(90deg, rgba(0,0,0,.18) 0 1px, transparent 1px 10px);
+  mix-blend-mode: multiply;
+}
+.photo-tile--hover:hover .photo-tile__pixelgrid,
+.photo-tile--hover:focus-within .photo-tile__pixelgrid {
+  animation: peken-pixel-flash 700ms ease-out;
+}
+
+/* Caption overlay — slides up from bottom on hover. Used by
+   Home image-run (with title + description from PROGRAMS) and
+   by Works masonry (with creator name only). */
+.photo-tile__caption {
+  position: absolute; left: 0; right: 0; bottom: 0;
+  padding: 24px;
+  z-index: 4;
+  pointer-events: none;
+  transform: translateY(8px);
+  opacity: 0;
+  background: linear-gradient(to top,
+                              rgba(13,13,13,.92) 0%,
+                              rgba(13,13,13,.85) 60%,
+                              rgba(13,13,13,0) 100%);
+  transition: opacity 320ms cubic-bezier(.22,.61,.36,1),
+              transform 320ms cubic-bezier(.22,.61,.36,1);
+}
+.photo-tile:hover .photo-tile__caption,
+.photo-tile:focus-within .photo-tile__caption {
+  opacity: 1;
+  transform: translateY(0);
+}
+
+/* ---------------------------------------------------------------
+   Wipe-reveal (v1.3) — redesigned to a simple gradient bridge.
+   The WipeReveal component in Shared.jsx now renders:
+     1. `before` section (flows naturally, no sticky, no clipping)
+     2. A 60vh gradient bridge from fromColor → toColor
+     3. `after` section with solid toColor bg
+   User scrolls the before section completely, enters the gradient
+   bridge, watches bg colour smoothly shift over ~60vh of scroll,
+   and arrives at the after section with no visible seam.
+
+   The v1.2 sticky + negative-margin pattern is RETIRED. No CSS
+   classes are needed — everything is inline styles in the component
+   so it composes cleanly with whatever colours each call-site uses.
+   --------------------------------------------------------------- */
+
+/* Modal backdrop — used by login modal, lightbox, any centered dialog. */
+.peken-modal-backdrop {
+  position: fixed; inset: 0;
+  background: rgba(13, 13, 13, 0.85);
+  backdrop-filter: blur(6px);
+  -webkit-backdrop-filter: blur(6px);
+  display: grid;
+  place-items: center;
+  z-index: 100;
+  animation: peken-fade-in var(--dur-base) var(--ease-out);
+  padding: 24px;
+}
+
+/* Hexa-helix card — text brightens when cursor is on the card. */
+.helix-card               { transition: background 320ms var(--ease-out); }
+.helix-card .helix-body   { color: var(--fg-secondary);
+                            transition: color 320ms var(--ease-out); }
+.helix-card:hover         { background: rgba(255,255,255,.02); }
+.helix-card:hover .helix-body,
+.helix-card:focus-within .helix-body { color: #fff; }
+
+/* Reduced-motion override */
+@media (prefers-reduced-motion: reduce) {
+  .pixel-flicker rect { animation: none; opacity: 1; }
+  .photo-tile > img:first-of-type,
+  .photo-tile__color,
+  .photo-tile__caption { transition: none; }
+  .photo-tile--hover .photo-tile__pixelgrid { animation: none; opacity: 0; }
+  .peken-modal-backdrop { animation: none; }
+  /* Wipe-reveal in v1.3 has no animation — just a static gradient
+     bridge — so no reduced-motion override is needed. */
+}
