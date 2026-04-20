@@ -12,6 +12,7 @@ import EventDetail from './pages/EventDetail';
 import Monitor from './pages/Monitor';
 import Profile from './pages/Profile';
 import Settings from './pages/Settings';
+import CompanyProfile from './pages/CompanyProfile';
 import { ToastProvider } from './components/Toast';
 
 const getStoredUser = () => {
@@ -61,6 +62,7 @@ function App() {
                         <Route path="reports" element={<AdminRoute><Reports /></AdminRoute>} />
                         <Route path="events" element={<AdminRoute><Events /></AdminRoute>} />
                         <Route path="events/:id" element={<AdminRoute><EventDetail /></AdminRoute>} />
+                        <Route path="company-profile" element={<AdminRoute><CompanyProfile /></AdminRoute>} />
                     </Route>
 
                     <Route path="*" element={<Navigate to="/" replace />} />
