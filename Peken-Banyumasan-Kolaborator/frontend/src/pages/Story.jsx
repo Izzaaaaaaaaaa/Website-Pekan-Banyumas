@@ -1,4 +1,4 @@
-// Story.jsx — with file upload (FileReader), tags, 👏 apresiasi
+// Story.jsx — with file upload (FileReader) and tags
 import React, { useState, useEffect, useRef } from 'react';
 import { Trash2, Plus, X, Loader2, BookOpen, Clock, Tag, Hash, MapPin } from 'lucide-react';
 import api, { getUser } from '../services/api';
@@ -19,7 +19,7 @@ const fmtDate = d => {
 };
 
 // ── StoryCard ─────────────────────────────────────────────────────────────────
-const StoryCard = ({ story, onDelete, onLike }) => {
+const StoryCard = ({ story, onDelete }) => {
   const user = getUser();
   return (
     <div className="bg-white rounded-2xl border border-earth-100 overflow-hidden group hover:shadow-sm transition">
@@ -63,15 +63,6 @@ const StoryCard = ({ story, onDelete, onLike }) => {
           </div>
         )}
 
-        {/* Actions */}
-        <div className="flex items-center gap-4 mt-4 pt-3 border-t border-earth-50">
-          <button onClick={() => onLike(story.id)}
-            className={`flex items-center gap-1.5 text-sm transition px-2 py-1 rounded-lg ${story.liked ? 'text-brand-700 bg-brand-50' : 'text-earth-400 hover:text-brand-600 hover:bg-brand-50'}`}>
-            <span className="text-base">{story.liked ? '👏' : '👋'}</span>
-            <span className="font-medium">{(story.like_count||story.suka||0) + (story.liked ? 1 : 0)}</span>
-            <span className="text-xs hidden sm:inline">apresiasi</span>
-          </button>
-        </div>
       </div>
     </div>
   );
@@ -201,14 +192,14 @@ export default function Story() {
 
   useEffect(() => {
     api.story.list().then(r => {
-      setList(r.data.map(s => ({ ...s, liked: false, like_count: s.suka || s.like_count || 0 })));
+      setList(r.data);
       setLoading(false);
     });
   }, []);
 
   const post = async (data) => {
     const res = await api.story.create(data);
-    setList(l => [{ ...res.data, liked: false, like_count: 0 }, ...l]);
+    setList(l => [res.data, ...l]);
     toast.success('Story berhasil diposting!');
   };
 
@@ -219,7 +210,6 @@ export default function Story() {
     toast.success('Story dihapus');
   };
 
-  const like = (id) => setList(l => l.map(s => s.id === id ? { ...s, liked: !s.liked } : s));
 
   return (
     <div className="max-w-xl mx-auto">
@@ -264,7 +254,7 @@ export default function Story() {
         </div>
       ) : (
         <div className="space-y-4">
-          {list.map(s => <StoryCard key={s.id} story={s} onDelete={del} onLike={like}/>)}
+          {list.map(s => <StoryCard key={s.id} story={s} onDelete={del}/>)}
         </div>
       )}
 
