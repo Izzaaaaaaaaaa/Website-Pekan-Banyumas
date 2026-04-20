@@ -7,41 +7,76 @@ import AboutScreen from './components/screens/AboutScreen.jsx';
 import ProgramScreen from './components/screens/ProgramScreen.jsx';
 import GalleryScreen from './components/screens/GalleryScreen.jsx';
 import WorksScreen from './components/screens/WorksScreen.jsx';
+import PublicProfileScreen from './components/screens/PublicProfileScreen.jsx';
 
-// Page → screen routing map.
-// PUBLICATION currently re-uses GalleryScreen (placeholder until a
-// dedicated publication CMS lands — flagged in HANDOFF §6).
 const SCREENS = {
-  HOME: HomeScreen,
-  ABOUT: AboutScreen,
-  PROGRAM: ProgramScreen,
-  KARYA: WorksScreen,
-  GALLERY: GalleryScreen,
+  HOME:        HomeScreen,
+  ABOUT:       AboutScreen,
+  PROGRAM:     ProgramScreen,
+  KARYA:       WorksScreen,
+  GALLERY:     GalleryScreen,
   PUBLICATION: GalleryScreen,
 };
 
+/** Konversi nama ke slug: "Aji Pradana" → "aji-pradana" */
+const toSlug = (name) =>
+  (name || '').toLowerCase().replace(/\s+/g, '-').replace(/[^a-z0-9-]/g, '');
+
+/** Baca slug dari hash URL: #/@aji-pradana → "aji-pradana" */
+const slugFromHash = () => {
+  const m = window.location.hash.match(/^#\/@(.+)$/);
+  return m ? decodeURIComponent(m[1]) : null;
+};
+
 export default function App() {
-  const [page, setPage] = useState(
-    () => localStorage.getItem('peken_page') || 'HOME'
-  );
+  const initSlug = slugFromHash();
+
+  const [page, setPage] = useState(initSlug ? 'PUBLIC_PROFILE' : (localStorage.getItem('peken_page') || 'HOME'));
+  const [profileOwner, setProfileOwner] = useState(initSlug);
   const [loginOpen, setLoginOpen] = useState(false);
 
   useEffect(() => {
-    localStorage.setItem('peken_page', page);
+    if (page === 'PUBLIC_PROFILE' && profileOwner) {
+      // Pasang hash URL — peken.com/#/@aji-pradana — bisa di-share
+      history.replaceState(null, '', `${window.location.pathname}#/@${profileOwner}`);
+    } else {
+      // Bersihkan hash saat keluar dari halaman profil
+      if (window.location.hash.startsWith('#/@')) {
+        history.replaceState(null, '', window.location.pathname);
+      }
+      localStorage.setItem('peken_page', page);
+    }
     window.scrollTo(0, 0);
-  }, [page]);
+  }, [page, profileOwner]);
+
+  const handleNavigate = (target, payload) => {
+    if (target === 'PUBLIC_PROFILE') {
+      setProfileOwner(toSlug(payload));
+      setPage('PUBLIC_PROFILE');
+    } else {
+      setProfileOwner(null);
+      setPage(target);
+    }
+  };
+
+  if (page === 'PUBLIC_PROFILE' && profileOwner) {
+    return (
+      <div>
+        <PekenNav current="KARYA" onNavigate={handleNavigate} onLogin={() => setLoginOpen(true)} />
+        <PublicProfileScreen ownerName={profileOwner} onBack={() => handleNavigate('KARYA')} />
+        <PekenFooter onNavigate={handleNavigate} />
+        <LoginModal open={loginOpen} onClose={() => setLoginOpen(false)} />
+      </div>
+    );
+  }
 
   const Screen = SCREENS[page] || HomeScreen;
 
   return (
-    <div data-screen-label={page}>
-      <PekenNav
-        current={page}
-        onNavigate={setPage}
-        onLogin={() => setLoginOpen(true)}
-      />
-      <Screen onNavigate={setPage} />
-      <PekenFooter onNavigate={setPage} />
+    <div>
+      <PekenNav current={page} onNavigate={handleNavigate} onLogin={() => setLoginOpen(true)} />
+      <Screen onNavigate={handleNavigate} />
+      <PekenFooter onNavigate={handleNavigate} />
       <LoginModal open={loginOpen} onClose={() => setLoginOpen(false)} />
     </div>
   );
