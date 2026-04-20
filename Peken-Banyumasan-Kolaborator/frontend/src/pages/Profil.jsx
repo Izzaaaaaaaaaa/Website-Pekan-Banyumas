@@ -146,15 +146,21 @@ export default function Profil() {
         <p className="text-batik-500 text-xs mt-0.5">{user.email}</p>
       </div>
 
-      {/* 🆕 Lihat Profil Publik */}
-      <a
-        href={`/pelaku/${user.id}`}
-        target="_blank"
-        rel="noopener noreferrer"
-        className="flex items-center justify-center gap-2 w-full py-3 border-2 border-dashed border-earth-200 rounded-2xl text-earth-500 hover:border-batik-400 hover:text-batik-700 transition text-sm font-medium"
-      >
-        <span>🌐</span> Lihat Profil Publik
-      </a>
+      {/* Lihat Profil Publik — company profile domain, URL: /#/@slug */}
+      {(() => {
+        const COMPANY_URL = import.meta.env.VITE_PUBLIC_URL || 'https://umkm-development.vercel.app';
+        const slug = (user.nama||'kreator').toLowerCase().replace(/\s+/g,'-').replace(/[^a-z0-9-]/g,'');
+        return (
+          <a
+            href={`${COMPANY_URL}/#/@${slug}`}
+            target="_blank"
+            rel="noopener noreferrer"
+            className="flex items-center justify-center gap-2 w-full py-3 border-2 border-dashed border-earth-200 rounded-2xl text-earth-500 hover:border-batik-400 hover:text-batik-700 transition text-sm font-medium"
+          >
+            <span>🌐</span> Lihat Profil Publik
+          </a>
+        );
+      })()}
     </div>
   );
 }
