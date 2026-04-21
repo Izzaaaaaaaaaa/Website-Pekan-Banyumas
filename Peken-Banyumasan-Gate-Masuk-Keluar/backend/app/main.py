@@ -3,7 +3,7 @@ from app.api.routes import test
 from app.api.routes import gate
 from app.api.routes import dashboard
 from app.api.routes import auth
-
+from app.api.routes import members
 
 app = FastAPI()
 
@@ -11,6 +11,7 @@ app.include_router(test.router)
 app.include_router(gate.router)
 app.include_router(dashboard.router)
 app.include_router(auth.router)
+app.include_router(members.router)
 
 @app.get("/")
 def root():
