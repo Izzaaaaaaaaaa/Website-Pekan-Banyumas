@@ -14,7 +14,10 @@ def create_access_token(data: dict):
 
 def verify_token(token: str):
     try:
+        print("TOKEN MASUK:", token)
         payload = jwt.decode(token, SECRET_KEY, algorithms=[ALGORITHM])
+        print("TOKEN VALID:", payload)
         return payload
-    except JWTError:
+    except Exception as e:
+        print("TOKEN ERROR:", e)
         return None

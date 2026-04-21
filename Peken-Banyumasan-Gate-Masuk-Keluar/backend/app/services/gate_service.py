@@ -1,5 +1,6 @@
 from app.db.supabase import supabase
 
+
 def scan_nfc(card_uid: str):
     # 1. cari kartu
     nfc = supabase.table("nfc_cards") \
@@ -44,3 +45,20 @@ def scan_nfc(card_uid: str):
         "status": next_type,
         "user": user.data[0]
     }
+
+def get_gate_logs(gate_type=None, limit=20):
+    try:
+        query = supabase.table("gate_logs").select("*")
+
+        if gate_type:
+            query = query.eq("gate_type", gate_type)
+
+        query = query.order("scan_time", desc=True).limit(limit)
+
+        res = query.execute()
+
+        return res.data
+
+    except Exception as e:
+        print("ERROR GATE LOGS:", e)
+        return {"error": str(e)}
