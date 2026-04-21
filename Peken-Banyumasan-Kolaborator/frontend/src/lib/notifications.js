@@ -3,6 +3,8 @@
 // Replace addNotif() with API POST when backend ready
 // Auto-triggers when actions happen (approve, assign, register, etc.)
 
+import { STORAGE_EVENTS, notifKey } from './storageKeys';
+
 export const NotifType = {
   // Member receives
   MEMBER_APPROVED:      'member_approved',      // admin setujui akun baru
@@ -34,8 +36,13 @@ const ICONS = {
   umkm_event_request:   '🏬',
 };
 
-const key = (role) => `pekan_notif_${role}`;
-const DISPATCH_EVENT = 'pekan_notif_update';
+// Local aliases — all string literals flow from lib/storageKeys. The
+// storage-key spelling is now canonical `peken_notif_*` (was legacy
+// `pekan_notif_*`). Existing sessions' queued notifications under the
+// old spelling are not migrated because this is a dummy/offline queue
+// that will be replaced by notifikasiApi in the APISpecs phase.
+const key = notifKey;                        // role → "peken_notif_{role}"
+const DISPATCH_EVENT = STORAGE_EVENTS.NOTIF_UPDATE;
 
 /** Get notifications for a role (member | umkm | admin) */
 export function getNotifs(role) {

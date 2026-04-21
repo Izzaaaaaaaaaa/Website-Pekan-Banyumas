@@ -5,7 +5,8 @@ import {
   LayoutDashboard, User, Image, BookOpen, Calendar,
   Bell, Settings, LogOut, Menu, X, Palette, Globe
 } from 'lucide-react';
-import { clearAuth, getUser } from '../services/api';
+import { clearAuth, getUser } from '../lib/auth';
+import { STORAGE_EVENTS } from '../lib/storageKeys';
 import { getNotifs } from '../lib/notifications';
 
 const navItems = [
@@ -18,7 +19,7 @@ const navItems = [
   { to:'/dashboard/pengaturan',  label:'Pengaturan',  icon:Settings         },
 ];
 
-const UMKM_URL = import.meta.env.VITE_UMKM_URL || 'http://localhost:5174';
+const COMPANY_URL = import.meta.env.VITE_COMPANY_URL || 'http://localhost:5174';
 
 export default function Layout() {
   const loc  = useLocation();
@@ -30,8 +31,8 @@ export default function Layout() {
   useEffect(() => {
     const refresh = () => setNotifCount(getNotifs('member').filter(n=>!n.read).length);
     refresh();
-    window.addEventListener('pekan_notif_update', refresh);
-    return () => window.removeEventListener('pekan_notif_update', refresh);
+    window.addEventListener(STORAGE_EVENTS.NOTIF_UPDATE, refresh);
+    return () => window.removeEventListener(STORAGE_EVENTS.NOTIF_UPDATE, refresh);
   }, []);
 
   const logout = () => { clearAuth(); nav('/login'); };
@@ -108,7 +109,7 @@ export default function Layout() {
 
         {/* Footer links */}
         <div className="px-3 pb-3 shrink-0 border-t border-gray-100 pt-3 space-y-0.5">
-          <a href={UMKM_URL} target="_blank" rel="noopener noreferrer"
+          <a href={COMPANY_URL} target="_blank" rel="noopener noreferrer"
             className="flex items-center gap-2.5 px-3 py-2 rounded-xl text-xs text-gray-500 hover:bg-gray-50 hover:text-green-700 transition font-medium w-full">
             <Globe size={14} className="text-gray-400 shrink-0"/>
             Beranda Publik

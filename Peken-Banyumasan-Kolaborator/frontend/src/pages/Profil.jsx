@@ -1,6 +1,8 @@
 import React, { useState } from 'react';
 import { User, MapPin, Edit2, Save, X, CheckCircle, ExternalLink } from 'lucide-react';
-import api, { getUser } from '../services/api';
+import { profilApi } from '../services/endpoints';
+import { getUser, setUser as setAuthUser } from '../lib/auth';
+import { extractError } from '../lib/unwrap';
 import { useToast } from '../components/Toast';
 import { SUBSEKTORS } from '../data/dummy';
 import ImageUpload from '../components/ImageUpload';
@@ -23,11 +25,16 @@ export default function Profil() {
   const save = async () => {
     setSaving(true);
     try {
-      await api.profil.update(form);
-      setUser(u => ({...u, ...form}));
+      // profilApi.update returns the unwrapped updated profile record.
+      const updated = await profilApi.update(form);
+      const merged = { ...user, ...form, ...(updated || {}) };
+      setUser(merged);
+      // Sync to global auth store so Layout (sidebar/header) re-renders
+      // via the STORAGE_EVENTS.USER_UPDATE dispatch inside setAuthUser.
+      setAuthUser(merged);
       setEditing(false);
       toast.success('Profil berhasil diperbarui');
-    } catch { toast.error('Gagal menyimpan'); }
+    } catch (err) { toast.error(extractError(err, 'Gagal menyimpan')); }
     finally { setSaving(false); }
   };
 
@@ -148,7 +155,7 @@ export default function Profil() {
 
       {/* Lihat Profil Publik — company profile domain, URL: /#/@slug */}
       {(() => {
-        const COMPANY_URL = import.meta.env.VITE_PUBLIC_URL || 'https://umkm-development.vercel.app';
+        const COMPANY_URL = import.meta.env.VITE_COMPANY_URL || 'https://umkm-development.vercel.app';
         const slug = (user.nama||'kreator').toLowerCase().replace(/\s+/g,'-').replace(/[^a-z0-9-]/g,'');
         return (
           <a

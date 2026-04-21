@@ -1,7 +1,9 @@
 // Event.jsx — Revisi: Jelajahi | Saya Ikuti | Selesai
 import React, { useState, useEffect } from 'react';
 import { Calendar, MapPin, CheckCircle, Clock, Loader2, Users, Tag, X, Image, Mic2, Store } from 'lucide-react';
-import api from '../services/api';
+import { eventApi } from '../services/endpoints';
+import { getUser } from '../lib/auth';
+import { extractError } from '../lib/unwrap';
 import { useToast } from '../components/Toast';
 
 const STATUS_CLS = {
@@ -218,25 +220,35 @@ export default function Event() {
   const [detailEvent, setDetailEvent] = useState(null);
 
   useEffect(() => {
-    api.event.list().then(r => { setList(r.data); setLoading(false); });
-  }, []);
+    (async () => {
+      try {
+        const items = await eventApi.list();
+        setList(items || []);
+      } catch (err) {
+        toast.error(extractError(err, 'Gagal memuat daftar event'));
+      } finally {
+        setLoading(false);
+      }
+    })();
+  }, [toast]);
 
   const [registerModal, setRegisterModal] = useState(null);
 
   const daftar = async (eventId, peran = 'peserta') => {
     setLoadingId(eventId);
     try {
-      await api.event.daftar(eventId);
+      // Phase 0 catalogue name: registerSelf (was dummy-facade `daftar`).
+      await eventApi.registerSelf(eventId);
       setList(l => l.map(e => e.id===eventId ? {...e, terdaftar:true, peran} : e));
       toast.success(`Berhasil mendaftar sebagai ${peran}!`);
       try {
-        const user = JSON.parse(localStorage.getItem('user') || '{}');
+        const user = getUser() || {};
         import('../lib/notifications').then(({ triggerMemberEventRegister }) => {
           const ev = list.find(e => e.id === eventId);
           if (ev) triggerMemberEventRegister(user.nama || 'Member', ev.nama);
         });
       } catch {}
-    } catch { toast.error('Gagal mendaftar'); }
+    } catch (err) { toast.error(extractError(err, 'Gagal mendaftar')); }
     finally { setLoadingId(null); }
   };
 

@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { Plus, Image, Trash2, Star, Edit2, X, Save, Loader2, Palette } from 'lucide-react';
-import api from '../services/api';
+import { portofolioApi } from '../services/endpoints';
+import { extractError } from '../lib/unwrap';
 import { useToast } from '../components/Toast';
 import { SUBSEKTORS } from '../data/dummy';
 import ImageUpload from '../components/ImageUpload';
@@ -53,8 +54,17 @@ export default function Portofolio() {
   const [saving, setSaving] = useState(false);
 
   useEffect(() => {
-    api.portofolio.list().then(r => { setList(r.data); setLoading(false); });
-  }, []);
+    (async () => {
+      try {
+        const items = await portofolioApi.list();
+        setList(items || []);
+      } catch (err) {
+        toast.error(extractError(err, 'Gagal memuat portofolio'));
+      } finally {
+        setLoading(false);
+      }
+    })();
+  }, [toast]);
 
   const openAdd  = () => { setForm(EMPTY); setEditItem(null); setShowModal(true); };
   const openEdit = (k) => { setForm({...k}); setEditItem(k); setShowModal(true); };
@@ -64,24 +74,28 @@ export default function Portofolio() {
     setSaving(true);
     try {
       if (editItem) {
-        await api.portofolio.update(editItem.id, form);
-        setList(l => l.map(x => x.id === editItem.id ? {...x,...form} : x));
+        const updated = await portofolioApi.update(editItem.id, form);
+        setList(l => l.map(x => x.id === editItem.id ? { ...x, ...form, ...(updated || {}) } : x));
         toast.success('Karya berhasil diperbarui');
       } else {
-        const res = await api.portofolio.create(form);
-        setList(l => [res.data, ...l]);
+        const created = await portofolioApi.create(form);
+        setList(l => [created, ...l]);
         toast.success('Karya berhasil ditambahkan');
       }
       setShowModal(false);
-    } catch { toast.error('Gagal menyimpan'); }
+    } catch (err) { toast.error(extractError(err, 'Gagal menyimpan')); }
     finally { setSaving(false); }
   };
 
   const del = async (id) => {
     if (!confirm('Hapus karya ini?')) return;
-    await api.portofolio.delete(id);
-    setList(l => l.filter(x => x.id !== id));
-    toast.success('Karya dihapus');
+    try {
+      await portofolioApi.delete(id);
+      setList(l => l.filter(x => x.id !== id));
+      toast.success('Karya dihapus');
+    } catch (err) {
+      toast.error(extractError(err, 'Gagal menghapus karya'));
+    }
   };
 
   return (

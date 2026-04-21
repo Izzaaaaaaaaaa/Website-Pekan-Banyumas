@@ -1,7 +1,9 @@
 import React, { useState } from 'react';
 import { Lock, Mail, Bell, Shield, Loader2, CheckCircle, Eye, EyeOff } from 'lucide-react';
 import { useToast } from '../components/Toast';
-import api, { getUser } from '../services/api';
+import { authApi } from '../services/endpoints';
+import { getUser } from '../lib/auth';
+import { extractError } from '../lib/unwrap';
 
 const Section = ({ icon: Icon, title, children }) => (
   <div className="bg-white rounded-2xl p-5 border border-earth-100">
@@ -28,10 +30,20 @@ export default function Pengaturan() {
     if (pwForm.baru !== pwForm.konfirmasi) { toast.error('Konfirmasi password tidak cocok'); return; }
     if (pwForm.baru.length < 8) { toast.error('Password baru minimal 8 karakter'); return; }
     setSavingPw(true);
-    await new Promise(r => setTimeout(r, 800));
-    setSavingPw(false);
-    setPwForm({ lama:'', baru:'', konfirmasi:'' });
-    toast.success('Password berhasil diubah');
+    try {
+      // Real API call — Phase 0 contract PUT /api/auth/password
+      // Replaces the previous fake setTimeout(800) placeholder.
+      await authApi.updatePassword({
+        password_lama: pwForm.lama,
+        password_baru: pwForm.baru,
+      });
+      setPwForm({ lama:'', baru:'', konfirmasi:'' });
+      toast.success('Password berhasil diubah');
+    } catch (err) {
+      toast.error(extractError(err, 'Gagal mengubah password. Periksa password lama Anda.'));
+    } finally {
+      setSavingPw(false);
+    }
   };
 
   const Input = ({ label, field, type='text', placeholder }) => (

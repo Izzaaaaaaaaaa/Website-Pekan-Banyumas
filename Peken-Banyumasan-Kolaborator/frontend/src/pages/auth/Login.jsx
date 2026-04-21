@@ -1,9 +1,11 @@
 // Login.jsx — Split-panel design matching UMKM login style exactly
 import React, { useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
-import api from '../../services/api';
+import { authApi } from '../../services/endpoints';
+import { setToken, setUser } from '../../lib/auth';
+import { extractError } from '../../lib/unwrap';
 
-const UMKM_URL = import.meta.env.VITE_UMKM_URL || 'http://localhost:5174';
+const COMPANY_URL = import.meta.env.VITE_COMPANY_URL || 'http://localhost:5174';
 
 const CSS = `
 @import url('https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:ital,wght@0,400;0,500;0,600;0,700;0,800&family=Playfair+Display:ital,wght@0,600;0,700;1,600&display=swap');
@@ -116,9 +118,14 @@ export default function Login() {
     if (!email || !password) { setError('Email dan password wajib diisi'); return; }
     setLoading(true); setError('');
     try {
-      await api.auth.login(email, password);
+      // authApi.login returns the UNWRAPPED payload: { token, user }.
+      // The page stores them explicitly via setToken/setUser (matches
+      // Gate's convention — Phase 0 contract).
+      const { token, user } = await authApi.login({ email, password });
+      setToken(token);
+      setUser(user);
       nav('/dashboard');
-    } catch(err) { setError(err.message || 'Email atau password salah'); }
+    } catch(err) { setError(extractError(err, 'Email atau password salah')); }
     finally { setLoading(false); }
   };
 
@@ -127,7 +134,7 @@ export default function Login() {
       <style>{CSS}</style>
 
       {/* Back to home */}
-      <a href={UMKM_URL} className="ml-back">← Beranda</a>
+      <a href={COMPANY_URL} className="ml-back">← Beranda</a>
 
       {/* LEFT */}
       <div className="ml-left">
@@ -212,7 +219,7 @@ export default function Login() {
           </div>
           <hr className="ml-divider"/>
           <div className="ml-cross">
-            Punya usaha UMKM? <a href={`${UMKM_URL}/login`}>Login sebagai UMKM →</a>
+            Punya usaha UMKM? <a href={`${COMPANY_URL}/login`}>Login sebagai UMKM →</a>
           </div>
           <p className="ml-demo">Mode demo — masukkan email &amp; password apapun</p>
         </div>

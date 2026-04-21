@@ -2,7 +2,8 @@
 import React, { useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { Loader2, Eye, EyeOff, Check, ChevronRight } from 'lucide-react';
-import api from '../../services/api';
+import { authApi } from '../../services/endpoints';
+import { extractError } from '../../lib/unwrap';
 import { SUBSEKTORS } from '../../data/dummy';
 import { triggerNewMemberRequest } from '../../lib/notifications';
 
@@ -44,11 +45,11 @@ export default function Register() {
     setLoading(true);
     setError('');
     try {
-      await api.auth.register(form);
+      await authApi.register(form);
       // Notify admin
       triggerNewMemberRequest(form.nama);
       nav('/login', { state: { registered: true } });
-    } catch(err) { setError(err.message || 'Gagal mendaftar. Coba lagi.'); }
+    } catch(err) { setError(extractError(err, 'Gagal mendaftar. Coba lagi.')); }
     finally { setLoading(false); }
   };
 
@@ -131,7 +132,7 @@ export default function Register() {
       <style>{CSS}</style>
       <div className="reg-wrap">
         {/* Brand */}
-        <a href={import.meta.env.VITE_UMKM_URL || 'http://localhost:5174'} className="reg-brand">
+        <a href={import.meta.env.VITE_COMPANY_URL || 'http://localhost:5174'} className="reg-brand">
           <div className="reg-brand-mark">🎨</div>
           <div><div className="reg-brand-name">Peken Banyumasan</div><div className="reg-brand-sub">Daftar sebagai Kreator</div></div>
         </a>
@@ -257,7 +258,7 @@ export default function Register() {
           </div>
           <div className="reg-crosslink">
             Punya usaha UMKM?{' '}
-            <a href={import.meta.env.VITE_UMKM_URL || 'http://localhost:5174/daftar'}>Daftar sebagai UMKM →</a>
+            <a href={`${import.meta.env.VITE_COMPANY_URL || 'http://localhost:5174'}/daftar`}>Daftar sebagai UMKM →</a>
           </div>
         </div>
       </div>

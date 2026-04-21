@@ -1,7 +1,10 @@
 import React, { useState, useEffect } from 'react';
 import { Bell, CheckCheck, Calendar, Info, Users, Trash2, FileText } from 'lucide-react';
 import { getNotifs, markRead, markAllRead } from '../lib/notifications';
-import api from '../services/api';
+import { notifikasiApi } from '../services/endpoints';
+import { STORAGE_EVENTS } from '../lib/storageKeys';
+import { extractError } from '../lib/unwrap';
+import { useToast } from '../components/Toast';
 
 const TYPE_ICON = {
   member_approved:     { icon:Users,    cls:'bg-green-50 text-green-600'  },
@@ -23,20 +26,24 @@ const fmtTime = (iso) => {
 };
 
 export default function Notifikasi() {
+  const toast = useToast();
   const [list, setList] = useState([]);
   const [filter, setFilter] = useState('semua'); // semua | belum | sudah
 
-  const refresh = () => {
+  const refresh = async () => {
     const local = getNotifs('member');
-    // Merge with dummy if local is empty (first visit)
+    // Merge with backend list if local queue is empty (first visit).
     if (local.length === 0) {
-      api.notifikasi.list().then(r => {
-        setList(r.data.map(n => ({
+      try {
+        const remote = await notifikasiApi.list();
+        setList((remote || []).map(n => ({
           ...n, id: n.id, type: n.tipe || 'system', read: n.dibaca,
           title: n.pesan, message: n.pesan, created_at: new Date().toISOString(),
           icon: '🔔',
         })));
-      });
+      } catch (err) {
+        toast.error(extractError(err, 'Gagal memuat notifikasi'));
+      }
     } else {
       setList(local);
     }
@@ -44,8 +51,9 @@ export default function Notifikasi() {
 
   useEffect(() => {
     refresh();
-    window.addEventListener('pekan_notif_update', refresh);
-    return () => window.removeEventListener('pekan_notif_update', refresh);
+    window.addEventListener(STORAGE_EVENTS.NOTIF_UPDATE, refresh);
+    return () => window.removeEventListener(STORAGE_EVENTS.NOTIF_UPDATE, refresh);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   const baca = (id) => { markRead('member', id); refresh(); };

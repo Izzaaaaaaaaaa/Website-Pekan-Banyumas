@@ -5,7 +5,9 @@ import {
   Plus, Image, BookOpen, Calendar, ArrowRight,
   MapPin, Sparkles, ChevronRight, Zap, Hash
 } from 'lucide-react';
-import api, { getUser } from '../services/api';
+import { storyApi, eventApi } from '../services/endpoints';
+import { getUser } from '../lib/auth';
+import { extractError } from '../lib/unwrap';
 import { useToast } from '../components/Toast';
 
 const fmtDate = d => {
@@ -132,15 +134,28 @@ export default function Dashboard() {
   const [events, setEvents] = useState([]);
 
   useEffect(() => {
-    api.story.list().then(r => setStories(r.data.slice(0, 4)));
-    api.event.list().then(r => {
-      setEvents(r.data.filter(e => ['upcoming','berlangsung'].includes(e.status)));
-    });
-  }, []);
+    (async () => {
+      try {
+        // storyApi.list / eventApi.list return the unwrapped payload directly.
+        const [storyList, eventList] = await Promise.all([
+          storyApi.list(),
+          eventApi.list(),
+        ]);
+        setStories((storyList || []).slice(0, 4));
+        setEvents((eventList || []).filter(e => ['upcoming','berlangsung'].includes(e.status)));
+      } catch (err) {
+        toast.error(extractError(err, 'Gagal memuat dashboard'));
+      }
+    })();
+  }, [toast]);
 
   const postStory = async (data) => {
-    const res = await api.story.create(data);
-    setStories(l => [{ ...res.data, like_count: 0 }, ...l.slice(0, 3)]);
+    try {
+      const newStory = await storyApi.create(data);
+      setStories(l => [{ ...newStory, like_count: newStory?.like_count ?? 0 }, ...l.slice(0, 3)]);
+    } catch (err) {
+      toast.error(extractError(err, 'Gagal memposting story'));
+    }
   };
 
   const myEvents = events.filter(e => e.terdaftar);

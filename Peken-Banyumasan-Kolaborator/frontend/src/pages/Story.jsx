@@ -1,7 +1,9 @@
 // Story.jsx — with file upload (FileReader) and tags
 import React, { useState, useEffect, useRef } from 'react';
 import { Trash2, Plus, X, Loader2, BookOpen, Clock, Tag, Hash, MapPin } from 'lucide-react';
-import api, { getUser } from '../services/api';
+import { storyApi } from '../services/endpoints';
+import { getUser } from '../lib/auth';
+import { extractError } from '../lib/unwrap';
 import { useToast } from '../components/Toast';
 import ImageUpload from '../components/ImageUpload';
 
@@ -191,23 +193,37 @@ export default function Story() {
   const [showModal, setShowModal] = useState(false);
 
   useEffect(() => {
-    api.story.list().then(r => {
-      setList(r.data);
-      setLoading(false);
-    });
-  }, []);
+    (async () => {
+      try {
+        const items = await storyApi.list();
+        setList(items || []);
+      } catch (err) {
+        toast.error(extractError(err, 'Gagal memuat story'));
+      } finally {
+        setLoading(false);
+      }
+    })();
+  }, [toast]);
 
   const post = async (data) => {
-    const res = await api.story.create(data);
-    setList(l => [res.data, ...l]);
-    toast.success('Story berhasil diposting!');
+    try {
+      const created = await storyApi.create(data);
+      setList(l => [created, ...l]);
+      toast.success('Story berhasil diposting!');
+    } catch (err) {
+      toast.error(extractError(err, 'Gagal memposting story'));
+    }
   };
 
   const del = async (id) => {
     if (!confirm('Hapus story ini?')) return;
-    await api.story.delete(id);
-    setList(l => l.filter(x => x.id !== id));
-    toast.success('Story dihapus');
+    try {
+      await storyApi.delete(id);
+      setList(l => l.filter(x => x.id !== id));
+      toast.success('Story dihapus');
+    } catch (err) {
+      toast.error(extractError(err, 'Gagal menghapus story'));
+    }
   };
 
 
