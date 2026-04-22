@@ -47,7 +47,7 @@ export const WORKS = [
   {
     id: 'w-005',
     title: 'Wadah Bambu Lipat',
-    owner: 'UMKM Tirta Karya',
+    owner: 'Artisan Tirta Karya',
     role: 'Artisan · Kriya',
     year: '2024',
     img: '/assets/gallery-4.jpg',

@@ -227,7 +227,7 @@ export default function HomeScreen({ onNavigate }) {
           >
             Peken Banyumasan adalah sebuah ruang kreatif berbasis budaya
             lokal yang dirancang sebagai wadah berkumpulnya masyarakat,
-            pelaku UMKM, seniman, dan komunitas dalam satu ekosistem yang
+            pelaku Artisan, seniman, dan komunitas dalam satu ekosistem yang
             hidup, inklusif, dan berkelanjutan.
             <br />
             <br />
@@ -247,7 +247,7 @@ export default function HomeScreen({ onNavigate }) {
             }}
           >
             Peken Banyumasan adalah ruang temu budaya dan ekonomi kreatif
-            di Banyumas yang mempertemukan seniman, UMKM, dan masyarakat
+            di Banyumas yang mempertemukan seniman, Artisan, dan masyarakat
             dalam satu perayaan kearifan lokal.
             <br />
             <br />
@@ -347,7 +347,7 @@ export default function HomeScreen({ onNavigate }) {
             >
               Edisi berikutnya kembali menghadirkan suasana Peken yang
               hangat dan hidup. Nikmati pertunjukan seni Banyumasan,
-              jelajahi tenant UMKM pilihan, dan temukan karya-karya lokal
+              jelajahi artisan pilihan, dan temukan karya-karya lokal
               dalam satu ruang yang penuh kebersamaan.
             </p>
             <div style={{ marginTop: 36 }}>

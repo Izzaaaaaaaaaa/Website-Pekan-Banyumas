@@ -13,13 +13,13 @@ export const PROGRAMS = [
     n: '02',
     title: 'Bring Your Own Bowl',
     img: '/assets/program-byob.jpg',
-    body: 'Gerakan zero-waste — pengunjung membawa wadah sendiri, tenant kuliner melayani tanpa kemasan sekali pakai.',
+    body: 'Gerakan zero-waste — pengunjung membawa wadah sendiri, artisan kuliner melayani tanpa kemasan sekali pakai.',
   },
   {
     n: '03',
     title: 'Local Market',
     img: '/assets/program-local-market.jpg',
-    body: 'Pasar produk kerajinan, makanan, dan kebutuhan rumah tangga dari UMKM Banyumasan.',
+    body: 'Pasar produk kerajinan, makanan, dan kebutuhan rumah tangga dari Artisan Banyumasan.',
   },
   {
     n: '04',
@@ -57,13 +57,13 @@ export const HOME_PROGRAMS = [
     n: '02',
     title: 'Bring Your Own Bowl',
     img: '/assets/program-byob.jpg',
-    body: 'Gerakan zero-waste — pengunjung membawa wadah sendiri, tenant kuliner tanpa kemasan sekali pakai.',
+    body: 'Gerakan zero-waste — pengunjung membawa wadah sendiri, artisan kuliner tanpa kemasan sekali pakai.',
   },
   {
     n: '03',
     title: 'Local Market',
     img: '/assets/program-local-market.jpg',
-    body: 'Pasar produk kerajinan, makanan, dan kebutuhan rumah tangga dari UMKM Banyumasan.',
+    body: 'Pasar produk kerajinan, makanan, dan kebutuhan rumah tangga dari Artisan Banyumasan.',
   },
   {
     n: '04',

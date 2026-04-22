@@ -1,5 +1,5 @@
 /**
- * PublicProfileScreen — profil publik kreator/artisan di company profile.
+ * PublicProfileScreen — profil publik kolaborator/artisan di company profile.
  * Layout persis mengikuti kolaborator dashboard PublicProfile:
  *   - Tanpa cover strip (langsung identity header)
  *   - Tab: Karya / Story / Event

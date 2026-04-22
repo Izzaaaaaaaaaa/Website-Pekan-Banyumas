@@ -308,7 +308,7 @@ export default function AboutScreen() {
           }}
         >
           Peken Banyumasan tumbuh dari percakapan kecil di sudut Kota Lama —
-          antara seniman pertunjukan, pelaku UMKM, dan warga sekitar yang
+          antara seniman pertunjukan, pelaku Artisan, dan warga sekitar yang
           ingin menghidupkan kembali ruang publik sebagai tempat bertemu,
           bukan sekadar berdagang.
           <br />
@@ -397,7 +397,7 @@ export default function AboutScreen() {
           </em>
           , kata Banyumasan yang berarti perjumpaan rutin yang dijaga bersama.
           Setiap edisi mempertemukan seniman pertunjukan tradisional, perajin
-          muda, pelaku UMKM, akademisi, hingga warga sekitar dalam satu ruang
+          muda, pelaku Artisan, akademisi, hingga warga sekitar dalam satu ruang
           yang sama.
         </p>
         <blockquote
@@ -455,7 +455,7 @@ export default function AboutScreen() {
           <Pillar
             n="03"
             label="CIRCULAR"
-            body="Mendorong ekonomi berputar di dalam komunitas — dari tenant lokal, bahan lokal, hingga pengunjung lokal."
+            body="Mendorong ekonomi berputar di dalam komunitas — dari artisan lokal, bahan lokal, hingga pengunjung lokal."
           />
         </div>
       </section>
@@ -547,7 +547,7 @@ export default function AboutScreen() {
               }}
             >
               Menyediakan ruang publik dwi-mingguan yang mempertemukan
-              pelaku seni, UMKM, dan masyarakat — sehingga warisan budaya
+              pelaku seni, Artisan, dan masyarakat — sehingga warisan budaya
               Banyumasan dirawat melalui praktik bersama, bukan sekadar
               dipamerkan.
             </p>
@@ -575,7 +575,7 @@ export default function AboutScreen() {
                 maxWidth: '56ch',
               }}
             >
-              Seniman pertunjukan tradisional, perajin & UMKM Banyumas,
+              Seniman pertunjukan tradisional, perajin & Artisan Banyumas,
               komunitas kreatif muda, akademisi, mitra pemerintah dan
               swasta, serta pengunjung lokal-regional yang menjadi audiens
               sekaligus pelaku.
@@ -623,8 +623,8 @@ export default function AboutScreen() {
             photo="/assets/tokoh-portrait-2.png"
             role="CURATOR"
             name="Galih Putra Pamungkas, S.Sn., M.Sn."
-            title="Curator — Artisan & UMKM"
-            bio="Mengkurasi tenant artisan dan UMKM yang masuk ke setiap edisi Peken. Sebelumnya menjalankan kolektif batik di Sokaraja; membangun program pendampingan tenant dari hulu ke hilir."
+            title="Curator — Artisan"
+            bio="Mengkurasi artisan yang masuk ke setiap edisi Peken. Sebelumnya menjalankan kolektif batik di Sokaraja; membangun program pendampingan artisan dari hulu ke hilir."
           />
           <PersonCard
             photo="/assets/tokoh-portrait-3.png"
@@ -680,7 +680,7 @@ export default function AboutScreen() {
           />
           <HelixCard
             name="Industry"
-            body="Pelaku usaha skala UMKM hingga korporasi sebagai mitra ekonomi dan ekosistem produk."
+            body="Pelaku usaha skala Artisan hingga korporasi sebagai mitra ekonomi dan ekosistem produk."
           />
           <HelixCard
             name="Community"
@@ -743,7 +743,7 @@ export default function AboutScreen() {
               Pemerintah Kabupaten Banyumas dan Dinas Kebudayaan sebagai
               mitra kebijakan; Universitas Jenderal Soedirman sebagai mitra
               riset dan pendampingan kurasi; Bank BPD Jawa Tengah sebagai
-              mitra pembiayaan UMKM; Komunitas Kota Lama Banyumas sebagai
+              mitra pembiayaan Artisan; Komunitas Kota Lama Banyumas sebagai
               mitra penyelenggara di lokasi.
               <br />
               <br />
@@ -827,7 +827,7 @@ export default function AboutScreen() {
         >
           <Stat n="86" label="Edisi Peken diselenggarakan" />
           <Stat n="240" label="Seniman & kolektif tampil" />
-          <Stat n="1.2k" label="UMKM & tenant terlibat" />
+          <Stat n="1.2k" label="Artisan terlibat" />
           <Stat n="38k" label="Pengunjung setiap edisi" />
         </div>
       </section>

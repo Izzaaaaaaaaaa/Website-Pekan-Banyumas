@@ -81,7 +81,7 @@ export const PROFILES = [
     ],
   },
   {
-    id: 'umkm-tirta-karya', slug: 'umkm-tirta-karya', nama: 'UMKM Tirta Karya',
+    id: 'artisan-tirta-karya', slug: 'artisan-tirta-karya', nama: 'Artisan Tirta Karya',
     role: 'Artisan', subsektor: ['Kriya', 'Kerajinan Bambu'],
     kota: 'Banyumas', verified: true, foto: null, cover: null,
     bio: 'Usaha kerajinan bambu ramah lingkungan yang mendukung gerakan zero-waste Peken melalui produksi wadah makanan tanpa lem sintetis.',
@@ -146,7 +146,7 @@ export const PROFILES = [
       { id: 's1', konten: 'Font aksara Jawa Banyumasan sudah diunduh lebih dari 3.000 kali di seluruh dunia. Identitas lokal ternyata bisa berdampak global jika dikemas dengan baik. ✍️', tanggal: '2025-01-15' },
     ],
     events: [
-      { id: 'e1', nama: 'Peken Brand Identity Workshop', tanggal: '2025-02-08', lokasi: 'Co-working UNSOED', status: 'selesai', peran: 'Fasilitator', deskripsi: 'Workshop identitas visual untuk UMKM lokal Banyumas.' },
+      { id: 'e1', nama: 'Peken Brand Identity Workshop', tanggal: '2025-02-08', lokasi: 'Co-working UNSOED', status: 'selesai', peran: 'Fasilitator', deskripsi: 'Workshop identitas visual untuk Artisan lokal Banyumas.' },
     ],
   },
   {
@@ -176,7 +176,7 @@ export const getProfileByOwner = (ownerNameOrSlug) => {
     nama: ownerNameOrSlug.replace(/-/g, ' ').replace(/\b\w/g, c => c.toUpperCase()),
     role: 'Kolaborator', subsektor: [], kota: 'Banyumas', verified: false,
     foto: null, cover: null,
-    bio: 'Kreator yang berkolaborasi dengan Peken Banyumasan.',
+    bio: 'Kolaborator yang berkolaborasi dengan Peken Banyumasan.',
     tahun_bergabung: '2024',
     stats: { karya: 0, story: 0, event: 0 },
     karya: [], story: [], events: [],

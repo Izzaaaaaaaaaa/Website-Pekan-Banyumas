@@ -3,3 +3,8 @@ dist
 .DS_Store
 *.log
 .vite
+
+# Env files — .env is gitignored, .env.example is committed.
+.env
+.env.*
+!.env.example

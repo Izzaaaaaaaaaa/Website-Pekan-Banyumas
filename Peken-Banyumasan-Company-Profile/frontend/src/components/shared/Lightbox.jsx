@@ -81,7 +81,7 @@ export default function Lightbox({ work, onClose, onViewProfile }) {
             <div style={{ marginTop: 'auto', paddingTop: 16, display: 'flex', gap: 12, flexWrap: 'wrap' }}>
               {onViewProfile && (
                 <PillButton onClick={handleProfile}>
-                  Profil Kreator
+                  Profil Kolaborator
                 </PillButton>
               )}
               <PillButton inverse onClick={onClose}>Tutup Karya</PillButton>
