@@ -1,4 +1,4 @@
-// Login.jsx — Split-panel design matching UMKM login style exactly
+// Login.jsx — Split-panel design matching Artisan login style exactly
 import React, { useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { authApi } from '../../services/endpoints';
@@ -142,17 +142,17 @@ export default function Login() {
         <div className="ml-blob ml-blob-2"/>
         <div className="ml-blob ml-blob-3"/>
         <div style={{position:'relative',zIndex:1}}>
-          <div className="ml-badge"><span/>Platform Kreator</div>
+          <div className="ml-badge"><span/>Platform Kolaborator</div>
           <h1 className="ml-heading">
             Tampilkan karya<br/>dan bergabung <em>bersama</em>
           </h1>
           <p className="ml-sub">
-            Kelola portofolio, ikut event budaya, dan terhubung dengan sesama kreator Banyumas Raya.
+            Kelola portofolio, ikut event budaya, dan terhubung dengan sesama kolaborator Banyumas Raya.
           </p>
           <div className="ml-stats">
             <div className="ml-stat">
               <div className="ml-stat-n">127+</div>
-              <div className="ml-stat-l">Kreator</div>
+              <div className="ml-stat-l">Kolaborator</div>
             </div>
             <div className="ml-stat">
               <div className="ml-stat-n">12</div>
@@ -171,7 +171,7 @@ export default function Login() {
         <div className="ml-card">
           <div className="ml-logo">🎨</div>
           <h2 className="ml-title">Selamat datang!</h2>
-          <p className="ml-sub2">Masuk ke dashboard kreator</p>
+          <p className="ml-sub2">Masuk ke dashboard kolaborator</p>
 
           {error && <div className="ml-err">⚠ {error}</div>}
 
@@ -219,7 +219,7 @@ export default function Login() {
           </div>
           <hr className="ml-divider"/>
           <div className="ml-cross">
-            Punya usaha UMKM? <a href={`${COMPANY_URL}/login`}>Login sebagai UMKM →</a>
+            Punya usaha Artisan? <a href={`${COMPANY_URL}/login`}>Login sebagai Artisan →</a>
           </div>
           <p className="ml-demo">Mode demo — masukkan email &amp; password apapun</p>
         </div>

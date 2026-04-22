@@ -1,4 +1,4 @@
-// Dashboard.jsx — Member dashboard — consistent with gate/UMKM green palette
+// Dashboard.jsx — Kolaborator dashboard — consistent with gate/Artisan green palette
 import React, { useState, useEffect } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import {
@@ -179,7 +179,7 @@ export default function Dashboard() {
             }
             <div className="flex-1 min-w-0">
               <p className="text-white/60 text-xs mb-0.5">Selamat datang 👋</p>
-              <h1 className="text-white font-display font-bold text-lg leading-tight truncate">{user.nama||'Kreator'}</h1>
+              <h1 className="text-white font-display font-bold text-lg leading-tight truncate">{user.nama||'Kolaborator'}</h1>
               <p className="text-white/50 text-xs flex items-center gap-1 mt-0.5"><MapPin size={10}/>{user.kota||'—'}</p>
             </div>
             <Link to="/dashboard/profil" className="shrink-0 px-3 py-1.5 bg-white/15 hover:bg-white/25 text-white text-xs font-semibold rounded-xl transition border border-white/10">

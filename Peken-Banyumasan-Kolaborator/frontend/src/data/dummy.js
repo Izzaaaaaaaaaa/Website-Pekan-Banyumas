@@ -1,4 +1,4 @@
-// dummy.js — Single source of truth untuk semua dummy data frontend-member
+// dummy.js — Single source of truth untuk semua dummy data frontend-kolaborator
 // Ganti setiap fungsi di api.js dengan real API call saat backend siap
 
 export const currentUser = {
@@ -48,12 +48,12 @@ export const dummyEvents = [
     status:'upcoming',                   // upcoming | berlangsung | selesai
     terdaftar:true, peran:'performer', assigned_by:'admin',
     deskripsi:'Festival tahunan menampilkan seni, kuliner, dan kerajinan khas Banyumas.',
-    konten_lengkap:'Festival Budaya Banyumasan menghadirkan lebih dari 80 penampil dan 50 stand UMKM dari seluruh eks-Karesidenan Banyumas.',
+    konten_lengkap:'Festival Budaya Banyumasan menghadirkan lebih dari 80 penampil dan 50 stand Artisan dari seluruh eks-Karesidenan Banyumas.',
     kapasitas:200, peserta_count:34,
     subsektor:['Kriya','Musik','Kuliner'],
     banner_url: null,
     lineup:[ {id:'m1', nama:'Sari Dewi'}, {id:'m2', nama:'Ahmad Fauzi'} ],
-    umkm:[ {id:'t1', nama_usaha:'Batik Sari Rahayu', kategori:'Kriya & Fashion'} ],
+    artisan:[ {id:'t1', nama_usaha:'Batik Sari Rahayu', kategori:'Kriya & Fashion'} ],
     galeri:[],
   },
   {
@@ -63,11 +63,11 @@ export const dummyEvents = [
     status:'upcoming',
     terdaftar:true, peran:'panitia', assigned_by:'admin',
     deskripsi:'Pelatihan intensif 2 hari teknik batik tulis dan tenun lurik.',
-    konten_lengkap:'Workshop ini dirancang untuk kreator yang ingin memperdalam teknik batik tulis dan tenun.',
+    konten_lengkap:'Workshop ini dirancang untuk kolaborator yang ingin memperdalam teknik batik tulis dan tenun.',
     kapasitas:30, peserta_count:18,
     subsektor:['Kriya','Fashion'],
     banner_url: null,
-    lineup:[], umkm:[], galeri:[],
+    lineup:[], artisan:[], galeri:[],
   },
   {
     id:'e3', nama:'Pameran Kriya Ekraf Regional',
@@ -80,7 +80,7 @@ export const dummyEvents = [
     kapasitas:500, peserta_count:12,
     subsektor:['Kriya','Desain Produk'],
     banner_url: null,
-    lineup:[], umkm:[], galeri:[],
+    lineup:[], artisan:[], galeri:[],
   },
   {
     id:'e4', nama:'Peken Banyumasan #12',
@@ -93,7 +93,7 @@ export const dummyEvents = [
     kapasitas:500, peserta_count:145,
     subsektor:['Musik','Kuliner'],
     banner_url: null,
-    lineup:[], umkm:[], galeri:[],
+    lineup:[], artisan:[], galeri:[],
   },
 ];
 

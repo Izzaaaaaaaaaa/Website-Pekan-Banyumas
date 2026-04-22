@@ -1,11 +1,11 @@
-// Register.jsx — Member registration — matches UMKM register style (light, stepper)
+// Register.jsx — Kolaborator registration — matches Artisan register style (light, stepper)
 import React, { useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { Loader2, Eye, EyeOff, Check, ChevronRight } from 'lucide-react';
 import { authApi } from '../../services/endpoints';
 import { extractError } from '../../lib/unwrap';
 import { SUBSEKTORS } from '../../data/dummy';
-import { triggerNewMemberRequest } from '../../lib/notifications';
+import { triggerNewKolaboratorRequest } from '../../lib/notifications';
 
 const STEPS = [
   { id:1, label:'Akun',      icon:'👤' },
@@ -47,7 +47,7 @@ export default function Register() {
     try {
       await authApi.register(form);
       // Notify admin
-      triggerNewMemberRequest(form.nama);
+      triggerNewKolaboratorRequest(form.nama);
       nav('/login', { state: { registered: true } });
     } catch(err) { setError(extractError(err, 'Gagal mendaftar. Coba lagi.')); }
     finally { setLoading(false); }
@@ -134,7 +134,7 @@ export default function Register() {
         {/* Brand */}
         <a href={import.meta.env.VITE_COMPANY_URL || 'http://localhost:5174'} className="reg-brand">
           <div className="reg-brand-mark">🎨</div>
-          <div><div className="reg-brand-name">Peken Banyumasan</div><div className="reg-brand-sub">Daftar sebagai Kreator</div></div>
+          <div><div className="reg-brand-name">Peken Banyumasan</div><div className="reg-brand-sub">Daftar sebagai Kolaborator</div></div>
         </a>
 
         {/* Stepper */}
@@ -156,7 +156,7 @@ export default function Register() {
           {step === 1 && (
             <>
               <div className="reg-card-title">Data Akun</div>
-              <div className="reg-card-sub">Isi informasi dasar untuk membuat akun Kreator</div>
+              <div className="reg-card-sub">Isi informasi dasar untuk membuat akun Kolaborator</div>
 
               <div className="reg-field">
                 <label className="reg-label">Nama Lengkap *</label>
@@ -257,8 +257,8 @@ export default function Register() {
             Sudah punya akun? <Link to="/login">Masuk</Link>
           </div>
           <div className="reg-crosslink">
-            Punya usaha UMKM?{' '}
-            <a href={`${import.meta.env.VITE_COMPANY_URL || 'http://localhost:5174'}/daftar`}>Daftar sebagai UMKM →</a>
+            Punya usaha Artisan?{' '}
+            <a href={`${import.meta.env.VITE_COMPANY_URL || 'http://localhost:5174'}/daftar`}>Daftar sebagai Artisan →</a>
           </div>
         </div>
       </div>

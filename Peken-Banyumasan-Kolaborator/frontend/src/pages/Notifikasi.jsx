@@ -7,7 +7,7 @@ import { extractError } from '../lib/unwrap';
 import { useToast } from '../components/Toast';
 
 const TYPE_ICON = {
-  member_approved:     { icon:Users,    cls:'bg-green-50 text-green-600'  },
+  kolaborator_approved:     { icon:Users,    cls:'bg-green-50 text-green-600'  },
   event_assigned:      { icon:Calendar, cls:'bg-brand-50 text-brand-600'  },
   event_status_change: { icon:Bell,     cls:'bg-blue-50 text-blue-600'    },
   story_deleted:       { icon:Trash2,   cls:'bg-red-50 text-red-500'      },
@@ -31,7 +31,7 @@ export default function Notifikasi() {
   const [filter, setFilter] = useState('semua'); // semua | belum | sudah
 
   const refresh = async () => {
-    const local = getNotifs('member');
+    const local = getNotifs('kolaborator');
     // Merge with backend list if local queue is empty (first visit).
     if (local.length === 0) {
       try {
@@ -56,8 +56,8 @@ export default function Notifikasi() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
-  const baca = (id) => { markRead('member', id); refresh(); };
-  const bacaSemua = () => { markAllRead('member'); refresh(); };
+  const baca = (id) => { markRead('kolaborator', id); refresh(); };
+  const bacaSemua = () => { markAllRead('kolaborator'); refresh(); };
   const unread = list.filter(n => !n.read && !n.dibaca).length;
 
   const filtered = list.filter(n => {

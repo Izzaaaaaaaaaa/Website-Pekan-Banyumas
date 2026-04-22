@@ -29,7 +29,7 @@ export default function Layout() {
   const [notifCount, setNotifCount] = useState(0);
 
   useEffect(() => {
-    const refresh = () => setNotifCount(getNotifs('member').filter(n=>!n.read).length);
+    const refresh = () => setNotifCount(getNotifs('kolaborator').filter(n=>!n.read).length);
     refresh();
     window.addEventListener(STORAGE_EVENTS.NOTIF_UPDATE, refresh);
     return () => window.removeEventListener(STORAGE_EVENTS.NOTIF_UPDATE, refresh);
@@ -76,8 +76,8 @@ export default function Layout() {
                 style={{background:'#2f6f4e'}}>{initial}</div>
           }
           <div className="min-w-0 flex-1">
-            <p className="text-gray-800 text-xs font-semibold truncate leading-tight">{user.nama||'Kreator'}</p>
-            <p className="text-gray-400 text-[9px] truncate mt-0.5">{(user.subsektor||[]).slice(0,2).join(', ')||'Kreator'}</p>
+            <p className="text-gray-800 text-xs font-semibold truncate leading-tight">{user.nama||'Kolaborator'}</p>
+            <p className="text-gray-400 text-[9px] truncate mt-0.5">{(user.subsektor||[]).slice(0,2).join(', ')||'Kolaborator'}</p>
           </div>
           <span className="w-1.5 h-1.5 rounded-full shrink-0" style={{background:'#22c55e'}}/>
         </Link>

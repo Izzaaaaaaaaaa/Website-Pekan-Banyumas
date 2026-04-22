@@ -58,12 +58,12 @@ function EventDetailModal({ event, onClose, onDaftar, loadingId }) {
               </div>
             </div>
           )}
-          {/* UMKM */}
-          {event.umkm?.length > 0 && (
+          {/* Artisan */}
+          {event.artisan?.length > 0 && (
             <div>
-              <p className="text-xs font-semibold text-earth-400 uppercase tracking-wider mb-2 flex items-center gap-1.5"><Store size={11}/>UMKM Peserta</p>
+              <p className="text-xs font-semibold text-earth-400 uppercase tracking-wider mb-2 flex items-center gap-1.5"><Store size={11}/>Artisan Peserta</p>
               <div className="flex flex-wrap gap-1.5">
-                {event.umkm.map(u => (
+                {event.artisan.map(u => (
                   <span key={u.id} className="px-2.5 py-1 bg-green-50 border border-green-100 text-green-700 rounded-full text-xs">{u.nama_usaha}</span>
                 ))}
               </div>
@@ -146,7 +146,7 @@ const EventCard = ({ event, onDaftar, loadingId, onClick, showPeran }) => {
 };
 
 // ── Main ─────────────────────────────────────────────────────────────────────
-// ── RoleRegisterModal — member picks role before registering ──────────────────
+// ── RoleRegisterModal — kolaborator picks role before registering ──────────────────
 function RoleRegisterModal({ event, onClose, onConfirm, loading }) {
   const [peran, setPeran] = useState('peserta');
 
@@ -243,9 +243,9 @@ export default function Event() {
       toast.success(`Berhasil mendaftar sebagai ${peran}!`);
       try {
         const user = getUser() || {};
-        import('../lib/notifications').then(({ triggerMemberEventRegister }) => {
+        import('../lib/notifications').then(({ triggerKolaboratorEventRegister }) => {
           const ev = list.find(e => e.id === eventId);
-          if (ev) triggerMemberEventRegister(user.nama || 'Member', ev.nama);
+          if (ev) triggerKolaboratorEventRegister(user.nama || 'Kolaborator', ev.nama);
         });
       } catch {}
     } catch (err) { toast.error(extractError(err, 'Gagal mendaftar')); }

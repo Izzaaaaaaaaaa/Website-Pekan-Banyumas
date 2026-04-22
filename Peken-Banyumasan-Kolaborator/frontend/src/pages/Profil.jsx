@@ -156,7 +156,7 @@ export default function Profil() {
       {/* Lihat Profil Publik — company profile domain, URL: /#/@slug */}
       {(() => {
         const COMPANY_URL = import.meta.env.VITE_COMPANY_URL || 'https://umkm-development.vercel.app';
-        const slug = (user.nama||'kreator').toLowerCase().replace(/\s+/g,'-').replace(/[^a-z0-9-]/g,'');
+        const slug = (user.nama||'kolaborator').toLowerCase().replace(/\s+/g,'-').replace(/[^a-z0-9-]/g,'');
         return (
           <a
             href={`${COMPANY_URL}/#/@${slug}`}
