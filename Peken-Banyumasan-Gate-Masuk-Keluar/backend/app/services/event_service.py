@@ -1,4 +1,7 @@
 from app.db.supabase import supabase
+from fastapi import HTTPException
+from app.schemas.event_schema import EventResponse
+
 
 # GET ALL EVENTS
 def get_events():
@@ -7,7 +10,7 @@ def get_events():
         .order("created_at", desc=True) \
         .execute()
 
-    return res.data
+    return [EventResponse(**e) for e in res.data]
 
 
 # GET EVENT BY ID
@@ -15,10 +18,12 @@ def get_event_by_id(event_id: str):
     res = supabase.table("events") \
         .select("*") \
         .eq("id", event_id) \
-        .single() \
         .execute()
 
-    return res.data
+    if not res.data:
+        raise HTTPException(404, "Event tidak ditemukan")
+
+    return EventResponse(**res.data[0])
 
 
 # CREATE EVENT
@@ -35,45 +40,36 @@ def create_event(data):
         "status": data.get("status", "draft")
     }).execute()
 
-    return res.data
+    return {
+        "message": "Event berhasil dibuat",
+        "data": res.data
+    }
 
 
+# UPDATE EVENT
 def update_event(event_id: str, data):
-    try:
-        print("EVENT ID:", event_id)
-        print("DATA:", data)
+    res = supabase.table("events") \
+        .update(data) \
+        .eq("id", event_id) \
+        .execute()
 
-        res = supabase.table("events") \
-            .update(data) \
-            .eq("id", event_id) \
-            .execute()
+    if not res.data:
+        raise HTTPException(404, "Event tidak ditemukan atau gagal update")
 
-        print("RESPONSE:", res)
-
-        # ❗ kalau tidak ada data yang keupdate
-        if not res.data:
-            return {
-                "error": "Event tidak ditemukan atau gagal update"
-            }
-
-        return {
-            "message": "Event berhasil diupdate",
-            "data": res.data
-        }
-
-    except Exception as e:
-        print("ERROR:", str(e))
-        return {
-            "error": "Server error",
-            "detail": str(e)
-        }
+    return {
+        "message": "Event berhasil diupdate",
+        "data": res.data
+    }
 
 
 # DELETE EVENT
 def delete_event(event_id: str):
-    supabase.table("events") \
+    res = supabase.table("events") \
         .delete() \
         .eq("id", event_id) \
         .execute()
+
+    if not res.data:
+        raise HTTPException(404, "Event tidak ditemukan")
 
     return {"message": "Event berhasil dihapus"}

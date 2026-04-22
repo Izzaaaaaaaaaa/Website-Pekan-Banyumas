@@ -1,33 +1,9 @@
-from fastapi import APIRouter, Depends
-from pydantic import BaseModel
+from fastapi import APIRouter, Depends, HTTPException
 from app.services.event_service import *
 from app.api.deps import get_current_user
+from app.schemas.event_schema import EventCreate, EventUpdate  # 🔥 import schema
 
 router = APIRouter(prefix="/events", tags=["Events"])
-
-# SCHEMA
-class EventCreate(BaseModel):
-    nama: str
-    deskripsi: str | None = None
-    lokasi: str | None = None
-    tanggal_mulai: str | None = None
-    tanggal_selesai: str | None = None
-    jam_mulai: str | None = None
-    jam_selesai: str | None = None
-    kapasitas: int | None = None
-    status: str | None = "draft"
-
-
-class EventUpdate(BaseModel):
-    nama: str | None = None
-    deskripsi: str | None = None
-    lokasi: str | None = None
-    tanggal_mulai: str | None = None
-    tanggal_selesai: str | None = None
-    jam_mulai: str | None = None
-    jam_selesai: str | None = None
-    kapasitas: int | None = None
-    status: str | None = None
 
 
 # GET ALL
@@ -45,20 +21,30 @@ def get_one(id: str, user=Depends(get_current_user)):
 # CREATE
 @router.post("/")
 def create(data: EventCreate, user=Depends(get_current_user)):
+    if user["role"] != "admin":
+        raise HTTPException(403, "Hanya admin yang boleh membuat event")
+
     return create_event(data.dict())
 
 
 # UPDATE
 @router.put("/{id}")
 def update(id: str, data: EventUpdate, user=Depends(get_current_user)):
-    clean_data = {k: v for k, v in data.dict().items() if v is not None}
+    if user["role"] != "admin":
+        raise HTTPException(403, "Hanya admin yang boleh update event")
+
+    clean_data = data.dict(exclude_none=True)
 
     if not clean_data:
-        return {"error": "Tidak ada data yang diupdate"}
+        raise HTTPException(400, "Tidak ada data yang diupdate")
 
     return update_event(id, clean_data)
+
 
 # DELETE
 @router.delete("/{id}")
 def delete(id: str, user=Depends(get_current_user)):
+    if user["role"] != "admin":
+        raise HTTPException(403, "Hanya admin yang boleh hapus event")
+
     return delete_event(id)
