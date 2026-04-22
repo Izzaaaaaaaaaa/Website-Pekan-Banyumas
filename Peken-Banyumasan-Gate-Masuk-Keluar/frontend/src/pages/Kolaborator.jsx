@@ -59,9 +59,9 @@ const DUMMY_ALL_EVENTS = [
 ];
 
 const STATUS_MAP = {
-  aktif:    { label:'Aktif',   cls:'bg-green-50 text-green-700 border-green-200',  dot:'bg-green-500' },
-  pending:  { label:'Pending', cls:'bg-amber-50 text-amber-700 border-amber-200',  dot:'bg-amber-400' },
-  suspended:{ label:'Suspend', cls:'bg-red-50 text-red-600 border-red-200',        dot:'bg-red-400' },
+  aktif:    { label:'Aktif',   cls:'bg-[#eef0e0] text-[#7a8a52] border-[#c8d09a]',  dot:'bg-[#7A9B6A]' },
+  pending:  { label:'Pending', cls:'bg-[#f7f2e4] text-[#C4A24D] border-[#dcc882]',  dot:'bg-amber-400' },
+  suspended:{ label:'Suspend', cls:'bg-[#f7eeee] text-[#B87272] border-[#dbb8b8]',        dot:'bg-red-400' },
 };
 const PERAN_CLS = {
   peserta:'bg-indigo-50 text-indigo-600', performer:'bg-purple-50 text-purple-700', panitia:'bg-orange-50 text-orange-600',
@@ -91,33 +91,33 @@ function AssignEventModal({ kolaboratorId, existingIds, onClose, onAssign }) {
 
   return (
     <div className="fixed inset-0 bg-black/60 z-[60] flex items-center justify-center p-4" onClick={onClose}>
-      <div className="bg-white rounded-2xl w-full max-w-sm shadow-2xl" onClick={e=>e.stopPropagation()}>
-        <div className="flex items-center justify-between p-5 border-b"><h3 className="font-bold text-gray-800">Assign ke Event</h3><button onClick={onClose}><X size={18} className="text-gray-400"/></button></div>
+      <div className="bg-white rounded-[16px] w-full max-w-sm shadow-2xl" onClick={e=>e.stopPropagation()}>
+        <div className="flex items-center justify-between p-5 border-b"><h3 className="font-bold text-[#1e2010]">Assign ke Event</h3><button onClick={onClose}><X size={18} className="text-[#8a9070]"/></button></div>
         <div className="p-5 space-y-4">
           <div className="space-y-1.5 max-h-40 overflow-y-auto">
             {available.length === 0
-              ? <p className="text-gray-400 text-sm text-center py-4">Tidak ada event tersedia</p>
+              ? <p className="text-[#8a9070] text-sm text-center py-4">Tidak ada event tersedia</p>
               : available.map(e => (
                 <button key={e.id} onClick={() => setSelected(e)}
-                  className={`w-full text-left px-3 py-2.5 rounded-xl border text-sm transition ${selected?.id===e.id?'border-green-400 bg-green-50':'border-gray-100 hover:border-gray-300'}`}>
+                  className={`w-full text-left px-3 py-2.5 rounded-[12px] border text-sm transition ${selected?.id===e.id?'border-[#7a8a52] bg-[#eef0e0]':'border-[#e4e7d4] hover:border-[#c8ccb0]'}`}>
                   {e.nama}
                 </button>
               ))
             }
           </div>
           <div>
-            <label className="text-xs font-semibold text-gray-500 mb-1.5 block">Peran</label>
+            <label className="text-xs font-semibold text-[#8a9070] mb-1.5 block">Peran</label>
             <div className="flex gap-2">
               {['peserta','performer','panitia'].map(p => (
                 <button key={p} onClick={() => setPeran(p)}
-                  className={`flex-1 py-2 rounded-xl text-xs font-semibold border capitalize transition ${peran===p?'bg-green-700 text-white border-green-700':'border-gray-200 text-gray-600'}`}>{p}</button>
+                  className={`flex-1 py-2 rounded-[12px] text-xs font-semibold border capitalize transition ${peran===p?'bg-[#7a8a52] text-white border-[#4f5c30]':'border-[#e4e7d4] text-[#5a6040]'}`}>{p}</button>
               ))}
             </div>
           </div>
           <div className="flex gap-2">
-            <button onClick={onClose} className="flex-1 border border-gray-200 text-gray-600 py-2 rounded-xl text-sm font-semibold">Batal</button>
+            <button onClick={onClose} className="flex-1 border border-[#e4e7d4] text-[#5a6040] py-2 rounded-[12px] text-sm font-semibold">Batal</button>
             <button onClick={save} disabled={!selected||saving}
-              className="flex-1 bg-green-700 text-white py-2 rounded-xl text-sm font-semibold disabled:opacity-50 flex items-center justify-center gap-1">
+              className="flex-1 bg-[#7a8a52] text-white py-2 rounded-[12px] text-sm font-semibold disabled:opacity-50 flex items-center justify-center gap-1">
               {saving?<Loader2 size={13} className="animate-spin"/>:<Plus size={13}/>} Assign
             </button>
           </div>
@@ -132,21 +132,21 @@ const KolaboratorRow = React.memo(({ m, onApprove, onSuspend, onDetail, onDelete
   const st = STATUS_MAP[m.status] || STATUS_MAP.aktif;
   const fmt = d => new Date(d).toLocaleDateString('id-ID',{day:'numeric',month:'short',year:'numeric'});
   return (
-    <tr className="border-b border-gray-50 hover:bg-gray-50/60 transition group">
+    <tr className="border-b border-gray-50 hover:bg-[#f7f8f2]/60 transition group">
       <td className="px-5 py-3.5">
         <div className="flex items-center gap-3">
-          <div className="w-9 h-9 rounded-xl bg-gradient-to-br from-amber-100 to-amber-200 flex items-center justify-center text-amber-800 font-bold text-sm shrink-0">{m.nama.charAt(0)}</div>
+          <div className="w-9 h-9 rounded-[12px] bg-gradient-to-br from-amber-100 to-amber-200 flex items-center justify-center text-[#7a5c1a] font-bold text-sm shrink-0">{m.nama.charAt(0)}</div>
           <div>
-            <p className="font-semibold text-gray-800 text-sm">{m.nama}</p>
-            <p className="text-gray-400 text-xs flex items-center gap-1"><Mail size={10}/>{m.email}</p>
+            <p className="font-semibold text-[#1e2010] text-sm">{m.nama}</p>
+            <p className="text-[#8a9070] text-xs flex items-center gap-1"><Mail size={10}/>{m.email}</p>
           </div>
         </div>
       </td>
       <td className="px-4 py-3.5">
-        <div className="flex items-center gap-1 text-gray-500 text-xs"><MapPin size={11}/>{m.kota}</div>
+        <div className="flex items-center gap-1 text-[#8a9070] text-xs"><MapPin size={11}/>{m.kota}</div>
         <div className="flex flex-wrap gap-1 mt-1">
           {m.subsektor.slice(0,2).map(s => <span key={s} className="px-1.5 py-0.5 bg-indigo-50 text-indigo-600 rounded text-[10px] font-medium">{s}</span>)}
-          {m.subsektor.length>2 && <span className="text-gray-400 text-[10px]">+{m.subsektor.length-2}</span>}
+          {m.subsektor.length>2 && <span className="text-[#8a9070] text-[10px]">+{m.subsektor.length-2}</span>}
         </div>
       </td>
       <td className="px-4 py-3.5">
@@ -154,17 +154,17 @@ const KolaboratorRow = React.memo(({ m, onApprove, onSuspend, onDetail, onDelete
           <span className={`w-1.5 h-1.5 rounded-full shrink-0 ${st.dot}`}/>{st.label}
         </span>
       </td>
-      <td className="px-4 py-3.5 text-gray-500 text-sm">{m.total_karya}</td>
-      <td className="px-4 py-3.5 text-gray-400 text-xs">{fmt(m.tanggal_daftar)}</td>
+      <td className="px-4 py-3.5 text-[#8a9070] text-sm">{m.total_karya}</td>
+      <td className="px-4 py-3.5 text-[#8a9070] text-xs">{fmt(m.tanggal_daftar)}</td>
       <td className="px-4 py-3.5">
         <div className="flex items-center gap-1.5 opacity-0 group-hover:opacity-100 transition">
-          <button onClick={() => onDetail(m)} className="p-1.5 rounded-lg text-gray-400 hover:text-indigo-600 hover:bg-indigo-50 transition" title="Detail"><Eye size={14}/></button>
-          {m.status === 'pending'   && <button onClick={() => onApprove(m.id)} disabled={isProcessing===m.id} className="p-1.5 rounded-lg text-gray-400 hover:text-green-600 hover:bg-green-50 transition" title="Setujui"><CheckCircle size={14}/></button>}
-          {m.status === 'aktif'     && <button onClick={() => onSuspend(m.id)} disabled={isProcessing===m.id} className="p-1.5 rounded-lg text-gray-400 hover:text-red-500 hover:bg-red-50 transition" title="Suspend"><XCircle size={14}/></button>}
+          <button onClick={() => onDetail(m)} className="p-1.5 rounded-lg text-[#8a9070] hover:text-indigo-600 hover:bg-indigo-50 transition" title="Detail"><Eye size={14}/></button>
+          {m.status === 'pending'   && <button onClick={() => onApprove(m.id)} disabled={isProcessing===m.id} className="p-1.5 rounded-lg text-[#8a9070] hover:text-[#7a8a52] hover:bg-[#eef0e0] transition" title="Setujui"><CheckCircle size={14}/></button>}
+          {m.status === 'aktif'     && <button onClick={() => onSuspend(m.id)} disabled={isProcessing===m.id} className="p-1.5 rounded-lg text-[#8a9070] hover:text-[#B87272] hover:bg-[#f7eeee] transition" title="Suspend"><XCircle size={14}/></button>}
           {m.status === 'suspended' && (
             <>
-              <button onClick={() => onApprove(m.id)} disabled={isProcessing===m.id} className="p-1.5 rounded-lg text-gray-400 hover:text-green-600 hover:bg-green-50 transition" title="Aktifkan"><UserCheck size={14}/></button>
-              <button onClick={() => onDelete(m.id)} disabled={isProcessing===m.id} className="p-1.5 rounded-lg text-gray-400 hover:text-red-600 hover:bg-red-50 transition" title="Hapus Akun"><Trash2 size={14}/></button>
+              <button onClick={() => onApprove(m.id)} disabled={isProcessing===m.id} className="p-1.5 rounded-lg text-[#8a9070] hover:text-[#7a8a52] hover:bg-[#eef0e0] transition" title="Aktifkan"><UserCheck size={14}/></button>
+              <button onClick={() => onDelete(m.id)} disabled={isProcessing===m.id} className="p-1.5 rounded-lg text-[#8a9070] hover:text-[#B87272] hover:bg-[#f7eeee] transition" title="Hapus Akun"><Trash2 size={14}/></button>
             </>
           )}
         </div>
@@ -217,24 +217,24 @@ const DetailDrawer = ({ kolaborator, onClose, onApprove, onSuspend }) => {
       <div className="fixed inset-0 bg-slate-900/30 backdrop-blur-[2px] z-40" onClick={onClose}/>
       <div className="fixed top-0 right-0 h-full w-full sm:w-[420px] bg-white shadow-2xl z-50 flex flex-col" style={{animation:'slideIn .26s cubic-bezier(.32,.72,0,1) both'}}>
         {/* Header */}
-        <div className="flex items-center justify-between px-5 py-4 border-b border-gray-100 bg-gray-50 shrink-0">
+        <div className="flex items-center justify-between px-5 py-4 border-b border-[#e4e7d4] bg-[#f7f8f2] shrink-0">
           <div className="flex items-center gap-3">
-            <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-amber-100 to-amber-200 flex items-center justify-center text-amber-800 font-bold text-base shrink-0">{kolaborator.nama.charAt(0)}</div>
+            <div className="w-10 h-10 rounded-[12px] bg-gradient-to-br from-amber-100 to-amber-200 flex items-center justify-center text-[#7a5c1a] font-bold text-base shrink-0">{kolaborator.nama.charAt(0)}</div>
             <div>
-              <p className="font-bold text-gray-900 text-sm leading-tight">{kolaborator.nama}</p>
+              <p className="font-bold text-[#1e2010] text-sm leading-tight">{kolaborator.nama}</p>
               <span className={`inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-semibold border ${st.cls}`}>
                 <span className={`w-1.5 h-1.5 rounded-full ${st.dot}`}/>{st.label}
               </span>
             </div>
           </div>
-          <button onClick={onClose} className="w-8 h-8 flex items-center justify-center rounded-lg text-gray-400 hover:bg-gray-200 transition"><X size={18}/></button>
+          <button onClick={onClose} className="w-8 h-8 flex items-center justify-center rounded-lg text-[#8a9070] hover:bg-gray-200 transition"><X size={18}/></button>
         </div>
 
         {/* Tabs */}
-        <div className="flex border-b border-gray-100 shrink-0">
+        <div className="flex border-b border-[#e4e7d4] shrink-0">
           {TABS.map(([v,l]) => (
             <button key={v} onClick={() => setTab(v)}
-              className={`flex-1 py-2.5 text-xs font-semibold transition border-b-2 ${tab===v?'border-green-600 text-green-700':'border-transparent text-gray-500 hover:text-gray-700'}`}>
+              className={`flex-1 py-2.5 text-xs font-semibold transition border-b-2 ${tab===v?'border-[#7a8a52] text-[#7a8a52]':'border-transparent text-[#8a9070] hover:text-[#5a6040]'}`}>
               {l}
             </button>
           ))}
@@ -246,28 +246,28 @@ const DetailDrawer = ({ kolaborator, onClose, onApprove, onSuspend }) => {
           {/* TAB: Info */}
           {tab === 'info' && (
             <div className="p-5 space-y-4">
-              <div className="bg-gray-50 rounded-xl p-4 space-y-2 text-sm">
-                <div className="flex items-center gap-2 text-gray-600"><Mail size={13}/>{kolaborator.email}</div>
-                <div className="flex items-center gap-2 text-gray-600"><MapPin size={13}/>{kolaborator.kota}</div>
+              <div className="bg-[#f7f8f2] rounded-[12px] p-4 space-y-2 text-sm">
+                <div className="flex items-center gap-2 text-[#5a6040]"><Mail size={13}/>{kolaborator.email}</div>
+                <div className="flex items-center gap-2 text-[#5a6040]"><MapPin size={13}/>{kolaborator.kota}</div>
               </div>
               <div>
-                <p className="text-xs font-semibold text-gray-400 uppercase tracking-wider mb-2">Subsektor</p>
+                <p className="text-xs font-semibold text-[#8a9070] uppercase tracking-wider mb-2">Subsektor</p>
                 <div className="flex flex-wrap gap-2">
                   {kolaborator.subsektor.map(s => <span key={s} className="px-3 py-1 bg-indigo-50 border border-indigo-100 text-indigo-700 rounded-full text-xs font-medium">{s}</span>)}
                 </div>
               </div>
               {kolaborator.bio && (
                 <div>
-                  <p className="text-xs font-semibold text-gray-400 uppercase tracking-wider mb-2">Bio</p>
-                  <p className="text-gray-600 text-sm leading-relaxed">{kolaborator.bio}</p>
+                  <p className="text-xs font-semibold text-[#8a9070] uppercase tracking-wider mb-2">Bio</p>
+                  <p className="text-[#5a6040] text-sm leading-relaxed">{kolaborator.bio}</p>
                 </div>
               )}
               <div className="grid grid-cols-2 gap-3">
-                <div className="bg-amber-50 border border-amber-100 rounded-xl p-3 text-center">
-                  <p className="text-2xl font-bold text-amber-700">{kolaborator.total_karya}</p>
-                  <p className="text-amber-600 text-xs mt-0.5">Total Karya</p>
+                <div className="bg-[#f7f2e4] border border-amber-100 rounded-[12px] p-3 text-center">
+                  <p className="text-2xl font-bold text-[#C4A24D]">{kolaborator.total_karya}</p>
+                  <p className="text-[#C4A24D] text-xs mt-0.5">Total Karya</p>
                 </div>
-                <div className="bg-indigo-50 border border-indigo-100 rounded-xl p-3 text-center">
+                <div className="bg-indigo-50 border border-indigo-100 rounded-[12px] p-3 text-center">
                   <p className="text-xs text-indigo-500 font-medium">Terdaftar</p>
                   <p className="text-indigo-700 text-xs mt-1">{new Date(kolaborator.tanggal_daftar).toLocaleDateString('id-ID',{day:'numeric',month:'long',year:'numeric'})}</p>
                 </div>
@@ -279,26 +279,26 @@ const DetailDrawer = ({ kolaborator, onClose, onApprove, onSuspend }) => {
           {tab === 'event' && (
             <div>
               <div className="px-5 py-3.5 border-b border-gray-50 flex items-center justify-between">
-                <p className="text-sm text-gray-500">{kolaboratorEvents.length} event</p>
+                <p className="text-sm text-[#8a9070]">{kolaboratorEvents.length} event</p>
                 <button onClick={() => setShowAssignEvent(true)}
-                  className="flex items-center gap-1.5 bg-green-700 hover:bg-green-800 text-white px-3 py-1.5 rounded-xl text-xs font-semibold transition">
+                  className="flex items-center gap-1.5 bg-[#7a8a52] hover:bg-[#4f5c30] text-white px-3 py-1.5 rounded-[12px] text-xs font-semibold transition">
                   <Plus size={12}/> Assign Event
                 </button>
               </div>
               {kolaboratorEvents.length === 0
-                ? <div className="py-12 text-center text-gray-400 text-sm"><Calendar size={28} className="text-gray-200 mx-auto mb-2"/>Belum ada event</div>
+                ? <div className="py-12 text-center text-[#8a9070] text-sm"><Calendar size={28} className="text-gray-200 mx-auto mb-2"/>Belum ada event</div>
                 : <div className="divide-y divide-gray-50">
                     {kolaboratorEvents.map(e => (
-                      <div key={e.id} className="px-5 py-3 flex items-start gap-3 group hover:bg-gray-50/50 transition">
+                      <div key={e.id} className="px-5 py-3 flex items-start gap-3 group hover:bg-[#f7f8f2]/50 transition">
                         <div className="flex-1 min-w-0">
-                          <p className="font-semibold text-gray-800 text-sm leading-snug">{e.nama}</p>
-                          <p className="text-gray-400 text-xs mt-0.5">{fmtTgl(e.tanggal)}{e.jam_mulai && <span className="ml-1 text-gray-300">· {e.jam_mulai.replace(':','.')}{e.jam_selesai?`–${e.jam_selesai.replace(':','.')}`:''} WIB</span>}</p>
+                          <p className="font-semibold text-[#1e2010] text-sm leading-snug">{e.nama}</p>
+                          <p className="text-[#8a9070] text-xs mt-0.5">{fmtTgl(e.tanggal)}{e.jam_mulai && <span className="ml-1 text-gray-300">· {e.jam_mulai.replace(':','.')}{e.jam_selesai?`–${e.jam_selesai.replace(':','.')}`:''} WIB</span>}</p>
                           <div className="flex items-center gap-2 mt-1.5 flex-wrap">
                             {/* Editable peran */}
                             <select
                               value={e.peran}
                               onChange={ev => setKolaboratorEvents(l => l.map(x => x.id===e.id ? {...x,peran:ev.target.value} : x))}
-                              className="text-[10px] border border-gray-200 rounded-lg px-1.5 py-1 focus:outline-none focus:border-green-400 bg-white"
+                              className="text-[10px] border border-[#e4e7d4] rounded-lg px-1.5 py-1 focus:outline-none focus:border-[#7a8a52] bg-white"
                             >
                               <option value="peserta">Peserta</option>
                               <option value="performer">Performer</option>
@@ -308,7 +308,7 @@ const DetailDrawer = ({ kolaborator, onClose, onApprove, onSuspend }) => {
                             <select
                               value={e.status_kehadiran}
                               onChange={ev => setKolaboratorEvents(l => l.map(x => x.id===e.id ? {...x,status_kehadiran:ev.target.value} : x))}
-                              className={`text-[10px] border border-gray-200 rounded-lg px-1.5 py-1 focus:outline-none focus:border-green-400 bg-white ${e.status_kehadiran==='hadir'?'text-green-600':e.status_kehadiran==='tidak_hadir'?'text-red-500':'text-gray-400'}`}
+                              className={`text-[10px] border border-[#e4e7d4] rounded-lg px-1.5 py-1 focus:outline-none focus:border-[#7a8a52] bg-white ${e.status_kehadiran==='hadir'?'text-[#7a8a52]':e.status_kehadiran==='tidak_hadir'?'text-[#B87272]':'text-[#8a9070]'}`}
                             >
                               <option value="terdaftar">Terdaftar</option>
                               <option value="hadir">Hadir ✓</option>
@@ -316,7 +316,7 @@ const DetailDrawer = ({ kolaborator, onClose, onApprove, onSuspend }) => {
                             </select>
                           </div>
                         </div>
-                        <button onClick={() => removeEvent(e.id)} className="opacity-0 group-hover:opacity-100 transition p-1.5 rounded-lg text-gray-300 hover:text-red-500 hover:bg-red-50">
+                        <button onClick={() => removeEvent(e.id)} className="opacity-0 group-hover:opacity-100 transition p-1.5 rounded-lg text-gray-300 hover:text-[#B87272] hover:bg-[#f7eeee]">
                           <Trash2 size={13}/>
                         </button>
                       </div>
@@ -330,19 +330,19 @@ const DetailDrawer = ({ kolaborator, onClose, onApprove, onSuspend }) => {
           {tab === 'portofolio' && (
             <div className="p-5">
               {portfolio.length === 0
-                ? <div className="py-12 text-center text-gray-400 text-sm"><Image size={28} className="text-gray-200 mx-auto mb-2"/>Belum ada portofolio</div>
+                ? <div className="py-12 text-center text-[#8a9070] text-sm"><Image size={28} className="text-gray-200 mx-auto mb-2"/>Belum ada portofolio</div>
                 : <div className="space-y-2.5">
                     {portfolio.map(p => (
-                      <div key={p.id} className="flex items-center gap-3 p-3 bg-gray-50 rounded-xl border border-gray-100">
-                        <div className="w-10 h-10 rounded-lg bg-amber-100 flex items-center justify-center text-amber-600 shrink-0">
+                      <div key={p.id} className="flex items-center gap-3 p-3 bg-[#f7f8f2] rounded-[12px] border border-[#e4e7d4]">
+                        <div className="w-10 h-10 rounded-lg bg-[#f7f2e4] flex items-center justify-center text-[#C4A24D] shrink-0">
                           <Image size={16}/>
                         </div>
                         <div className="flex-1 min-w-0">
-                          <p className="font-semibold text-gray-800 text-sm">{p.judul}</p>
-                          <p className="text-gray-400 text-xs">{p.kategori} · {p.tahun}</p>
+                          <p className="font-semibold text-[#1e2010] text-sm">{p.judul}</p>
+                          <p className="text-[#8a9070] text-xs">{p.kategori} · {p.tahun}</p>
                         </div>
                         <button onClick={() => toggleFeatured(p.id)}
-                          className={`flex items-center gap-1 px-2.5 py-1 rounded-lg text-xs font-semibold transition ${p.is_featured?'bg-yellow-50 text-yellow-600 border border-yellow-200':'bg-gray-100 text-gray-400 border border-gray-200 hover:border-yellow-300'}`}>
+                          className={`flex items-center gap-1 px-2.5 py-1 rounded-lg text-xs font-semibold transition ${p.is_featured?'bg-[#f7f2e4] text-yellow-600 border border-[#dcc882]':'bg-[#eef0e0] text-[#8a9070] border border-[#e4e7d4] hover:border-yellow-300'}`}>
                           {p.is_featured ? <><Star size={11} fill="currentColor"/>Featured</> : <><StarOff size={11}/>Feature</>}
                         </button>
                       </div>
@@ -356,19 +356,19 @@ const DetailDrawer = ({ kolaborator, onClose, onApprove, onSuspend }) => {
           {tab === 'aktivitas' && (
             <div className="p-5 space-y-3">
               {stories.length === 0
-                ? <div className="py-12 text-center text-gray-400 text-sm"><BookOpen size={28} className="text-gray-200 mx-auto mb-2"/>Belum ada aktivitas</div>
+                ? <div className="py-12 text-center text-[#8a9070] text-sm"><BookOpen size={28} className="text-gray-200 mx-auto mb-2"/>Belum ada aktivitas</div>
                 : stories.map(s => (
-                    <div key={s.id} className="bg-gray-50 rounded-xl p-4 border border-gray-100 group">
+                    <div key={s.id} className="bg-[#f7f8f2] rounded-[12px] p-4 border border-[#e4e7d4] group">
                       <div className="flex items-start justify-between gap-2">
-                        <p className="text-gray-700 text-sm leading-relaxed flex-1">{s.konten}</p>
-                        <button onClick={() => deleteAktivitas(s.id)} className="opacity-0 group-hover:opacity-100 transition text-gray-300 hover:text-red-500 p-1">
+                        <p className="text-[#5a6040] text-sm leading-relaxed flex-1">{s.konten}</p>
+                        <button onClick={() => deleteAktivitas(s.id)} className="opacity-0 group-hover:opacity-100 transition text-gray-300 hover:text-[#B87272] p-1">
                           <Trash2 size={13}/>
                         </button>
                       </div>
-                      <div className="flex items-center gap-3 mt-2 text-xs text-gray-400">
+                      <div className="flex items-center gap-3 mt-2 text-xs text-[#8a9070]">
                         <span>{new Date(s.created_at).toLocaleDateString('id-ID',{day:'numeric',month:'short'})}</span>
                         <span>👏 {s.like_count}</span>
-                        <span className={`px-1.5 py-0.5 rounded text-[10px] font-medium ${s.status==='aktif'?'text-green-600':'text-red-500'}`}>{s.status}</span>
+                        <span className={`px-1.5 py-0.5 rounded text-[10px] font-medium ${s.status==='aktif'?'text-[#7a8a52]':'text-[#B87272]'}`}>{s.status}</span>
                       </div>
                     </div>
                   ))
@@ -378,11 +378,11 @@ const DetailDrawer = ({ kolaborator, onClose, onApprove, onSuspend }) => {
         </div>
 
         {/* Footer actions */}
-        <div className="p-4 border-t border-gray-100 shrink-0 flex gap-2.5">
-          {kolaborator.status === 'pending'   && <button onClick={() => { onApprove(kolaborator.id); onClose(); }} className="flex-1 flex items-center justify-center gap-2 bg-green-600 hover:bg-green-700 text-white py-2.5 rounded-xl font-semibold text-sm transition"><CheckCircle size={15}/> Setujui</button>}
-          {kolaborator.status === 'aktif'     && <button onClick={() => { onSuspend(kolaborator.id); onClose(); }} className="flex-1 flex items-center justify-center gap-2 border border-red-200 text-red-500 py-2.5 rounded-xl font-semibold text-sm hover:bg-red-50 transition"><XCircle size={15}/> Suspend</button>}
-          {kolaborator.status === 'suspended' && <button onClick={() => { onApprove(kolaborator.id); onClose(); }} className="flex-1 flex items-center justify-center gap-2 bg-green-600 hover:bg-green-700 text-white py-2.5 rounded-xl font-semibold text-sm transition"><UserCheck size={15}/> Aktifkan</button>}
-          <button onClick={onClose} className="flex-1 border border-gray-200 text-gray-600 py-2.5 rounded-xl font-semibold text-sm hover:bg-gray-50 transition">Tutup</button>
+        <div className="p-4 border-t border-[#e4e7d4] shrink-0 flex gap-2.5">
+          {kolaborator.status === 'pending'   && <button onClick={() => { onApprove(kolaborator.id); onClose(); }} className="flex-1 flex items-center justify-center gap-2 bg-[#7a8a52] hover:bg-[#7a8a52] text-white py-2.5 rounded-[12px] font-semibold text-sm transition"><CheckCircle size={15}/> Setujui</button>}
+          {kolaborator.status === 'aktif'     && <button onClick={() => { onSuspend(kolaborator.id); onClose(); }} className="flex-1 flex items-center justify-center gap-2 border border-[#dbb8b8] text-[#B87272] py-2.5 rounded-[12px] font-semibold text-sm hover:bg-[#f7eeee] transition"><XCircle size={15}/> Suspend</button>}
+          {kolaborator.status === 'suspended' && <button onClick={() => { onApprove(kolaborator.id); onClose(); }} className="flex-1 flex items-center justify-center gap-2 bg-[#7a8a52] hover:bg-[#7a8a52] text-white py-2.5 rounded-[12px] font-semibold text-sm transition"><UserCheck size={15}/> Aktifkan</button>}
+          <button onClick={onClose} className="flex-1 border border-[#e4e7d4] text-[#5a6040] py-2.5 rounded-[12px] font-semibold text-sm hover:bg-[#f7f8f2] transition">Tutup</button>
         </div>
 
         {showAssignEvent && (
@@ -485,29 +485,29 @@ export default function Kolaborator() {
 
       {/* Stats */}
       <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
-        {[['Total Kolaborator',counts.semua,'bg-indigo-600'],['Aktif',counts.aktif,'bg-green-600'],['Pending',counts.pending,'bg-amber-500'],['Suspend',counts.suspended,'bg-red-500']].map(([l,v,c]) => (
-          <div key={l} className="bg-white rounded-2xl p-4 border border-gray-100">
-            <p className="text-2xl font-bold text-gray-800">{v}</p>
-            <div className="flex items-center gap-2 mt-1"><div className={`w-2 h-2 rounded-full ${c}`}/><p className="text-gray-500 text-xs">{l}</p></div>
+        {[['Total Kolaborator',counts.semua,'bg-indigo-600'],['Aktif',counts.aktif,'bg-[#7a8a52]'],['Pending',counts.pending,'bg-[#C4A24D]'],['Suspend',counts.suspended,'bg-[#B87272]']].map(([l,v,c]) => (
+          <div key={l} className="bg-white rounded-[16px] p-4 border border-[#e4e7d4]">
+            <p className="text-2xl font-bold text-[#1e2010]">{v}</p>
+            <div className="flex items-center gap-2 mt-1"><div className={`w-2 h-2 rounded-full ${c}`}/><p className="text-[#8a9070] text-xs">{l}</p></div>
           </div>
         ))}
       </div>
 
       {/* Toolbar — industry standard: search + filter row + sort row */}
-      <div className="bg-white rounded-2xl border border-gray-100 overflow-hidden">
+      <div className="bg-white rounded-[16px] border border-[#e4e7d4] overflow-hidden">
 
         {/* Row 1: Search */}
         <div className="px-4 pt-4 pb-3 border-b border-gray-50">
           <div className="relative">
-            <Search size={15} className="absolute left-3.5 top-1/2 -translate-y-1/2 text-gray-400"/>
+            <Search size={15} className="absolute left-3.5 top-1/2 -translate-y-1/2 text-[#8a9070]"/>
             <input value={search} onChange={e=>setSearch(e.target.value)} placeholder="Cari nama atau email..."
-              className="w-full pl-9 pr-4 py-2.5 border border-gray-200 rounded-xl text-sm focus:outline-none focus:border-indigo-400 transition"/>
+              className="w-full pl-9 pr-4 py-2.5 border border-[#e4e7d4] rounded-[12px] text-sm focus:outline-none focus:border-indigo-400 transition"/>
           </div>
         </div>
 
         {/* Row 2: Filters (labeled) */}
         <div className="px-4 py-3 border-b border-gray-50 flex items-center gap-3 flex-wrap">
-          <span className="text-[11px] font-bold text-gray-400 uppercase tracking-wider shrink-0">Filter:</span>
+          <span className="text-[11px] font-bold text-[#8a9070] uppercase tracking-wider shrink-0">Filter:</span>
 
           {/* Status chips */}
           <div className="flex gap-1.5 flex-wrap">
@@ -515,11 +515,11 @@ export default function Kolaborator() {
               <button key={s} onClick={() => setFilterStatus(s)}
                 className={`px-3 py-1.5 rounded-lg text-xs font-semibold transition border
                   ${filterStatus===s
-                    ? s==='aktif' ? 'bg-green-600 text-white border-green-600'
-                    : s==='pending' ? 'bg-amber-500 text-white border-amber-500'
-                    : s==='suspended' ? 'bg-red-500 text-white border-red-500'
+                    ? s==='aktif' ? 'bg-[#7a8a52] text-white border-[#7a8a52]'
+                    : s==='pending' ? 'bg-[#C4A24D] text-white border-amber-500'
+                    : s==='suspended' ? 'bg-[#B87272] text-white border-red-500'
                     : 'bg-indigo-600 text-white border-indigo-600'
-                    : 'bg-gray-50 text-gray-600 border-gray-200 hover:border-gray-300'}`}>
+                    : 'bg-[#f7f8f2] text-[#5a6040] border-[#e4e7d4] hover:border-[#c8ccb0]'}`}>
                 {s === 'semua' ? 'Semua' : STATUS_MAP[s]?.label || s}
                 {s !== 'semua' && counts[s] > 0 && (
                   <span className="ml-1.5 opacity-75">({counts[s]})</span>
@@ -532,13 +532,13 @@ export default function Kolaborator() {
 
           {/* Subsektor filter */}
           <select value={filterSub} onChange={e=>setFilterSub(e.target.value)}
-            className="px-3 py-1.5 border border-gray-200 rounded-lg text-xs text-gray-600 bg-gray-50 focus:outline-none focus:border-indigo-400 transition">
+            className="px-3 py-1.5 border border-[#e4e7d4] rounded-lg text-xs text-[#5a6040] bg-[#f7f8f2] focus:outline-none focus:border-indigo-400 transition">
             {SUBSEKTORS.map(s => <option key={s}>{s}</option>)}
           </select>
 
           {/* Event filter */}
           <select value={filterEvent} onChange={e=>setFilterEvent(e.target.value)}
-            className="px-3 py-1.5 border border-gray-200 rounded-lg text-xs text-gray-600 bg-gray-50 focus:outline-none focus:border-indigo-400 transition">
+            className="px-3 py-1.5 border border-[#e4e7d4] rounded-lg text-xs text-[#5a6040] bg-[#f7f8f2] focus:outline-none focus:border-indigo-400 transition">
             <option value="semua">Semua Event</option>
             {DUMMY_ALL_EVENTS.map(e => <option key={e.id} value={e.id}>{e.nama}</option>)}
           </select>
@@ -546,19 +546,19 @@ export default function Kolaborator() {
 
         {/* Row 3: Sort (labeled, right-aligned) */}
         <div className="px-4 py-2.5 flex items-center justify-between">
-          <p className="text-xs text-gray-400">
+          <p className="text-xs text-[#8a9070]">
             {filtered.length} dari {kolaborators.filter(m=>m.status!=='deleted').length} anggota
             {filterEvent !== 'semua' && (
               <span className="ml-2 inline-flex items-center gap-1 px-2 py-0.5 bg-indigo-50 text-indigo-600 rounded-full text-[10px] font-semibold">
                 🎪 {DUMMY_ALL_EVENTS.find(e=>e.id===filterEvent)?.nama?.slice(0,20)}
-                <button onClick={()=>setFilterEvent('semua')} className="hover:text-red-500 ml-0.5">×</button>
+                <button onClick={()=>setFilterEvent('semua')} className="hover:text-[#B87272] ml-0.5">×</button>
               </span>
             )}
           </p>
           <div className="flex items-center gap-2">
-            <span className="text-[11px] font-bold text-gray-400 uppercase tracking-wider">Urutkan:</span>
+            <span className="text-[11px] font-bold text-[#8a9070] uppercase tracking-wider">Urutkan:</span>
             <select value={sortBy} onChange={e=>setSortBy(e.target.value)}
-              className="px-3 py-1.5 border border-gray-200 rounded-lg text-xs text-gray-600 bg-gray-50 focus:outline-none focus:border-indigo-400 transition">
+              className="px-3 py-1.5 border border-[#e4e7d4] rounded-lg text-xs text-[#5a6040] bg-[#f7f8f2] focus:outline-none focus:border-indigo-400 transition">
               <option value="newest">Terbaru Daftar</option>
               <option value="oldest">Terlama Daftar</option>
               <option value="name_asc">Nama A–Z</option>
@@ -571,28 +571,28 @@ export default function Kolaborator() {
         </div>
       </div>
 
-      <div className="bg-white rounded-2xl border border-gray-100 overflow-hidden">
+      <div className="bg-white rounded-[16px] border border-[#e4e7d4] overflow-hidden">
         <table className="w-full text-left">
           <thead>
-            <tr className="border-b border-gray-100 bg-gray-50/80">
+            <tr className="border-b border-[#e4e7d4] bg-[#f7f8f2]/80">
               {['Kolaborator','Subsektor / Kota','Status','Karya','Terdaftar','Aksi'].map(h => (
-                <th key={h} className="px-5 py-3 text-xs font-semibold text-gray-400 uppercase tracking-wider">{h}</th>
+                <th key={h} className="px-5 py-3 text-xs font-semibold text-[#8a9070] uppercase tracking-wider">{h}</th>
               ))}
             </tr>
           </thead>
           <tbody>
             {filtered.length === 0
-              ? <tr><td colSpan={6} className="px-5 py-12 text-center text-gray-400 text-sm">Tidak ada hasil</td></tr>
+              ? <tr><td colSpan={6} className="px-5 py-12 text-center text-[#8a9070] text-sm">Tidak ada hasil</td></tr>
               : filtered.map(m => <KolaboratorRow key={m.id} m={m} onApprove={approve} onSuspend={suspend} onDetail={setDetail} onDelete={deleteKolaborator} isProcessing={processing}/>)
             }
           </tbody>
         </table>
-        <div className="px-5 py-3 border-t border-gray-50 text-xs text-gray-400 flex items-center justify-between">
+        <div className="px-5 py-3 border-t border-gray-50 text-xs text-[#8a9070] flex items-center justify-between">
           <span>Menampilkan {filtered.length} dari {kolaborators.length} Kolaborator</span>
           {filterEvent !== 'semua' && (
             <span className="flex items-center gap-1.5 px-2 py-1 bg-indigo-50 text-indigo-600 rounded-lg font-medium">
               🎪 {DUMMY_ALL_EVENTS.find(e=>e.id===filterEvent)?.nama}
-              <button onClick={()=>setFilterEvent('semua')} className="hover:text-red-500 transition">×</button>
+              <button onClick={()=>setFilterEvent('semua')} className="hover:text-[#B87272] transition">×</button>
             </span>
           )}
         </div>

@@ -1,80 +1,107 @@
-// src/components/ConfirmDialog.jsx
+// src/components/ConfirmDialog.jsx — Peken Banyumasan Design System v2.0
 import React from 'react';
 import { AlertTriangle } from 'lucide-react';
 
-/**
- * Modal konfirmasi pengganti window.confirm().
- *
- * Props:
- *  - isOpen      {boolean}  — tampilkan atau sembunyikan dialog
- *  - title       {string}   — judul dialog
- *  - message     {string|ReactNode} — isi pesan
- *  - confirmLabel{string}   — teks tombol konfirmasi (default: 'Ya, Lanjutkan')
- *  - cancelLabel {string}   — teks tombol batal (default: 'Batal')
- *  - variant     {'danger'|'warning'} — warna aksen (default: 'danger')
- *  - onConfirm   {function} — dipanggil saat tombol konfirmasi diklik
- *  - onCancel    {function} — dipanggil saat tombol batal atau backdrop diklik
- */
 const ConfirmDialog = ({
-    isOpen,
-    title = 'Konfirmasi',
-    message,
-    confirmLabel = 'Ya, Lanjutkan',
-    cancelLabel = 'Batal',
-    variant = 'danger',
-    onConfirm,
-    onCancel,
+  isOpen, title = 'Konfirmasi', message,
+  confirmLabel = 'Ya, Lanjutkan', cancelLabel = 'Batal',
+  variant = 'danger', onConfirm, onCancel,
 }) => {
-    if (!isOpen) return null;
+  if (!isOpen) return null;
 
-    const isDanger = variant === 'danger';
+  const isDanger  = variant === 'danger';
+  const iconColor = isDanger ? '#B87272' : '#C4A24D';
+  const iconBg    = isDanger ? '#f7eeee' : '#f7f2e4';
+  const btnBg     = isDanger ? '#B87272' : '#C4A24D';
+  const btnHover  = isDanger ? '#a05f5f' : '#b08f3a';
 
-    const iconBg   = isDanger ? 'bg-red-100'               : 'bg-yellow-100';
-    const iconCls  = isDanger ? 'text-red-600'             : 'text-yellow-600';
-    const btnCls   = isDanger
-        ? 'bg-red-600 hover:bg-red-700 shadow-red-200'
-        : 'bg-amber-500 hover:bg-amber-600 shadow-amber-200';
-
-    return (
-        <div
-            className="fixed inset-0 bg-slate-900/40 backdrop-blur-sm z-50 flex items-center justify-center p-4"
-            onClick={onCancel}
-        >
-            <div
-                className="bg-white rounded-2xl shadow-2xl w-full max-w-sm overflow-hidden"
-                onClick={(e) => e.stopPropagation()}   // cegah klik bubble ke backdrop
-            >
-                {/* Body */}
-                <div className="p-6">
-                    <div className="flex items-start gap-4">
-                        <div className={`w-10 h-10 rounded-full flex items-center justify-center shrink-0 ${iconBg}`}>
-                            <AlertTriangle size={20} className={iconCls} />
-                        </div>
-                        <div>
-                            <h3 className="font-bold text-gray-800 text-base mb-1.5">{title}</h3>
-                            <p className="text-sm text-gray-600 leading-relaxed">{message}</p>
-                        </div>
-                    </div>
-                </div>
-
-                {/* Footer */}
-                <div className="px-6 py-4 bg-gray-50 border-t border-gray-100 flex justify-end gap-3">
-                    <button
-                        onClick={onCancel}
-                        className="px-5 py-2 text-gray-600 font-semibold text-sm hover:bg-gray-200 rounded-xl transition"
-                    >
-                        {cancelLabel}
-                    </button>
-                    <button
-                        onClick={onConfirm}
-                        className={`px-5 py-2 text-white font-semibold text-sm rounded-xl shadow-md transition ${btnCls}`}
-                    >
-                        {confirmLabel}
-                    </button>
-                </div>
+  return (
+    <div
+      style={{
+        position: 'fixed', inset: 0,
+        background: 'rgba(14,16,8,.45)',
+        backdropFilter: 'blur(3px)',
+        zIndex: 50,
+        display: 'flex', alignItems: 'center', justifyContent: 'center',
+        padding: 16,
+        fontFamily: '"Montserrat", system-ui, sans-serif',
+      }}
+      onClick={onCancel}
+    >
+      <div
+        style={{
+          background: '#fff',
+          borderRadius: 16,
+          boxShadow: '0 8px 24px rgba(30,32,16,.12)',
+          width: '100%', maxWidth: 360,
+          overflow: 'hidden',
+          animation: 'fadeInUp .22s cubic-bezier(0.22,0.61,0.36,1) both',
+        }}
+        onClick={e => e.stopPropagation()}
+      >
+        {/* Body */}
+        <div style={{ padding: '24px 24px 20px' }}>
+          <div style={{ display: 'flex', alignItems: 'flex-start', gap: 14 }}>
+            <div style={{
+              width: 38, height: 38, borderRadius: '50%',
+              background: iconBg,
+              display: 'flex', alignItems: 'center', justifyContent: 'center',
+              flexShrink: 0,
+            }}>
+              <AlertTriangle size={18} color={iconColor} />
             </div>
+            <div>
+              <h3 style={{ fontSize: 14, fontWeight: 700, color: '#1e2010', margin: '0 0 6px' }}>
+                {title}
+              </h3>
+              <p style={{ fontSize: 12, color: '#5a6040', lineHeight: 1.7, margin: 0 }}>
+                {message}
+              </p>
+            </div>
+          </div>
         </div>
-    );
+
+        {/* Footer */}
+        <div style={{
+          padding: '14px 24px',
+          background: '#f7f8f2',
+          borderTop: '1px solid #e4e7d4',
+          display: 'flex', justifyContent: 'flex-end', gap: 10,
+        }}>
+          <button
+            onClick={onCancel}
+            style={{
+              padding: '8px 18px', borderRadius: 20,
+              border: '1.5px solid #e4e7d4',
+              background: 'transparent', color: '#5a6040',
+              fontSize: 12, fontWeight: 600, cursor: 'pointer',
+              fontFamily: '"Montserrat", sans-serif',
+              transition: 'background 180ms ease',
+            }}
+            onMouseEnter={e => e.currentTarget.style.background = '#eef0e0'}
+            onMouseLeave={e => e.currentTarget.style.background = 'transparent'}
+          >
+            {cancelLabel}
+          </button>
+          <button
+            onClick={onConfirm}
+            style={{
+              padding: '8px 18px', borderRadius: 20,
+              border: 'none',
+              background: btnBg, color: '#fff',
+              fontSize: 12, fontWeight: 600, cursor: 'pointer',
+              fontFamily: '"Montserrat", sans-serif',
+              transition: 'background 180ms ease',
+            }}
+            onMouseEnter={e => e.currentTarget.style.background = btnHover}
+            onMouseLeave={e => e.currentTarget.style.background = btnBg}
+          >
+            {confirmLabel}
+          </button>
+        </div>
+      </div>
+    </div>
+  );
 };
 
 export default ConfirmDialog;

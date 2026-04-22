@@ -58,12 +58,12 @@ function useEventCountdown(tanggal, jamMulai) {
 function EventCountdownBadge({ tanggal, jamMulai }) {
   const { time, selesai } = useEventCountdown(tanggal, jamMulai);
   if (selesai) return (
-    <span className="text-[10px] font-semibold text-gray-400">Selesai</span>
+    <span className="text-[10px] font-semibold text-[#8a9070]">Selesai</span>
   );
   return (
     <div className="flex items-center gap-1 mt-2">
       {[["d","H"],["j","J"],["m","M"]].map(([k,u]) => (
-        <div key={k} className="bg-green-700 text-white rounded-lg px-1.5 py-0.5 text-center min-w-[28px]">
+        <div key={k} className="bg-[#7a8a52] text-white rounded-lg px-1.5 py-0.5 text-center min-w-[28px]">
           <div className="text-[11px] font-black leading-none">{time[k]}</div>
           <div className="text-[8px] opacity-70 font-semibold leading-none mt-0.5">{u}</div>
         </div>
@@ -303,75 +303,75 @@ const Dashboard = () => {
 
   const scannerTone =
     scannerState === 'error'
-      ? 'border-red-200 bg-red-50'
+      ? 'border-[#dbb8b8] bg-[#f7eeee]'
       : scannerState === 'success-keluar'
-        ? 'border-indigo-200 bg-indigo-50'
+        ? 'border-[#b8badc] bg-[#eeeef8]'
         : scannerState === 'success-masuk'
-          ? 'border-green-200 bg-green-50'
+          ? 'border-[#b8d4b0] bg-[#eef4eb]'
           : scannerState === 'scanning'
-            ? 'border-amber-200 bg-amber-50'
-            : 'border-gray-100 bg-white';
+            ? 'border-[#dcc882] bg-[#f7f2e4]'
+            : 'border-[#e4e7d4] bg-white';
 
   const isManualButtonDisabled = submittingAction !== null || !activeEventId;
 
   const RealtimeBadge = () => {
     if (realtimeStatus === 'connected') {
       return (
-        <span className="inline-flex items-center gap-1 text-[11px] font-semibold text-green-700 bg-green-50 border border-green-200 px-2 py-0.5 rounded-full">
+        <span className="inline-flex items-center gap-1 text-[11px] font-semibold text-[#7A9B6A] bg-[#eef4eb] border border-[#b8d4b0] px-2 py-0.5 rounded-full">
           <Wifi size={11} className="animate-pulse" /> Realtime
         </span>
       );
     }
     if (realtimeStatus === 'connecting') {
       return (
-        <span className="inline-flex items-center gap-1 text-[11px] font-medium text-amber-600 bg-amber-50 border border-amber-200 px-2 py-0.5 rounded-full">
+        <span className="inline-flex items-center gap-1 text-[11px] font-medium text-[#C4A24D] bg-[#f7f2e4] border border-[#dcc882] px-2 py-0.5 rounded-full">
           <RefreshCw size={11} className="animate-spin" /> Connecting…
         </span>
       );
     }
     if (realtimeStatus === 'error') {
       return (
-        <span className="inline-flex items-center gap-1 text-[11px] font-medium text-red-600 bg-red-50 border border-red-200 px-2 py-0.5 rounded-full">
+        <span className="inline-flex items-center gap-1 text-[11px] font-medium text-[#B87272] bg-[#f7eeee] border border-[#dbb8b8] px-2 py-0.5 rounded-full">
           <WifiOff size={11} /> Backup Polling
         </span>
       );
     }
     return (
-      <span className="inline-flex items-center gap-1 text-[11px] font-medium text-gray-500 bg-gray-100 border border-gray-200 px-2 py-0.5 rounded-full">
+      <span className="inline-flex items-center gap-1 text-[11px] font-medium text-[#8a9070] bg-[#f2f4e8] border border-[#e4e7d4] px-2 py-0.5 rounded-full">
         <RefreshCw size={11} /> Polling
       </span>
     );
   };
 
   const statCards = [
-    { key: 'di_dalam', label: 'Sedang di Dalam', value: stats.di_dalam, icon: Users, iconTone: 'bg-green-100 text-green-700', meta: 'Live', metaTone: 'text-green-700' },
-    { key: 'total_masuk', label: 'Tap Masuk', value: stats.total_masuk, icon: LogIn, iconTone: 'bg-emerald-100 text-emerald-700', meta: 'Hari ini', metaTone: 'text-gray-500' },
-    { key: 'total_keluar', label: 'Tap Keluar', value: stats.total_keluar, icon: LogOut, iconTone: 'bg-orange-100 text-orange-700', meta: 'Hari ini', metaTone: 'text-gray-500' },
-    { key: 'total_harian', label: 'Kunjungan Hari Ini', value: stats.total_harian, icon: CalendarCheck, iconTone: 'bg-purple-100 text-purple-700', meta: namaEvent || 'Event aktif', metaTone: 'text-gray-500' },
+    { key: 'di_dalam', label: 'Sedang di Dalam', value: stats.di_dalam, icon: Users, iconTone: 'bg-[#eef4eb] text-[#7A9B6A]', meta: 'Live', metaTone: 'text-[#7a8a52]' },
+    { key: 'total_masuk', label: 'Tap Masuk', value: stats.total_masuk, icon: LogIn, iconTone: 'bg-[#eef0e0] text-[#7a8a52]', meta: 'Hari ini', metaTone: 'text-[#8a9070]' },
+    { key: 'total_keluar', label: 'Tap Keluar', value: stats.total_keluar, icon: LogOut, iconTone: 'bg-[#f7eeee] text-[#B87272]', meta: 'Hari ini', metaTone: 'text-[#8a9070]' },
+    { key: 'total_harian', label: 'Kunjungan Hari Ini', value: stats.total_harian, icon: CalendarCheck, iconTone: 'bg-[#eeeef8] text-[#7A80B0]', meta: namaEvent || 'Event aktif', metaTone: 'text-[#8a9070]' },
   ];
 
   return (
     <div className="space-y-4 font-sans pb-1">
       <style>{`
-        @keyframes value-flash { 0% { background-color: transparent; } 25% { background-color: #dcfce7; } 100% { background-color: transparent; } }
-        @keyframes row-flash { 0% { background-color: transparent; } 25% { background-color: #f0fdf4; } 100% { background-color: transparent; } }
+        @keyframes value-flash { 0% { background-color: transparent; } 25% { background-color: #eef4eb; } 100% { background-color: transparent; } }
+        @keyframes row-flash { 0% { background-color: transparent; } 25% { background-color: #f2f4e8; } 100% { background-color: transparent; } }
         .value-flash { animation: value-flash 0.75s ease-out; }
         .row-flash { animation: row-flash 0.75s ease-out; }
       `}</style>
 
       {!isLoadingStats && !activeEventId && (
-        <div className="bg-amber-50 border border-amber-200 rounded-xl p-4 flex items-start gap-3">
-          <AlertCircle size={18} className="text-amber-600 shrink-0 mt-0.5" />
+        <div className="bg-[#f7f2e4] border border-[#dcc882] rounded-xl p-4 flex items-start gap-3">
+          <AlertCircle size={18} className="text-[#C4A24D] shrink-0 mt-0.5" />
           <div className="flex-1 min-w-0">
-            <p className="text-sm font-bold text-amber-800">Tidak ada event aktif</p>
-            <p className="text-xs text-amber-700 mt-0.5 leading-relaxed">
+            <p className="text-sm font-bold text-[#7a5c1a]">Tidak ada event aktif</p>
+            <p className="text-xs text-[#C4A24D] mt-0.5 leading-relaxed">
               Tombol input manual dinonaktifkan. Tap NFC juga tidak akan diterima sampai ada event aktif.
             </p>
           </div>
           {userRole === 'admin' && (
             <Link
               to="/events"
-              className="shrink-0 flex items-center gap-1.5 bg-amber-600 hover:bg-amber-700 text-white text-xs font-semibold px-3 py-2 rounded-lg transition whitespace-nowrap"
+              className="shrink-0 flex items-center gap-1.5 bg-[#C4A24D] hover:bg-[#b08f3a] text-white text-xs font-semibold px-3 py-2 rounded-lg transition whitespace-nowrap"
             >
               <Calendar size={13} /> Kelola Event <ArrowRight size={13} />
             </Link>
@@ -383,17 +383,17 @@ const Dashboard = () => {
         {statCards.map((item) => {
           const Icon = item.icon;
           return (
-            <div key={item.key} className="bg-white p-3.5 rounded-2xl shadow-sm border border-gray-100">
+            <div key={item.key} className="bg-white p-4 rounded-2xl border border-[#e4e7d4]">
               <div className="flex items-start justify-between gap-3 mb-3">
                 <div>
-                  <div className="text-[13px] text-gray-500 font-medium leading-tight">{item.label}</div>
+                  <div className="text-[13px] text-[#8a9070] font-medium leading-tight">{item.label}</div>
                   <div className={`text-[11px] mt-1 ${item.metaTone}`}>{item.meta}</div>
                 </div>
                 <div className={`w-9 h-9 rounded-2xl flex items-center justify-center shrink-0 ${item.iconTone}`}>
                   <Icon size={16} />
                 </div>
               </div>
-              <div className="text-3xl md:text-[32px] font-bold leading-none text-gray-900">
+              <div className="text-3xl md:text-[32px] font-bold leading-none text-[#1e2010]">
                 {isLoadingStats ? '...' : (
                   <span key={`${item.key}-${flashKey}`} className="value-flash inline-block px-1 rounded-lg">
                     {item.value}
@@ -406,12 +406,12 @@ const Dashboard = () => {
       </div>
 
       {/* 🆕 Event Mendatang */}
-      <div className="bg-white rounded-2xl border border-gray-100 p-5">
+      <div className="bg-white rounded-2xl border border-[#e4e7d4] p-5">
         <div className="flex items-center justify-between mb-4">
-          <h3 className="font-bold text-gray-800 flex items-center gap-2">
-            <CalendarCheck size={16} className="text-green-600"/> Event Mendatang
+          <h3 className="font-bold text-[#1e2010] flex items-center gap-2">
+            <CalendarCheck size={16} className="text-[#7a8a52]"/> Event Mendatang
           </h3>
-          <button onClick={() => navigate('/events')} className="text-xs text-green-600 hover:underline font-medium">Lihat Semua →</button>
+          <button onClick={() => navigate('/events')} className="text-xs text-[#7a8a52] hover:underline font-medium">Lihat Semua →</button>
         </div>
         <div className="grid sm:grid-cols-3 gap-3">
           {[
@@ -419,17 +419,17 @@ const Dashboard = () => {
             { nama:'Workshop Batik & Tenun Nusantara', tanggal:'2025-04-26', jam_mulai:'09:00', jam_selesai:'17:00', lokasi:'Gedung Kebudayaan Cilacap', peserta_count:18, kapasitas:30 },
             { nama:'Pameran Kriya Ekraf Regional', tanggal:'2025-06-10', jam_mulai:'10:00', jam_selesai:'21:00', lokasi:'Mall Cilacap Raya', peserta_count:0, kapasitas:500 },
           ].map(ev => (
-            <div key={ev.nama} className="bg-gray-50 border border-gray-100 rounded-xl p-4 hover:border-green-200 transition cursor-pointer" onClick={() => navigate('/events')}>
-              <p className="font-semibold text-gray-800 text-sm leading-snug line-clamp-2 mb-1">{ev.nama}</p>
-              <p className="text-gray-400 text-xs">{ev.lokasi}</p>
+            <div key={ev.nama} className="bg-[#f7f8f2] border border-[#e4e7d4] rounded-xl p-4 hover:border-[#c8d09a] transition cursor-pointer" onClick={() => navigate('/events')}>
+              <p className="font-semibold text-[#1e2010] text-sm leading-snug line-clamp-2 mb-1">{ev.nama}</p>
+              <p className="text-[#8a9070] text-xs">{ev.lokasi}</p>
               {/* Countdown badges: H / J / M */}
               <EventCountdownBadge tanggal={ev.tanggal} jamMulai={ev.jam_mulai}/>
               <div className="mt-2">
-                <div className="flex justify-between text-[10px] text-gray-400 mb-1">
+                <div className="flex justify-between text-[10px] text-[#8a9070] mb-1">
                   <span>{ev.peserta_count} peserta</span><span>{Math.round(ev.peserta_count/ev.kapasitas*100)}%</span>
                 </div>
                 <div className="h-1 bg-gray-200 rounded-full overflow-hidden">
-                  <div className="h-full bg-green-500 rounded-full" style={{width:`${Math.min(100,ev.peserta_count/ev.kapasitas*100)}%`}}/>
+                  <div className="h-full bg-[#7a8a52] rounded-full" style={{width:`${Math.min(100,ev.peserta_count/ev.kapasitas*100)}%`}}/>
                 </div>
               </div>
             </div>
@@ -453,46 +453,46 @@ const Dashboard = () => {
 
           <div className={`p-2.5 rounded-2xl shadow-sm border transition-colors ${scannerTone}`} onClick={() => scannerInputRef.current?.focus()}>
             <div className="flex items-center justify-between gap-2 mb-2">
-              <h3 className="text-sm font-bold text-gray-800">Tap NFC Pengunjung</h3>
-              <div className="w-7 h-7 rounded-2xl bg-green-100 text-green-700 flex items-center justify-center shrink-0">
+              <h3 className="text-sm font-bold text-[#1e2010]">Tap NFC Pengunjung</h3>
+              <div className="w-7 h-7 rounded-2xl bg-[#eef4eb] text-[#7A9B6A] flex items-center justify-center shrink-0">
                 <ScanLine size={14} />
               </div>
             </div>
 
             <div className="rounded-2xl bg-gray-900 text-white px-3 py-2.5 min-h-[88px] flex flex-col justify-center">
-              <div className="text-[10px] uppercase tracking-[0.16em] text-gray-400 font-semibold mb-1.5">Tap Terakhir</div>
+              <div className="text-[10px] uppercase tracking-[0.16em] text-[#8a9070] font-semibold mb-1.5">Tap Terakhir</div>
               <div className="text-[15px] font-semibold leading-snug break-words line-clamp-2">{getScannerHeadline()}</div>
-              <div className={`mt-1 text-[11px] ${scannerState === 'error' ? 'text-red-300' : scannerState.startsWith('success') ? 'text-green-300' : scannerState === 'scanning' ? 'text-amber-300' : 'text-gray-300'}`}>
+              <div className={`mt-1 text-[11px] ${scannerState === 'error' ? 'text-red-300' : scannerState.startsWith('success') ? 'text-[#7a8a52]' : scannerState === 'scanning' ? 'text-amber-300' : 'text-gray-300'}`}>
                 {getScannerSubtext()}
               </div>
               {scannerResult?.ok && (
                 <div className="mt-2 inline-flex w-max items-center gap-1 rounded-full px-2 py-1 text-[10px] font-semibold border border-white/10 bg-white/10">
-                  <CheckCircle2 size={11} className={scannerResult?.aksi === 'keluar' ? 'text-indigo-300' : 'text-green-300'} />
+                  <CheckCircle2 size={11} className={scannerResult?.aksi === 'keluar' ? 'text-indigo-300' : 'text-[#7a8a52]'} />
                   {scannerResult?.aksi === 'keluar' ? 'KELUAR' : 'MASUK'}
                 </div>
               )}
             </div>
           </div>
 
-          <div className="bg-white p-3.5 rounded-2xl shadow-sm border border-gray-100">
-            <h3 className="text-sm font-bold text-gray-800 mb-3">Input Manual</h3>
+          <div className="bg-white p-4 rounded-2xl border border-[#e4e7d4]">
+            <h3 className="text-sm font-bold text-[#1e2010] mb-3">Input Manual</h3>
             <div className="space-y-3">
               <button
                 onClick={() => handleManualInput('masuk')}
                 disabled={isManualButtonDisabled}
                 title={!activeEventId ? 'Menunggu data event aktif...' : ''}
-                className="w-full bg-green-500 hover:bg-green-600 disabled:bg-green-300 disabled:cursor-not-allowed text-white rounded-2xl px-3.5 py-3.5 flex flex-col items-center justify-center transition-all shadow-lg shadow-green-100 group"
+                className="w-full bg-[#7a8a52] hover:bg-[#4f5c30] disabled:bg-[#a8b07a] disabled:cursor-not-allowed text-white rounded-2xl px-3.5 py-3.5 flex flex-col items-center justify-center transition-all shadow-lg shadow-[rgba(122,138,82,.2)] group"
               >
                 <ArrowDownCircle className={`mb-2 ${!isManualButtonDisabled ? 'group-hover:scale-110' : ''} transition-transform`} size={28} />
                 <span className="text-base font-bold tracking-wide leading-none">{submittingAction === 'masuk' ? 'PROSES…' : '+ MASUK'}</span>
-                <span className="text-green-100 text-[11px] mt-1">1 pengunjung</span>
+                <span className="text-[#7a8a52] text-[11px] mt-1">1 pengunjung</span>
               </button>
 
               <button
                 onClick={() => handleManualInput('keluar')}
                 disabled={isManualButtonDisabled}
                 title={!activeEventId ? 'Menunggu data event aktif...' : ''}
-                className="w-full bg-red-500 hover:bg-red-600 disabled:bg-red-300 disabled:cursor-not-allowed text-white rounded-2xl px-3.5 py-3.5 flex flex-col items-center justify-center transition-all shadow-lg shadow-red-100 group"
+                className="w-full bg-[#B87272] hover:bg-[#a05f5f] disabled:bg-[#c89898] disabled:cursor-not-allowed text-white rounded-2xl px-3.5 py-3.5 flex flex-col items-center justify-center transition-all shadow-lg shadow-[rgba(184,114,114,.2)] group"
               >
                 <ArrowUpCircle className={`mb-2 ${!isManualButtonDisabled ? 'group-hover:scale-110' : ''} transition-transform`} size={28} />
                 <span className="text-base font-bold tracking-wide leading-none">{submittingAction === 'keluar' ? 'PROSES…' : '- KELUAR'}</span>
@@ -503,10 +503,10 @@ const Dashboard = () => {
         </div>
 
         <div className="min-w-0">
-          <div className="bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden h-full flex flex-col lg:h-[calc(100vh-300px)] min-h-[420px]">
-            <div className="px-5 py-4 border-b border-gray-100 flex items-center justify-between gap-3 bg-gray-50/60">
+          <div className="bg-white rounded-2xl border border-[#e4e7d4] overflow-hidden h-full flex flex-col lg:h-[calc(100vh-300px)] min-h-[420px]">
+            <div className="px-5 py-4 border-b border-[#e4e7d4] flex items-center justify-between gap-3 bg-[#f7f8f2]">
               <div className="flex items-center gap-3 min-w-0">
-                <h3 className="text-base font-bold text-gray-800 truncate">Aktivitas Tap & Input Terbaru</h3>
+                <h3 className="text-base font-bold text-[#1e2010] truncate">Aktivitas Tap & Input Terbaru</h3>
                 <RealtimeBadge />
               </div>
               <button
@@ -514,7 +514,7 @@ const Dashboard = () => {
                   fetchStats();
                   fetchActivities();
                 }}
-                className="text-sm text-green-700 font-medium hover:underline flex items-center gap-1 shrink-0"
+                className="text-sm text-[#7a8a52] font-medium hover:underline flex items-center gap-1 shrink-0"
               >
                 Refresh <RefreshCw size={14} className={isLoadingActivities ? 'animate-spin' : ''} />
               </button>
@@ -523,35 +523,35 @@ const Dashboard = () => {
             <div className="flex-1 overflow-auto">
               <table className="w-full text-left border-collapse">
                 <thead>
-                  <tr className="bg-white text-gray-400 text-[11px] uppercase tracking-wider border-b border-gray-100">
+                  <tr className="bg-[#f7f8f2] text-[#8a9070] text-[11px] uppercase tracking-wider border-b border-[#e4e7d4]">
                     <th className="px-5 py-3 font-semibold whitespace-nowrap">Waktu</th>
                     <th className="px-5 py-3 font-semibold whitespace-nowrap">Tipe</th>
                     <th className="px-5 py-3 font-semibold">Identitas</th>
                     <th className="px-5 py-3 font-semibold whitespace-nowrap">Aktivitas</th>
                   </tr>
                 </thead>
-                <tbody className="text-sm divide-y divide-gray-50">
+                <tbody className="text-sm divide-y divide-[#f2f4e8]">
                   {isLoadingActivities ? (
                     <tr>
-                      <td colSpan="4" className="px-5 py-8 text-center text-gray-500">Memuat data aktivitas...</td>
+                      <td colSpan="4" className="px-5 py-8 text-center text-[#8a9070]">Memuat data aktivitas...</td>
                     </tr>
                   ) : activities.length === 0 ? (
                     <tr>
-                      <td colSpan="4" className="px-5 py-8 text-center text-gray-500">Belum ada aktivitas hari ini.</td>
+                      <td colSpan="4" className="px-5 py-8 text-center text-[#8a9070]">Belum ada aktivitas hari ini.</td>
                     </tr>
                   ) : (
                     activities.map((activity) => (
-                      <tr key={`${activity.id}-${flashKey}`} className="hover:bg-gray-50 transition row-flash align-top">
-                        <td className="px-5 py-3 text-gray-500 font-medium whitespace-nowrap">
+                      <tr key={`${activity.id}-${flashKey}`} className="hover:bg-[#f7f8f2] transition row-flash align-top">
+                        <td className="px-5 py-3 text-[#8a9070] font-medium whitespace-nowrap">
                           {getActivityTime(activity).toLocaleTimeString('id-ID', { hour: '2-digit', minute: '2-digit', second: '2-digit' })} WIB
                         </td>
                         <td className="px-5 py-3 whitespace-nowrap">
                           {activity.tipe_pengunjung === 'nfc' ? (
-                            <span className="inline-flex items-center gap-1.5 bg-green-50 text-green-800 px-2.5 py-1 rounded-md text-xs font-semibold border border-green-100">
+                            <span className="inline-flex items-center gap-1.5 bg-[#eef4eb] text-[#4f5c30] px-2.5 py-1 rounded-md text-xs font-semibold border border-[#b8d4b0]">
                               <CreditCard size={12} /> NFC
                             </span>
                           ) : (
-                            <span className="inline-flex items-center gap-1.5 bg-gray-100 text-gray-600 px-2.5 py-1 rounded-md text-xs font-semibold border border-gray-200">
+                            <span className="inline-flex items-center gap-1.5 bg-[#eef0e0] text-gray-600 px-2.5 py-1 rounded-md text-xs font-semibold border border-[#e4e7d4]">
                               <User size={12} /> Manual
                             </span>
                           )}
@@ -559,21 +559,21 @@ const Dashboard = () => {
                         <td className="px-5 py-3 min-w-[220px]">
                           {activity.tipe_pengunjung === 'nfc' ? (
                             <>
-                              <div className="font-semibold text-gray-800 leading-snug">{activity.nama_pengunjung || 'Pengunjung'}</div>
-                              <div className="text-[11px] text-gray-400 font-mono mt-1">UID: {activity.nfc_uid?.substring(0, 8)}...</div>
+                              <div className="font-semibold text-[#1e2010] leading-snug">{activity.nama_pengunjung || 'Pengunjung'}</div>
+                              <div className="text-[11px] text-[#8a9070] font-mono mt-1">UID: {activity.nfc_uid?.substring(0, 8)}...</div>
                             </>
                           ) : (
                             <>
-                              <div className="font-semibold text-gray-800">Pengunjung</div>
-                              <div className="text-[11px] text-gray-400 font-mono mt-1">Input Manual</div>
+                              <div className="font-semibold text-[#1e2010]">Pengunjung</div>
+                              <div className="text-[11px] text-[#8a9070] font-mono mt-1">Input Manual</div>
                             </>
                           )}
                         </td>
                         <td className="px-5 py-3 whitespace-nowrap">
                           {activity.status === 'di_dalam' ? (
-                            <span className="text-green-600 font-bold flex items-center gap-2"><LogIn size={14} /> Masuk</span>
+                            <span className="text-[#7A9B6A] font-bold flex items-center gap-2"><LogIn size={14} /> Masuk</span>
                           ) : (
-                            <span className="text-red-500 font-bold flex items-center gap-2"><LogOut size={14} /> Keluar</span>
+                            <span className="text-[#B87272] font-bold flex items-center gap-2"><LogOut size={14} /> Keluar</span>
                           )}
                         </td>
                       </tr>
@@ -583,8 +583,8 @@ const Dashboard = () => {
               </table>
             </div>
 
-            <div className="px-4 py-3 border-t border-gray-100 bg-gray-50 text-center">
-              <button onClick={() => navigate('/reports')} className="text-sm font-semibold text-green-700 hover:text-green-900 transition">
+            <div className="px-4 py-3 border-t border-[#e4e7d4] bg-[#f7f8f2] text-center">
+              <button onClick={() => navigate('/reports')} className="text-sm font-semibold text-[#7a8a52] hover:text-[#4f5c30] transition">
                 Lihat Semua Riwayat Kunjungan &rarr;
               </button>
             </div>

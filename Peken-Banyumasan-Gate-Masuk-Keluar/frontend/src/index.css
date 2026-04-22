@@ -2,10 +2,275 @@
 @tailwind components;
 @tailwind utilities;
 
+/* ══════════════════════════════════════════════════════════════
+   Peken Banyumasan — Design System Tokens (Gate Dashboard)
+   v2.0 — Light-mode, sage-derived palette
+   ══════════════════════════════════════════════════════════════ */
+
 @layer base {
+  /* ── Peken Brand Primitives ─────────────────────────────── */
+  :root {
+    /* Sage family */
+    --peken-sage:        #C3CA96;
+    --peken-sage-light:  #dde3c0;
+    --peken-sage-pale:   #f2f4e8;
+    --peken-sage-mid:    #a8b07a;
+    --peken-sage-dark:   #7a8a52;
+    --peken-sage-deeper: #4f5c30;
+
+    /* Ink / dark */
+    --peken-ink:       #0D0D0D;
+    --peken-charcoal:  #1B1B1B;
+    --peken-white:     #FFFFFF;
+    --peken-mist:      #B2B2B2;
+    --peken-smoke:     #5B5B5B;
+
+    /* Status (muted, harmonised with sage) */
+    --peken-success:        #7A9B6A;
+    --peken-success-bg:     #eef4eb;
+    --peken-success-border: #b8d4b0;
+    --peken-error:          #B87272;
+    --peken-error-bg:       #f7eeee;
+    --peken-error-border:   #dbb8b8;
+    --peken-warning:        #C4A24D;
+    --peken-warning-bg:     #f7f2e4;
+    --peken-warning-border: #dcc882;
+    --peken-info:           #6B8FA3;
+    --peken-info-bg:        #eaf0f4;
+    --peken-info-border:    #b0c8d8;
+    --peken-exit:           #7A80B0;
+    --peken-exit-bg:        #eeeef8;
+    --peken-exit-border:    #b8badc;
+
+    /* ── Dashboard Semantic Surfaces ──────────────────────── */
+    --dash-bg:              #f2f4e8;
+    --dash-surface:         #FFFFFF;
+    --dash-surface-hover:   #f7f8f2;
+    --dash-border:          #e4e7d4;
+    --dash-border-strong:   #c8ccb0;
+
+    /* Sidebar */
+    --dash-sidebar-bg:      #1B1B1B;
+    --dash-sidebar-fg:      #d0d4b8;
+    --dash-sidebar-active:  rgba(195,202,150,0.13);
+    --dash-sidebar-active-fg: #C3CA96;
+
+    /* Accent */
+    --dash-accent:          #C3CA96;
+    --dash-accent-dark:     #7a8a52;
+    --dash-accent-deeper:   #4f5c30;
+    --dash-accent-bg:       #eef0e0;
+    --dash-accent-border:   #c8d09a;
+
+    /* Text */
+    --dash-text-primary:   #1e2010;
+    --dash-text-secondary: #5a6040;
+    --dash-text-muted:     #8a9070;
+    --dash-text-inverse:   #FFFFFF;
+
+    /* Motion */
+    --ease-out-brand: cubic-bezier(0.22, 0.61, 0.36, 1);
+    --dur-fast:  180ms;
+    --dur-base:  320ms;
+    --dur-slow:  560ms;
+
+    /* Shadows */
+    --shadow-sm:     0 1px 3px rgba(30,32,16,.06), 0 1px 2px rgba(30,32,16,.04);
+    --shadow-md:     0 4px 12px rgba(30,32,16,.08), 0 2px 4px rgba(30,32,16,.04);
+    --shadow-lg:     0 8px 24px rgba(30,32,16,.10), 0 4px 8px rgba(30,32,16,.06);
+    --shadow-accent: 0 4px 14px rgba(122,138,82,.25);
+  }
+
+  /* ── Base Reset & Typography ──────────────────────────── */
+  *, *::before, *::after { box-sizing: border-box; }
+  img { display: block; max-width: 100%; }
+
+  html { -webkit-text-size-adjust: 100%; }
+
   body {
-    font-family: 'DM Sans', system-ui, sans-serif;
+    font-family: 'Montserrat', system-ui, sans-serif;
+    font-size: 14px;
+    line-height: 1.5;
+    color: var(--dash-text-primary);
+    background: var(--dash-bg);
     -webkit-font-smoothing: antialiased;
     -moz-osx-font-smoothing: grayscale;
   }
+
+  h1, h2, h3, h4, h5, h6 {
+    font-family: 'Montserrat', system-ui, sans-serif;
+    color: var(--dash-text-primary);
+  }
+}
+
+/* ══════════════════════════════════════════════════════════════
+   Peken Dashboard — Reusable Component Classes
+   ══════════════════════════════════════════════════════════════ */
+
+@layer components {
+
+  /* ── Cards ─────────────────────────────────────────────── */
+  .peken-card {
+    background: var(--dash-surface);
+    border: 1px solid var(--dash-border);
+    border-radius: 16px;
+    box-shadow: var(--shadow-sm);
+  }
+
+  /* ── Buttons ────────────────────────────────────────────── */
+  .peken-btn {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    font-family: 'Montserrat', sans-serif;
+    font-weight: 600;
+    font-size: 13px;
+    border: none;
+    border-radius: 20px;
+    padding: 10px 22px;
+    cursor: pointer;
+    transition:
+      background var(--dur-fast) var(--ease-out-brand),
+      box-shadow var(--dur-fast) var(--ease-out-brand),
+      opacity var(--dur-fast);
+  }
+  .peken-btn:disabled { opacity: .6; cursor: not-allowed; }
+
+  .peken-btn-primary {
+    background: var(--dash-accent-dark);
+    color: #fff;
+  }
+  .peken-btn-primary:hover:not(:disabled) {
+    background: var(--dash-accent-deeper);
+    box-shadow: var(--shadow-accent);
+  }
+
+  .peken-btn-ghost {
+    background: transparent;
+    color: var(--dash-accent-dark);
+    border: 1.5px solid var(--dash-accent-border);
+  }
+  .peken-btn-ghost:hover:not(:disabled) {
+    background: var(--dash-accent-bg);
+  }
+
+  .peken-btn-danger {
+    background: var(--peken-error);
+    color: #fff;
+  }
+  .peken-btn-danger:hover:not(:disabled) {
+    background: #a05f5f;
+  }
+
+  /* ── Form inputs ────────────────────────────────────────── */
+  .peken-input {
+    width: 100%;
+    background: #fff;
+    border: 1px solid var(--dash-border);
+    border-radius: 12px;
+    padding: 10px 14px;
+    font-family: 'Montserrat', sans-serif;
+    font-size: 13px;
+    color: var(--dash-text-primary);
+    transition: border-color var(--dur-fast) var(--ease-out-brand),
+                box-shadow var(--dur-fast) var(--ease-out-brand);
+    outline: none;
+  }
+  .peken-input::placeholder { color: var(--dash-text-muted); }
+  .peken-input:focus {
+    border-color: var(--dash-accent-dark);
+    box-shadow: 0 0 0 3px rgba(122,138,82,.15);
+  }
+
+  /* ── Badges / Pills ─────────────────────────────────────── */
+  .peken-badge {
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+    padding: 2px 9px;
+    border-radius: 9999px;
+    font-size: 10px;
+    font-weight: 700;
+    font-family: 'Montserrat', sans-serif;
+    letter-spacing: .02em;
+    border-width: 1px;
+    border-style: solid;
+  }
+  .peken-badge-success {
+    background: var(--peken-success-bg);
+    color: var(--peken-success);
+    border-color: var(--peken-success-border);
+  }
+  .peken-badge-error {
+    background: var(--peken-error-bg);
+    color: var(--peken-error);
+    border-color: var(--peken-error-border);
+  }
+  .peken-badge-warning {
+    background: var(--peken-warning-bg);
+    color: var(--peken-warning);
+    border-color: var(--peken-warning-border);
+  }
+  .peken-badge-info {
+    background: var(--peken-info-bg);
+    color: var(--peken-info);
+    border-color: var(--peken-info-border);
+  }
+  .peken-badge-exit {
+    background: var(--peken-exit-bg);
+    color: var(--peken-exit);
+    border-color: var(--peken-exit-border);
+  }
+  .peken-badge-sage {
+    background: var(--dash-accent-bg);
+    color: var(--dash-accent-deeper);
+    border-color: var(--dash-accent-border);
+  }
+
+  /* ── Stat value flash animation ─────────────────────────── */
+  @keyframes valueFlash {
+    0%   { background-color: var(--peken-success-bg); }
+    100% { background-color: transparent; }
+  }
+  .peken-flash { animation: valueFlash 0.75s var(--ease-out-brand); }
+
+  /* ── Fade-in-up entry animation ─────────────────────────── */
+  @keyframes fadeInUp {
+    from { opacity: 0; transform: translateY(6px); }
+    to   { opacity: 1; transform: translateY(0); }
+  }
+  .peken-fade-in {
+    animation: fadeInUp var(--dur-base) var(--ease-out-brand) both;
+  }
+
+  /* ── Sidebar section divider label ─────────────────────── */
+  .sidebar-section-label {
+    font-size: 9px;
+    font-weight: 700;
+    color: #3a4030;
+    text-transform: uppercase;
+    letter-spacing: .1em;
+    padding: 14px 8px 4px;
+  }
+
+  /* ── Table rows ─────────────────────────────────────────── */
+  .peken-table-row:hover td {
+    background: var(--dash-surface-hover);
+  }
+
+  /* ── Scrollbar (webkit) ─────────────────────────────────── */
+  ::-webkit-scrollbar { width: 5px; height: 5px; }
+  ::-webkit-scrollbar-track { background: transparent; }
+  ::-webkit-scrollbar-thumb { background: var(--dash-border); border-radius: 9999px; }
+  ::-webkit-scrollbar-thumb:hover { background: var(--dash-border-strong); }
+}
+
+/* ── Countdown box ─────────────────────────────────────────── */
+.countdown-unit {
+  background: var(--dash-accent-dark);
+  color: #fff;
+  border-radius: 8px;
+  padding: 4px 8px;
+  min-width: 32px;
+  text-align: center;
 }

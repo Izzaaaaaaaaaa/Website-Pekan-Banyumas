@@ -78,12 +78,12 @@ const DUMMY_ARTISAN_EVENT = {
 
 const fmtDate = d => d ? new Date(d).toLocaleDateString('id-ID',{day:'numeric',month:'long',year:'numeric'}) : '—';
 const STATUS_CLS = {
-  draft:'bg-gray-50 text-gray-500 border-gray-200',
-  published:'bg-green-50 text-green-700 border-green-200',
-  berlangsung:'bg-blue-50 text-blue-600 border-blue-200',
-  selesai:'bg-yellow-50 text-yellow-700 border-yellow-200',
+  draft:'bg-[#f7f8f2] text-[#8a9070] border-[#e4e7d4]',
+  published:'bg-[#eef0e0] text-[#7a8a52] border-[#c8d09a]',
+  berlangsung:'bg-[#eaf0f4] text-[#6B8FA3] border-[#b0c8d8]',
+  selesai:'bg-[#f7f2e4] text-[#C4A24D] border-[#dcc882]',
 };
-const HADIR_CLS = { terdaftar:'text-gray-500', hadir:'text-green-600', tidak_hadir:'text-red-500' };
+const HADIR_CLS = { terdaftar:'text-[#8a9070]', hadir:'text-[#7a8a52]', tidak_hadir:'text-[#B87272]' };
 
 // ── Modals — semua terima `zones` sebagai prop, tidak akses closure luar ──────
 
@@ -103,40 +103,40 @@ function AssignKolaboratorModal({ onClose, onAssign, existingIds }) {
   };
   return (
     <div className="fixed inset-0 bg-black/40 z-50 flex items-center justify-center p-4" onClick={onClose}>
-      <div className="bg-white rounded-2xl w-full max-w-md shadow-2xl" onClick={e=>e.stopPropagation()}>
-        <div className="flex items-center justify-between p-5 border-b border-gray-100">
-          <h3 className="font-bold text-gray-800">Assign Kolaborator</h3>
-          <button onClick={onClose}><X size={18} className="text-gray-400 hover:text-gray-600"/></button>
+      <div className="bg-white rounded-[16px] w-full max-w-md shadow-2xl" onClick={e=>e.stopPropagation()}>
+        <div className="flex items-center justify-between p-5 border-b border-[#e4e7d4]">
+          <h3 className="font-bold text-[#1e2010]">Assign Kolaborator</h3>
+          <button onClick={onClose}><X size={18} className="text-[#8a9070] hover:text-[#5a6040]"/></button>
         </div>
         <div className="p-5 space-y-4">
           <div className="relative">
-            <Search size={13} className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400"/>
+            <Search size={13} className="absolute left-3 top-1/2 -translate-y-1/2 text-[#8a9070]"/>
             <input value={search} onChange={e=>setSearch(e.target.value)} placeholder="Cari kolaborator..."
-              className="w-full pl-8 pr-3 py-2 border border-gray-200 rounded-xl text-sm focus:outline-none focus:border-green-400"/>
+              className="w-full pl-8 pr-3 py-2 border border-[#e4e7d4] rounded-[12px] text-sm focus:outline-none focus:border-[#7a8a52]"/>
           </div>
           <div className="max-h-44 overflow-y-auto space-y-1.5">
             {list.length === 0
-              ? <p className="text-gray-400 text-sm text-center py-3">Tidak ada tersedia</p>
+              ? <p className="text-[#8a9070] text-sm text-center py-3">Tidak ada tersedia</p>
               : list.map(m=>(
                 <button key={m.id} onClick={()=>setSel(m)}
-                  className={`w-full text-left px-3 py-2.5 rounded-xl border text-sm transition ${sel?.id===m.id?'border-green-400 bg-green-50':'border-gray-100 hover:border-gray-300'}`}>
-                  <p className="font-semibold text-gray-800">{m.nama}</p>
-                  <p className="text-gray-400 text-xs">{m.subsektor.join(', ')}</p>
+                  className={`w-full text-left px-3 py-2.5 rounded-[12px] border text-sm transition ${sel?.id===m.id?'border-[#7a8a52] bg-[#eef0e0]':'border-[#e4e7d4] hover:border-[#c8ccb0]'}`}>
+                  <p className="font-semibold text-[#1e2010]">{m.nama}</p>
+                  <p className="text-[#8a9070] text-xs">{m.subsektor.join(', ')}</p>
                 </button>
               ))}
           </div>
           <div className="flex gap-2">
             {['peserta','performer','panitia'].map(p=>(
               <button key={p} onClick={()=>setPeran(p)}
-                className={`flex-1 py-2 rounded-xl text-xs font-semibold border capitalize transition ${peran===p?'bg-green-700 text-white border-green-700':'border-gray-200 text-gray-600 hover:border-green-300'}`}>
+                className={`flex-1 py-2 rounded-[12px] text-xs font-semibold border capitalize transition ${peran===p?'bg-[#7a8a52] text-white border-[#4f5c30]':'border-[#e4e7d4] text-[#5a6040] hover:border-[#c8d09a]'}`}>
                 {p}
               </button>
             ))}
           </div>
           <div className="flex gap-2 pt-1">
-            <button onClick={onClose} className="flex-1 border border-gray-200 text-gray-600 py-2.5 rounded-xl text-sm font-semibold hover:bg-gray-50 transition">Batal</button>
+            <button onClick={onClose} className="flex-1 border border-[#e4e7d4] text-[#5a6040] py-2.5 rounded-[12px] text-sm font-semibold hover:bg-[#f7f8f2] transition">Batal</button>
             <button onClick={save} disabled={!sel||saving}
-              className="flex-1 bg-green-700 hover:bg-green-800 text-white py-2.5 rounded-xl text-sm font-semibold transition disabled:opacity-50 flex items-center justify-center gap-2">
+              className="flex-1 bg-[#7a8a52] hover:bg-[#4f5c30] text-white py-2.5 rounded-[12px] text-sm font-semibold transition disabled:opacity-50 flex items-center justify-center gap-2">
               {saving ? <Loader2 size={13} className="animate-spin"/> : <Plus size={13}/>} Assign
             </button>
           </div>
@@ -164,46 +164,46 @@ function AssignArtisanModal({ onClose, onAssign, existingIds, zones }) {
   };
   return (
     <div className="fixed inset-0 bg-black/40 z-50 flex items-center justify-center p-4" onClick={onClose}>
-      <div className="bg-white rounded-2xl w-full max-w-md shadow-2xl max-h-[88vh] flex flex-col" onClick={e=>e.stopPropagation()}>
-        <div className="flex items-center justify-between p-5 border-b border-gray-100 shrink-0">
-          <h3 className="font-bold text-gray-800">Assign Artisan ke Event</h3>
-          <button onClick={onClose}><X size={18} className="text-gray-400 hover:text-gray-600"/></button>
+      <div className="bg-white rounded-[16px] w-full max-w-md shadow-2xl max-h-[88vh] flex flex-col" onClick={e=>e.stopPropagation()}>
+        <div className="flex items-center justify-between p-5 border-b border-[#e4e7d4] shrink-0">
+          <h3 className="font-bold text-[#1e2010]">Assign Artisan ke Event</h3>
+          <button onClick={onClose}><X size={18} className="text-[#8a9070] hover:text-[#5a6040]"/></button>
         </div>
         <div className="overflow-y-auto flex-1 p-5 space-y-4">
           <div className="relative">
-            <Search size={13} className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400"/>
+            <Search size={13} className="absolute left-3 top-1/2 -translate-y-1/2 text-[#8a9070]"/>
             <input value={search} onChange={e=>setSearch(e.target.value)} placeholder="Cari nama usaha..."
-              className="w-full pl-8 pr-3 py-2 border border-gray-200 rounded-xl text-sm focus:outline-none focus:border-green-400"/>
+              className="w-full pl-8 pr-3 py-2 border border-[#e4e7d4] rounded-[12px] text-sm focus:outline-none focus:border-[#7a8a52]"/>
           </div>
           <div className="max-h-36 overflow-y-auto space-y-1.5">
             {list.length === 0
-              ? <p className="text-gray-400 text-sm text-center py-3">Tidak ada tersedia</p>
+              ? <p className="text-[#8a9070] text-sm text-center py-3">Tidak ada tersedia</p>
               : list.map(t=>(
                 <button key={t.id} onClick={()=>setSel(t)}
-                  className={`w-full text-left px-3 py-2.5 rounded-xl border text-sm transition ${sel?.id===t.id?'border-green-400 bg-green-50':'border-gray-100 hover:border-gray-300'}`}>
-                  <p className="font-semibold text-gray-800">{t.nama_usaha}</p>
-                  <p className="text-gray-400 text-xs">{t.kategori}</p>
+                  className={`w-full text-left px-3 py-2.5 rounded-[12px] border text-sm transition ${sel?.id===t.id?'border-[#7a8a52] bg-[#eef0e0]':'border-[#e4e7d4] hover:border-[#c8ccb0]'}`}>
+                  <p className="font-semibold text-[#1e2010]">{t.nama_usaha}</p>
+                  <p className="text-[#8a9070] text-xs">{t.kategori}</p>
                 </button>
               ))}
           </div>
           <div>
             <div className="flex items-center justify-between mb-2">
-              <label className="text-xs font-semibold text-gray-500 uppercase tracking-wide">Posisi Stand</label>
-              <button onClick={()=>setUseMap(p=>!p)} className="text-xs text-green-600 hover:underline">
+              <label className="text-xs font-semibold text-[#8a9070] uppercase tracking-wide">Posisi Stand</label>
+              <button onClick={()=>setUseMap(p=>!p)} className="text-xs text-[#7a8a52] hover:underline">
                 {useMap ? 'Input manual' : 'Pilih dari peta'}
               </button>
             </div>
             {useMap
               ? <ZoneSelector value={posisi} onChange={setPosisi} zones={safeZones} compact/>
               : <input value={posisi} onChange={e=>setPosisi(e.target.value)} placeholder="cth: A-5"
-                  className="w-full border border-gray-200 rounded-xl px-3 py-2 text-sm focus:outline-none focus:border-green-400"/>
+                  className="w-full border border-[#e4e7d4] rounded-[12px] px-3 py-2 text-sm focus:outline-none focus:border-[#7a8a52]"/>
             }
           </div>
         </div>
-        <div className="flex gap-2 p-5 border-t border-gray-100 shrink-0">
-          <button onClick={onClose} className="flex-1 border border-gray-200 text-gray-600 py-2.5 rounded-xl text-sm font-semibold hover:bg-gray-50 transition">Batal</button>
+        <div className="flex gap-2 p-5 border-t border-[#e4e7d4] shrink-0">
+          <button onClick={onClose} className="flex-1 border border-[#e4e7d4] text-[#5a6040] py-2.5 rounded-[12px] text-sm font-semibold hover:bg-[#f7f8f2] transition">Batal</button>
           <button onClick={save} disabled={!sel||saving}
-            className="flex-1 bg-green-700 hover:bg-green-800 text-white py-2.5 rounded-xl text-sm font-semibold transition disabled:opacity-50 flex items-center justify-center gap-2">
+            className="flex-1 bg-[#7a8a52] hover:bg-[#4f5c30] text-white py-2.5 rounded-[12px] text-sm font-semibold transition disabled:opacity-50 flex items-center justify-center gap-2">
             {saving ? <Loader2 size={13} className="animate-spin"/> : <Plus size={13}/>} Assign
           </button>
         </div>
@@ -218,23 +218,23 @@ function StandPickerModal({ value, onClose, onConfirm, zones }) {
   const safeZones = Array.isArray(zones) ? zones : [];
   return (
     <div className="fixed inset-0 bg-black/50 z-[60] flex items-center justify-center p-4" onClick={onClose}>
-      <div className="bg-white rounded-2xl shadow-2xl w-full max-w-sm max-h-[80vh] flex flex-col" onClick={e=>e.stopPropagation()}>
-        <div className="flex items-center justify-between px-5 py-4 border-b border-gray-100 shrink-0">
-          <p className="font-bold text-gray-800 text-sm">Pilih Stand</p>
-          <button onClick={onClose}><X size={17} className="text-gray-400 hover:text-gray-600"/></button>
+      <div className="bg-white rounded-[16px] shadow-2xl w-full max-w-sm max-h-[80vh] flex flex-col" onClick={e=>e.stopPropagation()}>
+        <div className="flex items-center justify-between px-5 py-4 border-b border-[#e4e7d4] shrink-0">
+          <p className="font-bold text-[#1e2010] text-sm">Pilih Stand</p>
+          <button onClick={onClose}><X size={17} className="text-[#8a9070] hover:text-[#5a6040]"/></button>
         </div>
         <div className="overflow-y-auto flex-1 p-4 space-y-3">
           <ZoneSelector value={local} onChange={setLocal} zones={safeZones} compact/>
-          <div className="pt-2 border-t border-gray-100">
-            <label className="text-xs font-semibold text-gray-400 mb-1.5 block">Atau ketik manual</label>
+          <div className="pt-2 border-t border-[#e4e7d4]">
+            <label className="text-xs font-semibold text-[#8a9070] mb-1.5 block">Atau ketik manual</label>
             <input value={local} onChange={e=>setLocal(e.target.value)} placeholder="A-5"
-              className="w-full border border-gray-200 rounded-xl px-3 py-2 text-sm focus:outline-none focus:border-green-400"/>
+              className="w-full border border-[#e4e7d4] rounded-[12px] px-3 py-2 text-sm focus:outline-none focus:border-[#7a8a52]"/>
           </div>
         </div>
         <div className="flex gap-2 px-4 pb-4 shrink-0">
-          <button onClick={onClose} className="flex-1 border border-gray-200 text-gray-600 py-2.5 rounded-xl text-sm font-semibold hover:bg-gray-50 transition">Batal</button>
+          <button onClick={onClose} className="flex-1 border border-[#e4e7d4] text-[#5a6040] py-2.5 rounded-[12px] text-sm font-semibold hover:bg-[#f7f8f2] transition">Batal</button>
           <button onClick={()=>{ onConfirm(local); onClose(); }}
-            className="flex-1 bg-green-700 hover:bg-green-800 text-white py-2.5 rounded-xl text-sm font-semibold transition">
+            className="flex-1 bg-[#7a8a52] hover:bg-[#4f5c30] text-white py-2.5 rounded-[12px] text-sm font-semibold transition">
             Simpan
           </button>
         </div>
@@ -250,8 +250,8 @@ function StandEditor({ value, onChange, zones }) {
     <>
       <button type="button" onClick={()=>setOpen(true)}
         className={`flex items-center gap-1.5 px-2 py-1.5 rounded-lg border text-xs font-medium transition whitespace-nowrap ${
-          value ? 'border-green-300 bg-green-50 text-green-700 hover:bg-green-100'
-                : 'border-dashed border-gray-300 text-gray-400 hover:border-green-300 hover:text-green-600'}`}>
+          value ? 'border-[#c8d09a] bg-[#eef0e0] text-[#7a8a52] hover:bg-[#eef4eb]'
+                : 'border-dashed border-[#c8ccb0] text-[#8a9070] hover:border-[#c8d09a] hover:text-[#7a8a52]'}`}>
         <span>📍</span>
         <span className="max-w-[80px] truncate">{value || 'Pilih stand'}</span>
       </button>
@@ -354,13 +354,13 @@ export default function EventDetail() {
 
   if (loading) return (
     <div className="flex items-center justify-center h-64">
-      <Loader2 size={28} className="animate-spin text-green-600"/>
+      <Loader2 size={28} className="animate-spin text-[#7a8a52]"/>
     </div>
   );
   if (!event) return (
-    <div className="text-center py-20 text-gray-400">
+    <div className="text-center py-20 text-[#8a9070]">
       <p>Event tidak ditemukan.</p>
-      <button onClick={()=>navigate('/events')} className="mt-3 text-green-600 hover:underline text-sm">← Kembali</button>
+      <button onClick={()=>navigate('/events')} className="mt-3 text-[#7a8a52] hover:underline text-sm">← Kembali</button>
     </div>
   );
 
@@ -370,7 +370,7 @@ export default function EventDetail() {
     <div className="space-y-5">
       {/* Tombol kembali */}
       <button onClick={()=>navigate('/events')}
-        className="flex items-center gap-2 text-gray-500 hover:text-gray-800 text-sm transition">
+        className="flex items-center gap-2 text-[#8a9070] hover:text-[#1e2010] text-sm transition">
         <ArrowLeft size={15}/> Kembali ke Daftar Event
       </button>
 
@@ -379,20 +379,20 @@ export default function EventDetail() {
         {/* ── Kolom kiri: Info ── */}
         <div className="lg:col-span-2 space-y-4">
           {event.banner_url
-            ? <img src={event.banner_url} alt="banner" className="w-full h-40 object-cover rounded-2xl"/>
-            : <div className="w-full h-40 bg-gradient-to-br from-green-100 to-green-200 rounded-2xl flex items-center justify-center">
-                <Image size={36} className="text-green-400"/>
+            ? <img src={event.banner_url} alt="banner" className="w-full h-40 object-cover rounded-[16px]"/>
+            : <div className="w-full h-40 bg-gradient-to-br from-green-100 to-green-200 rounded-[16px] flex items-center justify-center">
+                <Image size={36} className="text-[#a8b07a]"/>
               </div>
           }
 
-          <div className="bg-white rounded-2xl p-5 border border-gray-100 space-y-3">
+          <div className="bg-white rounded-[16px] p-5 border border-[#e4e7d4] space-y-3">
             <div className="flex items-start gap-3 justify-between">
-              <h1 className="font-bold text-gray-900 text-lg leading-snug">{event.nama}</h1>
+              <h1 className="font-bold text-[#1e2010] text-lg leading-snug">{event.nama}</h1>
               <span className={`px-2.5 py-1 rounded-full text-[11px] font-semibold border shrink-0 ${STATUS_CLS[event.status]||STATUS_CLS.draft}`}>
                 {event.status}
               </span>
             </div>
-            <div className="space-y-1.5 text-sm text-gray-500">
+            <div className="space-y-1.5 text-sm text-[#8a9070]">
               <div className="flex items-center gap-2">
                 <Calendar size={13}/>
                 {fmtDate(event.tanggal)}
@@ -403,26 +403,26 @@ export default function EventDetail() {
               <div className="flex items-center gap-2"><Users size={13}/>{kolaborators.length} / {event.kapasitas} peserta</div>
             </div>
             <div>
-              <div className="h-1.5 bg-gray-100 rounded-full overflow-hidden">
-                <div className="h-full bg-green-500 rounded-full" style={{width:`${pct}%`}}/>
+              <div className="h-1.5 bg-[#eef0e0] rounded-full overflow-hidden">
+                <div className="h-full bg-[#7a8a52] rounded-full" style={{width:`${pct}%`}}/>
               </div>
-              <p className="text-xs text-gray-400 mt-1">{pct}% kapasitas</p>
+              <p className="text-xs text-[#8a9070] mt-1">{pct}% kapasitas</p>
             </div>
           </div>
 
-          <div className="bg-white rounded-2xl p-5 border border-gray-100">
-            <p className="text-xs font-semibold text-gray-400 uppercase tracking-wider mb-2 flex items-center gap-1.5">
+          <div className="bg-white rounded-[16px] p-5 border border-[#e4e7d4]">
+            <p className="text-xs font-semibold text-[#8a9070] uppercase tracking-wider mb-2 flex items-center gap-1.5">
               <FileText size={12}/> Deskripsi
             </p>
-            <p className="text-gray-600 text-sm leading-relaxed">{event.deskripsi}</p>
+            <p className="text-[#5a6040] text-sm leading-relaxed">{event.deskripsi}</p>
             {event.konten_lengkap && event.konten_lengkap !== event.deskripsi && (
-              <p className="text-gray-500 text-sm leading-relaxed mt-2">{event.konten_lengkap}</p>
+              <p className="text-[#8a9070] text-sm leading-relaxed mt-2">{event.konten_lengkap}</p>
             )}
           </div>
 
           {event.subsektor?.length > 0 && (
-            <div className="bg-white rounded-2xl p-5 border border-gray-100">
-              <p className="text-xs font-semibold text-gray-400 uppercase tracking-wider mb-2 flex items-center gap-1.5">
+            <div className="bg-white rounded-[16px] p-5 border border-[#e4e7d4]">
+              <p className="text-xs font-semibold text-[#8a9070] uppercase tracking-wider mb-2 flex items-center gap-1.5">
                 <Tag size={12}/> Subsektor
               </p>
               <div className="flex flex-wrap gap-2">
@@ -435,32 +435,32 @@ export default function EventDetail() {
 
           <div className="grid grid-cols-3 gap-3">
             {[
-              ['Kapasitas', event.kapasitas,  'text-gray-700'],
-              ['Terdaftar', kolaborators.length,   'text-green-700'],
-              ['Hadir',     kolaborators.filter(m=>m.status_kehadiran==='hadir').length, 'text-blue-600'],
+              ['Kapasitas', event.kapasitas,  'text-[#5a6040]'],
+              ['Terdaftar', kolaborators.length,   'text-[#7a8a52]'],
+              ['Hadir',     kolaborators.filter(m=>m.status_kehadiran==='hadir').length, 'text-[#6B8FA3]'],
             ].map(([l,v,c])=>(
-              <div key={l} className="bg-white border border-gray-100 rounded-2xl p-3 text-center">
+              <div key={l} className="bg-white border border-[#e4e7d4] rounded-[16px] p-3 text-center">
                 <p className={`text-xl font-bold ${c}`}>{v}</p>
-                <p className="text-gray-400 text-[11px] mt-0.5">{l}</p>
+                <p className="text-[#8a9070] text-[11px] mt-0.5">{l}</p>
               </div>
             ))}
           </div>
         </div>
 
         {/* ── Kolom kanan: Tabs ── */}
-        <div className="lg:col-span-3 bg-white rounded-2xl border border-gray-100 overflow-hidden">
+        <div className="lg:col-span-3 bg-white rounded-[16px] border border-[#e4e7d4] overflow-hidden">
 
           {/* Tab bar */}
-          <div className="flex border-b border-gray-100">
+          <div className="flex border-b border-[#e4e7d4]">
             {[
               { v:'kolaborators', l:'Kolaborator', n:kolaborators.length },
               { v:'Artisan', l:'Artisan',            n:Artisan.length },
               { v:'zones',   l:'Kelola Zona',     n:zones.length   },
             ].map(({ v, l, n }) => (
               <button key={v} onClick={()=>setTab(v)}
-                className={`flex-1 py-3.5 text-sm font-semibold transition border-b-2 ${tab===v ? 'border-green-600 text-green-700 bg-green-50/50' : 'border-transparent text-gray-500 hover:text-gray-700'}`}>
+                className={`flex-1 py-3.5 text-sm font-semibold transition border-b-2 ${tab===v ? 'border-[#7a8a52] text-[#7a8a52] bg-[#eef0e0]/50' : 'border-transparent text-[#8a9070] hover:text-[#5a6040]'}`}>
                 {l}
-                <span className="ml-1.5 px-1.5 py-0.5 rounded-full text-[10px] bg-gray-100 text-gray-500">{n}</span>
+                <span className="ml-1.5 px-1.5 py-0.5 rounded-full text-[10px] bg-[#eef0e0] text-[#8a9070]">{n}</span>
               </button>
             ))}
           </div>
@@ -469,43 +469,43 @@ export default function EventDetail() {
           {tab === 'kolaborators' && (
             <div>
               <div className="px-5 py-4 flex items-center justify-between border-b border-gray-50">
-                <p className="text-sm text-gray-500">{kolaborators.length} kolaborator</p>
+                <p className="text-sm text-[#8a9070]">{kolaborators.length} kolaborator</p>
                 <button onClick={()=>setShowAddM(true)}
-                  className="flex items-center gap-1.5 bg-green-700 hover:bg-green-800 text-white px-3.5 py-2 rounded-xl text-xs font-semibold transition">
+                  className="flex items-center gap-1.5 bg-[#7a8a52] hover:bg-[#4f5c30] text-white px-3.5 py-2 rounded-[12px] text-xs font-semibold transition">
                   <Plus size={13}/> Assign
                 </button>
               </div>
               {kolaborators.length === 0
-                ? <div className="py-16 text-center text-gray-400 text-sm">
+                ? <div className="py-16 text-center text-[#8a9070] text-sm">
                     <Users size={32} className="text-gray-200 mx-auto mb-3"/>Belum ada kolaborator
                   </div>
                 : <div className="divide-y divide-gray-50">
                     {kolaborators.map(m=>(
-                      <div key={m.id} className="px-5 py-3.5 flex items-center gap-3 group hover:bg-gray-50/60 transition">
-                        <div className="w-9 h-9 rounded-xl bg-amber-100 flex items-center justify-center text-amber-700 font-bold text-sm shrink-0">
+                      <div key={m.id} className="px-5 py-3.5 flex items-center gap-3 group hover:bg-[#f7f8f2]/60 transition">
+                        <div className="w-9 h-9 rounded-[12px] bg-[#f7f2e4] flex items-center justify-center text-[#C4A24D] font-bold text-sm shrink-0">
                           {m.nama.charAt(0)}
                         </div>
                         <div className="flex-1 min-w-0">
-                          <p className="font-semibold text-gray-800 text-sm">{m.nama}</p>
-                          <p className="text-gray-400 text-[10px]">{m.assigned_by==='admin'?'Oleh Admin':'Mandiri'}</p>
+                          <p className="font-semibold text-[#1e2010] text-sm">{m.nama}</p>
+                          <p className="text-[#8a9070] text-[10px]">{m.assigned_by==='admin'?'Oleh Admin':'Mandiri'}</p>
                         </div>
                         <div className="flex items-center gap-2 shrink-0">
                           <select value={m.peran}
                             onChange={e=>setKolaborators(l=>l.map(x=>x.id===m.id?{...x,peran:e.target.value}:x))}
-                            className="text-xs border border-gray-200 rounded-lg px-2 py-1.5 focus:outline-none focus:border-green-400 bg-white text-gray-600">
+                            className="text-xs border border-[#e4e7d4] rounded-lg px-2 py-1.5 focus:outline-none focus:border-[#7a8a52] bg-white text-[#5a6040]">
                             <option value="peserta">Peserta</option>
                             <option value="performer">Performer</option>
                             <option value="panitia">Panitia</option>
                           </select>
                           <select value={m.status_kehadiran}
                             onChange={e=>setKolaborators(l=>l.map(x=>x.id===m.id?{...x,status_kehadiran:e.target.value}:x))}
-                            className={`text-xs border border-gray-200 rounded-lg px-2 py-1.5 focus:outline-none focus:border-green-400 bg-white ${HADIR_CLS[m.status_kehadiran]||''}`}>
+                            className={`text-xs border border-[#e4e7d4] rounded-lg px-2 py-1.5 focus:outline-none focus:border-[#7a8a52] bg-white ${HADIR_CLS[m.status_kehadiran]||''}`}>
                             <option value="terdaftar">Terdaftar</option>
                             <option value="hadir">Hadir</option>
                             <option value="tidak_hadir">Tidak Hadir</option>
                           </select>
                           <button onClick={()=>removeKolaborator(m.id)}
-                            className="p-1.5 rounded-lg text-gray-300 hover:text-red-500 hover:bg-red-50 transition opacity-0 group-hover:opacity-100">
+                            className="p-1.5 rounded-lg text-gray-300 hover:text-[#B87272] hover:bg-[#f7eeee] transition opacity-0 group-hover:opacity-100">
                             <Trash2 size={13}/>
                           </button>
                         </div>
@@ -520,25 +520,25 @@ export default function EventDetail() {
           {tab === 'Artisan' && (
             <div>
               <div className="px-5 py-4 flex items-center justify-between border-b border-gray-50">
-                <p className="text-sm text-gray-500">{Artisan.length} Artisan</p>
+                <p className="text-sm text-[#8a9070]">{Artisan.length} Artisan</p>
                 <button onClick={()=>setShowAddT(true)}
-                  className="flex items-center gap-1.5 bg-green-700 hover:bg-green-800 text-white px-3.5 py-2 rounded-xl text-xs font-semibold transition">
+                  className="flex items-center gap-1.5 bg-[#7a8a52] hover:bg-[#4f5c30] text-white px-3.5 py-2 rounded-[12px] text-xs font-semibold transition">
                   <Plus size={13}/> Assign Artisan
                 </button>
               </div>
               {Artisan.length === 0
-                ? <div className="py-16 text-center text-gray-400 text-sm">
+                ? <div className="py-16 text-center text-[#8a9070] text-sm">
                     <Plus size={32} className="text-gray-200 mx-auto mb-3"/>Belum ada Artisan
                   </div>
                 : <div className="divide-y divide-gray-50">
                     {Artisan.map(t=>(
-                      <div key={t.id} className="px-5 py-3.5 flex items-center gap-3 group hover:bg-gray-50/60 transition">
-                        <div className="w-9 h-9 rounded-xl bg-green-100 flex items-center justify-center text-green-700 font-bold text-sm shrink-0">
+                      <div key={t.id} className="px-5 py-3.5 flex items-center gap-3 group hover:bg-[#f7f8f2]/60 transition">
+                        <div className="w-9 h-9 rounded-[12px] bg-[#eef4eb] flex items-center justify-center text-[#7a8a52] font-bold text-sm shrink-0">
                           {t.nama_usaha.charAt(0)}
                         </div>
                         <div className="flex-1 min-w-0">
-                          <p className="font-semibold text-gray-800 text-sm">{t.nama_usaha}</p>
-                          <span className="px-1.5 py-0.5 bg-green-50 text-green-700 text-[10px] rounded font-medium">{t.kategori}</span>
+                          <p className="font-semibold text-[#1e2010] text-sm">{t.nama_usaha}</p>
+                          <span className="px-1.5 py-0.5 bg-[#eef0e0] text-[#7a8a52] text-[10px] rounded font-medium">{t.kategori}</span>
                         </div>
                         <div className="flex items-center gap-2 shrink-0">
                           {/* zones prop explicit, tidak pernah undefined */}
@@ -548,7 +548,7 @@ export default function EventDetail() {
                             zones={zones}
                           />
                           <button onClick={()=>removeArtisan(t.id)}
-                            className="p-1.5 rounded-lg text-gray-300 hover:text-red-500 hover:bg-red-50 transition opacity-0 group-hover:opacity-100">
+                            className="p-1.5 rounded-lg text-gray-300 hover:text-[#B87272] hover:bg-[#f7eeee] transition opacity-0 group-hover:opacity-100">
                             <Trash2 size={13}/>
                           </button>
                         </div>

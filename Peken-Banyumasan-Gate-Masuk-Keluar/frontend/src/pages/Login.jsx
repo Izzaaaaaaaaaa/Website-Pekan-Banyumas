@@ -1,153 +1,288 @@
-// src/pages/Login.jsx
+// src/pages/Login.jsx — Peken Banyumasan Design System v2.0
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { Mail, Lock, Eye, EyeOff, HelpCircle, ArrowRight, ShieldAlert } from 'lucide-react';
+import { Mail, Lock, Eye, EyeOff, ArrowRight, ShieldAlert } from 'lucide-react';
 import { authApi } from '../services/endpoints';
 import { setToken, setUser } from '../lib/auth';
 import { extractError } from '../lib/unwrap';
-import logoImg from '../assets/logo.png';
+
+// Pixel skyline SVG motif (brand mark strip)
+const PixelAccent = () => (
+  <div style={{
+    position: 'absolute', bottom: 0, left: 0, right: 0, height: 120,
+    backgroundImage: 'url(/pixel-skyline.svg)',
+    backgroundRepeat: 'repeat-x', backgroundPosition: 'bottom',
+    backgroundSize: 'auto 80px',
+    opacity: .15, pointerEvents: 'none',
+  }} />
+);
 
 const Login = () => {
-    const navigate = useNavigate();
-    const [formData, setFormData] = useState({ email: '', password: '' });
-    const [showPassword, setShowPassword] = useState(false);
-    const [isLoading, setIsLoading] = useState(false);
-    const [error, setError] = useState('');
+  const navigate = useNavigate();
+  const [formData, setFormData] = useState({ email: '', password: '' });
+  const [showPassword, setShowPassword] = useState(false);
+  const [isLoading, setIsLoading] = useState(false);
+  const [error, setError] = useState('');
 
-    const handleChange = (e) => {
-        setFormData({ ...formData, [e.target.name]: e.target.value });
-    };
+  const handleChange = (e) => setFormData({ ...formData, [e.target.name]: e.target.value });
 
-    const handleLogin = async (e) => {
-        e.preventDefault();
-        setIsLoading(true);
-        setError('');
+  const handleLogin = async (e) => {
+    e.preventDefault();
+    setIsLoading(true);
+    setError('');
+    try {
+      const { token, user } = await authApi.login(formData);
+      setToken(token);
+      setUser(user);
+      navigate('/');
+    } catch (err) {
+      setError(extractError(err, 'Email atau password salah. Silakan coba lagi.'));
+    } finally {
+      setIsLoading(false);
+    }
+  };
 
-        try {
-            // authApi.login returns the UNWRAPPED payload per the Phase 0 contract:
-            // { token, user: { id, nama, email, role } }. No more response.data.data gymnastics.
-            const { token, user } = await authApi.login(formData);
-            setToken(token);
-            setUser(user);
-            navigate('/');
-        } catch (err) {
-            setError(extractError(err, 'Email atau password salah. Silakan coba lagi.'));
-        } finally {
-            setIsLoading(false);
-        }
-    };
+  return (
+    <div style={{
+      display: 'flex', height: '100vh', overflow: 'hidden',
+      fontFamily: '"Montserrat", system-ui, sans-serif',
+      background: '#f2f4e8',
+    }}>
 
-    return (
-        <div className="flex h-screen bg-gray-50 overflow-hidden font-sans">
-            {/* SISI KIRI: Branding */}
-            <div className="hidden lg:flex lg:w-1/2 bg-green-800 relative flex-col justify-between p-12 overflow-hidden">
-                <div className="absolute inset-0 opacity-50" style={{ backgroundImage: 'radial-gradient(rgba(255, 255, 255, 0.1) 2px, transparent 2px)', backgroundSize: '30px 30px' }}></div>
-                <div className="absolute top-0 right-0 w-96 h-96 bg-green-600 rounded-full mix-blend-multiply filter blur-3xl opacity-50 -mr-20 -mt-20"></div>
-                <div className="absolute bottom-0 left-0 w-96 h-96 bg-purple-500 rounded-full mix-blend-multiply filter blur-3xl opacity-50 -ml-20 -mb-20"></div>
+      {/* ── LEFT: Branding panel ─────────────────────────────────────── */}
+      <div className="hidden lg:flex" style={{
+        width: '50%', minWidth: 480,
+        background: '#1B1B1B',
+        flexDirection: 'column',
+        justifyContent: 'space-between',
+        padding: '40px 52px',
+        position: 'relative',
+        overflow: 'hidden',
+      }}>
+        {/* Subtle dot grid texture */}
+        <div style={{
+          position: 'absolute', inset: 0, opacity: .04,
+          backgroundImage: 'radial-gradient(#C3CA96 1px, transparent 1px)',
+          backgroundSize: '24px 24px',
+          pointerEvents: 'none',
+        }} />
 
-                <div className="relative z-10 flex items-center gap-3">
-                    <img src={logoImg} alt="Logo Peken Banyumasan" className="w-12 h-12 rounded-xl object-cover shadow-lg" />
-                    <div>
-                        <h1 className="text-2xl font-bold text-white tracking-wide"> Peken Banyumasan</h1>
-                        <p className="text-green-200 text-sm font-medium">Sistem Manajemen Event</p>
-                    </div>
-                </div>
+        {/* Sage glow top-right */}
+        <div style={{
+          position: 'absolute', top: -80, right: -80,
+          width: 320, height: 320, borderRadius: '50%',
+          background: 'radial-gradient(circle, rgba(195,202,150,.14) 0%, transparent 70%)',
+          pointerEvents: 'none',
+        }} />
 
-                <div className="relative z-10 max-w-md">
-                    <h2 className="text-4xl font-bold text-white mb-6 leading-tight">Kelola pengunjung event dengan lebih cerdas.</h2>
-                    <p className="text-green-100 text-lg leading-relaxed">
-                        Pantau data real-time, kelola pengunjung dan optimalkan operasional event Peken Banyumasan dalam satu platform terintegrasi.
-                    </p>
-                </div>
+        {/* Pixel skyline at bottom */}
+        <PixelAccent />
 
-                <div className="relative z-10 text-green-200 text-sm">
-                    &copy; 2026 Panitia Peken Banyumasan. All rights reserved.
-                </div>
+        {/* Logo */}
+        <div style={{ position: 'relative', zIndex: 1, display: 'flex', alignItems: 'center', gap: 12 }}>
+          <img
+            src="/logo-gate.png"
+            alt="Logo Peken Banyumasan"
+            style={{ width: 44, height: 44, borderRadius: 10, objectFit: 'cover' }}
+          />
+          <div>
+            <div style={{
+              fontFamily: '"Clash Display", sans-serif',
+              fontSize: 18, fontWeight: 600, color: '#fff', lineHeight: 1,
+            }}>
+              Peken Banyumasan
             </div>
-
-            {/* SISI KANAN: Form Login */}
-            <div className="w-full lg:w-1/2 flex items-center justify-center p-8 sm:p-12 relative">
-                <div className="absolute top-8 right-8">
-                    <button className="text-sm font-medium text-gray-500 hover:text-green-700 transition flex items-center gap-2">
-                        <HelpCircle size={16} /> Butuh Bantuan?
-                    </button>
-                </div>
-
-                <div className="w-full max-w-md">
-                    <div className="flex lg:hidden items-center gap-3 mb-10">
-                        <img src={logoImg} alt="Logo Peken Banyumasan" className="w-10 h-10 rounded-lg object-cover shadow-md" />
-                        <h1 className="text-xl font-bold text-gray-900 tracking-wide">Peken Banyumasan</h1>
-                    </div>
-
-                    <div className="mb-10">
-                        <h2 className="text-3xl font-bold text-gray-900 mb-2">Selamat Datang</h2>
-                        <p className="text-gray-500">Silakan masuk ke akun admin atau petugas Anda.</p>
-                    </div>
-
-                    {error && (
-                        <div className="mb-6 p-4 bg-red-50 border border-red-200 text-red-600 rounded-xl text-sm">
-                            {error}
-                        </div>
-                    )}
-
-                    <form className="space-y-6" onSubmit={handleLogin}>
-                        <div>
-                            <label className="block text-sm font-semibold text-gray-700 mb-2">Email Address</label>
-                            <div className="relative">
-                                <div className="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none">
-                                    <Mail size={18} className="text-gray-400" />
-                                </div>
-                                <input
-                                    type="email" name="email" required
-                                    value={formData.email} onChange={handleChange}
-                                    placeholder="admin@Pekenbanyumas.com"
-                                    className="w-full pl-11 pr-4 py-3 bg-white border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-green-600 transition shadow-sm text-sm"
-                                />
-                            </div>
-                        </div>
-
-                        <div>
-                            <label className="block text-sm font-semibold text-gray-700 mb-2">Password</label>
-                            <div className="relative">
-                                <div className="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none">
-                                    <Lock size={18} className="text-gray-400" />
-                                </div>
-                                <input
-                                    type={showPassword ? "text" : "password"} name="password" required
-                                    value={formData.password} onChange={handleChange}
-                                    placeholder="••••••••"
-                                    className="w-full pl-11 pr-10 py-3 bg-white border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-green-600 transition shadow-sm text-sm"
-                                />
-                                <button
-                                    type="button"
-                                    onClick={() => setShowPassword(!showPassword)}
-                                    className="absolute inset-y-0 right-0 pr-4 flex items-center text-gray-400 hover:text-gray-600"
-                                >
-                                    {showPassword ? <EyeOff size={18} /> : <Eye size={18} />}
-                                </button>
-                            </div>
-                        </div>
-
-                        <button
-                            type="submit"
-                            disabled={isLoading}
-                            className="w-full bg-green-700 hover:bg-green-800 text-white font-bold py-3.5 px-4 rounded-xl transition shadow-lg shadow-green-200 flex justify-center items-center gap-2 disabled:opacity-70"
-                        >
-                            {isLoading ? 'Memproses...' : (
-                                <>Masuk ke Dashboard <ArrowRight size={18} /></>
-                            )}
-                        </button>
-                    </form>
-
-                    <div className="mt-8 pt-6 border-t border-gray-100 text-center">
-                        <p className="text-xs text-gray-500 flex items-center justify-center gap-1">
-                            <ShieldAlert size={14} className="text-gray-400" /> Akses dibatasi hanya untuk Panitia dan Petugas Event.
-                        </p>
-                    </div>
-                </div>
+            <div style={{ fontSize: 11, color: '#6a7258', marginTop: 3, letterSpacing: '.06em' }}>
+              SISTEM MANAJEMEN EVENT
             </div>
+          </div>
         </div>
-    );
+
+        {/* Hero copy */}
+        <div style={{ position: 'relative', zIndex: 1, maxWidth: 420 }}>
+          <div style={{
+            fontFamily: '"Clash Display", sans-serif',
+            fontSize: 32, fontWeight: 400, color: '#fff',
+            lineHeight: 1.25, marginBottom: 20, letterSpacing: '-.01em',
+          }}>
+            Kelola pengunjung event dengan lebih cerdas.
+          </div>
+          <p style={{ fontSize: 14, color: '#8a9278', lineHeight: 1.8 }}>
+            Pantau data real-time, kelola pengunjung dan optimalkan operasional event Peken Banyumasan dalam satu platform terintegrasi.
+          </p>
+
+          {/* Feature dots */}
+          <div style={{ marginTop: 32, display: 'flex', flexDirection: 'column', gap: 10 }}>
+            {[
+              'Tap NFC & entri manual pengunjung',
+              'Real-time statistik masuk & keluar',
+              'Laporan komprehensif per event',
+            ].map(text => (
+              <div key={text} style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
+                <span style={{ width: 6, height: 6, borderRadius: '50%', background: '#C3CA96', flexShrink: 0 }} />
+                <span style={{ fontSize: 12, color: '#8a9278' }}>{text}</span>
+              </div>
+            ))}
+          </div>
+        </div>
+
+        {/* Footer */}
+        <div style={{ position: 'relative', zIndex: 1, fontSize: 10, color: '#3a4030', letterSpacing: '.04em' }}>
+          &copy; 2026 Panitia Peken Banyumasan
+        </div>
+      </div>
+
+      {/* ── RIGHT: Login form ─────────────────────────────────────────── */}
+      <div style={{
+        flex: 1,
+        display: 'flex', alignItems: 'center', justifyContent: 'center',
+        padding: '40px 32px',
+        position: 'relative',
+        overflowY: 'auto',
+      }}>
+        <div style={{ width: '100%', maxWidth: 400 }}>
+
+          {/* Mobile logo */}
+          <div className="flex lg:hidden" style={{ alignItems: 'center', gap: 10, marginBottom: 36 }}>
+            <img src="/logo-gate.png" alt="Logo" style={{ width: 36, height: 36, borderRadius: 8 }} />
+            <span style={{ fontFamily: '"Clash Display", sans-serif', fontSize: 16, fontWeight: 600, color: '#1e2010' }}>
+              Peken Banyumasan
+            </span>
+          </div>
+
+          {/* Heading */}
+          <div style={{ marginBottom: 32 }}>
+            <h2 style={{
+              fontFamily: '"Clash Display", sans-serif',
+              fontSize: 26, fontWeight: 500, color: '#1e2010',
+              margin: '0 0 6px', letterSpacing: '-.01em',
+            }}>
+              Masuk ke Dashboard
+            </h2>
+            <p style={{ fontSize: 13, color: '#8a9070', margin: 0 }}>
+              Silakan masuk dengan akun admin atau petugas Anda.
+            </p>
+          </div>
+
+          {/* Error banner */}
+          {error && (
+            <div style={{
+              marginBottom: 20, padding: '12px 16px',
+              background: '#f7eeee', border: '1px solid #dbb8b8',
+              borderRadius: 12, fontSize: 12, color: '#B87272',
+              display: 'flex', alignItems: 'flex-start', gap: 8,
+            }}>
+              <ShieldAlert size={14} style={{ marginTop: 1, flexShrink: 0 }} />
+              {error}
+            </div>
+          )}
+
+          {/* Form */}
+          <form onSubmit={handleLogin} style={{ display: 'flex', flexDirection: 'column', gap: 18 }}>
+
+            {/* Email */}
+            <div>
+              <label style={{
+                display: 'block', marginBottom: 6,
+                fontSize: 11, fontWeight: 600, color: '#5a6040',
+                textTransform: 'uppercase', letterSpacing: '.06em',
+              }}>
+                Email
+              </label>
+              <div style={{ position: 'relative' }}>
+                <Mail size={16} style={{
+                  position: 'absolute', left: 14, top: '50%', transform: 'translateY(-50%)',
+                  color: '#8a9070', pointerEvents: 'none',
+                }} />
+                <input
+                  type="email" name="email" required
+                  value={formData.email} onChange={handleChange}
+                  placeholder="admin@pekenbanyumas.com"
+                  className="peken-input"
+                  style={{ paddingLeft: 40 }}
+                />
+              </div>
+            </div>
+
+            {/* Password */}
+            <div>
+              <label style={{
+                display: 'block', marginBottom: 6,
+                fontSize: 11, fontWeight: 600, color: '#5a6040',
+                textTransform: 'uppercase', letterSpacing: '.06em',
+              }}>
+                Password
+              </label>
+              <div style={{ position: 'relative' }}>
+                <Lock size={16} style={{
+                  position: 'absolute', left: 14, top: '50%', transform: 'translateY(-50%)',
+                  color: '#8a9070', pointerEvents: 'none',
+                }} />
+                <input
+                  type={showPassword ? 'text' : 'password'} name="password" required
+                  value={formData.password} onChange={handleChange}
+                  placeholder="••••••••"
+                  className="peken-input"
+                  style={{ paddingLeft: 40, paddingRight: 44 }}
+                />
+                <button
+                  type="button"
+                  onClick={() => setShowPassword(!showPassword)}
+                  style={{
+                    position: 'absolute', right: 12, top: '50%', transform: 'translateY(-50%)',
+                    background: 'none', border: 'none', cursor: 'pointer',
+                    color: '#8a9070', padding: 4, display: 'flex', alignItems: 'center',
+                  }}
+                  onMouseEnter={e => e.currentTarget.style.color = '#5a6040'}
+                  onMouseLeave={e => e.currentTarget.style.color = '#8a9070'}
+                >
+                  {showPassword ? <EyeOff size={16} /> : <Eye size={16} />}
+                </button>
+              </div>
+            </div>
+
+            {/* Submit */}
+            <button
+              type="submit"
+              disabled={isLoading}
+              style={{
+                marginTop: 6,
+                display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 8,
+                background: isLoading ? '#a8b07a' : '#7a8a52',
+                color: '#fff',
+                border: 'none', borderRadius: 20,
+                padding: '13px 28px',
+                fontSize: 13, fontWeight: 700,
+                fontFamily: '"Montserrat", sans-serif',
+                cursor: isLoading ? 'not-allowed' : 'pointer',
+                transition: 'background 180ms ease, box-shadow 180ms ease',
+                boxShadow: isLoading ? 'none' : '0 4px 14px rgba(122,138,82,.3)',
+                letterSpacing: '.01em',
+                width: '100%',
+              }}
+              onMouseEnter={e => { if (!isLoading) e.currentTarget.style.background = '#4f5c30'; }}
+              onMouseLeave={e => { if (!isLoading) e.currentTarget.style.background = '#7a8a52'; }}
+            >
+              {isLoading ? 'Memproses...' : (
+                <><span>Masuk ke Dashboard</span><ArrowRight size={16} /></>
+              )}
+            </button>
+          </form>
+
+          {/* Footer note */}
+          <div style={{
+            marginTop: 28, paddingTop: 20,
+            borderTop: '1px solid #e4e7d4',
+            display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 6,
+            fontSize: 11, color: '#8a9070',
+          }}>
+            <ShieldAlert size={12} />
+            Akses dibatasi hanya untuk Panitia dan Petugas Event.
+          </div>
+        </div>
+      </div>
+    </div>
+  );
 };
 
 export default Login;
