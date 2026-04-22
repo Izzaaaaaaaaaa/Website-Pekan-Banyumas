@@ -2,19 +2,26 @@
 //
 // ARCHITECTURE (best practice for recurring-venue events):
 //   • Zone layout (which zones exist, how many stands) = GLOBAL config
-//     stored in localStorage: "pekan_zones_global"
+//     stored in localStorage under STORAGE_KEYS.ZONES_GLOBAL
 //     → same venue is reused event after event, so layout is shared
 //   • Occupied state = per-event
-//     stored in localStorage: "pekan_occupied_{eventId}"
+//     stored under occupiedKey(eventId)  (= STORAGE_PREFIXES.OCCUPIED + eventId)
 //     → who has which stand differs per event
 //
 // This means admin sets up zones once, then just assigns stands per event.
 // Admin can still edit the global layout at any time.
+//
+// LEGACY MIGRATION: earlier builds used `pekan_*` keys (spelling bug).
+// Read paths below transparently fall through to the legacy key once,
+// copy the data into the canonical key, then delete the legacy entry.
 
-const GLOBAL_KEY    = 'pekan_zones_global';
-const OVERRIDE_KEY  = 'pekan_zones_default_override'; // Admin-saved permanent default
-const OCC_PREFIX    = 'pekan_occupied_';
-const UPDATE_EVT    = 'pekan_zones_update';
+import {
+  STORAGE_KEYS,
+  STORAGE_EVENTS,
+  occupiedKey,
+  legacyOccupiedKey,
+  LEGACY_STORAGE_KEYS,
+} from './storageKeys';
 
 // ── Default global layout ─────────────────────────────────────────────────────
 export const DEFAULT_GLOBAL_ZONES = [
@@ -54,15 +61,40 @@ export const ZONE_TEMPLATES = {
   ],
 };
 
+// ── One-time legacy-key migration helper ──────────────────────────────────────
+//
+// Reads the canonical key; if missing, reads the legacy `pekan_*` key.
+// When the legacy key is found it is copied into the canonical slot and
+// the legacy entry is removed — so subsequent reads go straight to canonical.
+// Safe to call on every read; it's a no-op once migration has happened.
+function readWithLegacyFallback(canonicalKey, legacyKey) {
+  try {
+    const raw = localStorage.getItem(canonicalKey);
+    if (raw) return raw;
+    const legacy = localStorage.getItem(legacyKey);
+    if (legacy) {
+      try { localStorage.setItem(canonicalKey, legacy); } catch {}
+      try { localStorage.removeItem(legacyKey); } catch {}
+      return legacy;
+    }
+    return null;
+  } catch {
+    return null;
+  }
+}
+
 // ── Global layout CRUD ────────────────────────────────────────────────────────
 
 /** Get the global zone layout (stand definitions, no occupied state) */
 export function getGlobalZones() {
   try {
-    const raw = localStorage.getItem(GLOBAL_KEY);
+    const raw = readWithLegacyFallback(STORAGE_KEYS.ZONES_GLOBAL, LEGACY_STORAGE_KEYS.ZONES_GLOBAL);
     if (raw) return JSON.parse(raw);
     // Fall back to admin-saved default, then hardcoded default
-    const override = localStorage.getItem(OVERRIDE_KEY);
+    const override = readWithLegacyFallback(
+      STORAGE_KEYS.ZONES_DEFAULT_OVERRIDE,
+      LEGACY_STORAGE_KEYS.ZONES_DEFAULT_OVERRIDE
+    );
     if (override) return JSON.parse(override);
   } catch {}
   return DEFAULT_GLOBAL_ZONES;
@@ -78,15 +110,18 @@ export function saveAsVenueDefault(zones) {
       zona: z.zona, label: z.label, warna: z.warna,
       stands: z.stands.map(s => ({ id: s.id })),
     }));
-    localStorage.setItem(OVERRIDE_KEY, JSON.stringify(clean));
-    window.dispatchEvent(new CustomEvent(UPDATE_EVT));
+    localStorage.setItem(STORAGE_KEYS.ZONES_DEFAULT_OVERRIDE, JSON.stringify(clean));
+    window.dispatchEvent(new CustomEvent(STORAGE_EVENTS.ZONES_UPDATE));
     return true;
   } catch { return false; }
 }
 
 /** Check if admin has saved a custom venue default */
 export function hasVenueDefault() {
-  return !!localStorage.getItem(OVERRIDE_KEY);
+  return Boolean(
+    localStorage.getItem(STORAGE_KEYS.ZONES_DEFAULT_OVERRIDE) ||
+    localStorage.getItem(LEGACY_STORAGE_KEYS.ZONES_DEFAULT_OVERRIDE)
+  );
 }
 
 /** Save the global zone layout */
@@ -97,8 +132,8 @@ export function saveGlobalZones(zones) {
       zona: z.zona, label: z.label, warna: z.warna,
       stands: z.stands.map(s => ({ id: s.id })),
     }));
-    localStorage.setItem(GLOBAL_KEY, JSON.stringify(clean));
-    window.dispatchEvent(new CustomEvent(UPDATE_EVT));
+    localStorage.setItem(STORAGE_KEYS.ZONES_GLOBAL, JSON.stringify(clean));
+    window.dispatchEvent(new CustomEvent(STORAGE_EVENTS.ZONES_UPDATE));
   } catch {}
 }
 
@@ -161,7 +196,8 @@ export function resetToTemplate(templateKey) {
 /** Get stand IDs that are occupied for a given event */
 function getOccupied(eventId) {
   try {
-    return new Set(JSON.parse(localStorage.getItem(OCC_PREFIX + eventId) || '[]'));
+    const raw = readWithLegacyFallback(occupiedKey(eventId), legacyOccupiedKey(eventId));
+    return new Set(JSON.parse(raw || '[]'));
   } catch {
     return new Set();
   }
@@ -169,7 +205,7 @@ function getOccupied(eventId) {
 
 function saveOccupied(eventId, occupiedSet) {
   try {
-    localStorage.setItem(OCC_PREFIX + eventId, JSON.stringify([...occupiedSet]));
+    localStorage.setItem(occupiedKey(eventId), JSON.stringify([...occupiedSet]));
   } catch {}
 }
 

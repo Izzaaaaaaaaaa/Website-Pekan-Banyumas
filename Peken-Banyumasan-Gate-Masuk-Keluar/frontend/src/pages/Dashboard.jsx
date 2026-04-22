@@ -18,7 +18,10 @@ import {
   Wifi,
   WifiOff,
 } from 'lucide-react';
-import api from '../services/api';
+import { dashboardApi } from '../services/endpoints';
+import { getUserRole } from '../lib/auth';
+import { STORAGE_KEYS, STORAGE_EVENTS } from '../lib/storageKeys';
+import { extractError } from '../lib/unwrap';
 import { useToast } from '../components/Toast';
 import { supabaseRealtime } from '../lib/supabase';
 
@@ -94,14 +97,7 @@ const Dashboard = () => {
   const activeEventIdRef = useRef(null);
   const scannerInputRef = useRef(null);
 
-  const userRole = (() => {
-    try {
-      const raw = localStorage.getItem('user');
-      return raw ? JSON.parse(raw).role : null;
-    } catch {
-      return null;
-    }
-  })();
+  const userRole = getUserRole();
 
   useEffect(() => {
     const refocus = () => scannerInputRef.current?.focus();
@@ -117,8 +113,8 @@ const Dashboard = () => {
   const fetchStats = useCallback(async (silent = false) => {
     try {
       if (!silent) setIsLoadingStats(true);
-      const response = await api.get('/dashboard/stats');
-      const data = response.data?.data || {};
+      // dashboardApi.stats returns the unwrapped data payload per the Phase 0 contract.
+      const data = (await dashboardApi.stats()) || {};
       setStats({
         di_dalam: data.di_dalam || 0,
         total_masuk: data.total_masuk || 0,
@@ -130,22 +126,25 @@ const Dashboard = () => {
         setActiveEventId(data.event_id);
         activeEventIdRef.current = data.event_id;
         setNamaEvent(data.nama_event || null);
-        localStorage.setItem('peken_active_event', JSON.stringify({ id: data.event_id, nama: data.nama_event || null }));
+        localStorage.setItem(STORAGE_KEYS.ACTIVE_EVENT, JSON.stringify({ id: data.event_id, nama: data.nama_event || null }));
       } else {
         setActiveEventId(null);
         activeEventIdRef.current = null;
         setNamaEvent(null);
-        localStorage.removeItem('peken_active_event');
+        localStorage.removeItem(STORAGE_KEYS.ACTIVE_EVENT);
       }
 
-      window.dispatchEvent(new CustomEvent('peken_event_update'));
+      window.dispatchEvent(new CustomEvent(STORAGE_EVENTS.EVENT_UPDATE));
       if (silent) setFlashKey((k) => k + 1);
     } catch (error) {
+      // Silent polling cycles must not spam toasts; only the foreground
+      // fetch surfaces an error. Either way we log for diagnostics.
       console.error('Gagal mengambil statistik:', error);
+      if (!silent) toast.error(extractError(error, 'Gagal mengambil statistik.'));
     } finally {
       if (!silent) setIsLoadingStats(false);
     }
-  }, []);
+  }, [toast]);
 
   const fetchActivities = useCallback(async (silent = false) => {
     try {
@@ -154,17 +153,17 @@ const Dashboard = () => {
       const today = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}-${String(now.getDate()).padStart(2, '0')}`;
       const params = { tanggal: today };
       if (activeEventIdRef.current) params.event_id = activeEventIdRef.current;
-      const response = await api.get('/visitors', { params });
-      const rows = response.data?.data || [];
+      const rows = (await dashboardApi.visitors(params)) || [];
       const sortTime = (row) => (row.status === 'keluar' && row.waktu_keluar ? new Date(row.waktu_keluar) : new Date(row.waktu_masuk));
       const sorted = [...rows].sort((a, b) => sortTime(b) - sortTime(a));
       setActivities(sorted.slice(0, 10));
     } catch (error) {
       console.error('Gagal mengambil aktivitas:', error);
+      if (!silent) toast.error(extractError(error, 'Gagal mengambil aktivitas.'));
     } finally {
       if (!silent) setIsLoadingActivities(false);
     }
-  }, []);
+  }, [toast]);
 
   useEffect(() => {
     fetchStats();
@@ -211,11 +210,11 @@ const Dashboard = () => {
     }
     try {
       setSubmittingAction(aksi);
-      await api.post('/visitors/manual', { aksi, event_id: activeEventId });
+      await dashboardApi.manualEntry({ aksi, event_id: activeEventId });
       toast.success(`Pengunjung ${aksi === 'masuk' ? 'masuk' : 'keluar'} berhasil dicatat.`);
       await Promise.all([fetchStats(true), fetchActivities(true)]);
     } catch (error) {
-      toast.error(`Gagal mencatat pengunjung ${aksi}.`);
+      toast.error(extractError(error, `Gagal mencatat pengunjung ${aksi}.`));
       console.error(error);
     } finally {
       setSubmittingAction(null);
@@ -236,24 +235,18 @@ const Dashboard = () => {
 
     setScannerState('scanning');
     try {
-      const response = await fetch(`${import.meta.env.VITE_API_URL}/tap`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ uid: scannedUid, timestamp: new Date().toISOString() }),
+      // dashboardApi.visitorTap replaces the legacy raw fetch('/tap'). This
+      // routes through the shared apiClient → consistent auth header, 401
+      // handling, and error-message parsing. Returns the unwrapped payload
+      // { aksi, nama, uid, ... } directly.
+      const data = await dashboardApi.visitorTap({
+        uid: scannedUid,
+        timestamp: new Date().toISOString(),
       });
-      const payload = await response.json();
 
-      if (!response.ok || payload?.status !== 'success') {
-        const message = payload?.detail?.message || payload?.message || 'Tap NFC gagal diproses.';
-        setScannerState('error');
-        setScannerResult({ ok: false, message });
-        toast.error(message);
-        return;
-      }
-
-      const aksi = payload?.data?.aksi;
+      const aksi = data?.aksi;
       setScannerState(aksi === 'keluar' ? 'success-keluar' : 'success-masuk');
-      setScannerResult({ ok: true, ...payload.data });
+      setScannerResult({ ok: true, ...data });
       toast.success(
         aksi === 'keluar'
           ? 'Pengunjung berhasil tap keluar.'
@@ -262,7 +255,7 @@ const Dashboard = () => {
 
       await Promise.all([fetchStats(true), fetchActivities(true)]);
     } catch (error) {
-      const message = error?.message || 'Gagal terhubung ke server.';
+      const message = extractError(error, 'Tap NFC gagal diproses.');
       setScannerState('error');
       setScannerResult({ ok: false, message });
       toast.error(message);

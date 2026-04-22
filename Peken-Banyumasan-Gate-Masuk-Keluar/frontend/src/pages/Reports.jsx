@@ -6,7 +6,9 @@ import {
     Download, AlertTriangle, X, Loader2,
     Users, TrendingUp, UserCheck, Info, Store, BarChart2, CalendarDays
 } from 'lucide-react';
-import api from '../services/api';
+import { eventApi, reportsApi } from '../services/endpoints';
+import { extractError } from '../lib/unwrap';
+import { useToast } from '../components/Toast';
 
 const ITEMS_PER_PAGE = 15;
 
@@ -21,6 +23,7 @@ const fmtTanggal = (s) => new Date(s + 'T00:00:00').toLocaleDateString('id-ID', 
 });
 
 const Reports = () => {
+    const toast = useToast();
     // ── Events list (untuk primary selector) ─────────────────────────────
     // ── Report tab ───────────────────────────────────────────────────────────
     const [reportTab, setReportTab] = useState('pengunjung'); // pengunjung | artisan_report | akumulasi
@@ -51,8 +54,8 @@ const Reports = () => {
     useEffect(() => {
         (async () => {
             try {
-                const res  = await api.get('/events');
-                const raw  = res.data.data || [];
+                // eventApi.list returns the unwrapped Array<Event> directly.
+                const raw = (await eventApi.list()) || [];
                 // Urutkan: terbaru dulu berdasarkan tanggal
                 const sorted = [...raw].sort((a, b) =>
                     new Date(b.tanggal) - new Date(a.tanggal)
@@ -61,13 +64,13 @@ const Reports = () => {
                 // Auto-pilih event aktif jika ada
                 const aktif = sorted.find(e => e.status === 'aktif');
                 if (aktif) setSelectedEventId(aktif.id);
-            } catch {
-                // gagal load events — biarkan user pilih manual
+            } catch (error) {
+                toast.error(extractError(error, 'Gagal memuat daftar event.'));
             } finally {
                 setLoadingEv(false);
             }
         })();
-    }, []);
+    }, [toast]);
 
     // ── Fetch laporan setiap kali filter berubah ──────────────────────────
     const fetchReports = useCallback(async () => {
@@ -82,8 +85,8 @@ const Reports = () => {
             if (selectedDate)    params.tanggal   = selectedDate;
             if (!selectedEventId && !selectedDate) params.tanggal = getLocalDateStr();
 
-            const response = await api.get('/reports', { params });
-            const data = response.data.data || null;
+            // reportsApi.list returns the unwrapped report payload directly.
+            const data = (await reportsApi.list(params)) || null;
             setReportData(data);
             setCurrentPage(1);
 
@@ -95,11 +98,12 @@ const Reports = () => {
             }
         } catch (error) {
             console.error('Gagal mengambil data laporan:', error);
+            toast.error(extractError(error, 'Gagal mengambil data laporan.'));
             setReportData(null);
         } finally {
             setIsLoading(false);
         }
-    }, [selectedEventId, selectedDate]);
+    }, [selectedEventId, selectedDate, toast]);
 
     useEffect(() => {
         fetchReports();
@@ -126,15 +130,14 @@ const Reports = () => {
             if (selectedEventId) exportParams.event_id = selectedEventId;
             if (selectedDate)    exportParams.tanggal  = selectedDate;
 
-            const response = await api.get('/reports/export', {
-                params: exportParams,
-                responseType: 'blob',
-            });
+            // reportsApi.export preserves responseType:'blob' via the apiClient
+            // and extractData passes Blob payloads through untouched.
+            const blob = await reportsApi.export(exportParams);
 
             const ext = formatParam === 'excel' ? 'xlsx' : 'pdf';
             const safeName = (reportData?.nama || 'laporan').replace(/[^a-zA-Z0-9]/g, '_').slice(0, 30);
             const suffix   = selectedDate || safeName;
-            const url  = window.URL.createObjectURL(new Blob([response.data]));
+            const url  = window.URL.createObjectURL(blob);
             const link = document.createElement('a');
             link.href = url;
             link.setAttribute('download', `laporan_kunjungan_${suffix}.${ext}`);
@@ -144,7 +147,7 @@ const Reports = () => {
             window.URL.revokeObjectURL(url);
             setIsModalOpen(false);
         } catch (error) {
-            alert(`Gagal mengunduh file ${exportFormat}: ${error.message || 'Silakan coba lagi.'}`);
+            toast.error(extractError(error, `Gagal mengunduh file ${exportFormat}. Silakan coba lagi.`));
             console.error(error);
         } finally {
             setIsExporting(false);
@@ -351,7 +354,7 @@ const Reports = () => {
                             </tr>
                         ) : (
                             pagedReports.map((row) => {
-                                const isMember = row.tipe_pengunjung === 'nfc';
+                                const isKolaborator = row.tipe_pengunjung === 'nfc';
 
                                 const waktuMasuk = row.waktu_masuk ? new Date(row.waktu_masuk) : null;
                                 const waktuKeluar = row.waktu_keluar ? new Date(row.waktu_keluar) : null;
@@ -374,7 +377,7 @@ const Reports = () => {
 
                                         {/* Tipe */}
                                         <td className="px-6 py-4">
-                                            {isMember ? (
+                                            {isKolaborator ? (
                                                 <span className="inline-flex items-center gap-1.5 bg-green-50 text-green-800 px-2.5 py-1 rounded-md text-xs font-semibold border border-green-100">
                                                     <IdCard size={14} /> NFC
                                                 </span>
@@ -387,9 +390,9 @@ const Reports = () => {
 
                                         {/* Identitas */}
                                         <td className="px-6 py-4">
-                                            {isMember ? (
+                                            {isKolaborator ? (
                                                 <>
-                                                    <div className="font-semibold text-gray-800">{row.nama_member || '-'}</div>
+                                                    <div className="font-semibold text-gray-800">{row.nama_kolaborator || '-'}</div>
                                                     <div className="text-xs text-gray-400 font-mono">
                                                         #{row.id?.substring(0, 8)}
                                                     </div>
@@ -404,7 +407,7 @@ const Reports = () => {
                                             Manual → FIFO, tidak merepresentasikan individu
                                                          tampilkan dash + tooltip penjelasan */}
                                         <td className="px-6 py-4">
-                                            {isMember ? (
+                                            {isKolaborator ? (
                                                 waktuKeluar ? (
                                                     <>
                                                         <div className="font-medium text-gray-700">{fmtDate(waktuKeluar)}</div>
@@ -425,13 +428,13 @@ const Reports = () => {
 
                                         {/* Durasi
                                             NFC → akurat
-                                            Non-member → tidak bermakna (FIFO pairing) */}
+                                            Non-kolaborator → tidak bermakna (FIFO pairing) */}
                                         <td className="px-6 py-4">
-                                            {isMember && row.durasi_menit != null ? (
+                                            {isKolaborator && row.durasi_menit != null ? (
                                                 <span className="text-sm text-gray-700 font-medium">
                                                     {row.durasi_menit} mnt
                                                 </span>
-                                            ) : isMember && row.status === 'di_dalam' ? (
+                                            ) : isKolaborator && row.status === 'di_dalam' ? (
                                                 <span className="text-xs text-gray-400">Masih di dalam</span>
                                             ) : (
                                                 <span

@@ -6,7 +6,7 @@ import React, { useState, useEffect, useCallback, useRef } from 'react';
 import logoImg from '../assets/logo.png';
 import { Link } from 'react-router-dom';
 import { Users, LogIn, LogOut, CalendarCheck, RefreshCw, Wifi, WifiOff, ExternalLink } from 'lucide-react';
-import api from '../services/api';
+import { dashboardApi } from '../services/endpoints';
 import { supabaseRealtime } from '../lib/supabase';
 
 const REFRESH_INTERVAL = 10;
@@ -163,8 +163,9 @@ const Monitor = () => {
         if (!silent) setIsLoading(true);
         else setIsRefreshing(true);
         try {
-            const res  = await api.get('/dashboard/stats');
-            const data = res.data.data;
+            // dashboardApi.stats returns the unwrapped payload directly
+            // per the Phase 0 contract — no more response.data.data.
+            const data = await dashboardApi.stats();
             if (!data?.event_id) { setError('no_event'); setStats(null); }
             else { setStats(data); setError(null); }
             setLastUpdated(new Date());

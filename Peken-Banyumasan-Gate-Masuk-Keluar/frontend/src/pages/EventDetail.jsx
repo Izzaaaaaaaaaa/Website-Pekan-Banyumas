@@ -274,10 +274,10 @@ export default function EventDetail() {
   const toast     = useToast();
 
   const [event,    setEvent]    = useState(null);
-  const [members,  setMembers]  = useState([]);
+  const [kolaborators,  setKolaborators]  = useState([]);
   const [Artisan,  setArtisans]  = useState([]);
   const [zones,    setZones]    = useState([]);
-  const [tab,      setTab]      = useState('members');
+  const [tab,      setTab]      = useState('kolaborators');
   const [showAddM, setShowAddM] = useState(false);
   const [showAddT, setShowAddT] = useState(false);
   const [loading,  setLoading]  = useState(true);
@@ -289,7 +289,7 @@ export default function EventDetail() {
       const ms = DUMMY_KOLABORATOR_EVENT[id] || [];
       const ts = DUMMY_ARTISAN_EVENT[id]  || [];
       setEvent(ev);
-      setMembers(ms);
+      setKolaborators(ms);
       setArtisans(ts);
       // Load global zones merged with this event's occupied state
       try {
@@ -311,19 +311,19 @@ export default function EventDetail() {
     } catch {}
   };
 
-  const assignMember = async (data) => {
-    const updated = [...members, { ...data, kolaborator_id: data.id }];
-    setMembers(updated);
+  const assignKolaborator = async (data) => {
+    const updated = [...kolaborators, { ...data, kolaborator_id: data.id }];
+    setKolaborators(updated);
     toast.success(`${data.nama} di-assign sebagai ${data.peran}`);
     try {
-      const { triggerEventAssignedToMember } = await import('../lib/notifications');
-      triggerEventAssignedToMember(event.nama, data.peran);
+      const { triggerEventAssignedToKolaborator } = await import('../lib/notifications');
+      triggerEventAssignedToKolaborator(event.nama, data.peran);
     } catch {}
   };
 
-  const removeMember = (emId) => {
+  const removeKolaborator = (emId) => {
     if (!confirm('Hapus dari event ini?')) return;
-    setMembers(l => l.filter(m => m.id !== emId));
+    setKolaborators(l => l.filter(m => m.id !== emId));
     toast.success('Kolaborator dihapus');
   };
 
@@ -333,8 +333,8 @@ export default function EventDetail() {
     refreshZones(updated);
     toast.success(`${data.nama_usaha} berhasil di-assign`);
     try {
-      const { triggerUmkmEventAssigned } = await import('../lib/notifications');
-      triggerUmkmEventAssigned(event.nama, data.posisi_event || '—');
+      const { triggerArtisanEventAssigned } = await import('../lib/notifications');
+      triggerArtisanEventAssigned(event.nama, data.posisi_event || '—');
     } catch {}
   };
 
@@ -346,7 +346,7 @@ export default function EventDetail() {
     toast.success('Artisan dihapus');
   };
 
-  const updateTenantStand = (etId, val) => {
+  const updateArtisanStand = (etId, val) => {
     const updated = Artisan.map(t => t.id === etId ? { ...t, posisi_event: val } : t);
     setArtisans(updated);
     refreshZones(updated);
@@ -364,7 +364,7 @@ export default function EventDetail() {
     </div>
   );
 
-  const pct = Math.min(100, Math.round(members.length / (event.kapasitas||1) * 100));
+  const pct = Math.min(100, Math.round(kolaborators.length / (event.kapasitas||1) * 100));
 
   return (
     <div className="space-y-5">
@@ -400,7 +400,7 @@ export default function EventDetail() {
                 {event.jam_mulai && <span className="ml-1">· {event.jam_mulai.replace(':','.')}{event.jam_selesai?` – ${event.jam_selesai.replace(':','.')}`:''} WIB</span>}
               </div>
               <div className="flex items-center gap-2"><MapPin size={13}/>{event.lokasi}</div>
-              <div className="flex items-center gap-2"><Users size={13}/>{members.length} / {event.kapasitas} peserta</div>
+              <div className="flex items-center gap-2"><Users size={13}/>{kolaborators.length} / {event.kapasitas} peserta</div>
             </div>
             <div>
               <div className="h-1.5 bg-gray-100 rounded-full overflow-hidden">
@@ -436,8 +436,8 @@ export default function EventDetail() {
           <div className="grid grid-cols-3 gap-3">
             {[
               ['Kapasitas', event.kapasitas,  'text-gray-700'],
-              ['Terdaftar', members.length,   'text-green-700'],
-              ['Hadir',     members.filter(m=>m.status_kehadiran==='hadir').length, 'text-blue-600'],
+              ['Terdaftar', kolaborators.length,   'text-green-700'],
+              ['Hadir',     kolaborators.filter(m=>m.status_kehadiran==='hadir').length, 'text-blue-600'],
             ].map(([l,v,c])=>(
               <div key={l} className="bg-white border border-gray-100 rounded-2xl p-3 text-center">
                 <p className={`text-xl font-bold ${c}`}>{v}</p>
@@ -453,7 +453,7 @@ export default function EventDetail() {
           {/* Tab bar */}
           <div className="flex border-b border-gray-100">
             {[
-              { v:'members', l:'Kolaborator', n:members.length },
+              { v:'kolaborators', l:'Kolaborator', n:kolaborators.length },
               { v:'Artisan', l:'Artisan',            n:Artisan.length },
               { v:'zones',   l:'Kelola Zona',     n:zones.length   },
             ].map(({ v, l, n }) => (
@@ -466,21 +466,21 @@ export default function EventDetail() {
           </div>
 
           {/* ── Tab: Kolaborator ── */}
-          {tab === 'members' && (
+          {tab === 'kolaborators' && (
             <div>
               <div className="px-5 py-4 flex items-center justify-between border-b border-gray-50">
-                <p className="text-sm text-gray-500">{members.length} kolaborator</p>
+                <p className="text-sm text-gray-500">{kolaborators.length} kolaborator</p>
                 <button onClick={()=>setShowAddM(true)}
                   className="flex items-center gap-1.5 bg-green-700 hover:bg-green-800 text-white px-3.5 py-2 rounded-xl text-xs font-semibold transition">
                   <Plus size={13}/> Assign
                 </button>
               </div>
-              {members.length === 0
+              {kolaborators.length === 0
                 ? <div className="py-16 text-center text-gray-400 text-sm">
                     <Users size={32} className="text-gray-200 mx-auto mb-3"/>Belum ada kolaborator
                   </div>
                 : <div className="divide-y divide-gray-50">
-                    {members.map(m=>(
+                    {kolaborators.map(m=>(
                       <div key={m.id} className="px-5 py-3.5 flex items-center gap-3 group hover:bg-gray-50/60 transition">
                         <div className="w-9 h-9 rounded-xl bg-amber-100 flex items-center justify-center text-amber-700 font-bold text-sm shrink-0">
                           {m.nama.charAt(0)}
@@ -491,20 +491,20 @@ export default function EventDetail() {
                         </div>
                         <div className="flex items-center gap-2 shrink-0">
                           <select value={m.peran}
-                            onChange={e=>setMembers(l=>l.map(x=>x.id===m.id?{...x,peran:e.target.value}:x))}
+                            onChange={e=>setKolaborators(l=>l.map(x=>x.id===m.id?{...x,peran:e.target.value}:x))}
                             className="text-xs border border-gray-200 rounded-lg px-2 py-1.5 focus:outline-none focus:border-green-400 bg-white text-gray-600">
                             <option value="peserta">Peserta</option>
                             <option value="performer">Performer</option>
                             <option value="panitia">Panitia</option>
                           </select>
                           <select value={m.status_kehadiran}
-                            onChange={e=>setMembers(l=>l.map(x=>x.id===m.id?{...x,status_kehadiran:e.target.value}:x))}
+                            onChange={e=>setKolaborators(l=>l.map(x=>x.id===m.id?{...x,status_kehadiran:e.target.value}:x))}
                             className={`text-xs border border-gray-200 rounded-lg px-2 py-1.5 focus:outline-none focus:border-green-400 bg-white ${HADIR_CLS[m.status_kehadiran]||''}`}>
                             <option value="terdaftar">Terdaftar</option>
                             <option value="hadir">Hadir</option>
                             <option value="tidak_hadir">Tidak Hadir</option>
                           </select>
-                          <button onClick={()=>removeMember(m.id)}
+                          <button onClick={()=>removeKolaborator(m.id)}
                             className="p-1.5 rounded-lg text-gray-300 hover:text-red-500 hover:bg-red-50 transition opacity-0 group-hover:opacity-100">
                             <Trash2 size={13}/>
                           </button>
@@ -544,7 +544,7 @@ export default function EventDetail() {
                           {/* zones prop explicit, tidak pernah undefined */}
                           <StandEditor
                             value={t.posisi_event}
-                            onChange={val=>updateTenantStand(t.id, val)}
+                            onChange={val=>updateArtisanStand(t.id, val)}
                             zones={zones}
                           />
                           <button onClick={()=>removeArtisan(t.id)}
@@ -578,8 +578,8 @@ export default function EventDetail() {
       {showAddM && (
         <AssignKolaboratorModal
           onClose={()=>setShowAddM(false)}
-          onAssign={assignMember}
-          existingIds={members.map(m=>m.kolaborator_id)}
+          onAssign={assignKolaborator}
+          existingIds={kolaborators.map(m=>m.kolaborator_id)}
         />
       )}
       {showAddT && (

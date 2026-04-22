@@ -23,14 +23,14 @@ const DEFAULT_HOME = {
   ],
   hero_eyebrow: 'MIRAPAT · BANYUMASAN · 2026',
   hero_headline: 'Temukan pertunjukan, karya artisan, dan cerita Banyumasan dalam satu ekosistem.',
-  manifesto_col1: 'Peken Banyumasan adalah sebuah ruang kreatif berbasis budaya lokal yang dirancang sebagai wadah berkumpulnya masyarakat, pelaku UMKM, seniman, dan komunitas dalam satu ekosistem yang hidup, inklusif, dan berkelanjutan.\n\nPeken tidak hanya berfungsi sebagai pasar atau tempat berkumpul biasa, tetapi sebagai ruang interaksi yang menghadirkan pengalaman budaya khas Banyumas melalui berbagai aktivitas seperti pertunjukan seni, kuliner tradisional, produk kreatif, hingga eksplorasi identitas lokal.',
-  manifesto_col2: 'Peken Banyumasan adalah ruang temu budaya dan ekonomi kreatif di Banyumas yang mempertemukan seniman, UMKM, dan masyarakat dalam satu perayaan kearifan lokal.\n\nMenghadirkan kuliner tradisional, pertunjukan seni, serta aktivitas komunitas, Peken menjadi tempat di mana budaya tidak hanya dipamerkan, tetapi dirasakan dan dialami bersama.\n\nSejak pertama kali hadir pada Februari 2022 dan diselenggarakan dua kali setiap bulan di kawasan Kota Lama Banyumas, Peken terus berkembang sebagai ekosistem kreatif.',
+  manifesto_col1: 'Peken Banyumasan adalah sebuah ruang kreatif berbasis budaya lokal yang dirancang sebagai wadah berkumpulnya masyarakat, pelaku Artisan, seniman, dan komunitas dalam satu ekosistem yang hidup, inklusif, dan berkelanjutan.\n\nPeken tidak hanya berfungsi sebagai pasar atau tempat berkumpul biasa, tetapi sebagai ruang interaksi yang menghadirkan pengalaman budaya khas Banyumas melalui berbagai aktivitas seperti pertunjukan seni, kuliner tradisional, produk kreatif, hingga eksplorasi identitas lokal.',
+  manifesto_col2: 'Peken Banyumasan adalah ruang temu budaya dan ekonomi kreatif di Banyumas yang mempertemukan seniman, Artisan, dan masyarakat dalam satu perayaan kearifan lokal.\n\nMenghadirkan kuliner tradisional, pertunjukan seni, serta aktivitas komunitas, Peken menjadi tempat di mana budaya tidak hanya dipamerkan, tetapi dirasakan dan dialami bersama.\n\nSejak pertama kali hadir pada Februari 2022 dan diselenggarakan dua kali setiap bulan di kawasan Kota Lama Banyumas, Peken terus berkembang sebagai ekosistem kreatif.',
   agenda_tanggal: '24',
   agenda_hari: 'Minggu',
   agenda_bulan_tahun: 'Maret 2026',
   agenda_jam: '15:30–20:30 WIB',
   agenda_lokasi: 'Taman Sari · Kecamatan Banyumas',
-  agenda_deskripsi: 'Edisi berikutnya kembali menghadirkan suasana Peken yang hangat dan hidup. Nikmati pertunjukan seni Banyumasan, jelajahi tenant UMKM pilihan, dan temukan karya-karya lokal dalam satu ruang yang penuh kebersamaan.',
+  agenda_deskripsi: 'Edisi berikutnya kembali menghadirkan suasana Peken yang hangat dan hidup. Nikmati pertunjukan seni Banyumasan, jelajahi artisan pilihan, dan temukan karya-karya lokal dalam satu ruang yang penuh kebersamaan.',
   lokasi_nama: 'Kawasan Kota Lama Banyumas. Taman Sari · Sudagaran.',
   lokasi_alamat: 'Banyumas, Sudagaran, Kec. Banyumas, Kabupaten Banyumas, Jawa Tengah 53192',
   lokasi_trans1_nama: 'Trans Banyumas Koridor 4 · Terminal Bulupitu',
@@ -40,23 +40,23 @@ const DEFAULT_HOME = {
 
 const DEFAULT_ABOUT = {
   hero_headline: 'Peken lahir dari keinginan untuk menghidupkan kembali denyut kota lama melalui seni, pasar, dan kebersamaan.',
-  manifesto_col1: 'Peken Banyumasan tumbuh dari percakapan kecil di sudut Kota Lama — antara seniman pertunjukan, pelaku UMKM, dan warga sekitar yang ingin menghidupkan kembali ruang publik sebagai tempat bertemu, bukan sekadar berdagang.\n\nDari obrolan itu, lahir gerakan dwi-mingguan yang konsisten sejak Februari 2022 — sebuah ritual kolektif yang mempertemukan tradisi, kerajinan, dan kuliner Banyumasan dalam satu malam.',
+  manifesto_col1: 'Peken Banyumasan tumbuh dari percakapan kecil di sudut Kota Lama — antara seniman pertunjukan, pelaku Artisan, dan warga sekitar yang ingin menghidupkan kembali ruang publik sebagai tempat bertemu, bukan sekadar berdagang.\n\nDari obrolan itu, lahir gerakan dwi-mingguan yang konsisten sejak Februari 2022 — sebuah ritual kolektif yang mempertemukan tradisi, kerajinan, dan kuliner Banyumasan dalam satu malam.',
   manifesto_col2: 'Kami percaya kebudayaan tidak perlu dipajang di balik kaca. Ia hidup ketika dirayakan secara rutin, dalam skala kecil, oleh orang-orang yang merasa memilikinya.\n\nSetiap edisi Peken adalah usaha sederhana untuk menjaga warisan tetap berdetak — sambil membuka ruang bagi karya baru tumbuh di atasnya.',
-  mirapat_intro: 'Peken Banyumasan bukan event satu-malam — ia adalah mirapat, kata Banyumasan yang berarti perjumpaan rutin yang dijaga bersama. Setiap edisi mempertemukan seniman pertunjukan tradisional, perajin muda, pelaku UMKM, akademisi, hingga warga sekitar dalam satu ruang yang sama.',
+  mirapat_intro: 'Peken Banyumasan bukan event satu-malam — ia adalah mirapat, kata Banyumasan yang berarti perjumpaan rutin yang dijaga bersama. Setiap edisi mempertemukan seniman pertunjukan tradisional, perajin muda, pelaku Artisan, akademisi, hingga warga sekitar dalam satu ruang yang sama.',
   mirapat_quote: '"Bukan pasar yang menjadi tujuan, melainkan perjumpaan yang menjadikan pasar itu bermakna."',
   mirapat_closing: 'Tiga sumbu menjadi fondasi gerakan ini — pelestarian budaya, ruang berkarya bagi pelaku kreatif, dan ekonomi yang berputar di dalam komunitasnya sendiri.',
   pillars: [
     { n: '01', label: 'CULTURE', body: 'Melestarikan kearifan lokal, seni pertunjukan tradisional, dan warisan budaya takbenda Banyumas sebagai fondasi gerakan.' },
     { n: '02', label: 'CREATIVE', body: 'Memberikan ruang bagi seniman, perajin, dan kolektif muda untuk berkarya dan bertemu audiens yang sebenarnya.' },
-    { n: '03', label: 'CIRCULAR', body: 'Mendorong ekonomi berputar di dalam komunitas — dari tenant lokal, bahan lokal, hingga pengunjung lokal.' },
+    { n: '03', label: 'CIRCULAR', body: 'Mendorong ekonomi berputar di dalam komunitas — dari artisan lokal, bahan lokal, hingga pengunjung lokal.' },
   ],
   visi: 'Menjadi ekosistem budaya dan ekonomi kreatif yang menjaga kearifan lokal Banyumas tetap berdetak — relevan, hidup, dan berkelanjutan.',
-  tujuan: 'Menyediakan ruang publik dwi-mingguan yang mempertemukan pelaku seni, UMKM, dan masyarakat — sehingga warisan budaya Banyumasan dirawat melalui praktik bersama, bukan sekadar dipamerkan.',
-  sasaran: 'Seniman pertunjukan tradisional, perajin & UMKM Banyumas, komunitas kreatif muda, akademisi, mitra pemerintah dan swasta, serta pengunjung lokal-regional yang menjadi audiens sekaligus pelaku.',
+  tujuan: 'Menyediakan ruang publik dwi-mingguan yang mempertemukan pelaku seni, Artisan, dan masyarakat — sehingga warisan budaya Banyumasan dirawat melalui praktik bersama, bukan sekadar dipamerkan.',
+  sasaran: 'Seniman pertunjukan tradisional, perajin & Artisan Banyumas, komunitas kreatif muda, akademisi, mitra pemerintah dan swasta, serta pengunjung lokal-regional yang menjadi audiens sekaligus pelaku.',
   stats: [
     { n: '86', label: 'Edisi Peken diselenggarakan' },
     { n: '240', label: 'Seniman & kolektif tampil' },
-    { n: '1.2k', label: 'UMKM & tenant terlibat' },
+    { n: '1.2k', label: 'Artisan terlibat' },
     { n: '38k', label: 'Pengunjung setiap edisi' },
   ],
 };
@@ -64,25 +64,25 @@ const DEFAULT_ABOUT = {
 const DEFAULT_TIM = {
   key_people: [
     { id: 'kp1', photo: '/assets/tokoh-portrait-1.png', role: 'FOUNDER', name: 'Gilang Ramadhan, S.Sn., M.Ds.', title: 'Founder & Program Director', bio: 'Menggagas Peken pada Februari 2022 dan mengawal kurasi setiap edisi sejak. Latar belakang antropologi pertunjukan, dengan fokus pada kesenian Banyumasan kontemporer.' },
-    { id: 'kp2', photo: '/assets/tokoh-portrait-2.png', role: 'CURATOR', name: 'Galih Putra Pamungkas, S.Sn., M.Sn.', title: 'Curator — Artisan & UMKM', bio: 'Mengkurasi tenant artisan dan UMKM yang masuk ke setiap edisi Peken. Sebelumnya menjalankan kolektif batik di Sokaraja; membangun program pendampingan tenant dari hulu ke hilir.' },
+    { id: 'kp2', photo: '/assets/tokoh-portrait-2.png', role: 'CURATOR', name: 'Galih Putra Pamungkas, S.Sn., M.Sn.', title: 'Curator — Artisan', bio: 'Mengkurasi artisan yang masuk ke setiap edisi Peken. Sebelumnya menjalankan kolektif batik di Sokaraja; membangun program pendampingan artisan dari hulu ke hilir.' },
     { id: 'kp3', photo: '/assets/tokoh-portrait-3.png', role: 'STRATEGIC PARTNER', name: 'Jakarta Tisam S.STP, M.Si', title: 'Strategic Partner & Community Lead', bio: 'Menjaga jaringan kolaborator, sponsor, dan mitra institusi — kampus, pemerintah daerah, swasta. Memegang rasio kolaborasi yang sehat antar enam helix.' },
   ],
   hexa_helix: [
     { id: 'hh1', name: 'Government', body: 'Pemerintah Kabupaten Banyumas dan instansi terkait sebagai mitra kebijakan dan ruang publik.' },
     { id: 'hh2', name: 'Academia', body: 'Kampus dan lembaga riset sebagai sumber kajian, kurikulum, dan tenaga kurasi muda.' },
-    { id: 'hh3', name: 'Industry', body: 'Pelaku usaha skala UMKM hingga korporasi sebagai mitra ekonomi dan ekosistem produk.' },
+    { id: 'hh3', name: 'Industry', body: 'Pelaku usaha skala Artisan hingga korporasi sebagai mitra ekonomi dan ekosistem produk.' },
     { id: 'hh4', name: 'Community', body: 'Warga, kolektif seni, dan komunitas hobi sebagai inti gerakan dan audiens setia Peken.' },
     { id: 'hh5', name: 'Media', body: 'Jejaring media independen dan jurnalisme budaya sebagai penjaga narasi gerakan.' },
     { id: 'hh6', name: 'Finance', body: 'Mitra pembiayaan — bank, koperasi, hingga skema gotong royong — yang menjaga sirkulasi ekonomi tetap sehat.' },
   ],
-  legalitas_dukungan: 'Peken Banyumasan didukung oleh jaringan mitra lintas sektor: Pemerintah Kabupaten Banyumas dan Dinas Kebudayaan sebagai mitra kebijakan; Universitas Jenderal Soedirman sebagai mitra riset dan pendampingan kurasi; Bank BPD Jawa Tengah sebagai mitra pembiayaan UMKM; Komunitas Kota Lama Banyumas sebagai mitra penyelenggara di lokasi.\n\nDukungan ini terdokumentasi dalam Memorandum of Understanding yang diperbarui setiap dua tahun, dan operasional tahunan dilaporkan secara terbuka kepada para mitra sebagai bagian dari prinsip akuntabilitas gerakan.',
+  legalitas_dukungan: 'Peken Banyumasan didukung oleh jaringan mitra lintas sektor: Pemerintah Kabupaten Banyumas dan Dinas Kebudayaan sebagai mitra kebijakan; Universitas Jenderal Soedirman sebagai mitra riset dan pendampingan kurasi; Bank BPD Jawa Tengah sebagai mitra pembiayaan Artisan; Komunitas Kota Lama Banyumas sebagai mitra penyelenggara di lokasi.\n\nDukungan ini terdokumentasi dalam Memorandum of Understanding yang diperbarui setiap dua tahun, dan operasional tahunan dilaporkan secara terbuka kepada para mitra sebagai bagian dari prinsip akuntabilitas gerakan.',
   legalitas_hukum: 'Peken Banyumasan beroperasi di bawah payung Yayasan Peken Banyumasan, dengan landasan hukum nasional pada UU No. 5/2017 tentang Pemajuan Kebudayaan dan UU No. 24/2019 tentang Ekonomi Kreatif, serta payung daerah pada Peraturan Daerah Kabupaten Banyumas No. 6/2020 tentang Pemajuan Kebudayaan Daerah.\n\nYayasan terdaftar resmi dengan NPWP 00.000.000.0-000.000 dan NIB 0000000000000, tunduk pada laporan keuangan dan tata kelola yayasan sebagaimana diatur dalam UU Yayasan.',
 };
 
 const DEFAULT_PROGRAMS = [
   { n: '01', title: 'Banyumasan Fashionshow', img: '/assets/program-fashion.jpg', body: 'Peragaan busana bertema kebudayaan Banyumas dengan materi tenun, batik, dan karya desainer lokal.', body_short: 'Peragaan busana bertema kebudayaan Banyumas — tenun, batik, karya desainer lokal.' },
-  { n: '02', title: 'Bring Your Own Bowl', img: '/assets/program-byob.jpg', body: 'Gerakan zero-waste — pengunjung membawa wadah sendiri, tenant kuliner melayani tanpa kemasan sekali pakai.', body_short: 'Gerakan zero-waste — pengunjung membawa wadah sendiri, tenant kuliner tanpa kemasan sekali pakai.' },
-  { n: '03', title: 'Local Market', img: '/assets/program-local-market.jpg', body: 'Pasar produk kerajinan, makanan, dan kebutuhan rumah tangga dari UMKM Banyumasan.', body_short: 'Pasar produk kerajinan, makanan, dan kebutuhan rumah tangga dari UMKM Banyumasan.' },
+  { n: '02', title: 'Bring Your Own Bowl', img: '/assets/program-byob.jpg', body: 'Gerakan zero-waste — pengunjung membawa wadah sendiri, artisan kuliner melayani tanpa kemasan sekali pakai.', body_short: 'Gerakan zero-waste — pengunjung membawa wadah sendiri, artisan kuliner tanpa kemasan sekali pakai.' },
+  { n: '03', title: 'Local Market', img: '/assets/program-local-market.jpg', body: 'Pasar produk kerajinan, makanan, dan kebutuhan rumah tangga dari Artisan Banyumasan.', body_short: 'Pasar produk kerajinan, makanan, dan kebutuhan rumah tangga dari Artisan Banyumasan.' },
   { n: '04', title: 'Pitutur Banyumasan', img: '/assets/program-pitutur.jpg', body: 'Panggung cerita lisan: kidung, wayang, geguritan. Dipandu oleh para pelaku pertunjukan setempat.', body_short: 'Panggung cerita lisan: kidung, wayang, geguritan, dipandu pelaku pertunjukan setempat.' },
   { n: '05', title: 'Coffee & Conversation', img: '/assets/program-coffee.jpg', body: 'Ruang ngopi lambat untuk percakapan lintas komunitas: seniman, perajin, pemerintah, akademisi.', body_short: 'Ruang ngopi lambat untuk percakapan lintas komunitas — seniman, perajin, akademisi.' },
   { n: '06', title: 'Makers Workshop', img: '/assets/program-makers.jpg', body: 'Workshop dua-jam: batik ecoprint, tenun mini, aksara Jawa, sablon manual. Terbuka untuk pengunjung.', body_short: 'Workshop dua-jam: batik ecoprint, tenun mini, aksara Jawa, sablon manual.' },
@@ -93,7 +93,7 @@ const DEFAULT_WORKS = [
   { id: 'w-002', title: 'Tenun Lurik Modular', owner: 'Sanggar Lestari Sokaraja', role: 'Artisan · Tekstil', year: '2025', img: '/assets/gallery-2.jpg', description: 'Eksperimen tenun lurik dengan modul lebar tetap untuk memudahkan kombinasi warna oleh desainer pakaian.', source: 'kolaborator', visible: true },
   { id: 'w-003', title: 'Edisi #54 — Geguritan Malam', owner: 'Komunitas Pitutur', role: 'Kolaborator · Pertunjukan', year: '2025', img: '/assets/gallery-3.jpg', description: 'Dokumentasi panggung geguritan malam pada Peken Edisi #54. Empat pelaku tampil bergantian membawakan cerita rakyat Banyumasan dalam balutan musik akustik.', source: 'kolaborator', visible: true },
   { id: 'w-004', title: 'Banyumasan Streetwear Cap.1', owner: 'Reka Studio', role: 'Kolaborator · Mode', year: '2025', img: '/assets/program-fashion.jpg', description: 'Lini streetwear pertama dari Reka Studio yang mengadaptasi motif batik banyumasan ke siluet kontemporer.', source: 'kolaborator', visible: true },
-  { id: 'w-005', title: 'Wadah Bambu Lipat', owner: 'UMKM Tirta Karya', role: 'Artisan · Kriya', year: '2024', img: '/assets/gallery-4.jpg', description: 'Wadah makanan bambu lipat untuk mendukung Bring Your Own Bowl. Dibuat tanpa lem sintetis, dirakit hanya dengan ikatan rotan.', source: 'kolaborator', visible: true },
+  { id: 'w-005', title: 'Wadah Bambu Lipat', owner: 'Artisan Tirta Karya', role: 'Artisan · Kriya', year: '2024', img: '/assets/gallery-4.jpg', description: 'Wadah makanan bambu lipat untuk mendukung Bring Your Own Bowl. Dibuat tanpa lem sintetis, dirakit hanya dengan ikatan rotan.', source: 'kolaborator', visible: true },
   { id: 'w-006', title: 'Mural Kota Lama', owner: 'Kolektif Coret', role: 'Kolaborator · Seni Publik', year: '2024', img: '/assets/gallery-5.jpg', description: 'Mural permanen pada dinding selatan Taman Sari, dilukis selama dua minggu oleh enam seniman muda Kolektif Coret.', source: 'kolaborator', visible: true },
   { id: 'w-007', title: 'Kopi Robusta Banyumas', owner: 'Petani Kopi Baturraden', role: 'Artisan · Kuliner', year: '2024', img: '/assets/program-coffee.jpg', description: 'Robusta single-origin dari ketinggian 800 mdpl di Baturraden. Dipanen, dijemur, dan disangrai sendiri oleh kelompok tani.', source: 'kolaborator', visible: true },
   { id: 'w-008', title: 'Aksara Jawa Banyumasan', owner: 'Studio Wignya', role: 'Kolaborator · Desain Grafis', year: '2023', img: '/assets/gallery-6.jpg', description: 'Tipografi aksara Jawa varian Banyumasan, dirilis sebagai font terbuka. Hasil riset enam bulan bersama akademisi linguistik Universitas Jenderal Soedirman.', source: 'kolaborator', visible: true },
@@ -667,7 +667,7 @@ function TabTim() {
   };
 
   const addPerson = () => {
-    const newP = { id: `kp${Date.now()}`, photo: '', role: 'MEMBER', name: 'Anggota Baru', title: '', bio: '' };
+    const newP = { id: `kp${Date.now()}`, photo: '', role: 'KOLABORATOR', name: 'Anggota Baru', title: '', bio: '' };
     setData(p => ({ ...p, key_people: [...p.key_people, newP] }));
   };
 
@@ -838,7 +838,7 @@ function WorkModal({ work, onClose, onSave }) {
             <Input value={form.title} onChange={v => set('title', v)} placeholder="Nama karya" />
           </Field>
           <div className="grid grid-cols-2 gap-3">
-            <Field label="Nama Pembuat/Kreator" required>
+            <Field label="Nama Pembuat/Kolaborator" required>
               <Input value={form.owner} onChange={v => set('owner', v)} placeholder="Nama individu/komunitas" />
             </Field>
             <Field label="Tahun">
@@ -1154,7 +1154,7 @@ const TABS = [
 
 export default function CompanyProfile() {
   const [activeTab, setActiveTab] = useState('beranda');
-  const profileUrl = import.meta.env.VITE_PUBLIC_EVENT_URL || '/';
+  const profileUrl = import.meta.env.VITE_ARTISAN_URL || '/';
 
   return (
     <div className="min-h-full">

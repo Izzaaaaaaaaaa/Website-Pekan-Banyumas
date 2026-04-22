@@ -2,7 +2,9 @@
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Mail, Lock, Eye, EyeOff, HelpCircle, ArrowRight, ShieldAlert } from 'lucide-react';
-import api from '../services/api';
+import { authApi } from '../services/endpoints';
+import { setToken, setUser } from '../lib/auth';
+import { extractError } from '../lib/unwrap';
 import logoImg from '../assets/logo.png';
 
 const Login = () => {
@@ -22,17 +24,14 @@ const Login = () => {
         setError('');
 
         try {
-            // POST /auth/login → response: { status, message, data: { token, user } }
-            const response = await api.post('/auth/login', formData);
-
-            // [FIX] API membungkus payload di dalam .data.data (bukan .data langsung)
-            // OpenAPI LoginResponse: { status, message, data: { token, user: {...} } }
-            localStorage.setItem('token', response.data.data.token);
-            localStorage.setItem('user', JSON.stringify(response.data.data.user));
-
+            // authApi.login returns the UNWRAPPED payload per the Phase 0 contract:
+            // { token, user: { id, nama, email, role } }. No more response.data.data gymnastics.
+            const { token, user } = await authApi.login(formData);
+            setToken(token);
+            setUser(user);
             navigate('/');
         } catch (err) {
-            setError(err.response?.data?.message || 'Email atau password salah. Silakan coba lagi.');
+            setError(extractError(err, 'Email atau password salah. Silakan coba lagi.'));
         } finally {
             setIsLoading(false);
         }

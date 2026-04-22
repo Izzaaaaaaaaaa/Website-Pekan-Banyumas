@@ -4,7 +4,9 @@
 // Bisa diakses oleh semua role yang sudah login (admin & petugas).
 import React, { useState, useEffect } from 'react';
 import { User, KeyRound, CheckCircle, Eye, EyeOff, ShieldCheck, Loader2 } from 'lucide-react';
-import api from '../services/api';
+import { authApi } from '../services/endpoints';
+import { getUser, setUser } from '../lib/auth';
+import { extractError } from '../lib/unwrap';
 import { useToast } from '../components/Toast';
 
 // ── Sub-komponen: Card wrapper ────────────────────────────────────────────────
@@ -106,9 +108,8 @@ const Settings = () => {
     const [isUpdatingPw, setIsUpdatingPw] = useState(false);
 
     useEffect(() => {
-        const stored = localStorage.getItem('user');
-        if (stored) {
-            const u = JSON.parse(stored);
+        const u = getUser();
+        if (u) {
             setUserData(u);
             setNamaBaru(u.nama || '');
         }
@@ -128,16 +129,16 @@ const Settings = () => {
         }
         try {
             setIsUpdatingNama(true);
-            const res = await api.put('/auth/profile', { nama });
-            // Update localStorage dengan nama baru
-            const newUser = { ...userData, nama: res.data.data.nama };
-            localStorage.setItem('user', JSON.stringify(newUser));
+            // authApi.updateProfile returns the unwrapped updated-user subset.
+            const data = await authApi.updateProfile({ nama });
+            const newUser = { ...userData, nama: data.nama };
+            // setUser writes to localStorage AND dispatches STORAGE_EVENTS.USER_UPDATE,
+            // so AdminLayout's sidebar updates reactively — no manual dispatch needed.
+            setUser(newUser);
             setUserData(newUser);
-            // Broadcast ke AdminLayout agar nama di sidebar ikut berubah
-            window.dispatchEvent(new CustomEvent('peken_user_update', { detail: newUser }));
             toast.success('Nama berhasil diperbarui');
         } catch (error) {
-            toast.error(error.message || 'Gagal memperbarui nama');
+            toast.error(extractError(error, 'Gagal memperbarui nama'));
         } finally {
             setIsUpdatingNama(false);
         }
@@ -164,7 +165,7 @@ const Settings = () => {
         }
         try {
             setIsUpdatingPw(true);
-            await api.put('/auth/password', {
+            await authApi.updatePassword({
                 password_lama: pwLama,
                 password_baru: pwBaru,
             });
@@ -174,7 +175,7 @@ const Settings = () => {
             setPwBaru('');
             setPwKonfirmasi('');
         } catch (error) {
-            toast.error(error.message || 'Gagal mengubah password. Periksa password lama Anda.');
+            toast.error(extractError(error, 'Gagal mengubah password. Periksa password lama Anda.'));
         } finally {
             setIsUpdatingPw(false);
         }

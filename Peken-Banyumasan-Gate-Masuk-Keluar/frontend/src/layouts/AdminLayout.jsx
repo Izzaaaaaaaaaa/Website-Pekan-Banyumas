@@ -2,7 +2,7 @@
 // CHANGELOG:
 // [NEW] Link "Pengaturan Akun" di sidebar → /settings (semua role)
 // [NEW] Avatar user di header bisa diklik → /settings
-// [NEW] Listen CustomEvent 'pekan_user_update' dari Settings.jsx
+// [NEW] Listen CustomEvent STORAGE_EVENTS.USER_UPDATE dari lib/auth#setUser
 // agar nama di sidebar/header langsung berubah tanpa reload
 
 import React, { useState, useEffect, useMemo } from 'react';
@@ -14,6 +14,8 @@ import {
     Calendar, Monitor, BookOpen, Settings, Globe,
 } from 'lucide-react';
 import ConfirmDialog from '../components/ConfirmDialog';
+import { getUser, clearAuth } from '../lib/auth';
+import { STORAGE_KEYS, STORAGE_EVENTS } from '../lib/storageKeys';
 
 const normalizeExternalUrl = (value, fallback = '/') => {
     const raw = String(value || '').trim();
@@ -36,20 +38,20 @@ const AdminLayout = () => {
 
     const [activeEventBadge, setActiveEventBadge] = useState(() => {
         try {
-            const stored = localStorage.getItem('peken_active_event');
+            const stored = localStorage.getItem(STORAGE_KEYS.ACTIVE_EVENT);
             return stored ? JSON.parse(stored) : null;
         } catch { return null; }
     });
 
-    const [pendingArtisanCount, setPendingUmkmCount] = useState(() => {
+    const [pendingArtisanCount, setPendingArtisanCount] = useState(() => {
         try {
-            const stored = localStorage.getItem('peken_pending_artisan');
+            const stored = localStorage.getItem(STORAGE_KEYS.PENDING_ARTISAN);
             return stored ? parseInt(stored, 10) : 0;
         } catch { return 0; }
     });
 
     const publicCompanyProfileUrl = useMemo(() => normalizeExternalUrl(
-        import.meta.env.VITE_PUBLIC_EVENT_URL || import.meta.env.VITE_Artisan_PUBLIC_URL || '/',
+        import.meta.env.VITE_ARTISAN_URL || '/',
         '/'
     ), []);
 
@@ -57,43 +59,42 @@ const AdminLayout = () => {
     useEffect(() => {
         const handler = () => {
             try {
-                const stored = localStorage.getItem('peken_active_event');
+                const stored = localStorage.getItem(STORAGE_KEYS.ACTIVE_EVENT);
                 setActiveEventBadge(stored ? JSON.parse(stored) : null);
             } catch { setActiveEventBadge(null); }
         };
-        window.addEventListener('peken_event_update', handler);
-        return () => window.removeEventListener('peken_event_update', handler);
+        window.addEventListener(STORAGE_EVENTS.EVENT_UPDATE, handler);
+        return () => window.removeEventListener(STORAGE_EVENTS.EVENT_UPDATE, handler);
     }, []);
 
-    // Sync pending Artisan count dari Tenants page
+    // Sync pending Artisan count dari Artisan page
     useEffect(() => {
-        const handler = (e) => setPendingUmkmCount(e?.detail?.count ?? 0);
-        window.addEventListener('peken_pending_artisan_update', handler);
-        return () => window.removeEventListener('peken_pending_artisan_update', handler);
+        const handler = (e) => setPendingArtisanCount(e?.detail?.count ?? 0);
+        window.addEventListener(STORAGE_EVENTS.PENDING_ARTISAN_UPDATE, handler);
+        return () => window.removeEventListener(STORAGE_EVENTS.PENDING_ARTISAN_UPDATE, handler);
     }, []);
 
-    // Load user dari localStorage
+    // Load user via lib/auth helper — never touch localStorage directly.
     useEffect(() => {
-        const storedUser = localStorage.getItem('user');
-        if (storedUser) setUserData(JSON.parse(storedUser));
+        const u = getUser();
+        if (u) setUserData(u);
     }, []);
 
-    // [NEW] Dengarkan update nama dari Settings.jsx
+    // Dengarkan update user dari setUser() in lib/auth (dispatched by Settings.jsx save flow)
     useEffect(() => {
         const handler = (e) => {
-            if (e?.detail) {
-                setUserData(e.detail);
-            }
+            if (e?.detail) setUserData(e.detail);
         };
-        window.addEventListener('peken_user_update', handler);
-        return () => window.removeEventListener('peken_user_update', handler);
+        window.addEventListener(STORAGE_EVENTS.USER_UPDATE, handler);
+        return () => window.removeEventListener(STORAGE_EVENTS.USER_UPDATE, handler);
     }, []);
 
     const handleLogout = () => setShowLogoutConfirm(true);
     const executeLogout = () => {
         setShowLogoutConfirm(false);
-        localStorage.removeItem('token');
-        localStorage.removeItem('user');
+        // clearAuth wipes token + user + every per-user localStorage key
+        // (see PER_USER_STORAGE_KEYS in storageKeys.js).
+        clearAuth();
         navigate('/login');
     };
 

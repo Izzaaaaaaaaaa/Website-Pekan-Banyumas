@@ -74,7 +74,7 @@ function useDebounce(v, d=300) {
 }
 
 // ── AssignEventModal ─────────────────────────────────────────────────────────
-function AssignEventModal({ memberId, existingIds, onClose, onAssign }) {
+function AssignEventModal({ kolaboratorId, existingIds, onClose, onAssign }) {
   const [selected, setSelected] = useState(null);
   const [peran, setPeran] = useState('peserta');
   const [saving, setSaving] = useState(false);
@@ -127,8 +127,8 @@ function AssignEventModal({ memberId, existingIds, onClose, onAssign }) {
   );
 }
 
-// ── MemberRow ─────────────────────────────────────────────────────────────────
-const MemberRow = React.memo(({ m, onApprove, onSuspend, onDetail, onDelete, isProcessing }) => {
+// ── KolaboratorRow ─────────────────────────────────────────────────────────────────
+const KolaboratorRow = React.memo(({ m, onApprove, onSuspend, onDetail, onDelete, isProcessing }) => {
   const st = STATUS_MAP[m.status] || STATUS_MAP.aktif;
   const fmt = d => new Date(d).toLocaleDateString('id-ID',{day:'numeric',month:'short',year:'numeric'});
   return (
@@ -174,27 +174,27 @@ const MemberRow = React.memo(({ m, onApprove, onSuspend, onDetail, onDelete, isP
 });
 
 // ── DetailDrawer ─────────────────────────────────────────────────────────────
-const DetailDrawer = ({ member, onClose, onApprove, onSuspend }) => {
+const DetailDrawer = ({ kolaborator, onClose, onApprove, onSuspend }) => {
   const [tab, setTab] = useState('info');
-  const [memberEvents, setMemberEvents] = useState([]);
+  const [kolaboratorEvents, setKolaboratorEvents] = useState([]);
   const [portfolio, setPortfolio] = useState([]);
   const [stories, setStories] = useState([]);
   const [showAssignEvent, setShowAssignEvent] = useState(false);
   const toast = useToast();
 
   useEffect(() => {
-    if (!member) return;
-    setMemberEvents(DUMMY_KOLABORATOR_EVENTS[member.id] || []);
-    setPortfolio(DUMMY_KOLABORATOR_PORTO[member.id] || []);
-    setStories(DUMMY_KOLABORATOR_AKTIVITAS[member.id] || []);
+    if (!kolaborator) return;
+    setKolaboratorEvents(DUMMY_KOLABORATOR_EVENTS[kolaborator.id] || []);
+    setPortfolio(DUMMY_KOLABORATOR_PORTO[kolaborator.id] || []);
+    setStories(DUMMY_KOLABORATOR_AKTIVITAS[kolaborator.id] || []);
     setTab('info');
-  }, [member?.id]);
+  }, [kolaborator?.id]);
 
-  if (!member) return null;
-  const st = STATUS_MAP[member.status];
+  if (!kolaborator) return null;
+  const st = STATUS_MAP[kolaborator.status];
 
   const removeEvent = (emId) => {
-    setMemberEvents(l => l.filter(e => e.id !== emId));
+    setKolaboratorEvents(l => l.filter(e => e.id !== emId));
     toast.success('Kolaborator dihapus dari event');
   };
 
@@ -219,9 +219,9 @@ const DetailDrawer = ({ member, onClose, onApprove, onSuspend }) => {
         {/* Header */}
         <div className="flex items-center justify-between px-5 py-4 border-b border-gray-100 bg-gray-50 shrink-0">
           <div className="flex items-center gap-3">
-            <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-amber-100 to-amber-200 flex items-center justify-center text-amber-800 font-bold text-base shrink-0">{member.nama.charAt(0)}</div>
+            <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-amber-100 to-amber-200 flex items-center justify-center text-amber-800 font-bold text-base shrink-0">{kolaborator.nama.charAt(0)}</div>
             <div>
-              <p className="font-bold text-gray-900 text-sm leading-tight">{member.nama}</p>
+              <p className="font-bold text-gray-900 text-sm leading-tight">{kolaborator.nama}</p>
               <span className={`inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-semibold border ${st.cls}`}>
                 <span className={`w-1.5 h-1.5 rounded-full ${st.dot}`}/>{st.label}
               </span>
@@ -247,29 +247,29 @@ const DetailDrawer = ({ member, onClose, onApprove, onSuspend }) => {
           {tab === 'info' && (
             <div className="p-5 space-y-4">
               <div className="bg-gray-50 rounded-xl p-4 space-y-2 text-sm">
-                <div className="flex items-center gap-2 text-gray-600"><Mail size={13}/>{member.email}</div>
-                <div className="flex items-center gap-2 text-gray-600"><MapPin size={13}/>{member.kota}</div>
+                <div className="flex items-center gap-2 text-gray-600"><Mail size={13}/>{kolaborator.email}</div>
+                <div className="flex items-center gap-2 text-gray-600"><MapPin size={13}/>{kolaborator.kota}</div>
               </div>
               <div>
                 <p className="text-xs font-semibold text-gray-400 uppercase tracking-wider mb-2">Subsektor</p>
                 <div className="flex flex-wrap gap-2">
-                  {member.subsektor.map(s => <span key={s} className="px-3 py-1 bg-indigo-50 border border-indigo-100 text-indigo-700 rounded-full text-xs font-medium">{s}</span>)}
+                  {kolaborator.subsektor.map(s => <span key={s} className="px-3 py-1 bg-indigo-50 border border-indigo-100 text-indigo-700 rounded-full text-xs font-medium">{s}</span>)}
                 </div>
               </div>
-              {member.bio && (
+              {kolaborator.bio && (
                 <div>
                   <p className="text-xs font-semibold text-gray-400 uppercase tracking-wider mb-2">Bio</p>
-                  <p className="text-gray-600 text-sm leading-relaxed">{member.bio}</p>
+                  <p className="text-gray-600 text-sm leading-relaxed">{kolaborator.bio}</p>
                 </div>
               )}
               <div className="grid grid-cols-2 gap-3">
                 <div className="bg-amber-50 border border-amber-100 rounded-xl p-3 text-center">
-                  <p className="text-2xl font-bold text-amber-700">{member.total_karya}</p>
+                  <p className="text-2xl font-bold text-amber-700">{kolaborator.total_karya}</p>
                   <p className="text-amber-600 text-xs mt-0.5">Total Karya</p>
                 </div>
                 <div className="bg-indigo-50 border border-indigo-100 rounded-xl p-3 text-center">
                   <p className="text-xs text-indigo-500 font-medium">Terdaftar</p>
-                  <p className="text-indigo-700 text-xs mt-1">{new Date(member.tanggal_daftar).toLocaleDateString('id-ID',{day:'numeric',month:'long',year:'numeric'})}</p>
+                  <p className="text-indigo-700 text-xs mt-1">{new Date(kolaborator.tanggal_daftar).toLocaleDateString('id-ID',{day:'numeric',month:'long',year:'numeric'})}</p>
                 </div>
               </div>
             </div>
@@ -279,16 +279,16 @@ const DetailDrawer = ({ member, onClose, onApprove, onSuspend }) => {
           {tab === 'event' && (
             <div>
               <div className="px-5 py-3.5 border-b border-gray-50 flex items-center justify-between">
-                <p className="text-sm text-gray-500">{memberEvents.length} event</p>
+                <p className="text-sm text-gray-500">{kolaboratorEvents.length} event</p>
                 <button onClick={() => setShowAssignEvent(true)}
                   className="flex items-center gap-1.5 bg-green-700 hover:bg-green-800 text-white px-3 py-1.5 rounded-xl text-xs font-semibold transition">
                   <Plus size={12}/> Assign Event
                 </button>
               </div>
-              {memberEvents.length === 0
+              {kolaboratorEvents.length === 0
                 ? <div className="py-12 text-center text-gray-400 text-sm"><Calendar size={28} className="text-gray-200 mx-auto mb-2"/>Belum ada event</div>
                 : <div className="divide-y divide-gray-50">
-                    {memberEvents.map(e => (
+                    {kolaboratorEvents.map(e => (
                       <div key={e.id} className="px-5 py-3 flex items-start gap-3 group hover:bg-gray-50/50 transition">
                         <div className="flex-1 min-w-0">
                           <p className="font-semibold text-gray-800 text-sm leading-snug">{e.nama}</p>
@@ -297,7 +297,7 @@ const DetailDrawer = ({ member, onClose, onApprove, onSuspend }) => {
                             {/* Editable peran */}
                             <select
                               value={e.peran}
-                              onChange={ev => setMemberEvents(l => l.map(x => x.id===e.id ? {...x,peran:ev.target.value} : x))}
+                              onChange={ev => setKolaboratorEvents(l => l.map(x => x.id===e.id ? {...x,peran:ev.target.value} : x))}
                               className="text-[10px] border border-gray-200 rounded-lg px-1.5 py-1 focus:outline-none focus:border-green-400 bg-white"
                             >
                               <option value="peserta">Peserta</option>
@@ -307,7 +307,7 @@ const DetailDrawer = ({ member, onClose, onApprove, onSuspend }) => {
                             {/* Editable kehadiran */}
                             <select
                               value={e.status_kehadiran}
-                              onChange={ev => setMemberEvents(l => l.map(x => x.id===e.id ? {...x,status_kehadiran:ev.target.value} : x))}
+                              onChange={ev => setKolaboratorEvents(l => l.map(x => x.id===e.id ? {...x,status_kehadiran:ev.target.value} : x))}
                               className={`text-[10px] border border-gray-200 rounded-lg px-1.5 py-1 focus:outline-none focus:border-green-400 bg-white ${e.status_kehadiran==='hadir'?'text-green-600':e.status_kehadiran==='tidak_hadir'?'text-red-500':'text-gray-400'}`}
                             >
                               <option value="terdaftar">Terdaftar</option>
@@ -379,18 +379,18 @@ const DetailDrawer = ({ member, onClose, onApprove, onSuspend }) => {
 
         {/* Footer actions */}
         <div className="p-4 border-t border-gray-100 shrink-0 flex gap-2.5">
-          {member.status === 'pending'   && <button onClick={() => { onApprove(member.id); onClose(); }} className="flex-1 flex items-center justify-center gap-2 bg-green-600 hover:bg-green-700 text-white py-2.5 rounded-xl font-semibold text-sm transition"><CheckCircle size={15}/> Setujui</button>}
-          {member.status === 'aktif'     && <button onClick={() => { onSuspend(member.id); onClose(); }} className="flex-1 flex items-center justify-center gap-2 border border-red-200 text-red-500 py-2.5 rounded-xl font-semibold text-sm hover:bg-red-50 transition"><XCircle size={15}/> Suspend</button>}
-          {member.status === 'suspended' && <button onClick={() => { onApprove(member.id); onClose(); }} className="flex-1 flex items-center justify-center gap-2 bg-green-600 hover:bg-green-700 text-white py-2.5 rounded-xl font-semibold text-sm transition"><UserCheck size={15}/> Aktifkan</button>}
+          {kolaborator.status === 'pending'   && <button onClick={() => { onApprove(kolaborator.id); onClose(); }} className="flex-1 flex items-center justify-center gap-2 bg-green-600 hover:bg-green-700 text-white py-2.5 rounded-xl font-semibold text-sm transition"><CheckCircle size={15}/> Setujui</button>}
+          {kolaborator.status === 'aktif'     && <button onClick={() => { onSuspend(kolaborator.id); onClose(); }} className="flex-1 flex items-center justify-center gap-2 border border-red-200 text-red-500 py-2.5 rounded-xl font-semibold text-sm hover:bg-red-50 transition"><XCircle size={15}/> Suspend</button>}
+          {kolaborator.status === 'suspended' && <button onClick={() => { onApprove(kolaborator.id); onClose(); }} className="flex-1 flex items-center justify-center gap-2 bg-green-600 hover:bg-green-700 text-white py-2.5 rounded-xl font-semibold text-sm transition"><UserCheck size={15}/> Aktifkan</button>}
           <button onClick={onClose} className="flex-1 border border-gray-200 text-gray-600 py-2.5 rounded-xl font-semibold text-sm hover:bg-gray-50 transition">Tutup</button>
         </div>
 
         {showAssignEvent && (
           <AssignEventModal
-            memberId={member.id}
-            existingIds={memberEvents.map(e => e.event_id)}
+            kolaboratorId={kolaborator.id}
+            existingIds={kolaboratorEvents.map(e => e.event_id)}
             onClose={() => setShowAssignEvent(false)}
-            onAssign={(ev) => { setMemberEvents(l => [...l, ev]); toast.success('Berhasil di-assign ke event'); }}
+            onAssign={(ev) => { setKolaboratorEvents(l => [...l, ev]); toast.success('Berhasil di-assign ke event'); }}
           />
         )}
       </div>
@@ -401,7 +401,7 @@ const DetailDrawer = ({ member, onClose, onApprove, onSuspend }) => {
 // ── Main ─────────────────────────────────────────────────────────────────────
 export default function Kolaborator() {
   const toast = useToast();
-  const [members, setMembers] = useState(DUMMY_KOLABORATOR);
+  const [kolaborators, setKolaborators] = useState(DUMMY_KOLABORATOR);
   const [search, setSearch] = useState('');
   const [filterStatus, setFilterStatus] = useState('semua');
   const [filterSub, setFilterSub] = useState('Semua');
@@ -414,10 +414,10 @@ export default function Kolaborator() {
   const approve = async (id) => {
     setProcessing(id);
     await new Promise(r=>setTimeout(r,600));
-    const m = members.find(x=>x.id===id);
-    setMembers(l => l.map(m => m.id===id ? {...m,status:'aktif'} : m));
+    const m = kolaborators.find(x=>x.id===id);
+    setKolaborators(l => l.map(m => m.id===id ? {...m,status:'aktif'} : m));
     toast.success('Kolaborator berhasil disetujui');
-    // Auto-notify member
+    // Auto-notify kolaborator
     try {
       const { triggerKolaboratorApproved } = await import('../lib/notifications');
       if (m) triggerKolaboratorApproved(m.nama);
@@ -427,27 +427,27 @@ export default function Kolaborator() {
   const suspend = async (id) => {
     setProcessing(id);
     await new Promise(r=>setTimeout(r,600));
-    setMembers(l => l.map(m => m.id===id ? {...m,status:'suspended'} : m));
+    setKolaborators(l => l.map(m => m.id===id ? {...m,status:'suspended'} : m));
     toast.error('Akun disuspend');
     setProcessing(null);
   };
 
-  const deleteMember = async (id) => {
+  const deleteKolaborator = async (id) => {
     if (!confirm('Hapus akun ini secara permanen? Data akan diarsipkan dan tidak bisa dipulihkan.')) return;
     setProcessing(id);
     await new Promise(r=>setTimeout(r,500));
-    setMembers(l => l.map(m => m.id===id ? {...m, status:'deleted'} : m));
+    setKolaborators(l => l.map(m => m.id===id ? {...m, status:'deleted'} : m));
     toast.error('Akun dihapus (diarsipkan)');
     setProcessing(null);
   };
 
-  const memberIdsInEvent = (eventId) => {
+  const kolaboratorIdsInEvent = (eventId) => {
     return Object.entries(DUMMY_KOLABORATOR_EVENTS)
       .filter(([, evs]) => evs.some(e => e.event_id === eventId))
       .map(([mid]) => mid);
   };
 
-  // Count events per member
+  // Count events per kolaborator
   const eventCount = (id) => (DUMMY_KOLABORATOR_EVENTS[id] || []).length;
 
   const SORT_FNS = {
@@ -460,18 +460,18 @@ export default function Kolaborator() {
     most_works:  (a,b) => (b.total_karya||0) - (a.total_karya||0),
   };
 
-  const filtered = members
+  const filtered = kolaborators
     .filter(m => m.status !== 'deleted')  // exclude soft-deleted from main list
     .filter(m => {
       const matchQ = !dSearch || m.nama.toLowerCase().includes(dSearch.toLowerCase()) || m.email.toLowerCase().includes(dSearch.toLowerCase());
       const matchS = filterStatus==='semua' || m.status===filterStatus;
       const matchSub = filterSub==='Semua' || m.subsektor.includes(filterSub);
-      const matchEv = filterEvent==='semua' || memberIdsInEvent(filterEvent).includes(m.id);
+      const matchEv = filterEvent==='semua' || kolaboratorIdsInEvent(filterEvent).includes(m.id);
       return matchQ && matchS && matchSub && matchEv;
     })
     .sort(SORT_FNS[sortBy] || SORT_FNS.newest);
 
-  const active = members.filter(m=>m.status!=='deleted');
+  const active = kolaborators.filter(m=>m.status!=='deleted');
   const counts = {
     semua:     active.length,
     aktif:     active.filter(m=>m.status==='aktif').length,
@@ -547,7 +547,7 @@ export default function Kolaborator() {
         {/* Row 3: Sort (labeled, right-aligned) */}
         <div className="px-4 py-2.5 flex items-center justify-between">
           <p className="text-xs text-gray-400">
-            {filtered.length} dari {members.filter(m=>m.status!=='deleted').length} anggota
+            {filtered.length} dari {kolaborators.filter(m=>m.status!=='deleted').length} anggota
             {filterEvent !== 'semua' && (
               <span className="ml-2 inline-flex items-center gap-1 px-2 py-0.5 bg-indigo-50 text-indigo-600 rounded-full text-[10px] font-semibold">
                 🎪 {DUMMY_ALL_EVENTS.find(e=>e.id===filterEvent)?.nama?.slice(0,20)}
@@ -583,12 +583,12 @@ export default function Kolaborator() {
           <tbody>
             {filtered.length === 0
               ? <tr><td colSpan={6} className="px-5 py-12 text-center text-gray-400 text-sm">Tidak ada hasil</td></tr>
-              : filtered.map(m => <MemberRow key={m.id} m={m} onApprove={approve} onSuspend={suspend} onDetail={setDetail} onDelete={deleteMember} isProcessing={processing}/>)
+              : filtered.map(m => <KolaboratorRow key={m.id} m={m} onApprove={approve} onSuspend={suspend} onDetail={setDetail} onDelete={deleteKolaborator} isProcessing={processing}/>)
             }
           </tbody>
         </table>
         <div className="px-5 py-3 border-t border-gray-50 text-xs text-gray-400 flex items-center justify-between">
-          <span>Menampilkan {filtered.length} dari {members.length} Kolaborator</span>
+          <span>Menampilkan {filtered.length} dari {kolaborators.length} Kolaborator</span>
           {filterEvent !== 'semua' && (
             <span className="flex items-center gap-1.5 px-2 py-1 bg-indigo-50 text-indigo-600 rounded-lg font-medium">
               🎪 {DUMMY_ALL_EVENTS.find(e=>e.id===filterEvent)?.nama}
@@ -598,7 +598,7 @@ export default function Kolaborator() {
         </div>
       </div>
 
-      <DetailDrawer member={detail} onClose={() => setDetail(null)} onApprove={approve} onSuspend={suspend}/>
+      <DetailDrawer kolaborator={detail} onClose={() => setDetail(null)} onApprove={approve} onSuspend={suspend}/>
     </div>
   );
 }

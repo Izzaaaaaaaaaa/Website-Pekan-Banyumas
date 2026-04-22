@@ -9,6 +9,7 @@ import {
 import { useToast } from '../components/Toast';
 import ZoneSelector from '../components/ZoneSelector';
 import { getEventZones } from '../lib/eventZones';
+import { STORAGE_KEYS, STORAGE_EVENTS } from '../lib/storageKeys';
 
 const DUMMY_ARTISANS = [
   { id:'t1', nama_usaha:'Batik Sari Rahayu',    pemilik:'Sari Dewi',     kategori:'Kriya & Fashion', kota:'Banyumas',    no_hp:'08111234567', email:'sari@batik.com', status:'aktif',    tanggal_daftar:'2024-03-10', komisi_persen:15, total_penjualan:4500000, komisi_terkumpul:675000,  deskripsi:'Batik tulis dan printing motif Banyumasan.' },
@@ -411,8 +412,8 @@ export default function ArtisanPage() {
 
   useEffect(() => {
     try {
-      localStorage.setItem('peken_pending_artisan', String(pending.length));
-      window.dispatchEvent(new CustomEvent('peken_pending_artisan_update',{detail:{count:pending.length}}));
+      localStorage.setItem(STORAGE_KEYS.PENDING_ARTISAN, String(pending.length));
+      window.dispatchEvent(new CustomEvent(STORAGE_EVENTS.PENDING_ARTISAN_UPDATE,{detail:{count:pending.length}}));
     } catch {}
   }, [pending.length]);
 

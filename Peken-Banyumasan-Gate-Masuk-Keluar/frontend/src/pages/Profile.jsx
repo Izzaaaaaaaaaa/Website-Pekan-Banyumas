@@ -14,9 +14,7 @@ const normalizePublicUrl = (value) => {
 
 const resolvePublicEventUrl = () => {
     return normalizePublicUrl(
-        import.meta.env.VITE_PUBLIC_EVENT_URL ||
-        import.meta.env.VITE_Artisan_PUBLIC_URL ||
-        '/'
+        import.meta.env.VITE_ARTISAN_URL || '/'
     );
 };
 
