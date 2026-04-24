@@ -1,24 +1,45 @@
 from fastapi import APIRouter, Depends, HTTPException
-from app.services.event_service import *
 from app.api.deps import get_current_user
-from app.schemas.event_schema import EventCreate, EventUpdate  # 🔥 import schema
+
+# SERVICES
+from app.services.event_service import (
+    get_events,
+    get_event_by_id,
+    create_event,
+    update_event,
+    delete_event,
+    get_event_detail
+)
+
+# SCHEMAS
+from app.schemas.event_schema import (
+    EventCreate,
+    EventUpdate,
+    EventDetailResponse
+)
 
 router = APIRouter(prefix="/events", tags=["Events"])
 
 
-# GET ALL
+# 🔥 DETAIL EVENT (HARUS DI ATAS)
+@router.get("/{id}/detail", response_model=EventDetailResponse)
+def detail(id: str, user=Depends(get_current_user)):
+    return get_event_detail(id)
+
+
+# GET ALL EVENTS
 @router.get("/")
 def get_all(user=Depends(get_current_user)):
     return get_events()
 
 
-# GET BY ID
+# GET EVENT BY ID
 @router.get("/{id}")
 def get_one(id: str, user=Depends(get_current_user)):
     return get_event_by_id(id)
 
 
-# CREATE
+# CREATE EVENT
 @router.post("/")
 def create(data: EventCreate, user=Depends(get_current_user)):
     if user["role"] != "admin":
@@ -27,7 +48,7 @@ def create(data: EventCreate, user=Depends(get_current_user)):
     return create_event(data.dict())
 
 
-# UPDATE
+# UPDATE EVENT
 @router.put("/{id}")
 def update(id: str, data: EventUpdate, user=Depends(get_current_user)):
     if user["role"] != "admin":
@@ -41,7 +62,7 @@ def update(id: str, data: EventUpdate, user=Depends(get_current_user)):
     return update_event(id, clean_data)
 
 
-# DELETE
+# DELETE EVENT
 @router.delete("/{id}")
 def delete(id: str, user=Depends(get_current_user)):
     if user["role"] != "admin":

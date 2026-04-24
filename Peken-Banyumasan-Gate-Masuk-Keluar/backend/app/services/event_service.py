@@ -25,6 +25,59 @@ def get_event_by_id(event_id: str):
 
     return EventResponse(**res.data[0])
 
+def get_event_detail(event_id: str):
+    # 1. ambil event
+    event_res = supabase.table("events") \
+        .select("*") \
+        .eq("id", event_id) \
+        .single() \
+        .execute()
+
+    if not event_res.data:
+        return {"error": "Event tidak ditemukan"}
+
+    event = event_res.data
+
+    # 2. ambil logs
+    logs = supabase.table("gate_logs") \
+        .select("id, gate_type, scan_time, users(nama)") \
+        .eq("event_id", event_id) \
+        .order("scan_time", desc=True) \
+        .limit(10) \
+        .execute().data
+
+    # 3. hitung stats
+    total_masuk = sum(1 for l in logs if l["gate_type"] == "masuk")
+    total_keluar = sum(1 for l in logs if l["gate_type"] == "keluar")
+
+    # 4. format activity
+    activities = []
+    for log in logs:
+        activities.append({
+            "id": log["id"],
+            "gate_type": log["gate_type"],
+            "scan_time": log["scan_time"],
+            "nama": log["users"]["nama"] if log.get("users") else None
+        })
+
+    return {
+        "id": event["id"],
+        "nama": event["nama"],
+        "deskripsi": event.get("deskripsi"),
+        "lokasi": event.get("lokasi"),
+        "tanggal_mulai": event.get("tanggal_mulai"),
+        "tanggal_selesai": event.get("tanggal_selesai"),
+        "status": event.get("status"),
+
+        "stats": {
+            "total_masuk": total_masuk,
+            "total_keluar": total_keluar,
+            "di_dalam": total_masuk - total_keluar
+        },
+
+        "activities": activities
+    }
+
 
 # CREATE EVENT
 def create_event(data):
