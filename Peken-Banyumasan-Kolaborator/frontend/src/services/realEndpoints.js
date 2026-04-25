@@ -70,6 +70,27 @@ export const authApi = {
     const response = await apiClient.put('/api/auth/password', { password_lama, password_baru });
     return extractData(response);
   },
+
+  /** POST /api/auth/otp/request → { message } — STUB */
+  requestOtp: async (/* { phone } */) => {
+    throw new Error('Not implemented yet');
+    // const response = await apiClient.post('/api/auth/otp/request', { phone });
+    // return extractData(response);
+  },
+
+  /** POST /api/auth/otp/verify → { reset_token } — STUB */
+  verifyOtp: async (/* { phone, otp } */) => {
+    throw new Error('Not implemented yet');
+    // const response = await apiClient.post('/api/auth/otp/verify', { phone, otp });
+    // return extractData(response);
+  },
+
+  /** POST /api/auth/password/reset → { message } — STUB */
+  resetPassword: async (/* { reset_token, password_baru } */) => {
+    throw new Error('Not implemented yet');
+    // const response = await apiClient.post('/api/auth/password/reset', { reset_token, password_baru });
+    // return extractData(response);
+  },
 };
 
 // ── profilApi (kolaborator self-profile) ────────────────────────────────────
@@ -114,7 +135,7 @@ export const portofolioApi = {
   },
 };
 
-// ── storyApi (kolaborator stories, author-scoped CRUD + like) ──────────────
+// ── storyApi (kolaborator stories, author-scoped CRUD) ──────────────────────
 export const storyApi = {
   /** GET /api/kolaborator/me/story → Array<Story> */
   list: async () => {
@@ -131,12 +152,6 @@ export const storyApi = {
   /** DELETE /api/kolaborator/me/story/:id → { message } */
   delete: async (id) => {
     const response = await apiClient.delete(`/api/kolaborator/me/story/${id}`);
-    return extractData(response);
-  },
-
-  /** POST /api/story/:id/like → { like_count } */
-  like: async (id) => {
-    const response = await apiClient.post(`/api/story/${id}/like`);
     return extractData(response);
   },
 };

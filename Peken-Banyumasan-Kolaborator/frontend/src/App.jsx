@@ -13,6 +13,7 @@ import Layout from './components/Layout';
 
 import Login        from './pages/auth/Login';
 import Register     from './pages/auth/Register';
+import LupaPass     from './pages/auth/LupaPass';
 import Dashboard    from './pages/Dashboard';
 import Profil       from './pages/Profil';
 import Portofolio   from './pages/Portofolio';
@@ -52,8 +53,9 @@ const AppShell = () => {
   return (
     <Routes>
       {/* ── Public routes (no auth required) ── */}
-      <Route path="/login"  element={<Pub><Login /></Pub>} />
-      <Route path="/daftar" element={<Pub><Register /></Pub>} />
+      <Route path="/login"          element={<Pub><Login /></Pub>} />
+      <Route path="/daftar"         element={<Pub><Register /></Pub>} />
+      <Route path="/lupa-password"  element={<Pub><LupaPass /></Pub>} />
 
       {/* ── Authenticated dashboard routes ── */}
       <Route path="/" element={<Navigate to="/dashboard" replace />} />

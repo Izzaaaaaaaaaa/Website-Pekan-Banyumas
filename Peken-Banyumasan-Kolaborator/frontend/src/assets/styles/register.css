@@ -1,0 +1,229 @@
+/* ══════════════════════════════════════════════════════════════
+   REGISTER — Kolaborator Portal, Peken Banyumasan Design System v2.1
+   Classes matched exactly to Register.jsx (rg-* prefix)
+   ══════════════════════════════════════════════════════════════ */
+
+*, *::before, *::after { box-sizing: border-box; }
+
+.rg-root {
+  min-height: 100vh;
+  background: var(--sage-pale, #f2f4e8);
+  display: flex;
+  align-items: flex-start;
+  justify-content: center;
+  padding: 40px 16px 60px;
+  font-family: "Montserrat", system-ui, sans-serif;
+  position: relative;
+}
+.rg-root::before {
+  content: '';
+  position: fixed; inset: 0;
+  background-image:
+    radial-gradient(circle at 15% 15%, rgba(195,202,150,.08) 0%, transparent 45%),
+    radial-gradient(circle at 85% 85%, rgba(79,92,48,.05) 0%, transparent 45%);
+  pointer-events: none;
+}
+
+.rg-wrap { width: 100%; max-width: 540px; position: relative; }
+
+/* Brand header */
+.rg-brand {
+  display: flex; align-items: center; gap: 12px;
+  margin-bottom: 28px; text-decoration: none;
+}
+.rg-brand-mark {
+  width: 40px; height: 40px;
+  background: var(--sage, #C3CA96);
+  border-radius: 11px;
+  display: flex; align-items: center; justify-content: center;
+  font-family: "Clash Display", system-ui, sans-serif;
+  font-size: 18px; font-weight: 700; color: #1B1B1B;
+  overflow: hidden;
+}
+.rg-brand-mark img { width: 100%; height: 100%; object-fit: cover; }
+.rg-brand-name {
+  font-family: "Clash Display", system-ui, sans-serif;
+  font-size: 16px; font-weight: 500; color: var(--text-1, #1e2010);
+}
+.rg-brand-sub { font-size: 11px; color: var(--text-3, #8a9070); margin-top: 1px; }
+
+/* Stepper */
+.stepper { display: flex; align-items: center; margin-bottom: 22px; }
+.step-item {
+  display: flex; flex-direction: column; align-items: center;
+  flex: 1; position: relative;
+}
+.step-item:not(:last-child)::after {
+  content: ''; position: absolute; top: 16px; left: 60%;
+  width: 80%; height: 1.5px; background: var(--border, #e4e7d4);
+  z-index: 0; transition: background .3s;
+}
+.step-item.done:not(:last-child)::after,
+.step-item.active:not(:last-child)::after { background: var(--sage, #C3CA96); }
+
+.step-circle {
+  width: 32px; height: 32px; border-radius: 50%;
+  display: flex; align-items: center; justify-content: center;
+  font-size: 12px; font-weight: 600; position: relative; z-index: 1;
+  border: 1.5px solid var(--border, #e4e7d4);
+  background: #fff; color: var(--text-3, #8a9070);
+  font-family: "Montserrat", sans-serif;
+  transition: all .3s;
+}
+.step-item.active .step-circle {
+  border-color: var(--sage-deeper, #4F5C30);
+  background: var(--sage-deeper, #4F5C30); color: #fff;
+  box-shadow: 0 0 0 4px rgba(195,202,150,.20);
+}
+.step-item.done .step-circle {
+  border-color: var(--sage-dark, #7A8A52);
+  background: var(--sage-dark, #7A8A52); color: #fff;
+}
+.step-label {
+  font-size: 9px; font-weight: 600; margin-top: 5px;
+  color: var(--text-3, #8a9070); letter-spacing: .05em; text-transform: uppercase;
+  font-family: "Montserrat", sans-serif;
+}
+.step-item.active .step-label { color: var(--sage-deeper, #4F5C30); }
+.step-item.done   .step-label { color: var(--sage-dark, #7A8A52); }
+
+/* Card */
+.rg-card {
+  background: #fff; border-radius: 18px; padding: 28px;
+  border: 1px solid var(--border, #e4e7d4);
+  box-shadow: 0 4px 20px rgba(30,32,16,.07), 0 1px 3px rgba(30,32,16,.04);
+}
+.rg-card-title {
+  font-family: "Clash Display", system-ui, sans-serif;
+  font-size: 19px; font-weight: 500; color: var(--text-1, #1e2010); margin-bottom: 5px;
+}
+.rg-card-sub {
+  font-size: 12px; color: var(--text-3, #8a9070);
+  margin-bottom: 22px; line-height: 1.6; font-weight: 400;
+}
+
+/* Error */
+.rg-error {
+  background: #f7eeee; border: 1px solid #dbb8b8;
+  border-radius: 10px; padding: 10px 14px;
+  font-size: 12px; color: #B87272; margin-bottom: 16px; font-weight: 500;
+}
+
+/* Fields */
+.rg-field { margin-bottom: 15px; }
+.rg-label {
+  font-size: 11px; font-weight: 600; color: var(--text-2, #5a6040);
+  margin-bottom: 6px; display: block; letter-spacing: .04em; text-transform: uppercase;
+  font-family: "Montserrat", sans-serif;
+}
+
+.rg-input {
+  width: 100%; padding: 11px 14px;
+  border: 1px solid var(--border, #e4e7d4);
+  border-radius: 12px; font-size: 13px; outline: none;
+  transition: border .15s, box-shadow .15s;
+  font-family: "Montserrat", system-ui, sans-serif;
+  color: var(--text-1, #1e2010); background: #fff; -webkit-appearance: none;
+}
+.rg-input:focus {
+  border-color: var(--sage-mid, #a8b07a); background: #fff;
+  box-shadow: 0 0 0 3px rgba(195,202,150,.18);
+}
+.rg-input::placeholder { color: var(--border-strong, #c8ccb0); }
+
+.rg-input-wrap { position: relative; }
+.rg-eye {
+  position: absolute; right: 11px; top: 50%; transform: translateY(-50%);
+  color: var(--text-3, #8a9070); cursor: pointer;
+  background: none; border: none; display: flex; padding: 3px;
+  transition: color 150ms;
+}
+.rg-eye:hover { color: var(--sage-deeper, #4F5C30); }
+
+/* Password strength */
+.pass-bar { height: 3px; background: var(--border, #e4e7d4); border-radius: 99px; overflow: hidden; margin-top: 6px; }
+.pass-fill { height: 100%; border-radius: 99px; transition: all .3s; }
+.pass-label { font-size: 10px; margin-top: 4px; font-weight: 600; }
+
+/* Select / textarea */
+.rg-select {
+  width: 100%; padding: 11px 14px; border: 1px solid var(--border, #e4e7d4);
+  border-radius: 12px; font-size: 13px; outline: none;
+  background: #fff; color: var(--text-1, #1e2010);
+  font-family: "Montserrat", system-ui, sans-serif; cursor: pointer; -webkit-appearance: none;
+}
+.rg-select:focus { border-color: var(--sage-mid, #a8b07a); }
+
+.rg-textarea {
+  width: 100%; padding: 11px 14px; border: 1px solid var(--border, #e4e7d4);
+  border-radius: 12px; font-size: 13px; outline: none; resize: none;
+  font-family: "Montserrat", system-ui, sans-serif;
+  color: var(--text-1, #1e2010); background: #fff; line-height: 1.6;
+}
+.rg-textarea:focus { border-color: var(--sage-mid, #a8b07a); box-shadow: 0 0 0 3px rgba(195,202,150,.18); }
+
+/* Subsektor chips */
+.sub-grid { display: flex; flex-wrap: wrap; gap: 7px; }
+.sub-chip {
+  padding: 6px 13px; border-radius: 20px; font-size: 11px; font-weight: 600;
+  border: 1px solid var(--border, #e4e7d4); cursor: pointer; transition: all .15s;
+  background: #fff; color: var(--text-2, #5a6040); font-family: "Montserrat", sans-serif;
+}
+.sub-chip.sel { background: var(--sage-deeper, #4F5C30); border-color: var(--sage-deeper, #4F5C30); color: #fff; }
+.sub-chip:not(.sel):hover { border-color: var(--sage-mid, #a8b07a); color: var(--sage-deeper, #4F5C30); background: #eef0e0; }
+
+/* Confirm box */
+.confirm-box {
+  background: #eef0e0; border: 1px solid var(--border, #e4e7d4);
+  border-radius: 12px; padding: 14px 16px; margin-bottom: 18px;
+}
+.confirm-row {
+  display: flex; justify-content: space-between; padding: 5px 0;
+  font-size: 12px; border-bottom: 1px solid var(--border, #e4e7d4);
+}
+.confirm-row:last-child { border-bottom: none; }
+.confirm-label { color: var(--text-3, #8a9070); }
+.confirm-val { font-weight: 600; color: var(--text-1, #1e2010); text-align: right; max-width: 60%; font-size: 12px; }
+
+/* Buttons */
+.rg-btn {
+  width: 100%; padding: 12px; border-radius: 20px;
+  font-size: 14px; font-weight: 600; cursor: pointer;
+  transition: all .18s;
+  display: flex; align-items: center; justify-content: center; gap: 8px;
+  font-family: "Montserrat", system-ui, sans-serif;
+}
+.rg-btn-primary { background: var(--sage-deeper, #4F5C30); color: #fff; border: none; }
+.rg-btn-primary:hover:not(:disabled) { background: #4f5c30; box-shadow: 0 4px 14px rgba(79,92,48,.28); }
+.rg-btn-primary:disabled { opacity: .6; cursor: not-allowed; }
+.rg-btn-secondary {
+  background: transparent; color: var(--text-3, #8a9070);
+  border: 1px solid var(--border, #e4e7d4); margin-top: 8px;
+}
+.rg-btn-secondary:hover { border-color: var(--sage-mid, #a8b07a); color: var(--sage-deeper, #4F5C30); background: #eef0e0; }
+
+/* Footer */
+.rg-footer {
+  text-align: center; margin-top: 16px; font-size: 12px;
+  color: var(--text-3, #8a9070); font-family: "Montserrat", sans-serif;
+}
+.rg-footer a { color: var(--sage-dark, #7A8A52); font-weight: 600; text-decoration: none; }
+.rg-footer a:hover { text-decoration: underline; }
+
+.rg-crosslink {
+  margin-top: 12px; padding-top: 12px; border-top: 1px solid var(--border, #e4e7d4);
+  text-align: center; font-size: 11px; color: var(--text-3, #8a9070); font-family: "Montserrat", sans-serif;
+}
+.rg-crosslink a { color: var(--sage-dark, #7A8A52); font-weight: 600; text-decoration: none; }
+.rg-crosslink a:hover { text-decoration: underline; }
+
+/* Info notice */
+.rg-notice {
+  background: #eef0e0; border: 1px solid var(--border-strong, #c8d09a);
+  border-radius: 10px; padding: 11px 13px; margin-bottom: 16px;
+  font-size: 11px; color: var(--text-2, #5a6040); line-height: 1.6;
+}
+
+/* Spinner (animate-spin from Tailwind — also define as CSS for safety) */
+@keyframes spin { to { transform: rotate(360deg); } }
+.animate-spin { animation: spin .7s linear infinite; }

@@ -51,6 +51,9 @@ export const authApi = {
     await delay();
     return { message: 'Password berhasil diubah (demo)' };
   },
+  requestOtp:    async () => { throw new Error('Not implemented yet'); },
+  verifyOtp:     async () => { throw new Error('Not implemented yet'); },
+  resetPassword: async () => { throw new Error('Not implemented yet'); },
 };
 
 // ── profilApi ─────────────────────────────────────────────────────────────────
@@ -75,7 +78,7 @@ export const portofolioApi = {
   },
   create: async (data) => {
     await delay();
-    const item = { id: `p-${Date.now()}`, featured: false, gambar: null, tahun: new Date().getFullYear(), ...data };
+    const item = { id: `p-${Date.now()}`, featured: false, gambar_url: null, tahun: new Date().getFullYear(), ...data };
     _portofolio.unshift(item);
     return item;
   },
@@ -107,13 +110,6 @@ export const storyApi = {
     await delay();
     _stories = _stories.filter(s => s.id !== id);
     return { message: 'OK' };
-  },
-  like: async (id) => {
-    await delay();
-    const s = _stories.find(s => s.id === id);
-    const like_count = (s?.like_count || 0) + 1;
-    _stories = _stories.map(s => s.id === id ? { ...s, like_count } : s);
-    return { like_count };
   },
 };
 
@@ -147,12 +143,13 @@ export const notifikasiApi = {
   },
   baca: async (id) => {
     await delay();
-    _notifikasi = _notifikasi.map(n => n.id === id ? { ...n, dibaca: true } : n);
+    _notifikasi = _notifikasi.map(n => n.id === id ? { ...n, read: true } : n);
     return { id, read: true };
   },
   bacaSemua: async () => {
     await delay();
-    _notifikasi = _notifikasi.map(n => ({ ...n, dibaca: true }));
-    return { count: _notifikasi.length };
+    const count = _notifikasi.filter(n => !n.read).length;
+    _notifikasi = _notifikasi.map(n => ({ ...n, read: true }));
+    return { count };
   },
 };

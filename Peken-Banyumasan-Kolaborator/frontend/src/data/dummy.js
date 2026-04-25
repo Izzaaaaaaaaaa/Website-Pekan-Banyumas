@@ -23,12 +23,12 @@ export const SUBSEKTORS = [
 ];
 
 export const dummyPortofolio = [
-  { id:'p1', judul:'Batik Sekar Jagad Kontemporer', subsektor:'Kriya', deskripsi:'Karya batik tulis dengan motif sekar jagad yang dipadukan dengan warna-warna natural dari tumbuhan lokal.', tahun:2024, gambar:null, featured:true },
-  { id:'p2', judul:'Koleksi Tenun Banyumas Vol.3', subsektor:'Fashion', deskripsi:'Tenun lurik dengan motif diagonal hasil kolaborasi dengan pengrajin dari Cilacap.', tahun:2024, gambar:null, featured:false },
-  { id:'p3', judul:'Instalasi Bambu Gedek', subsektor:'Kriya', deskripsi:'Instalasi seni dari bambu gedek dengan pola anyaman yang terinspirasi ornamen candi.', tahun:2023, gambar:null, featured:false },
-  { id:'p4', judul:'Kain Jumputan Pekanbaru Fusion', subsektor:'Fashion', deskripsi:'Eksplorasi teknik shibori Jepang pada kain katun lokal dengan pewarna alam.', tahun:2023, gambar:null, featured:false },
-  { id:'p5', judul:'Lukisan Wayang Kontemporer', subsektor:'Seni Rupa', deskripsi:'Interpretasi ulang tokoh wayang Arjuna dalam gaya lukisan ekspresionistik.', tahun:2022, gambar:null, featured:false },
-  { id:'p6', judul:'Aksesori Kayu Jati Minimalis', subsektor:'Kriya', deskripsi:'Rangkaian aksesori dari kayu jati sisa produksi dengan finishing natural oil.', tahun:2022, gambar:null, featured:false },
+  { id:'p1', judul:'Batik Sekar Jagad Kontemporer', subsektor:'Kriya',    deskripsi:'Karya batik tulis dengan motif sekar jagad yang dipadukan dengan warna-warna natural dari tumbuhan lokal.', tahun:2024, gambar_url:null, featured:true  },
+  { id:'p2', judul:'Koleksi Tenun Banyumas Vol.3',  subsektor:'Fashion',  deskripsi:'Tenun lurik dengan motif diagonal hasil kolaborasi dengan pengrajin dari Cilacap.',                           tahun:2024, gambar_url:null, featured:false },
+  { id:'p3', judul:'Instalasi Bambu Gedek',         subsektor:'Kriya',    deskripsi:'Instalasi seni dari bambu gedek dengan pola anyaman yang terinspirasi ornamen candi.',                       tahun:2023, gambar_url:null, featured:false },
+  { id:'p4', judul:'Kain Jumputan Pekanbaru Fusion',subsektor:'Fashion',  deskripsi:'Eksplorasi teknik shibori Jepang pada kain katun lokal dengan pewarna alam.',                               tahun:2023, gambar_url:null, featured:false },
+  { id:'p5', judul:'Lukisan Wayang Kontemporer',    subsektor:'Seni Rupa',deskripsi:'Interpretasi ulang tokoh wayang Arjuna dalam gaya lukisan ekspresionistik.',                                tahun:2022, gambar_url:null, featured:false },
+  { id:'p6', judul:'Aksesori Kayu Jati Minimalis',  subsektor:'Kriya',    deskripsi:'Rangkaian aksesori dari kayu jati sisa produksi dengan finishing natural oil.',                             tahun:2022, gambar_url:null, featured:false },
 ];
 
 export const dummyStory = [
@@ -53,7 +53,7 @@ export const dummyEvents = [
     subsektor:['Kriya','Musik','Kuliner'],
     banner_url: null,
     lineup:[ {id:'m1', nama:'Sari Dewi'}, {id:'m2', nama:'Ahmad Fauzi'} ],
-    artisan:[ {id:'t1', nama_usaha:'Batik Sari Rahayu', kategori:'Kriya & Fashion'} ],
+    artisan:[ {id:'t1', nama_usaha:'Batik Sari Rahayu', subsektor:['Kriya','Fashion']} ],
     galeri:[],
   },
   {
@@ -103,9 +103,10 @@ export const dummyEvent = dummyEvents;
 /** @deprecated gunakan dummyEvents */
 export const dummyEventExtended = dummyEvents;
 
+const _now = Date.now();
 export const dummyNotifikasi = [
-  { id:'n1', tipe:'event', pesan:'Pendaftaran kamu untuk "Festival Budaya Banyumasan 2025" telah dikonfirmasi.', waktu:'2 jam lalu', dibaca:false },
-  { id:'n2', tipe:'system', pesan:'Profil kamu telah diverifikasi oleh admin. Sekarang tampil di direktori publik.', waktu:'1 hari lalu', dibaca:false },
-  { id:'n3', tipe:'event', pesan:'"Workshop Batik & Tenun Nusantara" akan dimulai 3 hari lagi. Jangan lupa hadir!', waktu:'2 hari lalu', dibaca:true },
-  { id:'n4', tipe:'system', pesan:'Karya portofolio "Batik Sekar Jagad Kontemporer" telah disetujui dan tampil di beranda.', waktu:'5 hari lalu', dibaca:true },
+  { id:'n1', type:'event_assigned',       title:'Pendaftaran Dikonfirmasi',    message:'Pendaftaran kamu untuk "Festival Budaya Banyumasan 2025" telah dikonfirmasi.', read:false, link:'/events/e1', detail:null, created_at: new Date(_now - 7_200_000).toISOString() },
+  { id:'n2', type:'kolaborator_approved', title:'Profil Diverifikasi',         message:'Profil kamu telah diverifikasi oleh admin. Sekarang tampil di direktori publik.', read:false, link:'/profil', detail:null, created_at: new Date(_now - 86_400_000).toISOString() },
+  { id:'n3', type:'event_status_change',  title:'Event Segera Dimulai',        message:'"Workshop Batik & Tenun Nusantara" akan dimulai 3 hari lagi. Jangan lupa hadir!', read:true, link:'/events/e2', detail:null, created_at: new Date(_now - 172_800_000).toISOString() },
+  { id:'n4', type:'system',               title:'Karya Portofolio Disetujui',  message:'Karya portofolio "Batik Sekar Jagad Kontemporer" telah disetujui dan tampil di beranda.', read:true, link:'/portofolio', detail:null, created_at: new Date(_now - 432_000_000).toISOString() },
 ];

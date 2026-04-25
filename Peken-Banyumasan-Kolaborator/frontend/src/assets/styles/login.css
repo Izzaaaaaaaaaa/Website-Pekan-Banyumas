@@ -1,0 +1,310 @@
+/* ══════════════════════════════════════════════════════════════
+   LOGIN — Peken Banyumasan Design System v2.1
+   Left panel  → Gate-style (uses .login-left-panel, all props
+                 inherited from inline styles in JSX)
+   Right panel → Artisan-style (CSS classes below)
+   ══════════════════════════════════════════════════════════════ */
+
+/* ── Root shell ──────────────────────────────────────────────
+   The outer flex container is fully inline in JSX (like Gate).
+   This file only styles the RIGHT panel and shared atoms.
+   ─────────────────────────────────────────────────────────── */
+
+/* ── LEFT panel shell — size & position only ─────────────── */
+.login-left-panel {
+    /* Shown only on ≥ 900px. Hidden on mobile. */
+    display: none;
+    width: 50%;
+    min-width: 460px;
+    background: #1B1B1B;
+
+    /* Three children spread top/middle/bottom (Gate pattern) */
+    flex-direction: column;
+    justify-content: space-between;
+    padding: 40px 52px;
+    position: relative;
+    overflow: hidden;
+    flex-shrink: 0;
+}
+@media (min-width: 900px) {
+    .login-left-panel { display: flex; }
+}
+
+/* ── RIGHT panel ─────────────────────────────────────────── */
+.login-right {
+    flex: 1;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 40px 32px;
+    overflow-y: auto;
+    background: var(--dash-bg);
+    position: relative;
+}
+
+/* Subtle sage pattern on right bg */
+.login-right::before {
+    content: "";
+    position: absolute; inset: 0;
+    background-image:
+            radial-gradient(circle at 90% 10%, rgba(195,202,150,.06) 0%, transparent 40%),
+            radial-gradient(circle at 10% 90%, rgba(195,202,150,.04) 0%, transparent 40%);
+    pointer-events: none;
+}
+
+/* ── Form card (floats in right panel) ───────────────────── */
+.login-card {
+    position: relative;
+    width: 100%;
+    max-width: 400px;
+    animation: fadeInUp var(--dur-base) var(--ease-out-brand) both;
+}
+
+/* ── Mobile logo bar ─────────────────────────────────────── */
+.card-logos {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    margin-bottom: 32px;
+}
+@media (min-width: 900px) { .card-logos { display: none; } }
+
+.card-logo          { height: 40px; width: auto; object-fit: contain; border-radius: 6px; }
+.card-logo.peken    { height: 36px; }
+.card-logo-sep      { width: 1px; height: 28px; background: var(--dash-border); flex-shrink: 0; }
+
+/* ── Brand icon mark ─────────────────────────────────────── */
+.logo-mark {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 52px;
+    height: 52px;
+    background: var(--dash-accent-dark);
+    border-radius: 14px;
+    margin-bottom: 20px;
+    box-shadow: var(--shadow-accent);
+    color: #fff;
+    transition: transform var(--dur-fast) var(--ease-out-brand);
+}
+.logo-mark:hover { transform: translateY(-2px) rotate(-4deg); }
+
+/* ── Form headings ───────────────────────────────────────── */
+.card-title {
+    font-family: var(--font-display);
+    font-size: 26px;
+    font-weight: 500;
+    color: var(--dash-text-primary);
+    margin: 0 0 6px;
+    letter-spacing: -.01em;
+}
+.card-sub {
+    font-size: 13px;
+    color: var(--dash-text-muted);
+    margin: 0 0 28px;
+    line-height: 1.5;
+}
+
+/* ── Error banner ────────────────────────────────────────── */
+.error-box {
+    display: flex;
+    align-items: flex-start;
+    gap: 8px;
+    margin-bottom: 20px;
+    padding: 12px 16px;
+    background: var(--peken-error-bg);
+    border: 1px solid var(--peken-error-border);
+    border-radius: 12px;
+    font-size: 12px;
+    color: var(--peken-error);
+    animation: shake .38s ease;
+}
+@keyframes shake {
+    0%,100% { transform: translateX(0); }
+    20%      { transform: translateX(-6px); }
+    40%      { transform: translateX(6px); }
+    60%      { transform: translateX(-4px); }
+    80%      { transform: translateX(4px); }
+}
+
+/* ── Form fields ─────────────────────────────────────────── */
+.field { margin-bottom: 18px; }
+
+.field-label {
+    display: block;
+    margin-bottom: 6px;
+    font-size: 11px;
+    font-weight: 600;
+    color: var(--dash-text-secondary);
+    text-transform: uppercase;
+    letter-spacing: .06em;
+}
+
+/* Input wrapper (holds icon + input + optional toggle) */
+.input-wrap { position: relative; }
+
+.input-icon {
+    position: absolute;
+    left: 14px;
+    top: 50%;
+    transform: translateY(-50%);
+    color: var(--dash-text-muted);
+    display: flex;
+    align-items: center;
+    pointer-events: none;
+    transition: color var(--dur-fast);
+}
+.input-wrap:focus-within .input-icon { color: var(--dash-accent-dark); }
+
+.login-input {
+    width: 100%;
+    padding: 12px 14px 12px 42px;
+    border: 1px solid var(--dash-border);
+    border-radius: 12px;
+    font-size: 13px;
+    font-family: var(--font-body);
+    background: #fff;
+    color: var(--dash-text-primary);
+    outline: none;
+    transition:
+            border-color var(--dur-fast) var(--ease-out-brand),
+            box-shadow   var(--dur-fast) var(--ease-out-brand);
+}
+.login-input::placeholder { color: var(--dash-text-muted); }
+.login-input:focus {
+    border-color: var(--dash-accent-dark);
+    box-shadow: 0 0 0 3px rgba(122,138,82,.15);
+}
+.login-input.has-toggle { padding-right: 44px; }
+
+/* Password toggle button */
+.toggle-pw {
+    position: absolute;
+    right: 12px;
+    top: 50%;
+    transform: translateY(-50%);
+    background: none;
+    border: none;
+    cursor: pointer;
+    color: var(--dash-text-muted);
+    display: flex;
+    padding: 4px;
+    border-radius: 6px;
+    transition: color var(--dur-fast);
+}
+.toggle-pw:hover { color: var(--dash-text-secondary); }
+
+/* Forgot password row */
+.forgot-row {
+    display: flex;
+    justify-content: flex-end;
+    margin: -6px 0 22px;
+}
+.forgot-link {
+    font-size: 12px;
+    color: var(--dash-accent-dark);
+    font-weight: 500;
+    cursor: pointer;
+    transition: opacity var(--dur-fast);
+}
+.forgot-link:hover { opacity: .7; }
+
+/* ── Submit button ───────────────────────────────────────── */
+.btn-submit {
+    width: 100%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    padding: 13px 28px;
+    background: #7a8a52;
+    color: #fff;
+    border: none;
+    border-radius: 20px;
+    font-size: 13px;
+    font-weight: 700;
+    font-family: var(--font-body);
+    cursor: pointer;
+    letter-spacing: .01em;
+    transition:
+            background  var(--dur-fast) var(--ease-out-brand),
+            box-shadow  var(--dur-fast) var(--ease-out-brand);
+    box-shadow: var(--shadow-accent);
+}
+.btn-submit:hover:not(:disabled) {
+    background: #4f5c30;
+    box-shadow: 0 6px 20px rgba(122,138,82,.35);
+}
+.btn-submit:disabled { opacity: .65; cursor: not-allowed; box-shadow: none; }
+
+/* ── Divider ─────────────────────────────────────────────── */
+.divider {
+    display: flex;
+    align-items: center;
+    gap: 14px;
+    margin: 22px 0;
+    color: var(--dash-text-muted);
+    font-size: 12px;
+    font-weight: 500;
+    letter-spacing: .04em;
+}
+.divider::before,
+.divider::after {
+    content: "";
+    flex: 1;
+    height: 1px;
+    background: var(--dash-border);
+}
+
+/* ── Register CTA ────────────────────────────────────────── */
+.register-row {
+    text-align: center;
+    font-size: 13px;
+    color: var(--dash-text-muted);
+    margin: 0;
+}
+.register-link {
+    color: var(--dash-accent-dark);
+    font-weight: 600;
+    cursor: pointer;
+    text-decoration: none;
+    transition: opacity var(--dur-fast);
+}
+.register-link:hover { opacity: .7; text-decoration: underline; }
+
+/* ── Event info strip ────────────────────────────────────── */
+.event-strip {
+    display: flex;
+    align-items: center;
+    gap: 14px;
+    margin-top: 24px;
+    padding: 12px 14px;
+    background: var(--dash-accent-bg);
+    border: 1px solid var(--dash-accent-border);
+    border-radius: 14px;
+    transition: box-shadow var(--dur-fast);
+}
+.event-strip:hover { box-shadow: var(--shadow-md); }
+
+.event-strip-left {
+    width: 36px;
+    height: 36px;
+    background: #fff;
+    border-radius: 8px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
+    box-shadow: var(--shadow-sm);
+    padding: 3px;
+}
+.event-strip-logo { width: 100%; height: 100%; object-fit: contain; border-radius: 5px; }
+
+.event-name   { font-size: 13px; font-weight: 700; color: var(--dash-text-primary); margin-bottom: 2px; }
+.event-detail { font-size: 11px; color: var(--dash-text-secondary); line-height: 1.4; }
+
+/* ── Responsive ──────────────────────────────────────────── */
+@media (max-width: 480px) {
+    .login-right { padding: 28px 20px; }
+    .card-title  { font-size: 22px; }
+}
