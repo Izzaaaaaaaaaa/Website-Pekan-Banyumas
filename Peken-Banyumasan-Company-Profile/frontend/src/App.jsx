@@ -8,6 +8,7 @@ import ProgramScreen from './components/screens/ProgramScreen.jsx';
 import GalleryScreen from './components/screens/GalleryScreen.jsx';
 import WorksScreen from './components/screens/WorksScreen.jsx';
 import PublicProfileScreen from './components/screens/PublicProfileScreen.jsx';
+import { toSlug } from './lib/slug.js';
 
 const SCREENS = {
   HOME:        HomeScreen,
@@ -18,9 +19,6 @@ const SCREENS = {
   PUBLICATION: GalleryScreen,
 };
 
-/** Konversi nama ke slug: "Aji Pradana" → "aji-pradana" */
-const toSlug = (name) =>
-  (name || '').toLowerCase().replace(/\s+/g, '-').replace(/[^a-z0-9-]/g, '');
 
 /** Baca slug dari hash URL: #/@aji-pradana → "aji-pradana" */
 const slugFromHash = () => {

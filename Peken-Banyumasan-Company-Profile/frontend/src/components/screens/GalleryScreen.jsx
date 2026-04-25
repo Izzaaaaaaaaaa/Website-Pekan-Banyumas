@@ -1,25 +1,33 @@
+import { useState, useEffect } from 'react';
 import PillButton from '../shared/PillButton.jsx';
 import { Eyebrow } from '../shared/Typography.jsx';
 import PhotoTile from '../shared/PhotoTile.jsx';
 import WipeReveal from '../shared/WipeReveal.jsx';
+import { companyProfileApi } from '../../services/endpoints.js';
 
-// Peken Banyumasan — Gallery screen · v1.2
+// Peken Banyumasan — Gallery screen · v1.3
 // §3 — Gallery tiles → mode="static" (no hover at all)
 // §4 — Documentation block transitions in via WipeReveal
 //      instead of a hard gradient bridge.
 
-const GALLERY_IMAGES = [
-  'gallery-1',
-  'gallery-2',
-  'gallery-3',
-  'gallery-4',
-  'gallery-5',
-  'gallery-6',
-  'gallery-perform-1',
-  'gallery-perform-2',
-  'banner-home-1',
-  'banner-home-2',
+const STATIC_IMAGES = [
+  { filename: 'gallery-1',      label: 'Edisi #01',        year: '2022' },
+  { filename: 'gallery-2',      label: 'Edisi #02',        year: '2022' },
+  { filename: 'gallery-3',      label: 'Edisi #03',        year: '2022' },
+  { filename: 'gallery-4',      label: 'Edisi #04',        year: '2023' },
+  { filename: 'gallery-5',      label: 'Edisi #05',        year: '2023' },
+  { filename: 'gallery-6',      label: 'Edisi #06',        year: '2023' },
+  { filename: 'gallery-perform-1', label: 'Pertunjukan #01', year: '2024' },
+  { filename: 'gallery-perform-2', label: 'Pertunjukan #02', year: '2024' },
+  { filename: 'banner-home-1',  label: 'Banner Peken',     year: '2025' },
+  { filename: 'banner-home-2',  label: 'Banner Edisi',     year: '2025' },
 ];
+
+const STATIC_DOC = {
+  headline: 'Setiap edisi Peken didokumentasikan secara terbuka.',
+  body: 'Foto-foto di laman ini diambil oleh tim dokumentasi Peken bersama relawan fotografer komunitas — dirilis di bawah lisensi Creative Commons BY-NC 4.0 untuk penggunaan non-komersial dengan atribusi.\n\nSetiap edisi dikemas sebagai paket gambar resolusi tinggi (RAW + JPEG terkurasi) yang dapat diunduh untuk keperluan riset, jurnalisme, atau kebutuhan komunitas.',
+  ukuran: 'ZIP · ±420 MB per edisi',
+};
 
 /* ------------------------------------------------------------------
    GalleryScreen — masonry on dark; documentation block reveals
@@ -27,6 +35,26 @@ const GALLERY_IMAGES = [
    §3: tiles are mode="static" — NO hover effect on Gallery photos.
    ------------------------------------------------------------------ */
 export default function GalleryScreen() {
+  const [images, setImages] = useState(STATIC_IMAGES);
+  const [doc,    setDoc]    = useState(STATIC_DOC);
+
+  useEffect(() => {
+    companyProfileApi.get('gallery')
+      .then(data => {
+        if (data?.images?.length) {
+          setImages(data.images.filter(g => g.visible !== false));
+        }
+        if (data?.doc_headline) {
+          setDoc({
+            headline: data.doc_headline,
+            body:     data.doc_body     || STATIC_DOC.body,
+            ukuran:   data.doc_ukuran   || STATIC_DOC.ukuran,
+          });
+        }
+      })
+      .catch(() => {});
+  }, []);
+
   /* The "before" half — the gallery body flows naturally now. No
      height cap, no overflow hidden — so the masonry can be as tall
      as it needs to be, and user scrolls through ALL of it before
@@ -52,32 +80,35 @@ export default function GalleryScreen() {
       </section>
       <section style={{ padding: '40px 60px 80px' }}>
         <div style={{ columnCount: 3, columnGap: 24 }}>
-          {GALLERY_IMAGES.concat(GALLERY_IMAGES).map((n, i) => (
-            <div key={i} style={{ breakInside: 'avoid', marginBottom: 24 }}>
-              <PhotoTile
-                src={`/assets/${n}.jpg`}
-                alt={`Edisi #${String(i + 1).padStart(2, '0')}`}
-                aspect="auto"
-                mode="static"
-                style={{ aspectRatio: 'auto', paddingBottom: '62%' }}
-              />
-              <div
-                style={{
-                  fontFamily: 'var(--font-body)',
-                  fontSize: 11,
-                  color: 'var(--fg-muted)',
-                  letterSpacing: '.08em',
-                  textTransform: 'uppercase',
-                  marginTop: 8,
-                  display: 'flex',
-                  justifyContent: 'space-between',
-                }}
-              >
-                <span>Edisi #{String(i + 1).padStart(2, '0')}</span>
-                <span>202{(i % 4) + 2}</span>
+          {images.map((item, i) => {
+            const src = item.src || `/assets/${item.filename}.jpg`;
+            return (
+              <div key={item.id || item.filename} style={{ breakInside: 'avoid', marginBottom: 24 }}>
+                <PhotoTile
+                  src={src}
+                  alt={item.label}
+                  aspect="auto"
+                  mode="static"
+                  style={{ aspectRatio: 'auto', paddingBottom: '62%' }}
+                />
+                <div
+                  style={{
+                    fontFamily: 'var(--font-body)',
+                    fontSize: 11,
+                    color: 'var(--fg-muted)',
+                    letterSpacing: '.08em',
+                    textTransform: 'uppercase',
+                    marginTop: 8,
+                    display: 'flex',
+                    justifyContent: 'space-between',
+                  }}
+                >
+                  <span>{item.label}</span>
+                  <span>{item.year}</span>
+                </div>
               </div>
-            </div>
-          ))}
+            );
+          })}
         </div>
       </section>
     </div>
@@ -125,7 +156,7 @@ export default function GalleryScreen() {
               maxWidth: '24ch',
             }}
           >
-            Setiap edisi Peken didokumentasikan secara terbuka.
+            {doc.headline}
           </div>
           <p
             style={{
@@ -135,17 +166,10 @@ export default function GalleryScreen() {
               color: 'var(--accent-ink)',
               margin: '32px 0 0',
               maxWidth: '60ch',
+              whiteSpace: 'pre-line',
             }}
           >
-            Foto-foto di laman ini diambil oleh tim dokumentasi Peken
-            bersama relawan fotografer komunitas — dirilis di bawah
-            lisensi Creative Commons BY-NC 4.0 untuk penggunaan
-            non-komersial dengan atribusi.
-            <br />
-            <br />
-            Setiap edisi dikemas sebagai paket gambar resolusi tinggi
-            (RAW + JPEG terkurasi) yang dapat diunduh untuk keperluan
-            riset, jurnalisme, atau kebutuhan komunitas.
+            {doc.body}
           </p>
         </div>
         <div
@@ -167,7 +191,7 @@ export default function GalleryScreen() {
               textTransform: 'uppercase',
             }}
           >
-            ZIP · ±420 MB per edisi
+            {doc.ukuran}
           </div>
         </div>
       </div>

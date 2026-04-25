@@ -5,7 +5,6 @@ const NAV_ITEMS = [
   'ABOUT',
   'PROGRAM',
   'KARYA',
-  'PUBLICATION',
   'GALLERY',
 ];
 

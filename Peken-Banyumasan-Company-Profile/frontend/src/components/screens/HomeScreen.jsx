@@ -7,6 +7,7 @@ import SectionHeader from '../shared/SectionHeader.jsx';
 import PhotoTile from '../shared/PhotoTile.jsx';
 import { LocationMarker } from '../shared/Atoms.jsx';
 import { HOME_PROGRAMS } from '../../data/programs.js';
+import { programsApi } from '../../services/endpoints.js';
 
 // Peken Banyumasan — Home screen · v1.2
 // Implements:
@@ -119,6 +120,14 @@ function HeroCarousel({ slides, children }) {
 }
 
 export default function HomeScreen({ onNavigate }) {
+  const [homePrograms, setHomePrograms] = useState(HOME_PROGRAMS);
+
+  useEffect(() => {
+    programsApi.list()
+      .then(data => { if (data?.length) setHomePrograms(data.slice(0, 6)); })
+      .catch(() => {});
+  }, []);
+
   return (
     <main style={{ background: 'var(--bg-page)' }}>
       {/* HERO — carousel + Wordmark + headline + CTAs. */}
@@ -398,10 +407,10 @@ export default function HomeScreen({ onNavigate }) {
             gap: 0,
           }}
         >
-          {HOME_PROGRAMS.map((p, i) => (
+          {homePrograms.map((p, i) => (
             <PhotoTile
               key={p.n}
-              src={p.img}
+              src={p.image_url}
               alt={p.title}
               aspect="480/520"
               mode="hover"

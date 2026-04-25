@@ -1,8 +1,9 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import PillButton from '../shared/PillButton.jsx';
 import { Eyebrow, Wordmark } from '../shared/Typography.jsx';
 import SectionHeader from '../shared/SectionHeader.jsx';
 import WipeReveal from '../shared/WipeReveal.jsx';
+import { companyProfileApi } from '../../services/endpoints.js';
 
 // Peken Banyumasan — About screen · v1.2
 // Implements:
@@ -217,7 +218,30 @@ function Stat({ n, label }) {
   );
 }
 
+const STATIC_PEOPLE = [
+  { photo: '/assets/tokoh-portrait-1.png', role: 'FOUNDER', name: 'Gilang Ramadhan, S.Sn., M.Ds.', title: 'Founder & Program Director', bio: 'Menggagas Peken pada Februari 2022 dan mengawal kurasi setiap edisi sejak. Latar belakang antropologi pertunjukan, dengan fokus pada kesenian Banyumasan kontemporer.' },
+  { photo: '/assets/tokoh-portrait-2.png', role: 'CURATOR', name: 'Galih Putra Pamungkas, S.Sn., M.Sn.', title: 'Curator — Artisan', bio: 'Mengkurasi artisan yang masuk ke setiap edisi Peken. Sebelumnya menjalankan kolektif batik di Sokaraja; membangun program pendampingan artisan dari hulu ke hilir.' },
+  { photo: '/assets/tokoh-portrait-3.png', role: 'STRATEGIC PARTNER', name: 'Jakarta Tisam S.STP, M.Si', title: 'Strategic Partner & Community Lead', bio: 'Menjaga jaringan kolaborator, sponsor, dan mitra institusi — kampus, pemerintah daerah, swasta. Memegang rasio kolaborasi yang sehat antar enam helix.' },
+];
+
+const STATIC_STATS = [
+  { n: '86', label: 'Edisi Peken diselenggarakan' },
+  { n: '240', label: 'Seniman & kolektif tampil' },
+  { n: '1.2k', label: 'Artisan terlibat' },
+  { n: '38k', label: 'Pengunjung setiap edisi' },
+];
+
 export default function AboutScreen() {
+  const [timData, setTimData] = useState(null);
+
+  useEffect(() => {
+    companyProfileApi.get('about').catch(() => {});
+    companyProfileApi.get('tim').then(d => { if (d) setTimData(d); }).catch(() => {});
+  }, []);
+
+  const keyPeople = timData?.key_people?.length ? timData.key_people : STATIC_PEOPLE;
+  const statsData = timData?.stats?.length ? timData.stats : STATIC_STATS;
+
   const Hero = (
     <section
       style={{
@@ -612,27 +636,16 @@ export default function AboutScreen() {
             alignItems: 'flex-start',
           }}
         >
-          <PersonCard
-            photo="/assets/tokoh-portrait-1.png"
-            role="FOUNDER"
-            name="Gilang Ramadhan, S.Sn., M.Ds."
-            title="Founder & Program Director"
-            bio="Menggagas Peken pada Februari 2022 dan mengawal kurasi setiap edisi sejak. Latar belakang antropologi pertunjukan, dengan fokus pada kesenian Banyumasan kontemporer."
-          />
-          <PersonCard
-            photo="/assets/tokoh-portrait-2.png"
-            role="CURATOR"
-            name="Galih Putra Pamungkas, S.Sn., M.Sn."
-            title="Curator — Artisan"
-            bio="Mengkurasi artisan yang masuk ke setiap edisi Peken. Sebelumnya menjalankan kolektif batik di Sokaraja; membangun program pendampingan artisan dari hulu ke hilir."
-          />
-          <PersonCard
-            photo="/assets/tokoh-portrait-3.png"
-            role="STRATEGIC PARTNER"
-            name="Jakarta Tisam S.STP, M.Si"
-            title="Strategic Partner & Community Lead"
-            bio="Menjaga jaringan kolaborator, sponsor, dan mitra institusi — kampus, pemerintah daerah, swasta. Memegang rasio kolaborasi yang sehat antar enam helix."
-          />
+          {keyPeople.map((p, i) => (
+            <PersonCard
+              key={i}
+              photo={p.photo || p.foto_url}
+              role={p.role}
+              name={p.name || p.nama}
+              title={p.title}
+              bio={p.bio}
+            />
+          ))}
         </div>
       </section>
 
@@ -825,10 +838,9 @@ export default function AboutScreen() {
             gap: 40,
           }}
         >
-          <Stat n="86" label="Edisi Peken diselenggarakan" />
-          <Stat n="240" label="Seniman & kolektif tampil" />
-          <Stat n="1.2k" label="Artisan terlibat" />
-          <Stat n="38k" label="Pengunjung setiap edisi" />
+          {statsData.map((s, i) => (
+            <Stat key={i} n={s.n} label={s.label} />
+          ))}
         </div>
       </section>
     </main>

@@ -1,12 +1,20 @@
+import { useState, useEffect } from 'react';
 import PillButton from '../shared/PillButton.jsx';
 import { Eyebrow } from '../shared/Typography.jsx';
 import PhotoTile from '../shared/PhotoTile.jsx';
 import { PROGRAMS } from '../../data/programs.js';
+import { programsApi } from '../../services/endpoints.js';
 
 // Peken Banyumasan — Program screen · v1.2
 // §3 — Program rows use mode="hover" (full pixel-step colourise).
 
 export default function ProgramScreen() {
+  const [programs, setPrograms] = useState(PROGRAMS);
+
+  useEffect(() => {
+    programsApi.list().then(data => { if (data?.length) setPrograms(data); }).catch(() => {});
+  }, []);
+
   return (
     <main style={{ background: 'var(--bg-page)', color: '#fff' }}>
       <section style={{ padding: '100px 120px 60px' }}>
@@ -29,7 +37,7 @@ export default function ProgramScreen() {
       </section>
 
       <section style={{ padding: '40px 120px 100px' }}>
-        {PROGRAMS.map((p, i) => (
+        {programs.map((p, i) => (
           <ProgramRow key={p.n} program={p} flip={i % 2 === 1} />
         ))}
       </section>
@@ -42,7 +50,7 @@ function ProgramRow({ program, flip }) {
      full pixel-step colourise + title/desc slide-in on hover. */
   const img = (
     <PhotoTile
-      src={program.img}
+      src={program.image_url}
       alt={program.title}
       aspect="16/9"
       mode="hover"
