@@ -5,63 +5,15 @@ import {
   Mail, X, Plus, Trash2, Calendar, Loader2, Image, BookOpen, Star, StarOff
 } from 'lucide-react';
 import { useToast } from '../components/Toast';
+import { kolaboratorApi, eventApi, aktivitasApi } from '../services/endpoints';
+import { extractError } from '../lib/unwrap';
 
 const SUBSEKTORS = ['Semua','Kriya','Fashion','Musik','Seni Pertunjukan','Fotografi','Kuliner','Desain Produk','Seni Rupa','Film & Animasi'];
-
-const DUMMY_KOLABORATOR = [
-  { id:'m1', nama:'Sari Dewi Rahayu',  email:'sari@email.com', kota:'Banyumas',     subsektor:['Kriya','Fashion'],            status:'aktif',    tanggal_daftar:'2024-03-15', total_karya:18, bio:'Pengrajin batik tulis Banyumas dengan fokus motif lokal.' },
-  { id:'m2', nama:'Ahmad Fauzi',        email:'ahmad@email.com', kota:'Purwokerto',  subsektor:['Musik','Seni Pertunjukan'],    status:'aktif',    tanggal_daftar:'2024-04-02', total_karya:12, bio:'Musisi tradisional dan penggiat kesenian calung Banyumas.' },
-  { id:'m3', nama:'Rizky Pramesti',     email:'rizky@email.com', kota:'Banyumas',    subsektor:['Fotografi'],                  status:'pending',  tanggal_daftar:'2025-04-08', total_karya:0,  bio:'Fotografer dokumentasi budaya dan event lokal.' },
-  { id:'m4', nama:'Nurul Hidayah',      email:'nurul@email.com', kota:'Cilacap',     subsektor:['Kuliner'],                    status:'aktif',    tanggal_daftar:'2024-05-10', total_karya:5,  bio:'Pengembang kuliner tradisional berbasis bahan lokal Banyumas.' },
-  { id:'m5', nama:'Dimas Arya',         email:'dimas@email.com', kota:'Purbalingga', subsektor:['Desain Produk','Kriya'],      status:'pending',  tanggal_daftar:'2025-04-09', total_karya:0,  bio:'Desainer produk kriya berbahan dasar bambu dan rotan.' },
-  { id:'m6', nama:'Laras Wulandari',    email:'laras@email.com', kota:'Banyumas',    subsektor:['Seni Rupa'],                  status:'suspended',tanggal_daftar:'2024-02-01', total_karya:8,  bio:'Pelukis dengan medium cat air berbasis motif wayang.' },
-  { id:'m7', nama:'Budi Santoso',       email:'budi@email.com',  kota:'Purwokerto',  subsektor:['Film & Animasi'],             status:'aktif',    tanggal_daftar:'2024-06-20', total_karya:3,  bio:'Sineas dokumenter budaya lokal Banyumas.' },
-];
-
-const DUMMY_KOLABORATOR_EVENTS = {
-  m1: [
-    { id:'em1', event_id:'e1', nama:'Festival Budaya Banyumasan 2025', tanggal:'2025-05-17', jam_mulai:'08:00', jam_selesai:'22:00', peran:'performer', status_kehadiran:'terdaftar' },
-    { id:'em2', event_id:'e4', nama:'Peken Banyumasan #12', tanggal:'2025-03-20', jam_mulai:'16:00', jam_selesai:'22:00', peran:'performer', status_kehadiran:'hadir' },
-  ],
-  m2: [
-    { id:'em3', event_id:'e1', nama:'Festival Budaya Banyumasan 2025', tanggal:'2025-05-17', jam_mulai:'08:00', jam_selesai:'22:00', peran:'performer', status_kehadiran:'terdaftar' },
-    { id:'em4', event_id:'e4', nama:'Peken Banyumasan #12', tanggal:'2025-03-20', jam_mulai:'16:00', jam_selesai:'22:00', peran:'performer', status_kehadiran:'hadir' },
-  ],
-  m4: [{ id:'em5', event_id:'e2', nama:'Workshop Batik & Tenun Nusantara', tanggal:'2025-04-26', jam_mulai:'09:00', jam_selesai:'17:00', peran:'peserta', status_kehadiran:'terdaftar' }],
-};
-
-const DUMMY_KOLABORATOR_PORTO = {
-  m1: [
-    { id:'p1', judul:'Batik Sekar Jagad Kontemporer', kategori:'Kriya', tahun:2024, is_featured:true },
-    { id:'p2', judul:'Koleksi Tenun Banyumas Vol.3', kategori:'Fashion', tahun:2024, is_featured:false },
-    { id:'p3', judul:'Instalasi Bambu Gedek', kategori:'Kriya', tahun:2023, is_featured:false },
-  ],
-  m2: [
-    { id:'p4', judul:'Album Calung Kontemporer', kategori:'Musik', tahun:2024, is_featured:true },
-  ],
-};
-
-const DUMMY_KOLABORATOR_AKTIVITAS = {
-  m1: [
-    { id:'s1', konten:'Proses pembuatan batik tulis hari ini...', created_at:'2025-04-10', like_count:34, status:'aktif' },
-    { id:'s2', konten:'Workshop batik shibori bersama siswa SMA!', created_at:'2025-04-07', like_count:61, status:'aktif' },
-  ],
-  m2: [
-    { id:'s3', konten:'Latihan calung untuk festival minggu depan...', created_at:'2025-04-09', like_count:22, status:'aktif' },
-  ],
-};
-
-const DUMMY_ALL_EVENTS = [
-  { id:'e1', nama:'Festival Budaya Banyumasan 2025',   status:'published' },
-  { id:'e2', nama:'Workshop Batik & Tenun Nusantara',  status:'published' },
-  { id:'e3', nama:'Pameran Kriya Ekraf Regional',       status:'draft'     },
-  { id:'e4', nama:'Peken Banyumasan #12',               status:'selesai'   },
-];
 
 const STATUS_MAP = {
   aktif:    { label:'Aktif',   cls:'bg-[#eef0e0] text-[#7a8a52] border-[#c8d09a]',  dot:'bg-[#7A9B6A]' },
   pending:  { label:'Pending', cls:'bg-[#f7f2e4] text-[#C4A24D] border-[#dcc882]',  dot:'bg-amber-400' },
-  suspended:{ label:'Suspend', cls:'bg-[#f7eeee] text-[#B87272] border-[#dbb8b8]',        dot:'bg-red-400' },
+  suspended:{ label:'Suspend', cls:'bg-[#f7eeee] text-[#B87272] border-[#dbb8b8]',  dot:'bg-red-400' },
 };
 const PERAN_CLS = {
   peserta:'bg-indigo-50 text-indigo-600', performer:'bg-purple-50 text-purple-700', panitia:'bg-orange-50 text-orange-600',
@@ -73,20 +25,25 @@ function useDebounce(v, d=300) {
   return dv;
 }
 
-// ── AssignEventModal ─────────────────────────────────────────────────────────
-function AssignEventModal({ kolaboratorId, existingIds, onClose, onAssign }) {
+// ── AssignEventModal ──────────────────────────────────────────────────────────
+function AssignEventModal({ kolaboratorId, existingIds, onClose, onAssign, allEvents }) {
   const [selected, setSelected] = useState(null);
   const [peran, setPeran] = useState('peserta');
   const [saving, setSaving] = useState(false);
-  const available = DUMMY_ALL_EVENTS.filter(e =>
+  const available = (allEvents || []).filter(e =>
     ['published','berlangsung'].includes(e.status) && !existingIds.includes(e.id));
 
   const save = async () => {
     if (!selected) return;
     setSaving(true);
-    await new Promise(r => setTimeout(r, 500));
-    onAssign({ id:'em'+Date.now(), event_id:selected.id, nama:selected.nama, tanggal:new Date().toISOString().split('T')[0], peran, status_kehadiran:'terdaftar' });
-    setSaving(false); onClose();
+    try {
+      await onAssign({ event_id: selected.id, peran });
+      onClose();
+    } catch {
+      // error sudah di-toast oleh parent
+    } finally {
+      setSaving(false);
+    }
   };
 
   return (
@@ -127,7 +84,7 @@ function AssignEventModal({ kolaboratorId, existingIds, onClose, onAssign }) {
   );
 }
 
-// ── KolaboratorRow ─────────────────────────────────────────────────────────────────
+// ── KolaboratorRow ────────────────────────────────────────────────────────────
 const KolaboratorRow = React.memo(({ m, onApprove, onSuspend, onDetail, onDelete, isProcessing }) => {
   const st = STATUS_MAP[m.status] || STATUS_MAP.aktif;
   const fmt = d => new Date(d).toLocaleDateString('id-ID',{day:'numeric',month:'short',year:'numeric'});
@@ -145,8 +102,8 @@ const KolaboratorRow = React.memo(({ m, onApprove, onSuspend, onDetail, onDelete
       <td className="px-4 py-3.5">
         <div className="flex items-center gap-1 text-[#8a9070] text-xs"><MapPin size={11}/>{m.kota}</div>
         <div className="flex flex-wrap gap-1 mt-1">
-          {m.subsektor.slice(0,2).map(s => <span key={s} className="px-1.5 py-0.5 bg-indigo-50 text-indigo-600 rounded text-[10px] font-medium">{s}</span>)}
-          {m.subsektor.length>2 && <span className="text-[#8a9070] text-[10px]">+{m.subsektor.length-2}</span>}
+          {(m.subsektor||[]).slice(0,2).map(s => <span key={s} className="px-1.5 py-0.5 bg-indigo-50 text-indigo-600 rounded text-[10px] font-medium">{s}</span>)}
+          {(m.subsektor||[]).length>2 && <span className="text-[#8a9070] text-[10px]">+{m.subsektor.length-2}</span>}
         </div>
       </td>
       <td className="px-4 py-3.5">
@@ -173,40 +130,90 @@ const KolaboratorRow = React.memo(({ m, onApprove, onSuspend, onDetail, onDelete
   );
 });
 
-// ── DetailDrawer ─────────────────────────────────────────────────────────────
-const DetailDrawer = ({ kolaborator, onClose, onApprove, onSuspend }) => {
+// ── DetailDrawer ──────────────────────────────────────────────────────────────
+const DetailDrawer = ({ kolaborator, onClose, onApprove, onSuspend, allEvents }) => {
   const [tab, setTab] = useState('info');
   const [kolaboratorEvents, setKolaboratorEvents] = useState([]);
   const [portfolio, setPortfolio] = useState([]);
   const [stories, setStories] = useState([]);
+  const [tabLoading, setTabLoading] = useState(false);
   const [showAssignEvent, setShowAssignEvent] = useState(false);
   const toast = useToast();
 
   useEffect(() => {
     if (!kolaborator) return;
-    setKolaboratorEvents(DUMMY_KOLABORATOR_EVENTS[kolaborator.id] || []);
-    setPortfolio(DUMMY_KOLABORATOR_PORTO[kolaborator.id] || []);
-    setStories(DUMMY_KOLABORATOR_AKTIVITAS[kolaborator.id] || []);
     setTab('info');
+    setKolaboratorEvents([]);
+    setPortfolio([]);
+    setStories([]);
   }, [kolaborator?.id]);
 
-  if (!kolaborator) return null;
-  const st = STATUS_MAP[kolaborator.status];
+  // Load per-tab data on tab change
+  useEffect(() => {
+    if (!kolaborator) return;
+    const loadTab = async () => {
+      setTabLoading(true);
+      try {
+        if (tab === 'event') {
+          const list = await kolaboratorApi.events(kolaborator.id);
+          setKolaboratorEvents(list || []);
+        } else if (tab === 'portofolio') {
+          const list = await kolaboratorApi.portofolio(kolaborator.id);
+          setPortfolio(list || []);
+        } else if (tab === 'aktivitas') {
+          const list = await kolaboratorApi.stories(kolaborator.id);
+          setStories(list || []);
+        }
+      } catch (err) {
+        toast.error(extractError(err, 'Gagal memuat data'));
+      } finally {
+        setTabLoading(false);
+      }
+    };
+    if (tab !== 'info') loadTab();
+  }, [tab, kolaborator?.id]);
 
-  const removeEvent = (emId) => {
-    setKolaboratorEvents(l => l.filter(e => e.id !== emId));
-    toast.success('Kolaborator dihapus dari event');
+  if (!kolaborator) return null;
+  const st = STATUS_MAP[kolaborator.status] || STATUS_MAP.aktif;
+
+  const handleAssignEvent = async ({ event_id, peran }) => {
+    try {
+      await eventApi.assignKolaborator(event_id, { kolaborator_id: kolaborator.id, peran });
+      const updated = await kolaboratorApi.events(kolaborator.id);
+      setKolaboratorEvents(updated || []);
+      toast.success('Berhasil di-assign ke event');
+    } catch (err) {
+      toast.error(extractError(err, 'Gagal assign ke event'));
+      throw err;
+    }
+  };
+
+  const removeEvent = async (e) => {
+    if (!confirm('Hapus dari event ini?')) return;
+    try {
+      await eventApi.removeKolaborator(e.event_id, e.id);
+      setKolaboratorEvents(l => l.filter(x => x.id !== e.id));
+      toast.success('Kolaborator dihapus dari event');
+    } catch (err) {
+      toast.error(extractError(err, 'Gagal menghapus dari event'));
+    }
   };
 
   const toggleFeatured = (pid) => {
+    // Optimistic toggle — no Gate endpoint for porto featured update
     setPortfolio(l => l.map(p => p.id===pid ? {...p, is_featured:!p.is_featured} : p));
     toast.success('Status featured diperbarui');
   };
 
-  const deleteAktivitas = (sid) => {
+  const deleteAktivitas = async (sid) => {
     if (!confirm('Hapus aktivitas ini?')) return;
-    setStories(l => l.filter(s => s.id !== sid));
-    toast.success('Aktivitas dihapus');
+    try {
+      await aktivitasApi.delete(sid);
+      setStories(l => l.filter(s => s.id !== sid));
+      toast.success('Aktivitas dihapus');
+    } catch (err) {
+      toast.error(extractError(err, 'Gagal menghapus aktivitas'));
+    }
   };
 
   const fmtTgl = d => new Date(d).toLocaleDateString('id-ID',{day:'numeric',month:'short',year:'numeric'});
@@ -253,7 +260,7 @@ const DetailDrawer = ({ kolaborator, onClose, onApprove, onSuspend }) => {
               <div>
                 <p className="text-xs font-semibold text-[#8a9070] uppercase tracking-wider mb-2">Subsektor</p>
                 <div className="flex flex-wrap gap-2">
-                  {kolaborator.subsektor.map(s => <span key={s} className="px-3 py-1 bg-indigo-50 border border-indigo-100 text-indigo-700 rounded-full text-xs font-medium">{s}</span>)}
+                  {(kolaborator.subsektor||[]).map(s => <span key={s} className="px-3 py-1 bg-indigo-50 border border-indigo-100 text-indigo-700 rounded-full text-xs font-medium">{s}</span>)}
                 </div>
               </div>
               {kolaborator.bio && (
@@ -275,8 +282,15 @@ const DetailDrawer = ({ kolaborator, onClose, onApprove, onSuspend }) => {
             </div>
           )}
 
+          {/* Loading indicator for data tabs */}
+          {tab !== 'info' && tabLoading && (
+            <div className="py-12 text-center text-[#8a9070] text-sm">
+              <Loader2 size={20} className="animate-spin mx-auto mb-2 text-[#a8b07a]"/>Memuat...
+            </div>
+          )}
+
           {/* TAB: Event */}
-          {tab === 'event' && (
+          {tab === 'event' && !tabLoading && (
             <div>
               <div className="px-5 py-3.5 border-b border-gray-50 flex items-center justify-between">
                 <p className="text-sm text-[#8a9070]">{kolaboratorEvents.length} event</p>
@@ -294,7 +308,6 @@ const DetailDrawer = ({ kolaborator, onClose, onApprove, onSuspend }) => {
                           <p className="font-semibold text-[#1e2010] text-sm leading-snug">{e.nama}</p>
                           <p className="text-[#8a9070] text-xs mt-0.5">{fmtTgl(e.tanggal)}{e.jam_mulai && <span className="ml-1 text-gray-300">· {e.jam_mulai.replace(':','.')}{e.jam_selesai?`–${e.jam_selesai.replace(':','.')}`:''} WIB</span>}</p>
                           <div className="flex items-center gap-2 mt-1.5 flex-wrap">
-                            {/* Editable peran */}
                             <select
                               value={e.peran}
                               onChange={ev => setKolaboratorEvents(l => l.map(x => x.id===e.id ? {...x,peran:ev.target.value} : x))}
@@ -304,7 +317,6 @@ const DetailDrawer = ({ kolaborator, onClose, onApprove, onSuspend }) => {
                               <option value="performer">Performer</option>
                               <option value="panitia">Panitia</option>
                             </select>
-                            {/* Editable kehadiran */}
                             <select
                               value={e.status_kehadiran}
                               onChange={ev => setKolaboratorEvents(l => l.map(x => x.id===e.id ? {...x,status_kehadiran:ev.target.value} : x))}
@@ -316,7 +328,7 @@ const DetailDrawer = ({ kolaborator, onClose, onApprove, onSuspend }) => {
                             </select>
                           </div>
                         </div>
-                        <button onClick={() => removeEvent(e.id)} className="opacity-0 group-hover:opacity-100 transition p-1.5 rounded-lg text-gray-300 hover:text-[#B87272] hover:bg-[#f7eeee]">
+                        <button onClick={() => removeEvent(e)} className="opacity-0 group-hover:opacity-100 transition p-1.5 rounded-lg text-gray-300 hover:text-[#B87272] hover:bg-[#f7eeee]">
                           <Trash2 size={13}/>
                         </button>
                       </div>
@@ -327,7 +339,7 @@ const DetailDrawer = ({ kolaborator, onClose, onApprove, onSuspend }) => {
           )}
 
           {/* TAB: Portofolio */}
-          {tab === 'portofolio' && (
+          {tab === 'portofolio' && !tabLoading && (
             <div className="p-5">
               {portfolio.length === 0
                 ? <div className="py-12 text-center text-[#8a9070] text-sm"><Image size={28} className="text-gray-200 mx-auto mb-2"/>Belum ada portofolio</div>
@@ -353,7 +365,7 @@ const DetailDrawer = ({ kolaborator, onClose, onApprove, onSuspend }) => {
           )}
 
           {/* TAB: Aktivitas */}
-          {tab === 'aktivitas' && (
+          {tab === 'aktivitas' && !tabLoading && (
             <div className="p-5 space-y-3">
               {stories.length === 0
                 ? <div className="py-12 text-center text-[#8a9070] text-sm"><BookOpen size={28} className="text-gray-200 mx-auto mb-2"/>Belum ada aktivitas</div>
@@ -390,7 +402,8 @@ const DetailDrawer = ({ kolaborator, onClose, onApprove, onSuspend }) => {
             kolaboratorId={kolaborator.id}
             existingIds={kolaboratorEvents.map(e => e.event_id)}
             onClose={() => setShowAssignEvent(false)}
-            onAssign={(ev) => { setKolaboratorEvents(l => [...l, ev]); toast.success('Berhasil di-assign ke event'); }}
+            onAssign={handleAssignEvent}
+            allEvents={allEvents}
           />
         )}
       </div>
@@ -398,10 +411,12 @@ const DetailDrawer = ({ kolaborator, onClose, onApprove, onSuspend }) => {
   );
 };
 
-// ── Main ─────────────────────────────────────────────────────────────────────
+// ── Main ──────────────────────────────────────────────────────────────────────
 export default function Kolaborator() {
   const toast = useToast();
-  const [kolaborators, setKolaborators] = useState(DUMMY_KOLABORATOR);
+  const [kolaborators, setKolaborators] = useState([]);
+  const [allEvents, setAllEvents] = useState([]);
+  const [kolaboratorIdsInSelectedEvent, setKolaboratorIdsInSelectedEvent] = useState([]);
   const [search, setSearch] = useState('');
   const [filterStatus, setFilterStatus] = useState('semua');
   const [filterSub, setFilterSub] = useState('Semua');
@@ -411,62 +426,89 @@ export default function Kolaborator() {
   const [processing, setProcessing] = useState(null);
   const dSearch = useDebounce(search);
 
+  const load = async () => {
+    try {
+      setKolaborators(await kolaboratorApi.list() || []);
+    } catch (err) {
+      toast.error(extractError(err, 'Gagal memuat data kolaborator'));
+    }
+  };
+
+  useEffect(() => { load(); }, []);
+
+  // Load events for filter dropdown
+  useEffect(() => {
+    eventApi.list().then(list => setAllEvents(list || [])).catch(() => {});
+  }, []);
+
+  // When filter event changes, fetch kolaborator IDs in that event
+  useEffect(() => {
+    if (filterEvent === 'semua') { setKolaboratorIdsInSelectedEvent([]); return; }
+    eventApi.kolaborators(filterEvent)
+      .then(list => setKolaboratorIdsInSelectedEvent((list || []).map(k => k.kolaborator_id)))
+      .catch(() => setKolaboratorIdsInSelectedEvent([]));
+  }, [filterEvent]);
+
   const approve = async (id) => {
     setProcessing(id);
-    await new Promise(r=>setTimeout(r,600));
-    const m = kolaborators.find(x=>x.id===id);
-    setKolaborators(l => l.map(m => m.id===id ? {...m,status:'aktif'} : m));
-    toast.success('Kolaborator berhasil disetujui');
-    // Auto-notify kolaborator
     try {
-      const { triggerKolaboratorApproved } = await import('../lib/notifications');
-      if (m) triggerKolaboratorApproved(m.nama);
-    } catch {}
-    setProcessing(null);
+      await kolaboratorApi.status(id, 'aktif');
+      toast.success('Kolaborator berhasil disetujui');
+      try {
+        const m = kolaborators.find(x=>x.id===id);
+        const { triggerKolaboratorApproved } = await import('../lib/notifications');
+        if (m) triggerKolaboratorApproved(m.nama);
+      } catch {}
+      await load();
+    } catch (err) {
+      toast.error(extractError(err, 'Gagal menyetujui kolaborator'));
+    } finally {
+      setProcessing(null);
+    }
   };
+
   const suspend = async (id) => {
     setProcessing(id);
-    await new Promise(r=>setTimeout(r,600));
-    setKolaborators(l => l.map(m => m.id===id ? {...m,status:'suspended'} : m));
-    toast.error('Akun disuspend');
-    setProcessing(null);
+    try {
+      await kolaboratorApi.status(id, 'suspended');
+      toast.error('Akun disuspend');
+      await load();
+    } catch (err) {
+      toast.error(extractError(err, 'Gagal mensuspend akun'));
+    } finally {
+      setProcessing(null);
+    }
   };
 
   const deleteKolaborator = async (id) => {
     if (!confirm('Hapus akun ini secara permanen? Data akan diarsipkan dan tidak bisa dipulihkan.')) return;
     setProcessing(id);
-    await new Promise(r=>setTimeout(r,500));
-    setKolaborators(l => l.map(m => m.id===id ? {...m, status:'deleted'} : m));
-    toast.error('Akun dihapus (diarsipkan)');
-    setProcessing(null);
+    try {
+      await kolaboratorApi.status(id, 'deleted');
+      toast.error('Akun dihapus (diarsipkan)');
+      await load();
+    } catch (err) {
+      toast.error(extractError(err, 'Gagal menghapus akun'));
+    } finally {
+      setProcessing(null);
+    }
   };
-
-  const kolaboratorIdsInEvent = (eventId) => {
-    return Object.entries(DUMMY_KOLABORATOR_EVENTS)
-      .filter(([, evs]) => evs.some(e => e.event_id === eventId))
-      .map(([mid]) => mid);
-  };
-
-  // Count events per kolaborator
-  const eventCount = (id) => (DUMMY_KOLABORATOR_EVENTS[id] || []).length;
 
   const SORT_FNS = {
-    newest:      (a,b) => new Date(b.tanggal_daftar) - new Date(a.tanggal_daftar),
-    oldest:      (a,b) => new Date(a.tanggal_daftar) - new Date(b.tanggal_daftar),
-    name_asc:    (a,b) => a.nama.localeCompare(b.nama),
-    name_desc:   (a,b) => b.nama.localeCompare(a.nama),
-    most_events: (a,b) => eventCount(b.id) - eventCount(a.id),
-    least_events:(a,b) => eventCount(a.id) - eventCount(b.id),
-    most_works:  (a,b) => (b.total_karya||0) - (a.total_karya||0),
+    newest:    (a,b) => new Date(b.tanggal_daftar) - new Date(a.tanggal_daftar),
+    oldest:    (a,b) => new Date(a.tanggal_daftar) - new Date(b.tanggal_daftar),
+    name_asc:  (a,b) => a.nama.localeCompare(b.nama),
+    name_desc: (a,b) => b.nama.localeCompare(a.nama),
+    most_works:(a,b) => (b.total_karya||0) - (a.total_karya||0),
   };
 
   const filtered = kolaborators
-    .filter(m => m.status !== 'deleted')  // exclude soft-deleted from main list
+    .filter(m => m.status !== 'deleted')
     .filter(m => {
       const matchQ = !dSearch || m.nama.toLowerCase().includes(dSearch.toLowerCase()) || m.email.toLowerCase().includes(dSearch.toLowerCase());
       const matchS = filterStatus==='semua' || m.status===filterStatus;
-      const matchSub = filterSub==='Semua' || m.subsektor.includes(filterSub);
-      const matchEv = filterEvent==='semua' || kolaboratorIdsInEvent(filterEvent).includes(m.id);
+      const matchSub = filterSub==='Semua' || (m.subsektor||[]).includes(filterSub);
+      const matchEv = filterEvent==='semua' || kolaboratorIdsInSelectedEvent.includes(m.id);
       return matchQ && matchS && matchSub && matchEv;
     })
     .sort(SORT_FNS[sortBy] || SORT_FNS.newest);
@@ -493,7 +535,7 @@ export default function Kolaborator() {
         ))}
       </div>
 
-      {/* Toolbar — industry standard: search + filter row + sort row */}
+      {/* Toolbar */}
       <div className="bg-white rounded-[16px] border border-[#e4e7d4] overflow-hidden">
 
         {/* Row 1: Search */}
@@ -505,11 +547,10 @@ export default function Kolaborator() {
           </div>
         </div>
 
-        {/* Row 2: Filters (labeled) */}
+        {/* Row 2: Filters */}
         <div className="px-4 py-3 border-b border-gray-50 flex items-center gap-3 flex-wrap">
           <span className="text-[11px] font-bold text-[#8a9070] uppercase tracking-wider shrink-0">Filter:</span>
 
-          {/* Status chips */}
           <div className="flex gap-1.5 flex-wrap">
             {['semua','aktif','pending','suspended'].map(s => (
               <button key={s} onClick={() => setFilterStatus(s)}
@@ -530,27 +571,25 @@ export default function Kolaborator() {
 
           <div className="w-px h-4 bg-gray-200 shrink-0"/>
 
-          {/* Subsektor filter */}
           <select value={filterSub} onChange={e=>setFilterSub(e.target.value)}
             className="px-3 py-1.5 border border-[#e4e7d4] rounded-lg text-xs text-[#5a6040] bg-[#f7f8f2] focus:outline-none focus:border-indigo-400 transition">
             {SUBSEKTORS.map(s => <option key={s}>{s}</option>)}
           </select>
 
-          {/* Event filter */}
           <select value={filterEvent} onChange={e=>setFilterEvent(e.target.value)}
             className="px-3 py-1.5 border border-[#e4e7d4] rounded-lg text-xs text-[#5a6040] bg-[#f7f8f2] focus:outline-none focus:border-indigo-400 transition">
             <option value="semua">Semua Event</option>
-            {DUMMY_ALL_EVENTS.map(e => <option key={e.id} value={e.id}>{e.nama}</option>)}
+            {allEvents.map(e => <option key={e.id} value={e.id}>{e.nama}</option>)}
           </select>
         </div>
 
-        {/* Row 3: Sort (labeled, right-aligned) */}
+        {/* Row 3: Sort */}
         <div className="px-4 py-2.5 flex items-center justify-between">
           <p className="text-xs text-[#8a9070]">
-            {filtered.length} dari {kolaborators.filter(m=>m.status!=='deleted').length} anggota
+            {filtered.length} dari {active.length} anggota
             {filterEvent !== 'semua' && (
               <span className="ml-2 inline-flex items-center gap-1 px-2 py-0.5 bg-indigo-50 text-indigo-600 rounded-full text-[10px] font-semibold">
-                🎪 {DUMMY_ALL_EVENTS.find(e=>e.id===filterEvent)?.nama?.slice(0,20)}
+                🎪 {allEvents.find(e=>e.id===filterEvent)?.nama?.slice(0,20)}
                 <button onClick={()=>setFilterEvent('semua')} className="hover:text-[#B87272] ml-0.5">×</button>
               </span>
             )}
@@ -563,8 +602,6 @@ export default function Kolaborator() {
               <option value="oldest">Terlama Daftar</option>
               <option value="name_asc">Nama A–Z</option>
               <option value="name_desc">Nama Z–A</option>
-              <option value="most_events">Terbanyak Event</option>
-              <option value="least_events">Tersedikit Event</option>
               <option value="most_works">Terbanyak Karya</option>
             </select>
           </div>
@@ -591,14 +628,14 @@ export default function Kolaborator() {
           <span>Menampilkan {filtered.length} dari {kolaborators.length} Kolaborator</span>
           {filterEvent !== 'semua' && (
             <span className="flex items-center gap-1.5 px-2 py-1 bg-indigo-50 text-indigo-600 rounded-lg font-medium">
-              🎪 {DUMMY_ALL_EVENTS.find(e=>e.id===filterEvent)?.nama}
+              🎪 {allEvents.find(e=>e.id===filterEvent)?.nama}
               <button onClick={()=>setFilterEvent('semua')} className="hover:text-[#B87272] transition">×</button>
             </span>
           )}
         </div>
       </div>
 
-      <DetailDrawer kolaborator={detail} onClose={() => setDetail(null)} onApprove={approve} onSuspend={suspend}/>
+      <DetailDrawer kolaborator={detail} onClose={() => setDetail(null)} onApprove={approve} onSuspend={suspend} allEvents={allEvents}/>
     </div>
   );
 }

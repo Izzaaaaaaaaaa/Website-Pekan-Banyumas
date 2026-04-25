@@ -30,13 +30,13 @@ const NavItem = ({ to, icon: Icon, label, isActive, badge, onClick }) => (
     style={{
       display: 'flex',
       alignItems: 'center',
-      gap: 9,
-      padding: '9px 12px',
+      gap: 10,
+      padding: '10px 14px',
       borderRadius: 10,
       margin: '1px 0',
       background: isActive ? 'rgba(195,202,150,0.13)' : 'transparent',
       color: isActive ? '#C3CA96' : '#8a9278',
-      fontSize: 12,
+      fontSize: 13,
       fontWeight: isActive ? 600 : 500,
       textDecoration: 'none',
       transition: 'background 180ms ease, color 180ms ease',
@@ -46,7 +46,7 @@ const NavItem = ({ to, icon: Icon, label, isActive, badge, onClick }) => (
     onMouseLeave={e => { if (!isActive) e.currentTarget.style.background = 'transparent'; }}
   >
     <span style={{ position: 'relative', flexShrink: 0 }}>
-      <Icon size={15} />
+      <Icon size={16} />
       {badge > 0 && (
         <span style={{
           position: 'absolute', top: -6, right: -6,
@@ -81,16 +81,16 @@ const ExtLink = ({ href, icon: Icon, label }) => (
     target="_blank"
     rel="noopener noreferrer"
     style={{
-      display: 'flex', alignItems: 'center', gap: 9,
-      padding: '9px 12px', borderRadius: 10, margin: '1px 0',
-      color: '#6a7258', fontSize: 12, fontWeight: 500,
+      display: 'flex', alignItems: 'center', gap: 10,
+      padding: '10px 14px', borderRadius: 10, margin: '1px 0',
+      color: '#6a7258', fontSize: 13, fontWeight: 500,
       textDecoration: 'none',
       transition: 'background 180ms ease, color 180ms ease',
     }}
     onMouseEnter={e => { e.currentTarget.style.background = 'rgba(195,202,150,0.06)'; e.currentTarget.style.color = '#C3CA96'; }}
     onMouseLeave={e => { e.currentTarget.style.background = 'transparent'; e.currentTarget.style.color = '#6a7258'; }}
   >
-    <Icon size={15} />
+    <Icon size={16} />
     <span style={{ flex: 1 }}>{label}</span>
     <svg width={9} height={9} viewBox="0 0 12 12" fill="none" stroke="currentColor" strokeWidth={1.8} style={{ opacity: .4 }}>
       <path d="M2 10L10 2M10 2H5M10 2v5" />
@@ -207,7 +207,7 @@ const AdminLayout = () => {
     <>
       {/* Logo area */}
       <div style={{
-        padding: '20px 16px 16px',
+        padding: '20px 18px 18px',
         borderBottom: '1px solid rgba(255,255,255,.07)',
         display: 'flex', alignItems: 'center', justifyContent: 'space-between',
       }}>
@@ -215,14 +215,14 @@ const AdminLayout = () => {
           <img
             src="/logo-gate.png"
             alt="Peken Banyumasan"
-            style={{ width: 36, height: 36, borderRadius: 9, objectFit: 'cover' }}
+            style={{ width: 38, height: 38, borderRadius: 10, objectFit: 'cover' }}
           />
           <div>
             <div style={{
               fontFamily: '"Clash Display", sans-serif',
-              fontSize: 14, fontWeight: 600, color: '#fff', lineHeight: 1,
+              fontSize: 15, fontWeight: 600, color: '#fff', lineHeight: 1,
             }}>Peken</div>
-            <div style={{ fontSize: 10, color: '#5a6258', marginTop: 2, letterSpacing: '.04em' }}>
+            <div style={{ fontSize: 10, color: '#5a6258', marginTop: 3, letterSpacing: '.06em', textTransform: 'uppercase' }}>
               Banyumasan
             </div>
           </div>
@@ -238,7 +238,7 @@ const AdminLayout = () => {
       </div>
 
       {/* Navigation */}
-      <nav style={{ flex: 1, padding: '12px 10px', overflowY: 'auto' }}>
+      <nav style={{ flex: 1, padding: '12px 12px', overflowY: 'auto' }}>
         <div className="sidebar-section-label">Menu Utama</div>
         {navItems.map(item => (
           <NavItem
@@ -264,7 +264,7 @@ const AdminLayout = () => {
 
       {/* User info + logout */}
       <div style={{ borderTop: '1px solid rgba(255,255,255,.06)' }}>
-        <div style={{ padding: '12px 16px 6px' }}>
+        <div style={{ padding: '14px 18px 6px' }}>
           <div style={{ display: 'flex', alignItems: 'center', gap: 6, marginBottom: 2 }}>
             <RoleIcon size={11} color="#7a8a52" />
             <span style={{ fontSize: 10, fontWeight: 700, color: '#7a8a52', textTransform: 'capitalize' }}>
@@ -279,7 +279,7 @@ const AdminLayout = () => {
           </div>
         </div>
 
-        <div style={{ padding: '4px 10px 12px' }}>
+        <div style={{ padding: '4px 12px 14px' }}>
           <button
             onClick={handleLogout}
             style={{
@@ -327,7 +327,7 @@ const AdminLayout = () => {
       {/* ── SIDEBAR (desktop: static, mobile: slide-in) ────────────────── */}
       <aside
         style={{
-          width: 240, minWidth: 240,
+          width: 260, minWidth: 260,
           background: '#1B1B1B',
           display: 'flex', flexDirection: 'column',
           height: '100vh', position: 'sticky', top: 0,

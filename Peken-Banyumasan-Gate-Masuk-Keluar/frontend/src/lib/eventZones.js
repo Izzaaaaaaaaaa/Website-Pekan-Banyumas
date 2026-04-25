@@ -241,6 +241,24 @@ export function getZoneStats(zones) {
   return { total, occupied, available: total - occupied };
 }
 
+/**
+ * Async variant: fetches zones from the API first (pass zonesApi.listGlobal),
+ * writes result to localStorage cache, falls back to sync getGlobalZones().
+ */
+export async function getGlobalZonesAsync(listGlobalFn) {
+  if (listGlobalFn) {
+    try {
+      const data = await listGlobalFn();
+      if (data?.length) {
+        localStorage.setItem(STORAGE_KEYS.ZONES_GLOBAL, JSON.stringify(data));
+        window.dispatchEvent(new CustomEvent(STORAGE_EVENTS.ZONES_UPDATE));
+        return data;
+      }
+    } catch (_) {}
+  }
+  return getGlobalZones();
+}
+
 // ── Backward compat alias ─────────────────────────────────────────────────────
 export function saveEventZones(eventId, zones) {
   // For backward compat: save the occupied state extracted from zones

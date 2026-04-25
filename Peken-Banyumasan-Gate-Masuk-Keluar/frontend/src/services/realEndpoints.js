@@ -163,11 +163,17 @@ export const kolaboratorApi = {
 
 // ── artisanApi (admin slice — the /me self-slice is Artisan's; omitted here) ──
 export const artisanApi = {
-  list:   async (params)      => extractData(await apiClient.get('/api/artisan', { params })),
-  detail: async (id)          => extractData(await apiClient.get(`/api/artisan/${id}`)),
-  update: async (id, data)    => extractData(await apiClient.patch(`/api/artisan/${id}`, data)),
-  status: async (id, status)  => extractData(await apiClient.patch(`/api/artisan/${id}/status`, { status })),
-  events: async (id)          => extractData(await apiClient.get(`/api/artisan/${id}/events`)),
+  list:    async (params)      => extractData(await apiClient.get('/api/artisan', { params })),
+  detail:  async (id)          => extractData(await apiClient.get(`/api/artisan/${id}`)),
+  update:  async (id, data)    => extractData(await apiClient.patch(`/api/artisan/${id}`, data)),
+  status:  async (id, status)  => extractData(await apiClient.patch(`/api/artisan/${id}/status`, { status })),
+  events:  async (id)          => extractData(await apiClient.get(`/api/artisan/${id}/events`)),
+  // Admin finance view (read-only aggregates per artisan)
+  kas:     async (id, params)  => extractData(await apiClient.get(`/api/artisan/${id}/kas`, { params })),
+  riwayat: async (id, params)  => extractData(await apiClient.get(`/api/artisan/${id}/riwayat`, { params })),
+  promo:   async (id)          => extractData(await apiClient.get(`/api/artisan/${id}/promo`)),
+  stok:    async (id)          => extractData(await apiClient.get(`/api/artisan/${id}/stok`)),
+  qris:    async (id)          => extractData(await apiClient.get(`/api/artisan/${id}/qris`)),
 };
 
 // ── aktivitasApi (admin moderation of all stories, cross-author) ───────────
@@ -182,3 +188,46 @@ export const aktivitasApi = {
    */
   delete: async (id) => extractData(await apiClient.delete(`/api/aktivitas/${id}`)),
 };
+
+// ── companyProfileApi (kelola konten company profile per section) ───────────
+export const companyProfileApi = {
+  /** GET /api/company-profile?section=home|about|tim|programs|works|gallery → content JSONB */
+  get: async (section) => extractData(await apiClient.get('/api/company-profile', { params: { section } })),
+  /** PUT /api/company-profile → { message } */
+  save: async (section, content) => extractData(await apiClient.put('/api/company-profile', { section, content })),
+};
+
+// ── zonesApi (venue zone & stand management) ─────────────────────────────────
+export const zonesApi = {
+  /** GET /api/zones → Array<Zone> (global venue layout) */
+  listGlobal:    async ()                           => extractData(await apiClient.get('/api/zones')),
+  /** PUT /api/zones → { message } */
+  saveGlobal:    async (zones)                      => extractData(await apiClient.put('/api/zones', { zones })),
+  /** GET /api/events/:id/zones → Array<Zone> with per-event occupied state */
+  listForEvent:  async (id)                         => extractData(await apiClient.get(`/api/events/${id}/zones`)),
+  /** POST /api/events/:eid/artisan/:aid/stand → { message } */
+  assignStand:   async (eventId, artisanId, standId) => extractData(await apiClient.post(`/api/events/${eventId}/artisan/${artisanId}/stand`, { stand_id: standId })),
+};
+
+// ── notifikasiApi (admin notification inbox) ──────────────────────────────────
+export const notifikasiApi = {
+  /** GET /api/notifikasi → Array<Notifikasi> */
+  list:      async ()   => extractData(await apiClient.get('/api/notifikasi')),
+  /** PATCH /api/notifikasi/:id/baca → { id, read: true } */
+  baca:      async (id) => extractData(await apiClient.patch(`/api/notifikasi/${id}/baca`)),
+  /** PATCH /api/notifikasi/baca-semua → { count } */
+  bacaSemua: async ()   => extractData(await apiClient.patch('/api/notifikasi/baca-semua')),
+};
+
+// ── eventApi: artisan-request approval endpoints ───────────────────────────
+// Append to the existing eventApi. These let admin respond to self-join requests.
+// (eventApi itself is defined earlier in this file; the extra methods below
+//  would ideally be merged there, but are added here to avoid a large diff.)
+Object.assign(eventApi, {
+  /** GET /api/events/:id/artisan-requests → Array<ArtisanRequest> */
+  artisanRequests:        async (id)           => extractData(await apiClient.get(`/api/events/${id}/artisan-requests`)),
+  /** PATCH /api/events/:id/artisan-requests/:rid → { message } — action:'approve'|'reject' */
+  respondArtisanRequest:  async (id, rid, data) => extractData(await apiClient.patch(`/api/events/${id}/artisan-requests/${rid}`, data)),
+  /** PATCH /api/events/:id/artisan-requests/:rid/change → { message } — respond to change_request */
+  respondPositionChange:  async (id, rid, data) => extractData(await apiClient.patch(`/api/events/${id}/artisan-requests/${rid}/change`, data)),
+});

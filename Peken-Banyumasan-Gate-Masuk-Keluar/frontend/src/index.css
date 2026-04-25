@@ -245,12 +245,12 @@
 
   /* ── Sidebar section divider label ─────────────────────── */
   .sidebar-section-label {
-    font-size: 9px;
+    font-size: 10px;
     font-weight: 700;
     color: #3a4030;
     text-transform: uppercase;
     letter-spacing: .1em;
-    padding: 14px 8px 4px;
+    padding: 14px 10px 4px;
   }
 
   /* ── Table rows ─────────────────────────────────────────── */

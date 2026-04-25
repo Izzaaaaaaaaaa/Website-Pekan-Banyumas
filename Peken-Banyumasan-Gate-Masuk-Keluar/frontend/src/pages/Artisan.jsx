@@ -10,37 +10,14 @@ import { useToast } from '../components/Toast';
 import ZoneSelector from '../components/ZoneSelector';
 import { getEventZones } from '../lib/eventZones';
 import { STORAGE_KEYS, STORAGE_EVENTS } from '../lib/storageKeys';
-
-const DUMMY_ARTISANS = [
-  { id:'t1', nama_usaha:'Batik Sari Rahayu',    pemilik:'Sari Dewi',     kategori:'Kriya & Fashion', kota:'Banyumas',    no_hp:'08111234567', email:'sari@batik.com', status:'aktif',    tanggal_daftar:'2024-03-10', komisi_persen:15, total_penjualan:4500000, komisi_terkumpul:675000,  deskripsi:'Batik tulis dan printing motif Banyumasan.' },
-  { id:'t2', nama_usaha:'Calung Mas',            pemilik:'Budi Hartono',  kategori:'Seni Pertunjukan',kota:'Purwokerto',  no_hp:'08122345678', email:'calung@mas.com',  status:'aktif',    tanggal_daftar:'2024-04-01', komisi_persen:10, total_penjualan:2800000, komisi_terkumpul:280000,  deskripsi:'Pertunjukan calung dan angklung tradisional.' },
-  { id:'t3', nama_usaha:'Dawet Ayu Banjarnegara',pemilik:'Nia Rahma',     kategori:'Kuliner',         kota:'Banjarnegara',no_hp:'08133456789', email:'dawet@ayu.com',   status:'pending',  tanggal_daftar:'2025-04-09', komisi_persen:0,  total_penjualan:0,       komisi_terkumpul:0,       deskripsi:'Dawet ayu asli Banjarnegara.' },
-  { id:'t4', nama_usaha:'Tenun Lurik Cilacap',   pemilik:'Hendra W.',     kategori:'Kriya & Fashion', kota:'Cilacap',     no_hp:'08144567890', email:'lurik@cilacap.com',status:'aktif',   tanggal_daftar:'2024-05-15', komisi_persen:12, total_penjualan:3200000, komisi_terkumpul:384000,  deskripsi:'Tenun lurik dengan corak khas pesisir selatan.' },
-  { id:'t5', nama_usaha:'Keripik Tempe Mrisi',   pemilik:'Sulastri K.',   kategori:'Kuliner',         kota:'Purbalingga', no_hp:'08155678901', email:'tempe@mrisi.com', status:'aktif',    tanggal_daftar:'2024-06-20', komisi_persen:10, total_penjualan:1900000, komisi_terkumpul:190000,  deskripsi:'Keripik tempe dan aneka olahan kedelai.' },
-  { id:'t6', nama_usaha:'Wayang Golek Banyumas', pemilik:'Dalang Suratno',kategori:'Seni Pertunjukan',kota:'Banyumas',    no_hp:'08166789012', email:'wayang@dalang.com',status:'pending', tanggal_daftar:'2025-04-10', komisi_persen:0,  total_penjualan:0,       komisi_terkumpul:0,       deskripsi:'Pertunjukan wayang golek gaya Banyumasan.' },
-];
-
-const DUMMY_ARTISAN_EVENTS = {
-  t1: [
-    { id:'et1', event_id:'e1', nama:'Festival Budaya Banyumasan 2025', tanggal:'2025-05-17', jam_mulai:'08:00', jam_selesai:'22:00', posisi_event:'Zona A - Stand 3', assigned_by:'admin' },
-    { id:'et2', event_id:'e4', nama:'Peken Banyumasan #12', tanggal:'2025-03-20', jam_mulai:'16:00', jam_selesai:'22:00', posisi_event:'Zona A', assigned_by:'admin' },
-  ],
-  t2: [{ id:'et3', event_id:'e4', nama:'Peken Banyumasan #12', tanggal:'2025-03-20', jam_mulai:'16:00', jam_selesai:'22:00', posisi_event:'Panggung Utama', assigned_by:'admin' }],
-  t5: [{ id:'et4', event_id:'e1', nama:'Festival Budaya Banyumasan 2025', tanggal:'2025-05-17', jam_mulai:'08:00', jam_selesai:'22:00', posisi_event:'Zona Kuliner - Stand 7', assigned_by:'self' }],
-};
-
-const DUMMY_ALL_EVENTS = [
-  { id:'e1', nama:'Festival Budaya Banyumasan 2025', status:'published' },
-  { id:'e2', nama:'Workshop Batik & Tenun Nusantara', status:'published' },
-];
+import { artisanApi, eventApi } from '../services/endpoints';
+import { extractError } from '../lib/unwrap';
 
 const fmtRupiah = v => 'Rp ' + (v||0).toLocaleString('id-ID');
 const fmtTgl = d => new Date(d).toLocaleDateString('id-ID',{day:'numeric',month:'short',year:'numeric'});
 function useDebounce(v,d=300){const[r,s]=useState(v);useEffect(()=>{const t=setTimeout(()=>s(v),d);return()=>clearTimeout(t)},[v,d]);return r}
 
-// ── AssignEventModal ─────────────────────────────────────────────────────────
-// ── PosisiInlineEditor — click-to-edit stand position ────────────────────────
-// ── PosisiSelectModal — centered modal with ZoneSelector ─────────────────────
+// ── PosisiSelectModal ─────────────────────────────────────────────────────────
 function PosisiSelectModal({ value, onClose, onChange, eventId }) {
   const [local, setLocal] = useState(value || '');
   const zones = eventId ? getEventZones(eventId) : [];
@@ -71,7 +48,7 @@ function PosisiSelectModal({ value, onClose, onChange, eventId }) {
   );
 }
 
-// ── PosisiInlineEditor — button opens PosisiSelectModal ───────────────────────
+// ── PosisiInlineEditor ────────────────────────────────────────────────────────
 function PosisiInlineEditor({ value, onChange, eventId }) {
   const [open, setOpen] = useState(false);
   return (
@@ -90,18 +67,23 @@ function PosisiInlineEditor({ value, onChange, eventId }) {
   );
 }
 
-function AssignEventModal({ existingIds, onClose, onAssign }) {
+function AssignEventModal({ artisanId, existingIds, onClose, onAssign, allEvents }) {
   const [selected, setSelected] = useState(null);
   const [posisi, setPosisi] = useState('');
   const [saving, setSaving] = useState(false);
-  const available = DUMMY_ALL_EVENTS.filter(e => !existingIds.includes(e.id));
+  const available = (allEvents || []).filter(e => !existingIds.includes(e.id));
 
   const save = async () => {
     if (!selected) return;
     setSaving(true);
-    await new Promise(r => setTimeout(r, 500));
-    onAssign({ id:'et'+Date.now(), event_id:selected.id, nama:selected.nama, tanggal:new Date().toISOString().split('T')[0], posisi_event:posisi, assigned_by:'admin' });
-    setSaving(false); onClose();
+    try {
+      await onAssign({ event_id: selected.id, posisi_event: posisi });
+      onClose();
+    } catch {
+      // error sudah di-toast oleh parent
+    } finally {
+      setSaving(false);
+    }
   };
 
   return (
@@ -142,10 +124,6 @@ function AssignEventModal({ existingIds, onClose, onAssign }) {
 }
 
 // ── PendingCard ───────────────────────────────────────────────────────────────
-// Approval = verifikasi akun artisan + set default komisi.
-// Posisi stand TIDAK di-set di sini karena bersifat per-event.
-// Setelah disetujui, admin assign artisan ke event via tab Event di EditDrawer
-// atau dari halaman Kelola Event → Detail Event.
 const PendingCard = memo(({ t, onApprove, onReject, isProcessing }) => {
   const [exp, setExp] = useState(false);
   const [komisi, setKomisi] = useState(10);
@@ -174,7 +152,7 @@ const PendingCard = memo(({ t, onApprove, onReject, isProcessing }) => {
               <div className="flex items-center gap-2 text-[#5a6040]"><MapPin size={12}/>{t.kota}</div>
             </div>
             <div>
-              <label className="text-xs font-semibold text-[#8a9070] mb-1.5 block flex items-center gap-1"><Percent size={11}/>Komisi Default (%)</label>
+              <label className="text-sm font-semibold text-[#5a6040] mb-2 block flex items-center gap-1.5"><Percent size={14}/>Komisi Default (%)</label>
               <div className="flex items-center gap-3">
                 <input type="range" min="0" max="30" value={komisi} onChange={e=>setKomisi(+e.target.value)} className="flex-1"/>
                 <div className="w-14 border border-[#e4e7d4] rounded-lg px-2 py-1.5 text-center font-bold text-indigo-700 text-sm bg-indigo-50">{komisi}%</div>
@@ -221,35 +199,61 @@ const ArtisanRow = memo(({ t, onEdit }) => (
 ));
 
 // ── EditDrawer ────────────────────────────────────────────────────────────────
-const EditDrawer = ({ artisan, onClose, onSave }) => {
+const EditDrawer = ({ artisan, onClose, onSave, allEvents }) => {
   const [tab, setTab] = useState('usaha');
   const [komisi, setKomisi] = useState(artisan?.komisi_persen||0);
   const [saving, setSaving] = useState(false);
   const [artisanEvents, setArtisanEvents] = useState([]);
+  const [eventsLoading, setEventsLoading] = useState(false);
   const [showAssign, setShowAssign] = useState(false);
   const toast = useToast();
 
   useEffect(() => {
     if (!artisan) return;
     setKomisi(artisan.komisi_persen||0);
-    // posisi is per-event, managed in Event tab
-    setArtisanEvents(DUMMY_ARTISAN_EVENTS[artisan.id] || []);
     setTab('usaha');
+    setEventsLoading(true);
+    artisanApi.events(artisan.id)
+      .then(list => setArtisanEvents(list || []))
+      .catch(() => setArtisanEvents([]))
+      .finally(() => setEventsLoading(false));
   }, [artisan?.id]);
 
   if (!artisan) return null;
 
   const save = async () => {
     setSaving(true);
-    await new Promise(r => setTimeout(r, 600));
-    onSave(artisan.id, { komisi_persen:komisi });
-    setSaving(false);
-    onClose();
+    try {
+      await onSave(artisan.id, { komisi_persen: komisi });
+      onClose();
+    } catch {
+      // error sudah di-toast oleh parent
+    } finally {
+      setSaving(false);
+    }
   };
 
-  const removeEvent = (etId) => {
-    setArtisanEvents(l => l.filter(e => e.id !== etId));
-    toast.success('Artisan dihapus dari event');
+  const removeEvent = async (e) => {
+    if (!confirm('Hapus dari event ini?')) return;
+    try {
+      await eventApi.removeArtisan(e.event_id, e.id);
+      setArtisanEvents(l => l.filter(x => x.id !== e.id));
+      toast.success('Artisan dihapus dari event');
+    } catch (err) {
+      toast.error(extractError(err, 'Gagal menghapus dari event'));
+    }
+  };
+
+  const handleAssignEvent = async ({ event_id, posisi_event }) => {
+    try {
+      await eventApi.assignArtisan(event_id, { artisan_id: artisan.id, posisi_event });
+      const updated = await artisanApi.events(artisan.id);
+      setArtisanEvents(updated || []);
+      toast.success('Artisan berhasil di-assign ke event');
+    } catch (err) {
+      toast.error(extractError(err, 'Gagal assign ke event'));
+      throw err;
+    }
   };
 
   return (
@@ -318,31 +322,33 @@ const EditDrawer = ({ artisan, onClose, onSave }) => {
                   <Plus size={12}/> Assign Event
                 </button>
               </div>
-              {artisanEvents.length === 0
-                ? <div className="py-12 text-center text-[#8a9070] text-sm"><Calendar size={28} className="text-gray-200 mx-auto mb-2"/>Belum ada event</div>
-                : <div className="divide-y divide-gray-50">
-                    {artisanEvents.map(e => (
-                      <div key={e.id} className="px-5 py-3 flex items-start gap-3 group hover:bg-[#f7f8f2]/50 transition">
-                        <div className="flex-1 min-w-0">
-                          <p className="font-semibold text-[#1e2010] text-sm">{e.nama}</p>
-                          <p className="text-[#8a9070] text-xs mt-0.5">{fmtTgl(e.tanggal)}{e.jam_mulai && <span className="ml-1 text-gray-300">· {e.jam_mulai.replace(':','.')}{e.jam_selesai?`–${e.jam_selesai.replace(':','.')}`:''} WIB</span>}</p>
-                          <div className="flex items-center gap-2 mt-1 flex-wrap">
-                            <PosisiInlineEditor
-                              value={e.posisi_event}
-                              onChange={val => setArtisanEvents(l => l.map(x => x.id===e.id ? {...x,posisi_event:val} : x))}
-                              eventId={e.event_id}
-                            />
-                            <span className={`text-[10px] ${e.assigned_by==='admin'?'text-blue-500':'text-[#8a9070]'}`}>
-                              {e.assigned_by==='admin'?'Oleh Admin':'Mandiri'}
-                            </span>
+              {eventsLoading
+                ? <div className="py-12 text-center text-[#8a9070] text-sm"><Loader2 size={20} className="animate-spin mx-auto mb-2 text-[#a8b07a]"/>Memuat event...</div>
+                : artisanEvents.length === 0
+                  ? <div className="py-12 text-center text-[#8a9070] text-sm"><Calendar size={28} className="text-gray-200 mx-auto mb-2"/>Belum ada event</div>
+                  : <div className="divide-y divide-gray-50">
+                      {artisanEvents.map(e => (
+                        <div key={e.id} className="px-5 py-3 flex items-start gap-3 group hover:bg-[#f7f8f2]/50 transition">
+                          <div className="flex-1 min-w-0">
+                            <p className="font-semibold text-[#1e2010] text-sm">{e.nama}</p>
+                            <p className="text-[#8a9070] text-xs mt-0.5">{fmtTgl(e.tanggal)}{e.jam_mulai && <span className="ml-1 text-gray-300">· {e.jam_mulai.replace(':','.')}{e.jam_selesai?`–${e.jam_selesai.replace(':','.')}`:''} WIB</span>}</p>
+                            <div className="flex items-center gap-2 mt-1 flex-wrap">
+                              <PosisiInlineEditor
+                                value={e.posisi_event}
+                                onChange={val => setArtisanEvents(l => l.map(x => x.id===e.id ? {...x,posisi_event:val} : x))}
+                                eventId={e.event_id}
+                              />
+                              <span className={`text-[10px] ${e.assigned_by==='admin'?'text-blue-500':'text-[#8a9070]'}`}>
+                                {e.assigned_by==='admin'?'Oleh Admin':'Mandiri'}
+                              </span>
+                            </div>
                           </div>
+                          <button onClick={() => removeEvent(e)} className="opacity-0 group-hover:opacity-100 transition p-1.5 rounded-lg text-gray-300 hover:text-[#B87272] hover:bg-[#f7eeee]">
+                            <Trash2 size={13}/>
+                          </button>
                         </div>
-                        <button onClick={() => removeEvent(e.id)} className="opacity-0 group-hover:opacity-100 transition p-1.5 rounded-lg text-gray-300 hover:text-[#B87272] hover:bg-[#f7eeee]">
-                          <Trash2 size={13}/>
-                        </button>
-                      </div>
-                    ))}
-                  </div>
+                      ))}
+                    </div>
               }
             </div>
           )}
@@ -385,9 +391,11 @@ const EditDrawer = ({ artisan, onClose, onSave }) => {
 
         {showAssign && (
           <AssignEventModal
+            artisanId={artisan.id}
             existingIds={artisanEvents.map(e => e.event_id)}
             onClose={() => setShowAssign(false)}
-            onAssign={(ev) => { setArtisanEvents(l => [...l, ev]); toast.success('Artisan berhasil di-assign ke event'); }}
+            onAssign={handleAssignEvent}
+            allEvents={allEvents}
           />
         )}
       </div>
@@ -398,7 +406,9 @@ const EditDrawer = ({ artisan, onClose, onSave }) => {
 // ── Main ─────────────────────────────────────────────────────────────────────
 export default function ArtisanPage() {
   const toast = useToast();
-  const [artisans, setArtisans] = useState(DUMMY_ARTISANS);
+  const [artisans, setArtisans] = useState([]);
+  const [allEvents, setAllEvents] = useState([]);
+  const [artisanIdsInSelectedEvent, setArtisanIdsInSelectedEvent] = useState([]);
   const [tab, setTab] = useState('aktif');
   const [search, setSearch] = useState('');
   const [sortBy, setSortBy] = useState('newest');
@@ -406,6 +416,29 @@ export default function ArtisanPage() {
   const [editItem, setEditItem] = useState(null);
   const [processing, setProcessing] = useState(null);
   const dSearch = useDebounce(search);
+
+  const load = async () => {
+    try {
+      setArtisans(await artisanApi.list() || []);
+    } catch (err) {
+      toast.error(extractError(err, 'Gagal memuat data artisan'));
+    }
+  };
+
+  useEffect(() => { load(); }, []);
+
+  // Load events for filter dropdown
+  useEffect(() => {
+    eventApi.list().then(list => setAllEvents(list || [])).catch(() => {});
+  }, []);
+
+  // When filter event changes, fetch artisan IDs in that event
+  useEffect(() => {
+    if (filterEvent === 'semua') { setArtisanIdsInSelectedEvent([]); return; }
+    eventApi.artisans(filterEvent)
+      .then(list => setArtisanIdsInSelectedEvent((list || []).map(a => a.artisan_id)))
+      .catch(() => setArtisanIdsInSelectedEvent([]));
+  }, [filterEvent]);
 
   const pending = artisans.filter(t => t.status === 'pending');
   const aktif   = artisans.filter(t => t.status === 'aktif');
@@ -419,56 +452,64 @@ export default function ArtisanPage() {
 
   const approve = async (id, extra={}) => {
     setProcessing(id);
-    await new Promise(r => setTimeout(r, 700));
-    const t = artisans.find(x=>x.id===id);
-    setArtisans(l => l.map(t => t.id===id ? {...t, status:'aktif', ...extra} : t));
-    toast.success('Artisan berhasil disetujui');
-    // Auto-notify Artisan
     try {
-      const { triggerArtisanApproved } = await import('../lib/notifications');
-      if (t) triggerArtisanApproved(t.nama_usaha);
-    } catch {}
-    setProcessing(null);
-    if (tab === 'pending' && pending.length === 1) setTab('aktif');
+      await artisanApi.status(id, 'aktif');
+      if (extra && Object.keys(extra).length) await artisanApi.update(id, extra);
+      toast.success('Artisan berhasil disetujui');
+      try {
+        const t = artisans.find(x=>x.id===id);
+        const { triggerArtisanApproved } = await import('../lib/notifications');
+        if (t) triggerArtisanApproved(t.nama_usaha);
+      } catch {}
+      await load();
+      if (tab === 'pending' && pending.length === 1) setTab('aktif');
+    } catch (err) {
+      toast.error(extractError(err, 'Gagal menyetujui artisan'));
+    } finally {
+      setProcessing(null);
+    }
   };
+
   const reject = async (id) => {
     if (!confirm('Tolak pendaftaran ini?')) return;
     setProcessing(id);
-    await new Promise(r => setTimeout(r, 500));
-    setArtisans(l => l.filter(t => t.id !== id));
-    toast.error('Pendaftaran ditolak');
-    setProcessing(null);
-  };
-  const saveEdit = (id, data) => {
-    setArtisans(l => l.map(t => t.id===id ? {...t,...data} : t));
-    toast.success('Data artisan diperbarui');
+    try {
+      await artisanApi.status(id, 'rejected');
+      toast.error('Pendaftaran ditolak');
+      await load();
+    } catch (err) {
+      toast.error(extractError(err, 'Gagal menolak pendaftaran'));
+    } finally {
+      setProcessing(null);
+    }
   };
 
-  // Count events per artisan from DUMMY_ARTISAN_EVENTS
-  const eventCountForArtisan = (tid) => Object.values(DUMMY_ARTISAN_EVENTS)
-    .flat().filter(e => e.artisan_id === tid || e.id?.startsWith(tid)).length;
+  const saveEdit = async (id, data) => {
+    try {
+      await artisanApi.update(id, data);
+      toast.success('Data artisan diperbarui');
+      await load();
+    } catch (err) {
+      toast.error(extractError(err, 'Gagal memperbarui artisan'));
+      throw err; // drawer tetap terbuka jika gagal
+    }
+  };
 
   const SORT_FNS = {
     newest:       (a,b) => new Date(b.tanggal_daftar)-new Date(a.tanggal_daftar),
     oldest:       (a,b) => new Date(a.tanggal_daftar)-new Date(b.tanggal_daftar),
     name_asc:     (a,b) => a.nama_usaha.localeCompare(b.nama_usaha),
     name_desc:    (a,b) => b.nama_usaha.localeCompare(a.nama_usaha),
-    most_events:  (a,b) => eventCountForArtisan(b.id)-eventCountForArtisan(a.id),
     most_revenue: (a,b) => (b.total_penjualan||0)-(a.total_penjualan||0),
     most_komisi:  (a,b) => (b.komisi_terkumpul||0)-(a.komisi_terkumpul||0),
     komisi_rate:  (a,b) => (b.komisi_persen||0)-(a.komisi_persen||0),
   };
 
-  const artisanIdsInEvent = (eventId) =>
-    Object.entries(DUMMY_ARTISAN_EVENTS)
-      .filter(([, evs]) => evs.some(e => e.event_id === eventId))
-      .map(([tid]) => tid);
-
   const filtered = aktif
     .filter(t => (!dSearch
       || t.nama_usaha.toLowerCase().includes(dSearch.toLowerCase())
       || t.pemilik.toLowerCase().includes(dSearch.toLowerCase()))
-      && (filterEvent === 'semua' || artisanIdsInEvent(filterEvent).includes(t.id))
+      && (filterEvent === 'semua' || artisanIdsInSelectedEvent.includes(t.id))
     )
     .sort(SORT_FNS[sortBy] || SORT_FNS.newest);
 
@@ -525,11 +566,11 @@ export default function ArtisanPage() {
               <select value={filterEvent} onChange={e=>setFilterEvent(e.target.value)}
                 className="px-3 py-1.5 border border-[#e4e7d4] rounded-lg text-xs text-[#5a6040] bg-[#f7f8f2] focus:outline-none focus:border-[#7a8a52] transition">
                 <option value="semua">Semua Event</option>
-                {DUMMY_ALL_EVENTS.map(e => <option key={e.id} value={e.id}>{e.nama}</option>)}
+                {allEvents.map(e => <option key={e.id} value={e.id}>{e.nama}</option>)}
               </select>
               {filterEvent !== 'semua' && (
                 <span className="flex items-center gap-1 px-2 py-0.5 bg-[#eef0e0] text-[#7a8a52] rounded-full text-[10px] font-semibold">
-                  🎪 {DUMMY_ALL_EVENTS.find(e=>e.id===filterEvent)?.nama?.slice(0,25)}
+                  🎪 {allEvents.find(e=>e.id===filterEvent)?.nama?.slice(0,25)}
                   <button onClick={()=>setFilterEvent('semua')} className="hover:text-[#B87272] ml-0.5">×</button>
                 </span>
               )}
@@ -546,7 +587,6 @@ export default function ArtisanPage() {
                   <option value="oldest">Terlama Daftar</option>
                   <option value="name_asc">Nama A–Z</option>
                   <option value="name_desc">Nama Z–A</option>
-                  <option value="most_events">Paling Banyak Event</option>
                   <option value="most_revenue">Revenue Tertinggi</option>
                   <option value="most_komisi">Komisi Terbanyak</option>
                   <option value="komisi_rate">Tarif Komisi ↓</option>
@@ -575,7 +615,7 @@ export default function ArtisanPage() {
         </>
       )}
 
-      <EditDrawer artisan={editItem} onClose={() => setEditItem(null)} onSave={saveEdit}/>
+      <EditDrawer artisan={editItem} onClose={() => setEditItem(null)} onSave={saveEdit} allEvents={allEvents}/>
     </div>
   );
 }

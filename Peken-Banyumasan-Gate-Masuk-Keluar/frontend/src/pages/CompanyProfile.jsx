@@ -10,6 +10,8 @@ import {
   Loader2, Upload, ImageIcon, AlertCircle,
 } from 'lucide-react';
 import { useToast } from '../components/Toast';
+import { companyProfileApi } from '../services/endpoints';
+import { extractError } from '../lib/unwrap';
 
 // ─────────────────────────────────────────────
 // DEFAULT DATA (mirrors company profile source)
@@ -301,8 +303,12 @@ const ImageInput = ({ value, onChange, label, shape = 'wide' }) => {
 
 function TabBeranda() {
   const toast = useToast();
-  const [data, setData] = useState(() => load('home', DEFAULT_HOME));
+  const [data, setData] = useState(DEFAULT_HOME);
   const [saving, setSaving] = useState({});
+
+  useEffect(() => {
+    companyProfileApi.get('home').then(d => d && setData(d)).catch(() => {});
+  }, []);
 
   const set = (k, v) => setData(p => ({ ...p, [k]: v }));
 
@@ -324,10 +330,14 @@ function TabBeranda() {
 
   const save = async (section) => {
     setSaving(s => ({ ...s, [section]: true }));
-    await new Promise(r => setTimeout(r, 400));
-    persist('home', data);
-    setSaving(s => ({ ...s, [section]: false }));
-    toast.success('Berhasil disimpan');
+    try {
+      await companyProfileApi.save('home', data);
+      toast.success('Berhasil disimpan');
+    } catch (err) {
+      toast.error(extractError(err, 'Gagal menyimpan'));
+    } finally {
+      setSaving(s => ({ ...s, [section]: false }));
+    }
   };
 
   return (
@@ -467,8 +477,12 @@ function TabBeranda() {
 
 function TabTentang() {
   const toast = useToast();
-  const [data, setData] = useState(() => load('about', DEFAULT_ABOUT));
+  const [data, setData] = useState(DEFAULT_ABOUT);
   const [saving, setSaving] = useState({});
+
+  useEffect(() => {
+    companyProfileApi.get('about').then(d => d && setData(d)).catch(() => {});
+  }, []);
 
   const set = (k, v) => setData(p => ({ ...p, [k]: v }));
   const setPillar = (idx, k, v) => setData(p => {
@@ -484,10 +498,14 @@ function TabTentang() {
 
   const save = async (section) => {
     setSaving(s => ({ ...s, [section]: true }));
-    await new Promise(r => setTimeout(r, 400));
-    persist('about', data);
-    setSaving(s => ({ ...s, [section]: false }));
-    toast.success('Berhasil disimpan');
+    try {
+      await companyProfileApi.save('about', data);
+      toast.success('Berhasil disimpan');
+    } catch (err) {
+      toast.error(extractError(err, 'Gagal menyimpan'));
+    } finally {
+      setSaving(s => ({ ...s, [section]: false }));
+    }
   };
 
   return (
@@ -641,9 +659,13 @@ function PersonModal({ person, onClose, onSave }) {
 
 function TabTim() {
   const toast = useToast();
-  const [data, setData] = useState(() => load('tim', DEFAULT_TIM));
+  const [data, setData] = useState(DEFAULT_TIM);
   const [editPerson, setEditPerson] = useState(null);
   const [saving, setSaving] = useState({});
+
+  useEffect(() => {
+    companyProfileApi.get('tim').then(d => d && setData(d)).catch(() => {});
+  }, []);
 
   const set = (k, v) => setData(p => ({ ...p, [k]: v }));
   const setHelix = (idx, k, v) => setData(p => {
@@ -654,10 +676,14 @@ function TabTim() {
 
   const saveAll = async (section) => {
     setSaving(s => ({ ...s, [section]: true }));
-    await new Promise(r => setTimeout(r, 400));
-    persist('tim', data);
-    setSaving(s => ({ ...s, [section]: false }));
-    toast.success('Berhasil disimpan');
+    try {
+      await companyProfileApi.save('tim', data);
+      toast.success('Berhasil disimpan');
+    } catch (err) {
+      toast.error(extractError(err, 'Gagal menyimpan'));
+    } finally {
+      setSaving(s => ({ ...s, [section]: false }));
+    }
   };
 
   const savePerson = (updated) => {
@@ -762,8 +788,12 @@ function TabTim() {
 
 function TabProgram() {
   const toast = useToast();
-  const [programs, setPrograms] = useState(() => load('programs', DEFAULT_PROGRAMS));
+  const [programs, setPrograms] = useState(DEFAULT_PROGRAMS);
   const [saving, setSaving] = useState(false);
+
+  useEffect(() => {
+    companyProfileApi.get('programs').then(d => d && setPrograms(d)).catch(() => {});
+  }, []);
 
   const setP = (idx, k, v) => setPrograms(p => {
     const arr = [...p];
@@ -773,10 +803,14 @@ function TabProgram() {
 
   const save = async () => {
     setSaving(true);
-    await new Promise(r => setTimeout(r, 400));
-    persist('programs', programs);
-    setSaving(false);
-    toast.success('Data program berhasil disimpan');
+    try {
+      await companyProfileApi.save('programs', programs);
+      toast.success('Data program berhasil disimpan');
+    } catch (err) {
+      toast.error(extractError(err, 'Gagal menyimpan'));
+    } finally {
+      setSaving(false);
+    }
   };
 
   return (
@@ -867,17 +901,25 @@ function WorkModal({ work, onClose, onSave }) {
 
 function TabKarya() {
   const toast = useToast();
-  const [works, setWorks] = useState(() => load('works', DEFAULT_WORKS));
+  const [works, setWorks] = useState(DEFAULT_WORKS);
   const [editWork, setEditWork] = useState(null);
   const [filter, setFilter] = useState('all'); // 'all' | 'kolaborator' | 'manual'
   const [saving, setSaving] = useState(false);
 
+  useEffect(() => {
+    companyProfileApi.get('works').then(d => d && setWorks(d)).catch(() => {});
+  }, []);
+
   const save = async () => {
     setSaving(true);
-    await new Promise(r => setTimeout(r, 400));
-    persist('works', works);
-    setSaving(false);
-    toast.success('Data karya berhasil disimpan');
+    try {
+      await companyProfileApi.save('works', works);
+      toast.success('Data karya berhasil disimpan');
+    } catch (err) {
+      toast.error(extractError(err, 'Gagal menyimpan'));
+    } finally {
+      setSaving(false);
+    }
   };
 
   const toggleVisible = (id) => {
@@ -1044,18 +1086,26 @@ function GalleryImageModal({ item, onClose, onSave }) {
 
 function TabGaleri() {
   const toast = useToast();
-  const [data, setData] = useState(() => load('gallery', DEFAULT_GALLERY));
+  const [data, setData] = useState(DEFAULT_GALLERY);
   const [editImg, setEditImg] = useState(null);
   const [saving, setSaving] = useState({});
+
+  useEffect(() => {
+    companyProfileApi.get('gallery').then(d => d && setData(d)).catch(() => {});
+  }, []);
 
   const set = (k, v) => setData(p => ({ ...p, [k]: v }));
 
   const save = async (section) => {
     setSaving(s => ({ ...s, [section]: true }));
-    await new Promise(r => setTimeout(r, 400));
-    persist('gallery', data);
-    setSaving(s => ({ ...s, [section]: false }));
-    toast.success('Galeri berhasil disimpan');
+    try {
+      await companyProfileApi.save('gallery', data);
+      toast.success('Galeri berhasil disimpan');
+    } catch (err) {
+      toast.error(extractError(err, 'Gagal menyimpan'));
+    } finally {
+      setSaving(s => ({ ...s, [section]: false }));
+    }
   };
 
   const toggleImg = (id) => setData(p => ({ ...p, images: p.images.map(x => x.id === id ? { ...x, visible: !x.visible } : x) }));

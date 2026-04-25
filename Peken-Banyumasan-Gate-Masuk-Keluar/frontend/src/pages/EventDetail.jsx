@@ -1,80 +1,16 @@
-// EventDetail.jsx — Detail Event + Kelola Kolaborator, Artisan, dan Zona
+// EventDetail.jsx — Detail Event + Kelola Kolaborator, artisans, dan Zona
 import React, { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import {
-  ArrowLeft, Calendar, MapPin, Users, Image, Tag, FileText,
+  ArrowLeft, Calendar, Clock, MapPin, Users, Image, Tag, FileText,
   Plus, Trash2, Search, X, Loader2,
 } from 'lucide-react';
 import { useToast } from '../components/Toast';
 import ZoneSelector from '../components/ZoneSelector';
 import ZoneEditor from '../components/ZoneEditor';
 import { getEventZones, syncOccupiedFromArtisans } from '../lib/eventZones';
-
-// ── DUMMY DATA ────────────────────────────────────────────────────────────────
-const DUMMY_EVENTS = {
-  e1: {
-    id:'e1', nama:'Festival Budaya Banyumasan 2025',
-    tanggal:'2025-05-17', jam_mulai:'08:00', jam_selesai:'22:00', tanggal_selesai:'2025-05-19',
-    lokasi:'Alun-Alun Purwokerto', status:'published', kapasitas:200, peserta_count:34,
-    deskripsi:'Festival tahunan menampilkan seni, kuliner, dan kerajinan khas Banyumas.',
-    konten_lengkap:'Festival Budaya Banyumasan mempertemukan seniman, pengrajin, dan pelaku kuliner dari seluruh eks-Karesidenan Banyumas.',
-    banner_url:null, galeri:[], subsektor:['Kriya','Musik','Seni Pertunjukan','Kuliner'],
-  },
-  e2: {
-    id:'e2', nama:'Workshop Batik & Tenun Nusantara',
-    tanggal:'2025-04-26', jam_mulai:'09:00', jam_selesai:'17:00', tanggal_selesai:'2025-04-27',
-    lokasi:'Gedung Kebudayaan Cilacap', status:'published', kapasitas:30, peserta_count:18,
-    deskripsi:'Pelatihan intensif 2 hari teknik batik tulis dan tenun lurik.',
-    konten_lengkap:'Workshop intensif dibimbing maestro batik dari Banyumas.',
-    banner_url:null, galeri:[], subsektor:['Kriya','Fashion'],
-  },
-  e3: {
-    id:'e3', nama:'Pameran Kriya Ekraf Regional',
-    tanggal:'2025-06-10', jam_mulai:'10:00', jam_selesai:'21:00', tanggal_selesai:'2025-06-12',
-    lokasi:'Mall Cilacap Raya', status:'draft', kapasitas:500, peserta_count:0,
-    deskripsi:'Pameran dan bazaar produk ekonomi kreatif se-eks Karesidenan Banyumas.',
-    konten_lengkap:'Pameran terbesar menampilkan lebih dari 100 produk unggulan.',
-    banner_url:null, galeri:[], subsektor:['Kriya','Desain Produk','Fashion'],
-  },
-  e4: {
-    id:'e4', nama:'Peken Banyumasan #12',
-    tanggal:'2025-03-20', jam_mulai:'16:00', jam_selesai:'22:00', tanggal_selesai:'2025-03-20',
-    lokasi:'Amphitheater GOR Satria', status:'selesai', kapasitas:500, peserta_count:145,
-    deskripsi:'Pasar budaya mingguan dengan penampilan seniman lokal.',
-    konten_lengkap:'Peken Banyumasan edisi ke-12 sukses digelar.',
-    banner_url:null, galeri:[], subsektor:['Musik','Kuliner','Seni Pertunjukan'],
-  },
-};
-
-const DUMMY_KOLABORATOR_ALL = [
-  { id:'m1', nama:'Sari Dewi Rahayu',  subsektor:['Kriya','Fashion'] },
-  { id:'m2', nama:'Ahmad Fauzi',        subsektor:['Musik'] },
-  { id:'m4', nama:'Nurul Hidayah',      subsektor:['Kuliner'] },
-  { id:'m7', nama:'Budi Santoso',       subsektor:['Film & Animasi'] },
-];
-const DUMMY_ARTISAN_ALL = [
-  { id:'t1', nama_usaha:'Batik Sari Rahayu',  kategori:'Kriya & Fashion' },
-  { id:'t2', nama_usaha:'Calung Mas',          kategori:'Seni Pertunjukan' },
-  { id:'t4', nama_usaha:'Tenun Lurik Cilacap', kategori:'Kriya & Fashion' },
-  { id:'t5', nama_usaha:'Keripik Tempe Mrisi', kategori:'Kuliner' },
-];
-const DUMMY_KOLABORATOR_EVENT = {
-  e1: [
-    { id:'em1', kolaborator_id:'m1', nama:'Sari Dewi Rahayu', subsektor:['Kriya'], peran:'performer', status_kehadiran:'terdaftar', assigned_by:'admin' },
-    { id:'em2', kolaborator_id:'m2', nama:'Ahmad Fauzi',       subsektor:['Musik'], peran:'performer', status_kehadiran:'terdaftar', assigned_by:'self'  },
-  ],
-  e2: [{ id:'em4', kolaborator_id:'m1', nama:'Sari Dewi Rahayu', subsektor:['Kriya'], peran:'panitia', status_kehadiran:'hadir', assigned_by:'admin' }],
-  e3: [], e4: [],
-};
-const DUMMY_ARTISAN_EVENT = {
-  e1: [
-    { id:'et1', artisan_id:'t1', nama_usaha:'Batik Sari Rahayu',  kategori:'Kriya & Fashion', posisi_event:'A-3', assigned_by:'admin' },
-    { id:'et2', artisan_id:'t5', nama_usaha:'Keripik Tempe Mrisi', kategori:'Kuliner',         posisi_event:'B-1', assigned_by:'self'  },
-  ],
-  e2: [],
-  e3: [{ id:'et3', artisan_id:'t4', nama_usaha:'Tenun Lurik Cilacap', kategori:'Kriya & Fashion', posisi_event:'A-1', assigned_by:'admin' }],
-  e4: [{ id:'et4', artisan_id:'t1', nama_usaha:'Batik Sari Rahayu', kategori:'Kriya & Fashion', posisi_event:'A-2', assigned_by:'admin' }],
-};
+import { eventApi, kolaboratorApi, artisanApi } from '../services/endpoints';
+import { extractError } from '../lib/unwrap';
 
 const fmtDate = d => d ? new Date(d).toLocaleDateString('id-ID',{day:'numeric',month:'long',year:'numeric'}) : '—';
 const STATUS_CLS = {
@@ -85,21 +21,26 @@ const STATUS_CLS = {
 };
 const HADIR_CLS = { terdaftar:'text-[#8a9070]', hadir:'text-[#7a8a52]', tidak_hadir:'text-[#B87272]' };
 
-// ── Modals — semua terima `zones` sebagai prop, tidak akses closure luar ──────
+// ── Modals ────────────────────────────────────────────────────────────────────
 
-function AssignKolaboratorModal({ onClose, onAssign, existingIds }) {
+function AssignKolaboratorModal({ onClose, onAssign, existingIds, allKolaborators }) {
   const [search, setSearch] = useState('');
   const [sel, setSel] = useState(null);
   const [peran, setPeran] = useState('peserta');
   const [saving, setSaving] = useState(false);
-  const list = DUMMY_KOLABORATOR_ALL.filter(m => !existingIds.includes(m.id) &&
+  const list = (allKolaborators || []).filter(m => !existingIds.includes(m.id) &&
     m.nama.toLowerCase().includes(search.toLowerCase()));
   const save = async () => {
     if (!sel) return;
     setSaving(true);
-    await new Promise(r => setTimeout(r, 400));
-    onAssign({ ...sel, peran, status_kehadiran:'terdaftar', assigned_by:'admin', id:'em'+Date.now() });
-    setSaving(false); onClose();
+    try {
+      await onAssign({ kolaborator_id: sel.id, peran });
+      onClose();
+    } catch {
+      // error sudah di-toast oleh parent
+    } finally {
+      setSaving(false);
+    }
   };
   return (
     <div className="fixed inset-0 bg-black/40 z-50 flex items-center justify-center p-4" onClick={onClose}>
@@ -121,7 +62,7 @@ function AssignKolaboratorModal({ onClose, onAssign, existingIds }) {
                 <button key={m.id} onClick={()=>setSel(m)}
                   className={`w-full text-left px-3 py-2.5 rounded-[12px] border text-sm transition ${sel?.id===m.id?'border-[#7a8a52] bg-[#eef0e0]':'border-[#e4e7d4] hover:border-[#c8ccb0]'}`}>
                   <p className="font-semibold text-[#1e2010]">{m.nama}</p>
-                  <p className="text-[#8a9070] text-xs">{m.subsektor.join(', ')}</p>
+                  <p className="text-[#8a9070] text-xs">{(m.subsektor||[]).join(', ')}</p>
                 </button>
               ))}
           </div>
@@ -146,27 +87,32 @@ function AssignKolaboratorModal({ onClose, onAssign, existingIds }) {
   );
 }
 
-function AssignArtisanModal({ onClose, onAssign, existingIds, zones }) {
+function AssignartisansModal({ onClose, onAssign, existingIds, zones, allartisanss }) {
   const [search, setSearch] = useState('');
   const [sel, setSel]       = useState(null);
   const [posisi, setPosisi] = useState('');
   const [useMap, setUseMap] = useState(true);
   const [saving, setSaving] = useState(false);
   const safeZones = Array.isArray(zones) ? zones : [];
-  const list = DUMMY_ARTISAN_ALL.filter(t => !existingIds.includes(t.id) &&
+  const list = (allartisanss || []).filter(t => !existingIds.includes(t.id) &&
     t.nama_usaha.toLowerCase().includes(search.toLowerCase()));
   const save = async () => {
     if (!sel) return;
     setSaving(true);
-    await new Promise(r => setTimeout(r, 400));
-    onAssign({ ...sel, posisi_event: posisi, assigned_by:'admin', id:'et'+Date.now() });
-    setSaving(false); onClose();
+    try {
+      await onAssign({ artisan_id: sel.id, stand_id: posisi });
+      onClose();
+    } catch {
+      // error sudah di-toast oleh parent
+    } finally {
+      setSaving(false);
+    }
   };
   return (
     <div className="fixed inset-0 bg-black/40 z-50 flex items-center justify-center p-4" onClick={onClose}>
       <div className="bg-white rounded-[16px] w-full max-w-md shadow-2xl max-h-[88vh] flex flex-col" onClick={e=>e.stopPropagation()}>
         <div className="flex items-center justify-between p-5 border-b border-[#e4e7d4] shrink-0">
-          <h3 className="font-bold text-[#1e2010]">Assign Artisan ke Event</h3>
+          <h3 className="font-bold text-[#1e2010]">Assign artisans ke Event</h3>
           <button onClick={onClose}><X size={18} className="text-[#8a9070] hover:text-[#5a6040]"/></button>
         </div>
         <div className="overflow-y-auto flex-1 p-5 space-y-4">
@@ -182,7 +128,7 @@ function AssignArtisanModal({ onClose, onAssign, existingIds, zones }) {
                 <button key={t.id} onClick={()=>setSel(t)}
                   className={`w-full text-left px-3 py-2.5 rounded-[12px] border text-sm transition ${sel?.id===t.id?'border-[#7a8a52] bg-[#eef0e0]':'border-[#e4e7d4] hover:border-[#c8ccb0]'}`}>
                   <p className="font-semibold text-[#1e2010]">{t.nama_usaha}</p>
-                  <p className="text-[#8a9070] text-xs">{t.kategori}</p>
+                  <p className="text-[#8a9070] text-xs">{(t.subsektor||[]).join(', ')}</p>
                 </button>
               ))}
           </div>
@@ -273,83 +219,168 @@ export default function EventDetail() {
   const navigate  = useNavigate();
   const toast     = useToast();
 
-  const [event,    setEvent]    = useState(null);
-  const [kolaborators,  setKolaborators]  = useState([]);
-  const [Artisan,  setArtisans]  = useState([]);
-  const [zones,    setZones]    = useState([]);
-  const [tab,      setTab]      = useState('kolaborators');
-  const [showAddM, setShowAddM] = useState(false);
-  const [showAddT, setShowAddT] = useState(false);
-  const [loading,  setLoading]  = useState(true);
+  const [event,           setEvent]          = useState(null);
+  const [kolaborators,    setKolaborators]    = useState([]);
+  const [artisans,        setartisanss]        = useState([]);
+  const [allKolaborators, setAllKolaborators] = useState([]);
+  const [allartisanss,     setAllartisanss]     = useState([]);
+  const [zones,           setZones]           = useState([]);
+  const [artisanRequests, setartisansRequests] = useState([]);
+  const [tab,             setTab]             = useState('kolaborators');
+  const [showAddM,        setShowAddM]        = useState(false);
+  const [showAddT,        setShowAddT]        = useState(false);
+  const [loading,         setLoading]         = useState(true);
 
-  // Load data and zones
-  useEffect(() => {
-    const t = setTimeout(() => {
-      const ev = DUMMY_EVENTS[id] || null;
-      const ms = DUMMY_KOLABORATOR_EVENT[id] || [];
-      const ts = DUMMY_ARTISAN_EVENT[id]  || [];
-      setEvent(ev);
-      setKolaborators(ms);
-      setArtisans(ts);
-      // Load global zones merged with this event's occupied state
-      try {
-        const z = syncOccupiedFromArtisans(id, ts.map(t => ({ posisi_event: t.posisi_event })));
-        setZones(z);
-      } catch {
-        setZones(getEventZones(id));
-      }
-      setLoading(false);
-    }, 300);
-    return () => clearTimeout(t);
-  }, [id]);
-
-  // Re-sync zones when Artisan change
-  const refreshZones = (updatedArtisans) => {
+  const refreshZones = (updatedartisanss) => {
     try {
-      const z = syncOccupiedFromArtisans(id, updatedArtisans.map(t => ({ posisi_event: t.posisi_event })));
+      const z = syncOccupiedFromArtisans(id, updatedartisanss.map(t => ({ posisi_event: t.posisi_event })));
       setZones(z);
     } catch {}
   };
 
-  const assignKolaborator = async (data) => {
-    const updated = [...kolaborators, { ...data, kolaborator_id: data.id }];
-    setKolaborators(updated);
-    toast.success(`${data.nama} di-assign sebagai ${data.peran}`);
+  const loadRelations = async () => {
     try {
-      const { triggerEventAssignedToKolaborator } = await import('../lib/notifications');
-      triggerEventAssignedToKolaborator(event.nama, data.peran);
-    } catch {}
+      const [kols, arts, reqs] = await Promise.all([
+        eventApi.kolaborators(id),
+        eventApi.artisans(id),
+        eventApi.artisanRequests(id),
+      ]);
+      setKolaborators(kols || []);
+      setartisanss(arts || []);
+      setartisansRequests(reqs || []);
+      refreshZones(arts || []);
+    } catch (err) {
+      toast.error(extractError(err, 'Gagal memuat data peserta'));
+    }
   };
 
-  const removeKolaborator = (emId) => {
-    if (!confirm('Hapus dari event ini?')) return;
-    setKolaborators(l => l.filter(m => m.id !== emId));
-    toast.success('Kolaborator dihapus');
-  };
+  // Initial load — paralel: event detail + relations + dropdown lists
+  useEffect(() => {
+    (async () => {
+      try {
+        const [ev, kols, arts, allKols, allArts, reqs] = await Promise.all([
+          eventApi.detail(id),
+          eventApi.kolaborators(id),
+          eventApi.artisans(id),
+          kolaboratorApi.list(),
+          artisanApi.list(),
+          eventApi.artisanRequests(id),
+        ]);
+        setEvent(ev || null);
+        setKolaborators(kols || []);
+        setartisanss(arts || []);
+        setAllKolaborators(allKols || []);
+        setAllartisanss(allArts || []);
+        setartisansRequests(reqs || []);
+        try {
+          const z = syncOccupiedFromArtisans(id, (arts || []).map(t => ({ posisi_event: t.posisi_event })));
+          setZones(z);
+        } catch {
+          setZones(getEventZones(id));
+        }
+      } catch (err) {
+        toast.error(extractError(err, 'Gagal memuat detail event'));
+      } finally {
+        setLoading(false);
+      }
+    })();
+  }, [id]);
 
-  const assignArtisan = async (data) => {
-    const updated = [...Artisan, { ...data, artisan_id: data.id }];
-    setArtisans(updated);
-    refreshZones(updated);
-    toast.success(`${data.nama_usaha} berhasil di-assign`);
+  const assignKolaborator = async ({ kolaborator_id, peran }) => {
     try {
-      const { triggerArtisanEventAssigned } = await import('../lib/notifications');
-      triggerArtisanEventAssigned(event.nama, data.posisi_event || '—');
-    } catch {}
+      await eventApi.assignKolaborator(id, { kolaborator_id, peran });
+      toast.success('Kolaborator berhasil di-assign');
+      await loadRelations();
+      try {
+        const k = allKolaborators.find(x => x.id === kolaborator_id);
+        const { triggerEventAssignedToKolaborator } = await import('../lib/notifications');
+        triggerEventAssignedToKolaborator(event?.nama || '', peran);
+      } catch {}
+    } catch (err) {
+      toast.error(extractError(err, 'Gagal assign kolaborator'));
+      throw err;
+    }
   };
 
-  const removeArtisan = (etId) => {
+  const updateKolaboratorField = async (emId, data) => {
+    // Optimistic update
+    setKolaborators(l => l.map(x => x.id === emId ? { ...x, ...data } : x));
+    try {
+      await eventApi.updateKolaborator(id, emId, data);
+    } catch (err) {
+      toast.error(extractError(err, 'Gagal memperbarui kolaborator'));
+      await loadRelations(); // revert
+    }
+  };
+
+  const removeKolaborator = async (emId) => {
     if (!confirm('Hapus dari event ini?')) return;
-    const updated = Artisan.filter(t => t.id !== etId);
-    setArtisans(updated);
-    refreshZones(updated);
-    toast.success('Artisan dihapus');
+    try {
+      await eventApi.removeKolaborator(id, emId);
+      toast.success('Kolaborator dihapus');
+      await loadRelations();
+    } catch (err) {
+      toast.error(extractError(err, 'Gagal menghapus kolaborator'));
+    }
   };
 
-  const updateArtisanStand = (etId, val) => {
-    const updated = Artisan.map(t => t.id === etId ? { ...t, posisi_event: val } : t);
-    setArtisans(updated);
+  const assignartisans = async ({ artisan_id, stand_id }) => {
+    try {
+      await eventApi.assignartisans(id, { artisan_id, stand_id });
+      toast.success('artisans berhasil di-assign');
+      await loadRelations();
+      try {
+        const { triggerartisansEventAssigned } = await import('../lib/notifications');
+        triggerartisansEventAssigned(event?.nama || '', stand_id || '—');
+      } catch {}
+    } catch (err) {
+      toast.error(extractError(err, 'Gagal assign artisan'));
+      throw err;
+    }
+  };
+
+  const respondRequest = async (rid, action, standId) => {
+    try {
+      await eventApi.respondartisansRequest(id, rid, { action, stand_id: standId });
+      toast.success(action === 'approve' ? 'Permintaan disetujui' : 'Permintaan ditolak');
+      await loadRelations();
+    } catch (err) {
+      toast.error(extractError(err, 'Gagal merespons permintaan'));
+    }
+  };
+
+  const respondPositionChange = async (rid, action) => {
+    try {
+      await eventApi.respondPositionChange(id, rid, { action });
+      toast.success(action === 'approve' ? 'Perubahan posisi disetujui' : 'Perubahan posisi ditolak');
+      await loadRelations();
+    } catch (err) {
+      toast.error(extractError(err, 'Gagal merespons perubahan posisi'));
+    }
+  };
+
+  const removeartisans = async (etId) => {
+    if (!confirm('Hapus dari event ini?')) return;
+    try {
+      await eventApi.removeartisans(id, etId);
+      toast.success('artisans dihapus');
+      await loadRelations();
+    } catch (err) {
+      toast.error(extractError(err, 'Gagal menghapus artisan'));
+    }
+  };
+
+  const updateartisansStand = async (etId, val) => {
+    // Optimistic update
+    const updated = artisans.map(t => t.id === etId ? { ...t, posisi_event: val } : t);
+    setartisanss(updated);
     refreshZones(updated);
+    try {
+      await eventApi.updateartisans(id, etId, { posisi_event: val });
+    } catch (err) {
+      toast.error(extractError(err, 'Gagal memperbarui posisi stand'));
+      await loadRelations(); // revert
+    }
   };
 
   if (loading) return (
@@ -454,8 +485,9 @@ export default function EventDetail() {
           <div className="flex border-b border-[#e4e7d4]">
             {[
               { v:'kolaborators', l:'Kolaborator', n:kolaborators.length },
-              { v:'Artisan', l:'Artisan',            n:Artisan.length },
-              { v:'zones',   l:'Kelola Zona',     n:zones.length   },
+              { v:'artisans',      l:'artisans',      n:artisans.length },
+              { v:'zones',        l:'Kelola Zona',  n:zones.length },
+              { v:'permintaan',   l:'Permintaan',   n:artisanRequests.filter(r=>r.status_request==='pending'||r.status_request==='pending_change').length },
             ].map(({ v, l, n }) => (
               <button key={v} onClick={()=>setTab(v)}
                 className={`flex-1 py-3.5 text-sm font-semibold transition border-b-2 ${tab===v ? 'border-[#7a8a52] text-[#7a8a52] bg-[#eef0e0]/50' : 'border-transparent text-[#8a9070] hover:text-[#5a6040]'}`}>
@@ -483,7 +515,7 @@ export default function EventDetail() {
                     {kolaborators.map(m=>(
                       <div key={m.id} className="px-5 py-3.5 flex items-center gap-3 group hover:bg-[#f7f8f2]/60 transition">
                         <div className="w-9 h-9 rounded-[12px] bg-[#f7f2e4] flex items-center justify-center text-[#C4A24D] font-bold text-sm shrink-0">
-                          {m.nama.charAt(0)}
+                          {(m.nama||'?').charAt(0)}
                         </div>
                         <div className="flex-1 min-w-0">
                           <p className="font-semibold text-[#1e2010] text-sm">{m.nama}</p>
@@ -491,14 +523,14 @@ export default function EventDetail() {
                         </div>
                         <div className="flex items-center gap-2 shrink-0">
                           <select value={m.peran}
-                            onChange={e=>setKolaborators(l=>l.map(x=>x.id===m.id?{...x,peran:e.target.value}:x))}
+                            onChange={e=>updateKolaboratorField(m.id, { peran: e.target.value })}
                             className="text-xs border border-[#e4e7d4] rounded-lg px-2 py-1.5 focus:outline-none focus:border-[#7a8a52] bg-white text-[#5a6040]">
                             <option value="peserta">Peserta</option>
                             <option value="performer">Performer</option>
                             <option value="panitia">Panitia</option>
                           </select>
                           <select value={m.status_kehadiran}
-                            onChange={e=>setKolaborators(l=>l.map(x=>x.id===m.id?{...x,status_kehadiran:e.target.value}:x))}
+                            onChange={e=>updateKolaboratorField(m.id, { status_kehadiran: e.target.value })}
                             className={`text-xs border border-[#e4e7d4] rounded-lg px-2 py-1.5 focus:outline-none focus:border-[#7a8a52] bg-white ${HADIR_CLS[m.status_kehadiran]||''}`}>
                             <option value="terdaftar">Terdaftar</option>
                             <option value="hadir">Hadir</option>
@@ -516,38 +548,37 @@ export default function EventDetail() {
             </div>
           )}
 
-          {/* ── Tab: Artisan ── */}
-          {tab === 'Artisan' && (
+          {/* ── Tab: artisans ── */}
+          {tab === 'artisans' && (
             <div>
               <div className="px-5 py-4 flex items-center justify-between border-b border-gray-50">
-                <p className="text-sm text-[#8a9070]">{Artisan.length} Artisan</p>
+                <p className="text-sm text-[#8a9070]">{artisans.length} artisans</p>
                 <button onClick={()=>setShowAddT(true)}
                   className="flex items-center gap-1.5 bg-[#7a8a52] hover:bg-[#4f5c30] text-white px-3.5 py-2 rounded-[12px] text-xs font-semibold transition">
-                  <Plus size={13}/> Assign Artisan
+                  <Plus size={13}/> Assign artisans
                 </button>
               </div>
-              {Artisan.length === 0
+              {artisans.length === 0
                 ? <div className="py-16 text-center text-[#8a9070] text-sm">
-                    <Plus size={32} className="text-gray-200 mx-auto mb-3"/>Belum ada Artisan
+                    <Plus size={32} className="text-gray-200 mx-auto mb-3"/>Belum ada artisans
                   </div>
                 : <div className="divide-y divide-gray-50">
-                    {Artisan.map(t=>(
+                    {artisans.map(t=>(
                       <div key={t.id} className="px-5 py-3.5 flex items-center gap-3 group hover:bg-[#f7f8f2]/60 transition">
                         <div className="w-9 h-9 rounded-[12px] bg-[#eef4eb] flex items-center justify-center text-[#7a8a52] font-bold text-sm shrink-0">
-                          {t.nama_usaha.charAt(0)}
+                          {(t.nama_usaha||'?').charAt(0)}
                         </div>
                         <div className="flex-1 min-w-0">
                           <p className="font-semibold text-[#1e2010] text-sm">{t.nama_usaha}</p>
-                          <span className="px-1.5 py-0.5 bg-[#eef0e0] text-[#7a8a52] text-[10px] rounded font-medium">{t.kategori}</span>
+                          <span className="px-1.5 py-0.5 bg-[#eef0e0] text-[#7a8a52] text-[10px] rounded font-medium">{(t.subsektor||[]).join(', ')}</span>
                         </div>
                         <div className="flex items-center gap-2 shrink-0">
-                          {/* zones prop explicit, tidak pernah undefined */}
                           <StandEditor
                             value={t.posisi_event}
-                            onChange={val=>updateArtisanStand(t.id, val)}
+                            onChange={val=>updateartisansStand(t.id, val)}
                             zones={zones}
                           />
-                          <button onClick={()=>removeArtisan(t.id)}
+                          <button onClick={()=>removeartisans(t.id)}
                             className="p-1.5 rounded-lg text-gray-300 hover:text-[#B87272] hover:bg-[#f7eeee] transition opacity-0 group-hover:opacity-100">
                             <Trash2 size={13}/>
                           </button>
@@ -571,6 +602,74 @@ export default function EventDetail() {
             </div>
           )}
 
+          {/* ── Tab: Permintaan ── */}
+          {tab === 'permintaan' && (
+            <div>
+              <div className="px-5 py-4 border-b border-gray-50">
+                <p className="text-sm text-[#8a9070]">
+                  {artisanRequests.filter(r=>r.status_request==='pending'||r.status_request==='pending_change').length} permintaan aktif
+                </p>
+              </div>
+              {artisanRequests.length === 0
+                ? <div className="py-16 text-center text-[#8a9070] text-sm">
+                    <Clock size={32} className="text-gray-200 mx-auto mb-3"/>Tidak ada permintaan
+                  </div>
+                : <div className="divide-y divide-gray-50">
+                    {artisanRequests.map(req => {
+                      const isPending       = req.status_request === 'pending';
+                      const isPendingChange = req.status_request === 'pending_change';
+                      const isRejected      = req.status_request === 'rejected';
+                      const isActive        = isPending || isPendingChange;
+                      return (
+                        <div key={req.id} className="px-5 py-4 space-y-3">
+                          <div className="flex items-start gap-3">
+                            <div className="w-9 h-9 rounded-[12px] bg-[#f7f8f2] flex items-center justify-center text-[#8a9070] font-bold text-sm shrink-0">
+                              {(req.nama_usaha||'?').charAt(0)}
+                            </div>
+                            <div className="flex-1 min-w-0">
+                              <p className="font-semibold text-[#1e2010] text-sm">{req.nama_usaha}</p>
+                              <p className="text-[#8a9070] text-[10px]">{(req.subsektor||[]).join(', ')}</p>
+                            </div>
+                            <span className={`px-2 py-0.5 rounded-full text-[10px] font-semibold border ${
+                              isPending       ? 'bg-[#fef9c3] text-[#854d0e] border-yellow-200' :
+                              isPendingChange ? 'bg-[#eff6ff] text-[#1d4ed8] border-blue-200'   :
+                              isRejected      ? 'bg-[#fee2e2] text-[#991b1b] border-red-200'     :
+                              'bg-[#f0fdf4] text-[#166534] border-green-200'
+                            }`}>
+                              {isPending ? 'Pending' : isPendingChange ? 'Ubah Posisi' : isRejected ? 'Ditolak' : 'Disetujui'}
+                            </span>
+                          </div>
+                          <div className="flex items-center gap-4 text-xs text-[#8a9070] pl-12">
+                            <span>Posisi: <strong className="text-[#5a6040]">{req.posisi_event||'—'}</strong></span>
+                            {isPendingChange && <span>→ <strong className="text-[#1d4ed8]">{req.change_request}</strong></span>}
+                            <span>{new Date(req.created_at).toLocaleDateString('id-ID')}</span>
+                          </div>
+                          {isActive && (
+                            <div className="flex gap-2 pl-12">
+                              <button
+                                onClick={() => isPendingChange
+                                  ? respondPositionChange(req.id, 'approve')
+                                  : respondRequest(req.id, 'approve', req.posisi_event)}
+                                className="flex-1 bg-[#7a8a52] hover:bg-[#4f5c30] text-white px-3 py-1.5 rounded-[10px] text-xs font-semibold transition">
+                                Setujui
+                              </button>
+                              <button
+                                onClick={() => isPendingChange
+                                  ? respondPositionChange(req.id, 'reject')
+                                  : respondRequest(req.id, 'reject')}
+                                className="flex-1 border border-[#e4e7d4] text-[#8a9070] hover:text-[#B87272] hover:border-[#f5c6c6] px-3 py-1.5 rounded-[10px] text-xs font-semibold transition">
+                                Tolak
+                              </button>
+                            </div>
+                          )}
+                        </div>
+                      );
+                    })}
+                  </div>
+              }
+            </div>
+          )}
+
         </div>{/* end col-span-3 */}
       </div>{/* end grid */}
 
@@ -580,14 +679,16 @@ export default function EventDetail() {
           onClose={()=>setShowAddM(false)}
           onAssign={assignKolaborator}
           existingIds={kolaborators.map(m=>m.kolaborator_id)}
+          allKolaborators={allKolaborators}
         />
       )}
       {showAddT && (
-        <AssignArtisanModal
+        <AssignartisansModal
           onClose={()=>setShowAddT(false)}
-          onAssign={assignArtisan}
-          existingIds={Artisan.map(t=>t.artisan_id)}
+          onAssign={assignartisans}
+          existingIds={artisans.map(t=>t.artisan_id)}
           zones={zones}
+          allartisanss={allartisanss}
         />
       )}
     </div>

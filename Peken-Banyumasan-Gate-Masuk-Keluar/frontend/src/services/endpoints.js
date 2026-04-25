@@ -11,12 +11,18 @@
 import * as real  from './realEndpoints.js';
 import * as dummy from './dummyEndpoints.js';
 
-const _mod = import.meta.env.VITE_DUMMY_MODE === 'true' ? dummy : real;
+// Defensive parse: accept 'true' / 'TRUE' / ' True ' / etc. Anything else → real mode.
+const _rawDummy = import.meta.env.VITE_DUMMY_MODE;
+const _isDummy  = typeof _rawDummy === 'string' && _rawDummy.trim().toLowerCase() === 'true';
+const _mod      = _isDummy ? dummy : real;
 
-export const authApi        = _mod.authApi;
-export const dashboardApi   = _mod.dashboardApi;
-export const eventApi       = _mod.eventApi;
-export const reportsApi     = _mod.reportsApi;
-export const kolaboratorApi = _mod.kolaboratorApi;
-export const artisanApi     = _mod.artisanApi;
-export const aktivitasApi   = _mod.aktivitasApi;
+export const authApi           = _mod.authApi;
+export const dashboardApi      = _mod.dashboardApi;
+export const eventApi          = _mod.eventApi;
+export const reportsApi        = _mod.reportsApi;
+export const kolaboratorApi    = _mod.kolaboratorApi;
+export const artisanApi        = _mod.artisanApi;
+export const aktivitasApi      = _mod.aktivitasApi;
+export const companyProfileApi = _mod.companyProfileApi;
+export const zonesApi          = _mod.zonesApi;
+export const notifikasiApi     = _mod.notifikasiApi;
