@@ -1,6 +1,7 @@
 from app.db.supabase import supabase
 from fastapi import HTTPException
 from app.schemas.event_schema import EventResponse
+from datetime import date
 
 
 # GET ALL EVENTS
@@ -77,6 +78,21 @@ def get_event_detail(event_id: str):
 
         "activities": activities
     }
+
+def get_active_event():
+    today = date.today().isoformat()
+
+    res = supabase.table("events") \
+        .select("*") \
+        .lte("tanggal_mulai", today) \
+        .gte("tanggal_selesai", today) \
+        .limit(1) \
+        .execute()
+
+    if not res.data:
+        return None
+
+    return res.data[0]
 
 
 # CREATE EVENT

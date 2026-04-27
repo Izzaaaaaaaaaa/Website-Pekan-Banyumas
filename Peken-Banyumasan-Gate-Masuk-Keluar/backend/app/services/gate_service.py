@@ -2,9 +2,19 @@ from app.db.supabase import supabase
 from fastapi import HTTPException
 from datetime import datetime, timedelta
 
+# 🔥 import event service
+from app.services.event_service import get_active_event
 
-# 🔥 SCAN NFC (CORE SYSTEM)
-def scan_nfc(card_uid: str, event_id: str):
+
+def scan_nfc(card_uid: str):
+    # 🔥 ambil event aktif
+    event = get_active_event()
+
+    if not event:
+        raise HTTPException(404, "Tidak ada event aktif")
+
+    event_id = event["id"]
+
     # 1. cari kartu
     nfc = supabase.table("nfc_cards") \
         .select("*") \
@@ -27,7 +37,7 @@ def scan_nfc(card_uid: str, event_id: str):
 
     user_data = user.data[0]
 
-    # 3. cek log terakhir (per event 🔥)
+    # 3. cek log terakhir (per event)
     last_log = supabase.table("gate_logs") \
         .select("*") \
         .eq("user_id", user_id) \
@@ -36,7 +46,7 @@ def scan_nfc(card_uid: str, event_id: str):
         .limit(1) \
         .execute()
 
-    # 🔥 ANTI DOUBLE SCAN (5 detik)
+    # 🔥 ANTI DOUBLE SCAN
     if last_log.data:
         last_time = datetime.fromisoformat(last_log.data[0]["scan_time"])
         now = datetime.utcnow()
@@ -59,14 +69,13 @@ def scan_nfc(card_uid: str, event_id: str):
 
     return {
         "status": next_type,
+        "event": event["nama"],
         "user": {
             "id": user_data["id"],
             "nama": user_data["nama"]
         }
     }
-
-
-# 🔥 GET GATE LOGS
+    
 def get_gate_logs(gate_type=None, limit=20, event_id=None):
     query = supabase.table("gate_logs") \
         .select("*, users(nama)") \
@@ -81,7 +90,6 @@ def get_gate_logs(gate_type=None, limit=20, event_id=None):
 
     res = query.execute()
 
-    # 🔥 mapping biar clean
     return [
         {
             "id": g["id"],

@@ -47,6 +47,15 @@ def create(data: EventCreate, user=Depends(get_current_user)):
 
     return create_event(data.dict())
 
+@router.get("/active")
+def active_event(user=Depends(get_current_user)):
+    event = get_active_event()
+
+    if not event:
+        raise HTTPException(404, "Tidak ada event aktif")
+
+    return event
+
 
 # UPDATE EVENT
 @router.put("/{id}")
