@@ -8,7 +8,8 @@ from app.services.event_service import (
     create_event,
     update_event,
     delete_event,
-    get_event_detail
+    get_event_detail,
+    get_active_event  # 🔥 FIX: tambahin ini
 )
 
 # SCHEMAS
@@ -21,32 +22,9 @@ from app.schemas.event_schema import (
 router = APIRouter(prefix="/events", tags=["Events"])
 
 
-# 🔥 DETAIL EVENT (HARUS DI ATAS)
-@router.get("/{id}/detail", response_model=EventDetailResponse)
-def detail(id: str, user=Depends(get_current_user)):
-    return get_event_detail(id)
-
-
-# GET ALL EVENTS
-@router.get("/")
-def get_all(user=Depends(get_current_user)):
-    return get_events()
-
-
-# GET EVENT BY ID
-@router.get("/{id}")
-def get_one(id: str, user=Depends(get_current_user)):
-    return get_event_by_id(id)
-
-
-# CREATE EVENT
-@router.post("/")
-def create(data: EventCreate, user=Depends(get_current_user)):
-    if user["role"] != "admin":
-        raise HTTPException(403, "Hanya admin yang boleh membuat event")
-
-    return create_event(data.dict())
-
+# =========================
+# 🔥 ACTIVE EVENT (HARUS PALING ATAS)
+# =========================
 @router.get("/active")
 def active_event(user=Depends(get_current_user)):
     event = get_active_event()
@@ -57,7 +35,44 @@ def active_event(user=Depends(get_current_user)):
     return event
 
 
+# =========================
+# 🔥 EVENT DETAIL
+# =========================
+@router.get("/{id}/detail", response_model=EventDetailResponse)
+def detail(id: str, user=Depends(get_current_user)):
+    return get_event_detail(id)
+
+
+# =========================
+# GET ALL EVENTS
+# =========================
+@router.get("/")
+def get_all(user=Depends(get_current_user)):
+    return get_events()
+
+
+# =========================
+# GET EVENT BY ID (HARUS DI BAWAH)
+# =========================
+@router.get("/{id}")
+def get_one(id: str, user=Depends(get_current_user)):
+    return get_event_by_id(id)
+
+
+# =========================
+# CREATE EVENT
+# =========================
+@router.post("/")
+def create(data: EventCreate, user=Depends(get_current_user)):
+    if user["role"] != "admin":
+        raise HTTPException(403, "Hanya admin yang boleh membuat event")
+
+    return create_event(data.dict())
+
+
+# =========================
 # UPDATE EVENT
+# =========================
 @router.put("/{id}")
 def update(id: str, data: EventUpdate, user=Depends(get_current_user)):
     if user["role"] != "admin":
@@ -71,7 +86,9 @@ def update(id: str, data: EventUpdate, user=Depends(get_current_user)):
     return update_event(id, clean_data)
 
 
+# =========================
 # DELETE EVENT
+# =========================
 @router.delete("/{id}")
 def delete(id: str, user=Depends(get_current_user)):
     if user["role"] != "admin":

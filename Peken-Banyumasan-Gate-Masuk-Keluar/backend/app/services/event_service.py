@@ -4,7 +4,9 @@ from app.schemas.event_schema import EventResponse
 from datetime import date
 
 
+# =========================
 # GET ALL EVENTS
+# =========================
 def get_events():
     res = supabase.table("events") \
         .select("*") \
@@ -14,7 +16,9 @@ def get_events():
     return [EventResponse(**e) for e in res.data]
 
 
+# =========================
 # GET EVENT BY ID
+# =========================
 def get_event_by_id(event_id: str):
     res = supabase.table("events") \
         .select("*") \
@@ -26,8 +30,11 @@ def get_event_by_id(event_id: str):
 
     return EventResponse(**res.data[0])
 
+
+# =========================
+# EVENT DETAIL (WITH STATS)
+# =========================
 def get_event_detail(event_id: str):
-    # 1. ambil event
     event_res = supabase.table("events") \
         .select("*") \
         .eq("id", event_id) \
@@ -35,11 +42,10 @@ def get_event_detail(event_id: str):
         .execute()
 
     if not event_res.data:
-        return {"error": "Event tidak ditemukan"}
+        raise HTTPException(404, "Event tidak ditemukan")
 
     event = event_res.data
 
-    # 2. ambil logs
     logs = supabase.table("gate_logs") \
         .select("id, gate_type, scan_time, users(nama)") \
         .eq("event_id", event_id) \
@@ -47,19 +53,18 @@ def get_event_detail(event_id: str):
         .limit(10) \
         .execute().data
 
-    # 3. hitung stats
     total_masuk = sum(1 for l in logs if l["gate_type"] == "masuk")
     total_keluar = sum(1 for l in logs if l["gate_type"] == "keluar")
 
-    # 4. format activity
-    activities = []
-    for log in logs:
-        activities.append({
+    activities = [
+        {
             "id": log["id"],
             "gate_type": log["gate_type"],
             "scan_time": log["scan_time"],
             "nama": log["users"]["nama"] if log.get("users") else None
-        })
+        }
+        for log in logs
+    ]
 
     return {
         "id": event["id"],
@@ -79,23 +84,47 @@ def get_event_detail(event_id: str):
         "activities": activities
     }
 
+
+# =========================
+# 🔥 GET ACTIVE EVENT (FIXED)
+# =========================
 def get_active_event():
-    today = date.today().isoformat()
+    today = date.today()
 
     res = supabase.table("events") \
         .select("*") \
-        .lte("tanggal_mulai", today) \
-        .gte("tanggal_selesai", today) \
-        .limit(1) \
         .execute()
 
     if not res.data:
         return None
 
-    return res.data[0]
+    for event in res.data:
+        start = event.get("tanggal_mulai")
+        end = event.get("tanggal_selesai")
+
+        # skip kalau kosong
+        if not start or not end:
+            continue
+
+        try:
+            start_date = date.fromisoformat(str(start))
+            end_date = date.fromisoformat(str(end))
+        except:
+            continue
+
+        # optional: cek status aktif
+        if event.get("status") != "aktif":
+            continue
+
+        if start_date <= today <= end_date:
+            return event
+
+    return None
 
 
+# =========================
 # CREATE EVENT
+# =========================
 def create_event(data):
     res = supabase.table("events").insert({
         "nama": data["nama"],
@@ -115,7 +144,9 @@ def create_event(data):
     }
 
 
+# =========================
 # UPDATE EVENT
+# =========================
 def update_event(event_id: str, data):
     res = supabase.table("events") \
         .update(data) \
@@ -131,7 +162,9 @@ def update_event(event_id: str, data):
     }
 
 
+# =========================
 # DELETE EVENT
+# =========================
 def delete_event(event_id: str):
     res = supabase.table("events") \
         .delete() \

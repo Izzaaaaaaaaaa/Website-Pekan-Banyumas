@@ -1,11 +1,27 @@
 from fastapi import APIRouter, Depends, Query, HTTPException
 from fastapi.responses import StreamingResponse
-from app.services.report_service import export_gate_logs_csv
 from app.api.deps import get_current_user
+
+# 🔥 import service
+from app.services.report_service import (
+    export_gate_logs_csv,
+    get_reports
+)
 
 router = APIRouter(prefix="/reports", tags=["Reports"])
 
 
+# 🔥 LIST REPORTS (WAJIB)
+@router.get("/")
+def list_reports(
+    event_id: str = Query(None),
+    tanggal: str = Query(None),
+    user=Depends(get_current_user)
+):
+    return get_reports(event_id, tanggal)
+
+
+# 🔥 EXPORT CSV
 @router.get("/export")
 def export(
     event_id: str = Query(...),
@@ -17,7 +33,6 @@ def export(
 
     csv_file = export_gate_logs_csv(event_id)
 
-    # 🧠 filename dinamis
     filename = f"report_event_{event_id}.csv"
 
     return StreamingResponse(

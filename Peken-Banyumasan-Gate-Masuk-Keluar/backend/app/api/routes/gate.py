@@ -12,12 +12,12 @@ def scan(data: ScanRequest):
     return scan_nfc(data.card_uid)
 
 
-# 🔥 GET LOGS (DENGAN FILTER)
 @router.get("/logs")
 def logs(
-    gate_type: str = Query(None),
-    event_id: str = Query(None),   # 🔥 tambah ini
+    event_id: str = Query(None),
+    tanggal: str = Query(None),
+    user_id: str = Query(None),
     limit: int = Query(20),
     user=Depends(get_current_user)
 ):
-    return get_gate_logs(gate_type, limit, event_id)
+    return get_gate_logs(event_id, tanggal, user_id, limit)

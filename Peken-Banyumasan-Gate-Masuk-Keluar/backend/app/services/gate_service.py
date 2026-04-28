@@ -76,26 +76,41 @@ def scan_nfc(card_uid: str):
         }
     }
     
-def get_gate_logs(gate_type=None, limit=20, event_id=None):
-    query = supabase.table("gate_logs") \
-        .select("*, users(nama)") \
-        .order("scan_time", desc=True) \
-        .limit(limit)
+def get_gate_logs(event_id=None, tanggal=None, user_id=None, limit=20):
+    try:
+        query = supabase.table("gate_logs") \
+            .select("id, gate_type, scan_time, users(nama), events(nama)") \
+            .order("scan_time", desc=True) \
+            .limit(limit)
 
-    if gate_type:
-        query = query.eq("gate_type", gate_type)
+        # 🔥 filter event
+        if event_id:
+            query = query.eq("event_id", event_id)
 
-    if event_id:
-        query = query.eq("event_id", event_id)
+        # 🔥 filter user
+        if user_id:
+            query = query.eq("user_id", user_id)
 
-    res = query.execute()
+        # 🔥 filter tanggal (FIX TIMESTAMP)
+        if tanggal:
+            query = query.gte("scan_time", f"{tanggal}T00:00:00") \
+                         .lte("scan_time", f"{tanggal}T23:59:59")
 
-    return [
-        {
-            "id": g["id"],
-            "nama": g["users"]["nama"] if g.get("users") else None,
-            "status": g["gate_type"],
-            "waktu": g["scan_time"]
-        }
-        for g in res.data
-    ]
+        res = query.execute()
+
+        data = res.data if res.data else []
+
+        return [
+            {
+                "id": r["id"],
+                "nama": r["users"]["nama"] if r.get("users") else None,
+                "event": r["events"]["nama"] if r.get("events") else None,
+                "status": r["gate_type"],
+                "waktu": r["scan_time"]
+            }
+            for r in data
+        ]
+
+    except Exception as e:
+        print("ERROR GATE LOGS:", e)
+        return {"error": str(e)}
