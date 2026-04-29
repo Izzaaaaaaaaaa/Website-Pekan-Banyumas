@@ -1,28 +1,52 @@
 /**
- * src/services/endpoints.js — Conditional re-export (Gate)
- * ──────────────────────────────────────────────────────────
- * Saat VITE_DUMMY_MODE=true  → semua API diarahkan ke dummyEndpoints.js
- * Saat VITE_DUMMY_MODE=false → semua API diarahkan ke realEndpoints.js (backend asli)
- *
- * PENTING: realEndpoints.js berisi implementasi asli — tidak ada yang diubah di sana.
- * Endpoint URL, parameter, dan payload semua ada di realEndpoints.js.
+ * src/services/endpoints.js — Public company profile endpoints
+ * All paths are under /api/public/ — no authentication required.
+ * Every method returns the unwrapped payload (envelope stripped by apiFetch).
+ * Every method throws on failure — callers handle errors.
  */
 
-import * as real  from './realEndpoints.js';
-import * as dummy from './dummyEndpoints.js';
+import apiFetch from './api.js';
 
-// Defensive parse: accept 'true' / 'TRUE' / ' True ' / etc. Anything else → real mode.
-const _rawDummy = import.meta.env.VITE_DUMMY_MODE;
-const _isDummy  = typeof _rawDummy === 'string' && _rawDummy.trim().toLowerCase() === 'true';
-const _mod      = _isDummy ? dummy : real;
+/** GET /api/public/company-profile?section=home|about|tim|programs|works|gallery */
+export const companyProfileApi = {
+  get: (section) => apiFetch(`/api/public/company-profile?section=${encodeURIComponent(section)}`),
+};
 
-export const authApi           = _mod.authApi;
-export const dashboardApi      = _mod.dashboardApi;
-export const eventApi          = _mod.eventApi;
-export const reportsApi        = _mod.reportsApi;
-export const kolaboratorApi    = _mod.kolaboratorApi;
-export const artisanApi        = _mod.artisanApi;
-export const aktivitasApi      = _mod.aktivitasApi;
-export const companyProfileApi = _mod.companyProfileApi;
-export const zonesApi          = _mod.zonesApi;
-export const notifikasiApi     = _mod.notifikasiApi;
+/** GET /api/public/programs → Array<Program> */
+/** GET /api/public/programs/:slug → Program */
+export const programsApi = {
+  list: () => apiFetch('/api/public/programs'),
+  detail: (slug) => apiFetch(`/api/public/programs/${encodeURIComponent(slug)}`),
+};
+
+/** GET /api/public/karya → Array<Karya> */
+export const karyaApi = {
+  list: (params = {}) => {
+    const qs = new URLSearchParams(params).toString();
+    return apiFetch(`/api/public/karya${qs ? `?${qs}` : ''}`);
+  },
+};
+
+/** GET /api/public/profiles/:slug → Profile */
+export const profileApi = {
+  bySlug: (slug) => apiFetch(`/api/public/profiles/${encodeURIComponent(slug)}`),
+};
+
+/** GET /api/public/events → Array<Event> */
+export const eventsApi = {
+  list: (params = {}) => {
+    const qs = new URLSearchParams(params).toString();
+    return apiFetch(`/api/public/events${qs ? `?${qs}` : ''}`);
+  },
+  /** GET /api/public/events/upcoming?limit=N → Array<Event> (ordered by tanggal asc) */
+  upcoming: (params = {}) => {
+    const qs = new URLSearchParams(params).toString();
+    return apiFetch(`/api/public/events/upcoming${qs ? `?${qs}` : ''}`);
+  },
+};
+
+/** GET /api/public/stats → { edisi_count, kolaborator_aktif, artisan_aktif, pengunjung_total } */
+export const statsApi = {
+  public: () => apiFetch('/api/public/stats'),
+};
+

@@ -1,13 +1,17 @@
-import { defineConfig } from 'vite'
-import react from '@vitejs/plugin-react'
+import { defineConfig } from 'vite';
+import react from '@vitejs/plugin-react';
 
+// https://vitejs.dev/config/
 export default defineConfig({
   plugins: [react()],
-  server:  { port: 5173 },
-  preview: { port: 5173 },
-  optimizeDeps: {
-    // Prevents Vite from pre-bundling lucide-react, which causes
-    // "Could not resolve ./icons/glass-water.js" on Windows
-    exclude: ['lucide-react'],
+  server: {
+    port: 5173,
+    open: true,
   },
-})
+  build: {
+    outDir: 'dist',
+    // Assets in public/ are copied as-is. Images referenced from JS/CSS
+    // via absolute paths like "/assets/foo.jpg" resolve correctly in
+    // both dev and build. No further asset handling needed.
+  },
+});
