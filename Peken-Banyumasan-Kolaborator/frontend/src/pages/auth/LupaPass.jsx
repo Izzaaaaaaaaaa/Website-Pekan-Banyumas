@@ -11,7 +11,7 @@ import logo from "../../assets/logo.png";
 import "../../assets/styles/lupapass.css";
 
 /* ─── CONFIG ─── */
-const ADMIN_PHONE = "6282192058122"; // nomor WA admin
+const ADMIN_PHONE = import.meta.env.VITE_ADMIN_WA || "6282192058122"; // set VITE_ADMIN_WA di .env
 const OTP_LENGTH  = 4;
 // OTP verification + password reset flow goes through authApi.verifyOtp /
 // authApi.resetPassword. The endpoints are STUBS today (Phase 0 contract):
@@ -180,6 +180,10 @@ export default function ForgotPassword() {
             <div className="fp-dot-grid" />
 
             <div className="fp-wrapper">
+                <a href={import.meta.env.VITE_COMPANY_URL || 'http://localhost:5173'}
+                   style={{ position: 'fixed', top: 14, right: 18, fontSize: 12, color: '#8a9070', textDecoration: 'none', zIndex: 99 }}>
+                    ← Beranda Publik
+                </a>
 
                 {/* ── Brand ── */}
                 <div className="fp-brand">

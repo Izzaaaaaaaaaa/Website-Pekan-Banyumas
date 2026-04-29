@@ -5,7 +5,7 @@ import { profilApi } from '../services/endpoints';
 import { getUser, setUser as setAuthUser } from '../lib/auth';
 import { extractError } from '../lib/unwrap';
 import { useToast } from '../components/Toast';
-import { SUBSEKTORS } from '../data/dummy';
+import { SUBSEKTOR } from '../constants/subsektor';
 import ImageUpload from '../components/ImageUpload';
 import { T } from '../lib/tokens';
 import { profileUrl } from '../lib/slug';
@@ -18,7 +18,7 @@ export default function Profil() {
     nama:      user.nama||'',
     kota:      user.kota||'',
     bio:       user.bio||'',
-    subsektor: user.subsektor||[],
+    subsektor: user.subsektor || [],
     foto_url:  user.foto_url||'',
     cover_url: user.cover_url||'',
   });
@@ -171,7 +171,7 @@ export default function Profil() {
           <div>
             <label style={labelStyle}>Subsektor</label>
             <div className="flex flex-wrap gap-2">
-              {SUBSEKTORS.map(s => (
+              {SUBSEKTOR.map(s => (
                 <button key={s} onClick={() => toggleSub(s)} type="button"
                   className="px-3 py-1.5 rounded-full text-xs font-semibold border transition-all"
                   style={form.subsektor.includes(s)

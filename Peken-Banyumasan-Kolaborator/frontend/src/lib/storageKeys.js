@@ -6,8 +6,9 @@
  * localStorage keys anywhere else in the codebase — always import from here.
  *
  * Naming conventions:
- *   • Auth keys (`token`, `user`) are intentionally unprefixed to preserve
- *     backward compatibility with existing logged-in sessions.
+ *   • Auth keys ('token', 'user') are private to lib/auth.js (TOKEN_KEY /
+ *     USER_KEY). They are NOT listed here so external code cannot bypass
+ *     the auth module and read/write auth state directly.
  *   • All other keys use the `peken_` prefix so that multiple Peken apps
  *     sharing an origin (dev, preview deployments) cannot collide.
  *
@@ -18,10 +19,12 @@
  */
 
 // ── Canonical keys (use these for all new writes) ──────────────────────────
+// Auth storage keys (TOKEN_KEY / USER_KEY = 'token' / 'user') are private to
+// lib/auth.js — they are no longer part of this public API so that external
+// code cannot bypass auth.js and touch auth state directly.
 export const STORAGE_KEYS = Object.freeze({
-  // Auth — unprefixed, backward compat with existing sessions.
-  TOKEN: 'token',
-  USER:  'user',
+  // Register-flow state — tracks signup approval status.
+  REGISTER_STATUS: 'peken_kolaborator_register_status',
 });
 
 /**
@@ -46,10 +49,11 @@ export const STORAGE_EVENTS = Object.freeze({
 // ── Per-user cleanup list (consumed by lib/auth.js#clearAuth) ──────────────
 /**
  * Concrete keys that must be removed on logout, in addition to TOKEN
- * and USER. Kolaborator currently has no concrete non-prefixed per-user
- * keys — all its per-user state lives under the notification prefix.
+ * and USER.
  */
-export const PER_USER_STORAGE_KEYS = Object.freeze([]);
+export const PER_USER_STORAGE_KEYS = Object.freeze([
+  STORAGE_KEYS.REGISTER_STATUS,
+]);
 
 /**
  * Prefix patterns for keys to remove on logout. clearAuth() iterates

@@ -4,7 +4,7 @@ import { Plus, Image, Trash2, Star, Edit2, X, Save, Loader2 } from 'lucide-react
 import { portofolioApi } from '../services/endpoints';
 import { extractError } from '../lib/unwrap';
 import { useToast } from '../components/Toast';
-import { SUBSEKTORS } from '../data/dummy';
+import { SUBSEKTOR } from '../constants/subsektor';
 import ImageUpload from '../components/ImageUpload';
 import { T } from '../lib/tokens';
 
@@ -216,7 +216,7 @@ export default function Portofolio() {
                     value={form.subsektor}
                     onChange={e => setForm(p => ({...p, subsektor:e.target.value}))}
                     style={{...inputStyle, cursor:'pointer'}}>
-                    {SUBSEKTORS.map(s => <option key={s}>{s}</option>)}
+                    {SUBSEKTOR.map(s => <option key={s}>{s}</option>)}
                   </select>
                 </div>
                 <div>

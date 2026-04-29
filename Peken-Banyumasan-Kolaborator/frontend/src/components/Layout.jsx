@@ -22,7 +22,7 @@ const navItems = [
     { to:'/dashboard/pengaturan', label:'Pengaturan',  icon:Settings         },
 ];
 
-const COMPANY_URL = import.meta.env.VITE_COMPANY_URL || 'http://localhost:5174';
+const COMPANY_URL = import.meta.env.VITE_COMPANY_URL || 'http://localhost:5173';
 
 // ── Design tokens (inline, for components that can't use Tailwind) ──
 /* ── Design System Tokens (matches gate & artisan canonical vars) ── */

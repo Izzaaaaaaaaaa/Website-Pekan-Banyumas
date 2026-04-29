@@ -24,52 +24,131 @@
  * storyApi, eventApi (self-register methods only — admin CRUD lives
  * in Gate), notifikasiApi.
  *
- * Method names that are Kolaborator-specific but catalogued as part
- * of eventApi use the catalogue names (`registerSelf`, `unregisterSelf`).
- * The old dummy-facade method names (`daftar`, `batal`) are intentionally
- * dropped here; consumer pages are being migrated to the new names.
+ * Method names that are Kolaborator-specific: `requestJoin` (POST to
+ * kolaborator-requests queue, pending admin approval) and `myRequests`
+ * (GET self-join request history). The old facade names (`daftar`,
+ * `registerSelf`, `unregisterSelf`) are dropped — canonical names only.
  */
 
 import apiClient from './api.js';
 import { extractData } from '../lib/unwrap.js';
+import { supabase } from '../lib/supabase.js';
 
 // ── authApi ─────────────────────────────────────────────────────────────────
+// login/logout/me/updatePassword → Supabase direct (FE ↔ Supabase Auth).
+// register → BE intermediary (BE pakai Supabase Admin SDK, atomik: auth+profil+foto).
+// updateProfile custom fields → BE via apiClient.
+// OTP password-reset → BE intermediary (WA gateway via Fonnte/Twilio) — STUB.
 export const authApi = {
-  /** POST /api/auth/login → { token, user: { id, nama, email, role } } */
+  /**
+   * Login via Supabase signInWithPassword.
+   * Kolaborator hanya menerima role 'kolaborator'. Jika role lain, signOut + throw.
+   * user.status dikembalikan agar Login.jsx bisa redirect ke /status jika pending.
+   */
   login: async ({ email, password }) => {
-    const response = await apiClient.post('/api/auth/login', { email, password });
-    return extractData(response);
+    if (!supabase) throw new Error('Supabase belum dikonfigurasi — isi VITE_SUPABASE_URL dan VITE_SUPABASE_ANON_KEY.');
+    const { data, error } = await supabase.auth.signInWithPassword({ email, password });
+    if (error) {
+      const err = new Error(error.message);
+      err.response = { status: error.status ?? 401, data: { status: 'error', message: error.message } };
+      throw err;
+    }
+    if (!data.session) throw new Error('Sesi gagal dibuat. Coba lagi.');
+    const role = data.user.app_metadata?.role;
+    if (role !== 'kolaborator') {
+      await supabase.auth.signOut();
+      const err = new Error('Akun Anda bukan akun kolaborator');
+      err.response = { status: 403, data: { status: 'error', message: err.message } };
+      throw err;
+    }
+    return {
+      token: data.session.access_token,
+      user: {
+        id: data.user.id,
+        email: data.user.email,
+        nama: data.user.user_metadata?.nama ?? data.user.email,
+        role,
+        status: data.user.app_metadata?.status ?? 'aktif',
+      },
+    };
   },
 
-  /** POST /api/auth/register → { message, status } (moderation-queued) */
+  /** POST /api/auth/register → { message, status } — via BE (atomik: auth+profil+foto). */
   register: async (data) => {
     const response = await apiClient.post('/api/auth/register', data);
     return extractData(response);
   },
 
-  /** POST /api/auth/logout → { message } */
+  /** Logout via Supabase signOut — revokes refresh token server-side. */
   logout: async () => {
-    const response = await apiClient.post('/api/auth/logout');
-    return extractData(response);
+    if (supabase) {
+      const { error } = await supabase.auth.signOut();
+      if (error) throw new Error(error.message);
+    }
+    return { message: 'Logout berhasil' };
   },
 
-  /** GET /api/auth/me → { id, nama, email, role, ... } */
+  /** Ambil user dari Supabase session (verified server-side). */
   me: async () => {
-    const response = await apiClient.get('/api/auth/me');
-    return extractData(response);
+    if (!supabase) throw new Error('Supabase belum dikonfigurasi.');
+    const { data: { user }, error } = await supabase.auth.getUser();
+    if (error) throw new Error(error.message);
+    return {
+      id: user.id,
+      email: user.email,
+      nama: user.user_metadata?.nama ?? user.email,
+      role: user.app_metadata?.role ?? null,
+      status: user.app_metadata?.status ?? 'aktif',
+    };
   },
 
-  /** PUT /api/auth/profile → updated user subset */
+  /**
+   * Update profile. nama/email → Supabase updateUser.
+   * Field custom (subsektor, kota, bio, dll) → BE via apiClient.
+   */
   updateProfile: async (data) => {
-    const response = await apiClient.put('/api/auth/profile', data);
-    return extractData(response);
+    if (!supabase) {
+      const response = await apiClient.put('/api/auth/profile', data);
+      return extractData(response);
+    }
+    const supabaseUpdate = {};
+    if (data.nama) supabaseUpdate.data = { nama: data.nama };
+    if (data.email) supabaseUpdate.email = data.email;
+    if (Object.keys(supabaseUpdate).length > 0) {
+      const { error } = await supabase.auth.updateUser(supabaseUpdate);
+      if (error) throw new Error(error.message);
+    }
+    const beFields = { ...data };
+    delete beFields.nama;
+    delete beFields.email;
+    if (Object.keys(beFields).length > 0) {
+      const response = await apiClient.put('/api/auth/profile', beFields);
+      return extractData(response);
+    }
+    return { message: 'Profile berhasil diupdate' };
   },
 
-  /** PUT /api/auth/password → { message } */
+  /**
+   * Ganti password. Butuh re-auth dengan password lama karena Supabase
+   * tidak menyediakan endpoint verify-only.
+   */
   updatePassword: async ({ password_lama, password_baru }) => {
-    const response = await apiClient.put('/api/auth/password', { password_lama, password_baru });
-    return extractData(response);
+    if (!supabase) throw new Error('Supabase belum dikonfigurasi.');
+    const { data: { user } } = await supabase.auth.getUser();
+    if (!user) throw new Error('Sesi tidak valid.');
+    const { error: verifyErr } = await supabase.auth.signInWithPassword({
+      email: user.email, password: password_lama,
+    });
+    if (verifyErr) throw new Error('Password lama salah.');
+    const { error: updateErr } = await supabase.auth.updateUser({ password: password_baru });
+    if (updateErr) throw new Error(updateErr.message);
+    return { message: 'Password berhasil diubah' };
   },
+
+  // ── OTP password-reset flow (STUBS — via BE WA gateway) ──────────────────
+  // BE akan pakai Fonnte/Twilio untuk kirim OTP via WhatsApp, kemudian
+  // supabase.auth.admin.updateUserById() untuk update password.
+  // Saat backend siap: hapus throw dan uncomment apiClient calls.
 
   /** POST /api/auth/otp/request → { message } — STUB */
   requestOtp: async (/* { phone } */) => {
@@ -170,17 +249,18 @@ export const eventApi = {
     return extractData(response);
   },
 
-  /** POST /api/events/:id/register → { message } (self as kolaborator) */
-  registerSelf: async (id) => {
-    const response = await apiClient.post(`/api/events/${id}/register`);
+  /** POST /api/events/:id/kolaborator-requests → { id, status:'pending', peran } */
+  requestJoin: async (id, peran = 'peserta') => {
+    const response = await apiClient.post(`/api/events/${id}/kolaborator-requests`, { peran });
     return extractData(response);
   },
 
-  /** DELETE /api/events/:id/register → { message } (cancel self-registration) */
-  unregisterSelf: async (id) => {
-    const response = await apiClient.delete(`/api/events/${id}/register`);
+  /** GET /api/events/my-requests → Array<{ event_id, peran, status }> */
+  myRequests: async () => {
+    const response = await apiClient.get('/api/events/my-requests');
     return extractData(response);
   },
+
 };
 
 // ── notifikasiApi (per-user notification inbox) ────────────────────────────

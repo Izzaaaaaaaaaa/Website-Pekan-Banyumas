@@ -3,7 +3,7 @@
 // Right panel → Form + event strip dari API (dynamic)
 
 import { useState, useEffect } from 'react';
-import { Link, useNavigate } from 'react-router-dom';
+import { Link, useNavigate, useLocation, useSearchParams } from 'react-router-dom';
 import {
     Mail, Lock, Eye, EyeOff, ArrowRight,
     Loader2, Globe, AlertCircle, Calendar, MapPin,
@@ -11,6 +11,8 @@ import {
 import { authApi, eventApi } from '../../services/endpoints';
 import { setToken, setUser } from '../../lib/auth';
 import { extractError } from '../../lib/unwrap';
+import { STORAGE_KEYS } from '../../lib/storageKeys';
+import { writeRaw } from '../../lib/domainStorage';
 import logo from '../../assets/logo.png';
 import '../../assets/styles/login.css';
 
@@ -50,12 +52,15 @@ const FEATURES = [
 
 export default function Login() {
     const nav = useNavigate();
+    const location = useLocation();
+    const [searchParams] = useSearchParams();
     const [email,     setEmail]     = useState('');
     const [password,  setPassword]  = useState('');
     const [show,      setShow]      = useState(false);
     const [loading,   setLoading]   = useState(false);
     const [error,     setError]     = useState('');
     const [nextEvent, setNextEvent] = useState(null);
+    const justRegistered = location.state?.registered === true;
 
     // Ambil event mendatang — tidak perlu auth, gagal = strip tersembunyi.
     useEffect(() => {
@@ -75,6 +80,12 @@ export default function Login() {
         setLoading(true); setError('');
         try {
             const { token, user } = await authApi.login({ email, password });
+            if (user?.status && user.status !== 'aktif') {
+                writeRaw(STORAGE_KEYS.REGISTER_STATUS, user.status);
+                setLoading(false);
+                nav('/status');
+                return;
+            }
             if (user?.role && user.role !== 'kolaborator') {
                 setError('Email atau password salah');
                 setLoading(false);
@@ -82,7 +93,7 @@ export default function Login() {
             }
             setToken(token);
             setUser(user);
-            nav('/dashboard');
+            nav(searchParams.get('return') || '/dashboard');
         } catch (err) {
             setError(extractError(err, 'Email atau password salah'));
         } finally {
@@ -93,7 +104,7 @@ export default function Login() {
     return (
         <div style={{
             display: 'flex', height: '100vh', overflow: 'hidden',
-            fontFamily: '"Montserrat", system-ui, sans-serif',
+            fontFamily: 'var(--font-body)',
             background: '#f2f4e8',
         }}>
 
@@ -158,6 +169,12 @@ export default function Login() {
 
             {/* RIGHT — Login form */}
             <div className="login-right">
+                <div style={{ position: 'absolute', top: 16, right: 20, zIndex: 10 }}>
+                    <a href={import.meta.env.VITE_COMPANY_URL || 'http://localhost:5173'}
+                       style={{ fontSize: 12, color: '#8a9070', textDecoration: 'none', display: 'flex', alignItems: 'center', gap: 4 }}>
+                        ← Beranda Publik
+                    </a>
+                </div>
                 <div className="login-card">
 
                     {/* Mobile logo */}
@@ -171,6 +188,13 @@ export default function Login() {
 
                     <h2 className="card-title">Selamat datang!</h2>
                     <p className="card-sub">Masuk ke portal kolaborator Anda</p>
+
+                    {justRegistered && (
+                        <div style={{ display:'flex', alignItems:'center', gap:8, background:'#f0fdf4', border:'1px solid #bbf7d0', borderRadius:10, padding:'10px 14px', marginBottom:16, fontSize:13, color:'#166534', fontWeight:500 }}>
+                            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><polyline points="20 6 9 17 4 12"/></svg>
+                            Pendaftaran berhasil — silakan login untuk melanjutkan.
+                        </div>
+                    )}
 
                     {error && (
                         <div className="error-box">
@@ -215,7 +239,7 @@ export default function Login() {
                         </div>
 
                         <div className="forgot-row">
-                            <span className="forgot-link" onClick={() => nav('/lupa-password')}>
+                            <span className="forgot-link" onClick={() => nav('/lupa-pass')}>
                                 Lupa password?
                             </span>
                         </div>
@@ -232,7 +256,7 @@ export default function Login() {
 
                     <p className="register-row">
                         Belum punya akun?{' '}
-                        <Link to="/daftar" className="register-link">Daftar sekarang</Link>
+                        <Link to="/register" className="register-link">Daftar sekarang</Link>
                     </p>
 
                     {/* Event info strip — dynamic dari eventApi.list()

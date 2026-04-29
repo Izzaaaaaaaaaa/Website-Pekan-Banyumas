@@ -8,7 +8,7 @@
  * Mutasi (create/update/delete) bekerja pada salinan lokal in-memory.
  */
 
-import { getUser, setUser } from '../lib/auth.js';
+import { getUser, setToken, setUser } from '../lib/auth.js';
 import {
   currentUser,
   dummyPortofolio,
@@ -29,7 +29,10 @@ let _notifikasi  = [...dummyNotifikasi];
 export const authApi = {
   login: async () => {
     await delay();
-    return { token: 'dummy-token-demo-mode', user: { ...currentUser, role: 'kolaborator' } };
+    const user = { ...currentUser, role: 'kolaborator' };
+    setToken('dummy-token-demo-mode');
+    setUser(user);
+    return { token: 'dummy-token-demo-mode', user };
   },
   register: async () => {
     await delay();
@@ -51,9 +54,19 @@ export const authApi = {
     await delay();
     return { message: 'Password berhasil diubah (demo)' };
   },
-  requestOtp:    async () => { throw new Error('Not implemented yet'); },
-  verifyOtp:     async () => { throw new Error('Not implemented yet'); },
-  resetPassword: async () => { throw new Error('Not implemented yet'); },
+  requestOtp: async () => {
+    await delay();
+    return { message: 'OTP dikirim melalui WhatsApp (demo)' };
+  },
+  verifyOtp: async ({ otp }) => {
+    await delay(400);
+    if (String(otp) !== '1234') throw new Error('Kode OTP salah. Coba lagi.');
+    return { reset_token: 'dummy-reset-token' };
+  },
+  resetPassword: async () => {
+    await delay();
+    return { message: 'Password berhasil direset (demo)' };
+  },
 };
 
 // ── profilApi ─────────────────────────────────────────────────────────────────
@@ -102,7 +115,7 @@ export const storyApi = {
   },
   create: async (data) => {
     await delay();
-    const s = { id: `s-${Date.now()}`, like_count: 0, created_at: new Date().toISOString(), tags: [], ...data };
+    const s = { id: `s-${Date.now()}`, like_count: 0, media_url: null, status: 'aktif', created_at: new Date().toISOString(), tags: [], ...data };
     _stories.unshift(s);
     return s;
   },
@@ -123,15 +136,18 @@ export const eventApi = {
     await delay();
     return _events.find(e => e.id === id) || _events[0];
   },
-  registerSelf: async (id) => {
+  requestJoin: async (id, peran = 'peserta') => {
     await delay();
-    _events = _events.map(e => e.id === id ? { ...e, terdaftar: true, peran: 'peserta', assigned_by: 'self' } : e);
-    return { message: 'Berhasil mendaftar ke event (demo)' };
+    _events = _events.map(e => e.id === id
+      ? { ...e, terdaftar: false, pending_request: true, pending_peran: peran }
+      : e);
+    return { id: `kreq-${Date.now()}`, status: 'pending', peran, event_id: id };
   },
-  unregisterSelf: async (id) => {
+  myRequests: async () => {
     await delay();
-    _events = _events.map(e => e.id === id ? { ...e, terdaftar: false, peran: undefined, assigned_by: undefined } : e);
-    return { message: 'Pendaftaran dibatalkan (demo)' };
+    return _events
+      .filter(e => e.pending_request)
+      .map(e => ({ event_id: e.id, peran: e.pending_peran || 'peserta', status: 'pending' }));
   },
 };
 

@@ -7,8 +7,9 @@ import { extractError } from '../lib/unwrap';
 import { useToast } from '../components/Toast';
 import ImageUpload from '../components/ImageUpload';
 import { T } from '../lib/tokens';
+import { SUBSEKTOR } from '../constants/subsektor';
 
-const SUBSEKTORS = ['Kuliner','Kriya','Fashion','Musik','Seni Pertunjukan','Fotografi','Desain Produk','Seni Rupa','Film & Animasi'];
+const SUBSEKTORS = SUBSEKTOR;
 const MAX = 500;
 
 const fmtDate = d => {
@@ -44,7 +45,7 @@ const StoryCard = ({ story, onDelete }) => {
                 {user?.nama||'Kamu'}
               </p>
               <p className="text-[11px] flex items-center gap-1 mt-0.5" style={{color: T.textMuted}}>
-                <Clock size={10}/>{fmtDate(story.tanggal||story.created_at)}
+                <Clock size={10}/>{fmtDate(story.created_at)}
               </p>
             </div>
           </div>

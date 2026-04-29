@@ -225,9 +225,9 @@ export default function Dashboard() {
             </Link>
           </div>
 
-          {(user.subsektor||[]).length > 0 && (
+          {(user.subsektor || []).length > 0 && (
             <div className="flex flex-wrap gap-1.5 mt-3">
-              {(user.subsektor||[]).map(s => (
+              {(user.subsektor || []).map(s => (
                 <span key={s}
                   className="px-2 py-0.5 rounded-full text-[11px] font-medium"
                   style={{background:'rgba(195,202,150,0.10)', border:'1px solid rgba(195,202,150,0.18)',

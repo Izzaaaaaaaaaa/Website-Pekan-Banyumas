@@ -56,9 +56,9 @@ function EventDetailModal({ event, onClose, onDaftar, loadingId }) {
             <div className="flex items-center gap-2"><Users size={13}/>{event.peserta_count||0} terdaftar</div>
           </div>
 
-          {event.subsektor?.length > 0 && (
+          {(event.subsektor || []).length > 0 && (
             <div className="flex flex-wrap gap-1.5">
-              {event.subsektor.map(s => (
+              {(event.subsektor || []).map(s => (
                 <span key={s} className="px-2.5 py-1 rounded-full text-xs font-medium"
                   style={{background: T.accentBg, border: `1px solid ${T.accentBorder}`, color: T.sageDeeper}}>
                   {s}
@@ -311,9 +311,9 @@ export default function Event() {
   const daftar = async (eventId, peran = 'peserta') => {
     setLoadingId(eventId);
     try {
-      await eventApi.registerSelf(eventId);
-      setList(l => l.map(e => e.id===eventId ? {...e, terdaftar:true, peran} : e));
-      toast.success(`Berhasil mendaftar sebagai ${peran}!`);
+      await eventApi.requestJoin(eventId, peran);
+      setList(l => l.map(e => e.id===eventId ? {...e, pending_request:true, pending_peran:peran} : e));
+      toast.success(`Permintaan dikirim sebagai ${peran}. Menunggu konfirmasi admin.`);
       try {
         const user = getUser() || {};
         import('../lib/notifications').then(({ triggerKolaboratorEventRegister }) => {
@@ -321,7 +321,7 @@ export default function Event() {
           if (ev) triggerKolaboratorEventRegister(user.nama || 'Kolaborator', ev.nama);
         });
       } catch {}
-    } catch (err) { toast.error(extractError(err, 'Gagal mendaftar')); }
+    } catch (err) { toast.error(extractError(err, 'Gagal mengirim permintaan')); }
     finally { setLoadingId(null); }
   };
 
