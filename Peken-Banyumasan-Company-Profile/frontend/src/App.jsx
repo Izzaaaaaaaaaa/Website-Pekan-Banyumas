@@ -8,6 +8,7 @@ import ProgramScreen from './components/screens/ProgramScreen.jsx';
 import GalleryScreen from './components/screens/GalleryScreen.jsx';
 import WorksScreen from './components/screens/WorksScreen.jsx';
 import PublicProfileScreen from './components/screens/PublicProfileScreen.jsx';
+import ProgramDetailScreen from './components/screens/ProgramDetailScreen.jsx';
 import { toSlug } from './lib/slug.js';
 
 const SCREENS = {
@@ -31,6 +32,7 @@ export default function App() {
 
   const [page, setPage] = useState(initSlug ? 'PUBLIC_PROFILE' : (localStorage.getItem('peken_page') || 'HOME'));
   const [profileOwner, setProfileOwner] = useState(initSlug);
+  const [programId, setProgramId] = useState(null);
   const [loginOpen, setLoginOpen] = useState(false);
 
   useEffect(() => {
@@ -50,9 +52,15 @@ export default function App() {
   const handleNavigate = (target, payload) => {
     if (target === 'PUBLIC_PROFILE') {
       setProfileOwner(toSlug(payload));
+      setProgramId(null);
       setPage('PUBLIC_PROFILE');
+    } else if (target === 'PROGRAM_DETAIL') {
+      setProgramId(payload);
+      setProfileOwner(null);
+      setPage('PROGRAM_DETAIL');
     } else {
       setProfileOwner(null);
+      setProgramId(null);
       setPage(target);
     }
   };
@@ -62,6 +70,17 @@ export default function App() {
       <div>
         <PekenNav current="KARYA" onNavigate={handleNavigate} onLogin={() => setLoginOpen(true)} />
         <PublicProfileScreen ownerName={profileOwner} onBack={() => handleNavigate('KARYA')} />
+        <PekenFooter onNavigate={handleNavigate} />
+        <LoginModal open={loginOpen} onClose={() => setLoginOpen(false)} />
+      </div>
+    );
+  }
+
+  if (page === 'PROGRAM_DETAIL' && programId) {
+    return (
+      <div>
+        <PekenNav current="PROGRAM" onNavigate={handleNavigate} onLogin={() => setLoginOpen(true)} />
+        <ProgramDetailScreen programId={programId} onBack={() => handleNavigate('PROGRAM')} />
         <PekenFooter onNavigate={handleNavigate} />
         <LoginModal open={loginOpen} onClose={() => setLoginOpen(false)} />
       </div>

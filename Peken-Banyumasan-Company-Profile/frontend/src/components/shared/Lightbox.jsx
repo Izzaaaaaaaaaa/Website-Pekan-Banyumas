@@ -26,7 +26,7 @@ export default function Lightbox({ work, onClose, onViewProfile }) {
             {/* Top row */}
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', gap: 12 }}>
               <Eyebrow style={{ color: 'var(--accent)' }}>
-                KARYA · {work.role.toUpperCase()} · {work.tahun}
+                KARYA · {(work.kategori_display || '').toUpperCase()} · {work.tahun}
               </Eyebrow>
               <button onClick={onClose} aria-label="Tutup lightbox" style={{ background: 'transparent', border: 0, color: '#fff', fontSize: 20, lineHeight: 1, cursor: 'pointer', fontFamily: 'var(--font-display)', padding: 4 }}>✕</button>
             </div>
@@ -66,7 +66,7 @@ export default function Lightbox({ work, onClose, onViewProfile }) {
                     {work.owner}
                   </span>
                   <span style={{ fontFamily: 'var(--font-body)', fontSize: 11, color: 'var(--fg-muted)', textTransform: 'uppercase', letterSpacing: '.05em' }}>
-                    {work.role || ''}{onViewProfile ? ' · Lihat profil →' : ''}
+                    {work.kategori_display || ''}{onViewProfile ? ' · Lihat profil →' : ''}
                   </span>
                 </span>
               </button>

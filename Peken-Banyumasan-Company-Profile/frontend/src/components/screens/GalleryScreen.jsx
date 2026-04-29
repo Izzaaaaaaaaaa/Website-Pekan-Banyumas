@@ -27,6 +27,7 @@ const STATIC_DOC = {
   headline: 'Setiap edisi Peken didokumentasikan secara terbuka.',
   body: 'Foto-foto di laman ini diambil oleh tim dokumentasi Peken bersama relawan fotografer komunitas — dirilis di bawah lisensi Creative Commons BY-NC 4.0 untuk penggunaan non-komersial dengan atribusi.\n\nSetiap edisi dikemas sebagai paket gambar resolusi tinggi (RAW + JPEG terkurasi) yang dapat diunduh untuk keperluan riset, jurnalisme, atau kebutuhan komunitas.',
   ukuran: 'ZIP · ±420 MB per edisi',
+  download_url: '',
 };
 
 /* ------------------------------------------------------------------
@@ -46,9 +47,10 @@ export default function GalleryScreen() {
         }
         if (data?.doc_headline) {
           setDoc({
-            headline: data.doc_headline,
-            body:     data.doc_body     || STATIC_DOC.body,
-            ukuran:   data.doc_ukuran   || STATIC_DOC.ukuran,
+            headline:     data.doc_headline,
+            body:         data.doc_body         || STATIC_DOC.body,
+            ukuran:       data.doc_ukuran       || STATIC_DOC.ukuran,
+            download_url: data.doc_download_url || '',
           });
         }
       })
@@ -180,7 +182,7 @@ export default function GalleryScreen() {
             gap: 16,
           }}
         >
-          <PillButton inverse>Unduh Paket Dokumentasi</PillButton>
+          <PillButton inverse onClick={() => doc.download_url && window.open(doc.download_url, '_blank', 'noopener,noreferrer')}>Unduh Paket Dokumentasi</PillButton>
           <div
             style={{
               fontFamily: 'var(--font-body)',

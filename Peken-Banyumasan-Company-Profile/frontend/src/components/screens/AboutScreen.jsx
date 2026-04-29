@@ -3,7 +3,7 @@ import PillButton from '../shared/PillButton.jsx';
 import { Eyebrow, Wordmark } from '../shared/Typography.jsx';
 import SectionHeader from '../shared/SectionHeader.jsx';
 import WipeReveal from '../shared/WipeReveal.jsx';
-import { companyProfileApi } from '../../services/endpoints.js';
+import { companyProfileApi, statsApi } from '../../services/endpoints.js';
 
 // Peken Banyumasan — About screen · v1.2
 // Implements:
@@ -226,21 +226,38 @@ const STATIC_PEOPLE = [
 
 const STATIC_STATS = [
   { n: '86', label: 'Edisi Peken diselenggarakan' },
-  { n: '240', label: 'Seniman & kolektif tampil' },
+  { n: '240', label: 'Kolaborator aktif' },
   { n: '1.2k', label: 'Artisan terlibat' },
   { n: '38k', label: 'Pengunjung setiap edisi' },
 ];
 
+function fmtStat(n) {
+  if (n >= 1000000) return (n / 1000000).toFixed(1).replace(/\.0$/, '') + 'jt';
+  if (n >= 1000)    return (n / 1000).toFixed(1).replace(/\.0$/, '') + 'k';
+  return String(n);
+}
+
 export default function AboutScreen() {
   const [timData, setTimData] = useState(null);
+  const [liveStats, setLiveStats] = useState(null);
 
   useEffect(() => {
-    companyProfileApi.get('about').catch(() => {});
     companyProfileApi.get('tim').then(d => { if (d) setTimData(d); }).catch(() => {});
+    statsApi.public()
+      .then(d => { if (d) setLiveStats(d); })
+      .catch(() => {});
   }, []);
 
   const keyPeople = timData?.key_people?.length ? timData.key_people : STATIC_PEOPLE;
-  const statsData = timData?.stats?.length ? timData.stats : STATIC_STATS;
+
+  const statsData = liveStats
+    ? [
+        { n: fmtStat(liveStats.edisi_count),        label: 'Edisi Peken diselenggarakan' },
+        { n: fmtStat(liveStats.kolaborator_aktif),   label: 'Kolaborator aktif' },
+        { n: fmtStat(liveStats.artisan_aktif),       label: 'Artisan terlibat' },
+        { n: fmtStat(liveStats.pengunjung_total),    label: 'Pengunjung setiap edisi' },
+      ]
+    : (timData?.stats?.length ? timData.stats : STATIC_STATS);
 
   const Hero = (
     <section

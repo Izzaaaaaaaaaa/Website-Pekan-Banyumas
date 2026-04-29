@@ -13,8 +13,10 @@ export const companyProfileApi = {
 };
 
 /** GET /api/public/programs → Array<Program> */
+/** GET /api/public/programs/:slug → Program */
 export const programsApi = {
   list: () => apiFetch('/api/public/programs'),
+  detail: (slug) => apiFetch(`/api/public/programs/${encodeURIComponent(slug)}`),
 };
 
 /** GET /api/public/karya → Array<Karya> */
@@ -36,4 +38,15 @@ export const eventsApi = {
     const qs = new URLSearchParams(params).toString();
     return apiFetch(`/api/public/events${qs ? `?${qs}` : ''}`);
   },
+  /** GET /api/public/events/upcoming?limit=N → Array<Event> (ordered by tanggal asc) */
+  upcoming: (params = {}) => {
+    const qs = new URLSearchParams(params).toString();
+    return apiFetch(`/api/public/events/upcoming${qs ? `?${qs}` : ''}`);
+  },
 };
+
+/** GET /api/public/stats → { edisi_count, kolaborator_aktif, artisan_aktif, pengunjung_total } */
+export const statsApi = {
+  public: () => apiFetch('/api/public/stats'),
+};
+

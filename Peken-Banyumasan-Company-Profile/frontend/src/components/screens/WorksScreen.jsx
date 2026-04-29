@@ -51,7 +51,7 @@ export default function WorksScreen({ onNavigate }) {
               caption={
                 <div>
                   <div style={{ fontFamily: 'var(--font-body)', fontSize: 11, color: 'var(--accent)', letterSpacing: '.08em', textTransform: 'uppercase', marginBottom: 6 }}>
-                    {w.role}
+                    {w.kategori_display}
                   </div>
                   <div style={{ fontFamily: 'var(--font-display)', fontWeight: 500, fontSize: 16, color: '#fff', marginBottom: 4 }}>
                     {w.owner}

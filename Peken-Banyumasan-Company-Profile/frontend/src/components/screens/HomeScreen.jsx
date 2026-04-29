@@ -7,20 +7,61 @@ import SectionHeader from '../shared/SectionHeader.jsx';
 import PhotoTile from '../shared/PhotoTile.jsx';
 import { LocationMarker } from '../shared/Atoms.jsx';
 import { HOME_PROGRAMS } from '../../data/programs.js';
-import { programsApi } from '../../services/endpoints.js';
+import { getUpcomingEvent } from '../../data/events.js';
+import { programsApi, companyProfileApi, eventsApi } from '../../services/endpoints.js';
 
-// Peken Banyumasan — Home screen · v1.2
-// Implements:
-//   §1 — pixel flicker (per-rect, in place) directly beneath carousel,
-//        bottom-anchored so it merges seamlessly into the sage
-//        manifesto section below.
-//   §3 — Home image-run becomes 6 PROGRAM cards: each tile has a
-//        title + description caption that slides in from below on
-//        hover, and clicking the tile jumps to the PROGRAM page.
-//   §4 — Carousel hero stays sticky during the wipe-up into manifesto
-//        (handled inside WipeReveal — but Home keeps a hard pixel-band
-//         seam because the user explicitly wanted seamless pixel→sage,
-//         not a wipe here).
+// Peken Banyumasan — Home screen · v1.3
+// v1.3: hero slides, eyebrow, headline, manifesto, agenda and lokasi
+//       now fetched from companyProfileApi.get('home') with static fallback.
+
+/* ------------------------------------------------------------------
+   DEFAULT_HOME — mirrors the API 'home' section schema.
+   All fields used as fallback when the API is unavailable.
+   ------------------------------------------------------------------ */
+const DEFAULT_HOME = {
+  hero_slides: [
+    '/assets/banner-home-1.jpg',
+    '/assets/banner-home-2.jpg',
+    '/assets/banner-about.png',
+  ],
+  hero_eyebrow:       'MIRAPAT · BANYUMASAN · 2026',
+  hero_headline_pre:  'Temukan',
+  hero_headline_em:   'pertunjukan',
+  hero_headline_post: ', karya artisan, dan cerita Banyumasan dalam satu ekosistem.',
+  manifesto_col1:
+    'Peken Banyumasan adalah sebuah ruang kreatif berbasis budaya\n' +
+    'lokal yang dirancang sebagai wadah berkumpulnya masyarakat,\n' +
+    'pelaku Artisan, seniman, dan komunitas dalam satu ekosistem yang\n' +
+    'hidup, inklusif, dan berkelanjutan.\n\n' +
+    'Peken tidak hanya berfungsi sebagai pasar atau tempat berkumpul\n' +
+    'biasa, tetapi sebagai ruang interaksi yang menghadirkan\n' +
+    'pengalaman budaya khas Banyumas melalui berbagai aktivitas\n' +
+    'seperti pertunjukan seni, kuliner tradisional, produk kreatif,\n' +
+    'hingga eksplorasi identitas lokal.',
+  manifesto_col2:
+    'Peken Banyumasan adalah ruang temu budaya dan ekonomi kreatif\n' +
+    'di Banyumas yang mempertemukan seniman, Artisan, dan masyarakat\n' +
+    'dalam satu perayaan kearifan lokal.\n\n' +
+    'Menghadirkan kuliner tradisional, pertunjukan seni, serta\n' +
+    'aktivitas komunitas, Peken menjadi tempat di mana budaya\n' +
+    'tidak hanya dipamerkan, tetapi dirasakan dan dialami bersama.\n\n' +
+    'Sejak pertama kali hadir pada Februari 2022 dan diselenggarakan\n' +
+    'dua kali setiap bulan di kawasan Kota Lama Banyumas, Peken\n' +
+    'terus berkembang sebagai ekosistem kreatif.',
+  agenda_date:     '—',
+  agenda_label:    'Agenda berikutnya akan diumumkan',
+  agenda_lokasi:   '',
+  agenda_deskripsi: 'Pantau terus informasi event Peken Banyumasan berikutnya.',
+  lokasi_headline: 'Kawasan Kota Lama Banyumas.\nTaman Sari · Sudagaran.',
+  lokasi_alamat:   'Banyumas, Sudagaran, Kec. Banyumas,\nKabupaten Banyumas, Jawa Tengah 53192',
+  lokasi_trans:
+    'Trans Banyumas Koridor 4 · Terminal Bulupitu\n' +
+    'Trans Banyumas Koridor 4 · RS Margono — Halte Alun-alun\n' +
+    'Operasional · 04:40 – 18:30 WIB',
+  lokasi_trans1_url: 'https://maps.google.com/?q=Taman+Sari+Kecamatan+Banyumas+Kabupaten+Banyumas+Jawa+Tengah',
+  lokasi_trans2_url: 'https://maps.google.com/?q=Trans+Banyumas+Koridor+4',
+  lokasi_image_url: '',
+};
 
 /* ------------------------------------------------------------------
    HeroCarousel — full-bleed bg image, dark gradient overlay,
@@ -119,8 +160,37 @@ function HeroCarousel({ slides, children }) {
   );
 }
 
+// ── Agenda helpers ────────────────────────────────────────────────────────────
+const HARI = ['Minggu', 'Senin', 'Selasa', 'Rabu', 'Kamis', 'Jumat', 'Sabtu'];
+const BULAN = ['Januari', 'Februari', 'Maret', 'April', 'Mei', 'Juni', 'Juli', 'Agustus', 'September', 'Oktober', 'November', 'Desember'];
+
+function deriveAgenda(event) {
+  if (!event) return null;
+  const d = new Date(event.tanggal);
+  const date    = String(d.getDate()).padStart(2, '0');
+  const hari    = HARI[d.getDay()];
+  const bulan   = BULAN[d.getMonth()];
+  const tahun   = d.getFullYear();
+  const jamStr  = event.jam_mulai && event.jam_selesai
+    ? ` · ${event.jam_mulai.replace(':', '.')}–${event.jam_selesai.replace(':', '.')} WIB`
+    : '';
+  return {
+    agenda_date:      date,
+    agenda_label:     `${hari} · ${bulan} ${tahun}${jamStr}`,
+    agenda_lokasi:    event.lokasi || '',
+    agenda_deskripsi: event.deskripsi || '',
+  };
+}
+
+// Derive agenda from static events so Beranda always shows something meaningful.
+const _staticUpcoming = getUpcomingEvent(1)[0] || null;
+const DEFAULT_HOME_WITH_AGENDA = _staticUpcoming
+  ? { ...DEFAULT_HOME, ...deriveAgenda(_staticUpcoming) }
+  : DEFAULT_HOME;
+
 export default function HomeScreen({ onNavigate }) {
   const [homePrograms, setHomePrograms] = useState(HOME_PROGRAMS);
+  const [homeData, setHomeData]         = useState(DEFAULT_HOME_WITH_AGENDA);
 
   useEffect(() => {
     programsApi.list()
@@ -128,16 +198,27 @@ export default function HomeScreen({ onNavigate }) {
       .catch(() => {});
   }, []);
 
+  useEffect(() => {
+    companyProfileApi.get('home')
+      .then(data => { if (data) setHomeData(prev => ({ ...prev, ...data })); })
+      .catch(() => {});
+  }, []);
+
+  // Agenda Terdekat — auto-derived dari event upcoming terdekat.
+  useEffect(() => {
+    eventsApi.upcoming({ limit: 1 })
+      .then(data => {
+        const ev = Array.isArray(data) ? data[0] : data;
+        const derived = deriveAgenda(ev);
+        if (derived) setHomeData(prev => ({ ...prev, ...derived }));
+      })
+      .catch(() => {});
+  }, []);
+
   return (
     <main style={{ background: 'var(--bg-page)' }}>
       {/* HERO — carousel + Wordmark + headline + CTAs. */}
-      <HeroCarousel
-        slides={[
-          '/assets/banner-home-1.jpg',
-          '/assets/banner-home-2.jpg',
-          '/assets/banner-about.png',
-        ]}
-      >
+      <HeroCarousel slides={homeData.hero_slides}>
         {/* §1 — PixelFlicker overlay (v1.6). Covers the full carousel
             via fullHeight mode. Pattern designed with an empty upper-
             centre zone that naturally clears the button area. */}
@@ -166,7 +247,7 @@ export default function HomeScreen({ onNavigate }) {
           }}
         >
           <Eyebrow style={{ color: 'var(--accent)' }}>
-            MIRAPAT · BANYUMASAN · 2026
+            {homeData.hero_eyebrow}
           </Eyebrow>
           <div style={{ textAlign: 'center' }}>
             <Wordmark size={28} gap={18} />
@@ -182,7 +263,7 @@ export default function HomeScreen({ onNavigate }) {
                 textAlign: 'center',
               }}
             >
-              Temukan{' '}
+              {homeData.hero_headline_pre}{' '}
               <em
                 style={{
                   fontFamily: 'var(--font-italic)',
@@ -190,9 +271,9 @@ export default function HomeScreen({ onNavigate }) {
                   color: 'var(--accent)',
                 }}
               >
-                pertunjukan
+                {homeData.hero_headline_em}
               </em>
-              , karya artisan, dan cerita Banyumasan dalam satu ekosistem.
+              {homeData.hero_headline_post}
             </h1>
           </div>
           <div style={{ display: 'flex', gap: 16 }}>
@@ -232,19 +313,10 @@ export default function HomeScreen({ onNavigate }) {
               lineHeight: 1.8,
               margin: 0,
               color: 'var(--accent-ink)',
+              whiteSpace: 'pre-line',
             }}
           >
-            Peken Banyumasan adalah sebuah ruang kreatif berbasis budaya
-            lokal yang dirancang sebagai wadah berkumpulnya masyarakat,
-            pelaku Artisan, seniman, dan komunitas dalam satu ekosistem yang
-            hidup, inklusif, dan berkelanjutan.
-            <br />
-            <br />
-            Peken tidak hanya berfungsi sebagai pasar atau tempat berkumpul
-            biasa, tetapi sebagai ruang interaksi yang menghadirkan
-            pengalaman budaya khas Banyumas melalui berbagai aktivitas
-            seperti pertunjukan seni, kuliner tradisional, produk kreatif,
-            hingga eksplorasi identitas lokal.
+            {homeData.manifesto_col1}
           </p>
           <p
             style={{
@@ -253,21 +325,10 @@ export default function HomeScreen({ onNavigate }) {
               lineHeight: 1.8,
               margin: 0,
               color: 'var(--accent-ink)',
+              whiteSpace: 'pre-line',
             }}
           >
-            Peken Banyumasan adalah ruang temu budaya dan ekonomi kreatif
-            di Banyumas yang mempertemukan seniman, Artisan, dan masyarakat
-            dalam satu perayaan kearifan lokal.
-            <br />
-            <br />
-            Menghadirkan kuliner tradisional, pertunjukan seni, serta
-            aktivitas komunitas, Peken menjadi tempat di mana budaya
-            tidak hanya dipamerkan, tetapi dirasakan dan dialami bersama.
-            <br />
-            <br />
-            Sejak pertama kali hadir pada Februari 2022 dan diselenggarakan
-            dua kali setiap bulan di kawasan Kota Lama Banyumas, Peken
-            terus berkembang sebagai ekosistem kreatif.
+            {homeData.manifesto_col2}
           </p>
         </div>
       </section>
@@ -314,7 +375,7 @@ export default function HomeScreen({ onNavigate }) {
                 marginTop: 24,
               }}
             >
-              24
+              {homeData.agenda_date}
             </div>
             <div
               style={{
@@ -323,7 +384,7 @@ export default function HomeScreen({ onNavigate }) {
                 marginTop: 12,
               }}
             >
-              Minggu · Maret 2026 · 15:30–20:30 WIB
+              {homeData.agenda_label}
             </div>
             <div
               style={{
@@ -335,7 +396,7 @@ export default function HomeScreen({ onNavigate }) {
                 letterSpacing: '.08em',
               }}
             >
-              Taman Sari · Kecamatan Banyumas
+              {homeData.agenda_lokasi}
             </div>
           </div>
           <div>
@@ -352,12 +413,10 @@ export default function HomeScreen({ onNavigate }) {
                 color: 'var(--fg-secondary)',
                 margin: 0,
                 maxWidth: '44ch',
+                whiteSpace: 'pre-line',
               }}
             >
-              Edisi berikutnya kembali menghadirkan suasana Peken yang
-              hangat dan hidup. Nikmati pertunjukan seni Banyumasan,
-              jelajahi artisan pilihan, dan temukan karya-karya lokal
-              dalam satu ruang yang penuh kebersamaan.
+              {homeData.agenda_deskripsi}
             </p>
             <div style={{ marginTop: 36 }}>
               <PillButton onClick={() => onNavigate('PROGRAM')}>
@@ -485,11 +544,10 @@ export default function HomeScreen({ onNavigate }) {
                 color: '#fff',
                 marginTop: 16,
                 lineHeight: 1.25,
+                whiteSpace: 'pre-line',
               }}
             >
-              Kawasan Kota Lama Banyumas.
-              <br />
-              Taman Sari · Sudagaran.
+              {homeData.lokasi_headline}
             </div>
             <div
               style={{
@@ -525,14 +583,13 @@ export default function HomeScreen({ onNavigate }) {
                     fontSize: 12,
                     color: 'var(--fg-secondary)',
                     lineHeight: 1.8,
+                    whiteSpace: 'pre-line',
                   }}
                 >
-                  Banyumas, Sudagaran, Kec. Banyumas,
-                  <br />
-                  Kabupaten Banyumas, Jawa Tengah 53192
+                  {homeData.lokasi_alamat}
                 </div>
                 <div style={{ marginTop: 16 }}>
-                  <PillButton>Rute Peken Banyumasan</PillButton>
+                  <PillButton onClick={() => homeData.lokasi_trans1_url && window.open(homeData.lokasi_trans1_url, '_blank', 'noopener,noreferrer')}>Rute Peken Banyumasan</PillButton>
                 </div>
               </div>
               <div>
@@ -561,16 +618,13 @@ export default function HomeScreen({ onNavigate }) {
                     fontSize: 12,
                     color: 'var(--fg-secondary)',
                     lineHeight: 1.9,
+                    whiteSpace: 'pre-line',
                   }}
                 >
-                  Trans Banyumas Koridor 4 · Terminal Bulupitu
-                  <br />
-                  Trans Banyumas Koridor 4 · RS Margono — Halte Alun-alun
-                  <br />
-                  Operasional · 04:40 – 18:30 WIB
+                  {homeData.lokasi_trans}
                 </div>
                 <div style={{ marginTop: 16 }}>
-                  <PillButton>Trayek Trans Banyumas</PillButton>
+                  <PillButton onClick={() => homeData.lokasi_trans2_url && window.open(homeData.lokasi_trans2_url, '_blank', 'noopener,noreferrer')}>Trayek Trans Banyumas</PillButton>
                 </div>
               </div>
             </div>
@@ -585,7 +639,7 @@ export default function HomeScreen({ onNavigate }) {
             }}
           >
             <img
-              src="/assets/map-kota-lama.png"
+              src={homeData.lokasi_image_url || '/assets/map-kota-lama.png'}
               alt="Peta kawasan Kota Lama Banyumas"
               style={{
                 width: '100%',
