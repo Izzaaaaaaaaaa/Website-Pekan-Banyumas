@@ -1,19 +1,33 @@
-from fastapi import FastAPI
+from fastapi import FastAPI, APIRouter
+from fastapi.middleware.cors import CORSMiddleware
 
-from app.api.routes import auth, dashboard, event, notifikasi, pengaturan, portofolio, profile, story, test
+from app.api.routes import auth, dashboard, event, kolaborator, notifikasi, pengaturan, portofolio, profile, story, test
 
 
 app = FastAPI(title="Peken Banyumasan Kolaborator API")
 
+# CORS — izinkan request dari frontend
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=["*"],  # ganti dengan domain spesifik saat production
+    allow_credentials=True,
+    allow_methods=["*"],
+    allow_headers=["*"],
+)
+
+api = APIRouter(prefix="/api")
+api.include_router(auth.router)
+api.include_router(dashboard.router)
+api.include_router(event.router)
+api.include_router(profile.router)
+api.include_router(story.router)
+api.include_router(portofolio.router)
+api.include_router(notifikasi.router)
+api.include_router(pengaturan.router)
+api.include_router(kolaborator.router)
+
 app.include_router(test.router)
-app.include_router(auth.router)
-app.include_router(dashboard.router)
-app.include_router(event.router)
-app.include_router(profile.router)
-app.include_router(story.router)
-app.include_router(portofolio.router)
-app.include_router(notifikasi.router)
-app.include_router(pengaturan.router)
+app.include_router(api)
 
 
 @app.get("/")

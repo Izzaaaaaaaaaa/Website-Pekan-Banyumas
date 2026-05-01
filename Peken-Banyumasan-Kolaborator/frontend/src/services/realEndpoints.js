@@ -40,65 +40,34 @@ import { supabase } from '../lib/supabase.js';
 // updateProfile custom fields → BE via apiClient.
 // OTP password-reset → BE intermediary (WA gateway via Fonnte/Twilio) — STUB.
 export const authApi = {
-  /**
-   * Login via Supabase signInWithPassword.
-   * Kolaborator hanya menerima role 'kolaborator'. Jika role lain, signOut + throw.
-   * user.status dikembalikan agar Login.jsx bisa redirect ke /status jika pending.
-   */
-  login: async ({ email, password }) => {
-    if (!supabase) throw new Error('Supabase belum dikonfigurasi — isi VITE_SUPABASE_URL dan VITE_SUPABASE_ANON_KEY.');
-    const { data, error } = await supabase.auth.signInWithPassword({ email, password });
-    if (error) {
-      const err = new Error(error.message);
-      err.response = { status: error.status ?? 401, data: { status: 'error', message: error.message } };
-      throw err;
-    }
-    if (!data.session) throw new Error('Sesi gagal dibuat. Coba lagi.');
-    const role = data.user.app_metadata?.role;
-    if (role !== 'kolaborator') {
-      await supabase.auth.signOut();
-      const err = new Error('Akun Anda bukan akun kolaborator');
-      err.response = { status: 403, data: { status: 'error', message: err.message } };
-      throw err;
-    }
+  login: async (data) => {
+    const response = await apiClient.post('/api/auth/login', data);
+    const result = extractData(response);
     return {
-      token: data.session.access_token,
-      user: {
-        id: data.user.id,
-        email: data.user.email,
-        nama: data.user.user_metadata?.nama ?? data.user.email,
-        role,
-        status: data.user.app_metadata?.status ?? 'aktif',
-      },
+      token: result.access_token,
+      user: result.user
     };
   },
 
-  /** POST /api/auth/register → { message, status } — via BE (atomik: auth+profil+foto). */
   register: async (data) => {
     const response = await apiClient.post('/api/auth/register', data);
     return extractData(response);
   },
 
-  /** Logout via Supabase signOut — revokes refresh token server-side. */
   logout: async () => {
-    if (supabase) {
-      const { error } = await supabase.auth.signOut();
-      if (error) throw new Error(error.message);
-    }
+    // Backend custom JWT doesn't need server-side logout
     return { message: 'Logout berhasil' };
   },
 
-  /** Ambil user dari Supabase session (verified server-side). */
   me: async () => {
-    if (!supabase) throw new Error('Supabase belum dikonfigurasi.');
-    const { data: { user }, error } = await supabase.auth.getUser();
-    if (error) throw new Error(error.message);
+    const response = await apiClient.get('/api/kolaborator/me');
+    const profile = extractData(response);
     return {
-      id: user.id,
-      email: user.email,
-      nama: user.user_metadata?.nama ?? user.email,
-      role: user.app_metadata?.role ?? null,
-      status: user.app_metadata?.status ?? 'aktif',
+      id: profile.id,
+      email: profile.email,
+      nama: profile.nama,
+      role: profile.role || 'kolaborator',
+      status: profile.is_verified ? 'aktif' : 'pending',
     };
   },
 
