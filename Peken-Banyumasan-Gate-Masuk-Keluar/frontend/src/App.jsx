@@ -1,100 +1,106 @@
-import { useState, useEffect } from 'react';
-import PekenNav from './components/layout/PekenNav.jsx';
-import PekenFooter from './components/layout/PekenFooter.jsx';
-import LoginModal from './components/modals/LoginModal.jsx';
-import HomeScreen from './components/screens/HomeScreen.jsx';
-import AboutScreen from './components/screens/AboutScreen.jsx';
-import ProgramScreen from './components/screens/ProgramScreen.jsx';
-import GalleryScreen from './components/screens/GalleryScreen.jsx';
-import WorksScreen from './components/screens/WorksScreen.jsx';
-import PublicProfileScreen from './components/screens/PublicProfileScreen.jsx';
-import ProgramDetailScreen from './components/screens/ProgramDetailScreen.jsx';
-import { toSlug } from './lib/slug.js';
+// src/App.jsx
+import React, { useEffect } from 'react';
+import {
+    BrowserRouter as Router,
+    Routes,
+    Route,
+    Navigate,
+    useNavigate,
+} from 'react-router-dom';
+import AdminLayout from './layouts/AdminLayout';
+import Login from './pages/Login';
+import Dashboard from './pages/Dashboard';
+import Kolaborator from './pages/Kolaborator';
+import Artisan from './pages/Artisan';
+import Reports from './pages/Reports';
+import Events from './pages/Events';
+import EventDetail from './pages/EventDetail';
+import Monitor from './pages/Monitor';
+import Profile from './pages/Profile';
+import Settings from './pages/Settings';
+import CompanyProfile from './pages/CompanyProfile';
+import { ToastProvider, useToast } from './components/Toast';
+import { isAuthenticated, hasRole, clearAuth } from './lib/auth';
+import { setUnauthorizedHandler } from './services/api';
 
-const SCREENS = {
-  HOME:        HomeScreen,
-  ABOUT:       AboutScreen,
-  PROGRAM:     ProgramScreen,
-  KARYA:       WorksScreen,
-  GALLERY:     GalleryScreen,
-  PUBLICATION: GalleryScreen,
+// ── Route guards ─────────────────────────────────────────────────────────
+// Read auth state via lib/auth helpers — never touch localStorage directly.
+
+const PrivateRoute = ({ children }) =>
+    isAuthenticated() ? children : <Navigate to="/login" replace />;
+
+const AdminRoute = ({ children }) => {
+    if (!isAuthenticated()) return <Navigate to="/login" replace />;
+    if (!hasRole('admin')) return <Navigate to="/" replace />;
+    return children;
 };
 
+const PublicOnlyRoute = ({ children }) =>
+    isAuthenticated() ? <Navigate to="/" replace /> : children;
 
-/** Baca slug dari hash URL: #/@aji-pradana → "aji-pradana" */
-const slugFromHash = () => {
-  const m = window.location.hash.match(/^#\/@(.+)$/);
-  return m ? decodeURIComponent(m[1]) : null;
+// ── AppShell — lives INSIDE <Router> so it can use useNavigate to register
+// the apiClient's 401 handler. Keeping the handler router-aware (vs. a
+// hard-coded window.location.href) means switching routers later is a
+// one-line change in apiClient.js, not a grep across the codebase.
+const AppShell = () => {
+    const navigate = useNavigate();
+    const toast = useToast();
+
+    useEffect(() => {
+        setUnauthorizedHandler(() => {
+            // Show the toast immediately so the user understands why they're
+            // about to be redirected, then wait briefly so the toast paints
+            // before navigation tears down the page.
+            try {
+                toast?.error('Sesi Anda telah berakhir. Silakan masuk kembali.');
+            } catch {
+                /* toast unavailable in some boundary cases — proceed anyway */
+            }
+            setTimeout(() => {
+                clearAuth();
+                navigate('/login', { replace: true });
+            }, 1500);
+        });
+
+        // Reset the handler on unmount (mostly relevant for HMR / testing).
+        return () => setUnauthorizedHandler(() => {});
+    }, [navigate, toast]);
+
+    return (
+        <Routes>
+            <Route path="/profile" element={<Profile />} />
+            <Route path="/monitor" element={<Monitor />} />
+
+            <Route path="/login" element={
+                <PublicOnlyRoute><Login /></PublicOnlyRoute>
+            } />
+
+            <Route path="/" element={
+                <PrivateRoute><AdminLayout /></PrivateRoute>
+            }>
+                <Route index element={<Dashboard />} />
+                <Route path="settings" element={<Settings />} />
+                <Route path="kolaborator" element={<AdminRoute><Kolaborator /></AdminRoute>} />
+                <Route path="artisan" element={<AdminRoute><Artisan /></AdminRoute>} />
+                <Route path="reports" element={<AdminRoute><Reports /></AdminRoute>} />
+                <Route path="events" element={<AdminRoute><Events /></AdminRoute>} />
+                <Route path="events/:id" element={<AdminRoute><EventDetail /></AdminRoute>} />
+                <Route path="company-profile" element={<AdminRoute><CompanyProfile /></AdminRoute>} />
+            </Route>
+
+            <Route path="*" element={<Navigate to="/" replace />} />
+        </Routes>
+    );
 };
 
-export default function App() {
-  const initSlug = slugFromHash();
-
-  const [page, setPage] = useState(initSlug ? 'PUBLIC_PROFILE' : (localStorage.getItem('peken_page') || 'HOME'));
-  const [profileOwner, setProfileOwner] = useState(initSlug);
-  const [programId, setProgramId] = useState(null);
-  const [loginOpen, setLoginOpen] = useState(false);
-
-  useEffect(() => {
-    if (page === 'PUBLIC_PROFILE' && profileOwner) {
-      // Pasang hash URL — peken.com/#/@aji-pradana — bisa di-share
-      history.replaceState(null, '', `${window.location.pathname}#/@${profileOwner}`);
-    } else {
-      // Bersihkan hash saat keluar dari halaman profil
-      if (window.location.hash.startsWith('#/@')) {
-        history.replaceState(null, '', window.location.pathname);
-      }
-      localStorage.setItem('peken_page', page);
-    }
-    window.scrollTo(0, 0);
-  }, [page, profileOwner]);
-
-  const handleNavigate = (target, payload) => {
-    if (target === 'PUBLIC_PROFILE') {
-      setProfileOwner(toSlug(payload));
-      setProgramId(null);
-      setPage('PUBLIC_PROFILE');
-    } else if (target === 'PROGRAM_DETAIL') {
-      setProgramId(payload);
-      setProfileOwner(null);
-      setPage('PROGRAM_DETAIL');
-    } else {
-      setProfileOwner(null);
-      setProgramId(null);
-      setPage(target);
-    }
-  };
-
-  if (page === 'PUBLIC_PROFILE' && profileOwner) {
+function App() {
     return (
-      <div>
-        <PekenNav current="KARYA" onNavigate={handleNavigate} onLogin={() => setLoginOpen(true)} />
-        <PublicProfileScreen ownerName={profileOwner} onBack={() => handleNavigate('KARYA')} />
-        <PekenFooter onNavigate={handleNavigate} />
-        <LoginModal open={loginOpen} onClose={() => setLoginOpen(false)} />
-      </div>
+        <ToastProvider>
+            <Router>
+                <AppShell />
+            </Router>
+        </ToastProvider>
     );
-  }
-
-  if (page === 'PROGRAM_DETAIL' && programId) {
-    return (
-      <div>
-        <PekenNav current="PROGRAM" onNavigate={handleNavigate} onLogin={() => setLoginOpen(true)} />
-        <ProgramDetailScreen programId={programId} onBack={() => handleNavigate('PROGRAM')} />
-        <PekenFooter onNavigate={handleNavigate} />
-        <LoginModal open={loginOpen} onClose={() => setLoginOpen(false)} />
-      </div>
-    );
-  }
-
-  const Screen = SCREENS[page] || HomeScreen;
-
-  return (
-    <div>
-      <PekenNav current={page} onNavigate={handleNavigate} onLogin={() => setLoginOpen(true)} />
-      <Screen onNavigate={handleNavigate} />
-      <PekenFooter onNavigate={handleNavigate} />
-      <LoginModal open={loginOpen} onClose={() => setLoginOpen(false)} />
-    </div>
-  );
 }
+
+export default App;

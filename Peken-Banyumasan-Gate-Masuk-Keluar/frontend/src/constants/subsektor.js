@@ -1,6 +1,6 @@
 /**
- * subsektor.js — 17 subsektor BEKRAF (canonical list for Company Profile)
- * Used by kolaborator profiles only. Artisan uses kategoriUsaha.js (UMKM 9).
+ * subsektor.js — 17 subsektor BEKRAF (canonical list untuk Kolaborator & Event)
+ * Artisan pakai kategoriUsaha.js (UMKM_LIST 9 opsi), bukan file ini.
  */
 export const SUBSEKTOR = [
   'Kuliner',
