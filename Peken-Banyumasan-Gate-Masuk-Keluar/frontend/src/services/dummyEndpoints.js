@@ -407,6 +407,49 @@ export const zonesApi = {
   },
 };
 
+// ── petugasApi ────────────────────────────────────────────────────────────────
+const DUMMY_PETUGAS_SEED = [
+  { id: 'ptg-0001', nama: 'Rina Kusuma',   jabatan: 'Petugas Pintu Masuk',  email: 'rina@pekenbanyumasan.id',   status: 'aktif',    created_at: '2026-01-10T08:00:00.000Z', last_sign_in_at: '2026-05-03T09:15:00.000Z' },
+  { id: 'ptg-0002', nama: 'Dani Prasetyo', jabatan: 'Petugas Scan Tiket',   email: 'dani@pekenbanyumasan.id',   status: 'aktif',    created_at: '2026-02-14T08:00:00.000Z', last_sign_in_at: '2026-05-04T07:45:00.000Z' },
+  { id: 'ptg-0003', nama: 'Sari Lestari',  jabatan: null,                   email: 'sari.l@pekenbanyumasan.id', status: 'disabled', created_at: '2026-03-01T08:00:00.000Z', last_sign_in_at: '2026-04-01T10:00:00.000Z' },
+];
+
+let _petugas = clone(DUMMY_PETUGAS_SEED);
+
+export const petugasApi = {
+  list: async () => { await delay(); return [..._petugas]; },
+  detail: async (id) => { await delay(); return _petugas.find(p => p.id === id) || {}; },
+  create: async (data) => {
+    await delay();
+    const p = {
+      id: `ptg-${Date.now()}`,
+      nama: data.nama,
+      jabatan: data.jabatan || null,
+      email: data.email,
+      status: 'aktif',
+      created_at: new Date().toISOString(),
+      last_sign_in_at: null,
+    };
+    _petugas.unshift(p);
+    return p;
+  },
+  update: async (id, data) => {
+    await delay();
+    _petugas = _petugas.map(p => p.id === id ? { ...p, ...data } : p);
+    return _petugas.find(p => p.id === id) || {};
+  },
+  status: async (id, status) => {
+    await delay();
+    _petugas = _petugas.map(p => p.id === id ? { ...p, status } : p);
+    return { id, status };
+  },
+  resetPassword: async (id, mode) => {
+    await delay();
+    if (mode === 'temp_password') return { temp_password: 'Demo@1234' };
+    return { message: 'Link reset password telah dikirim ke email petugas (demo).' };
+  },
+};
+
 // ── notifikasiApi ─────────────────────────────────────────────────────────────
 export const notifikasiApi = {
   list:      async ()   => { await delay(); return [..._notifikasi]; },

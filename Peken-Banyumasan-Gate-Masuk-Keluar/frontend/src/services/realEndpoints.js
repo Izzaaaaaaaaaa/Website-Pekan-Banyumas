@@ -291,6 +291,16 @@ export const zonesApi = {
   assignStand:   async (eventId, artisanId, standId) => extractData(await apiClient.post(`/api/events/${eventId}/artisan/${artisanId}/stand`, { stand_id: standId })),
 };
 
+// ── petugasApi (admin management of petugas accounts) ─────────────────────────
+export const petugasApi = {
+  list:          async (params)      => extractData(await apiClient.get('/api/petugas', { params })),
+  detail:        async (id)          => extractData(await apiClient.get(`/api/petugas/${id}`)),
+  create:        async (data)        => extractData(await apiClient.post('/api/petugas', data)),
+  update:        async (id, data)    => extractData(await apiClient.patch(`/api/petugas/${id}`, data)),
+  status:        async (id, status)  => extractData(await apiClient.patch(`/api/petugas/${id}/status`, { status })),
+  resetPassword: async (id, mode)    => extractData(await apiClient.post(`/api/petugas/${id}/reset-password`, { mode })),
+};
+
 // ── notifikasiApi (admin notification inbox) ──────────────────────────────────
 export const notifikasiApi = {
   /** GET /api/notifikasi → Array<Notifikasi> */

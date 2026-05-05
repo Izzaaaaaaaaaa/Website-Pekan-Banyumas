@@ -26,3 +26,4 @@ export const aktivitasApi      = _mod.aktivitasApi;
 export const companyProfileApi = _mod.companyProfileApi;
 export const zonesApi          = _mod.zonesApi;
 export const notifikasiApi     = _mod.notifikasiApi;
+export const petugasApi        = _mod.petugasApi;

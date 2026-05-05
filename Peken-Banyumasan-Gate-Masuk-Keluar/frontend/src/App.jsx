@@ -12,6 +12,7 @@ import Login from './pages/Login';
 import Dashboard from './pages/Dashboard';
 import Kolaborator from './pages/Kolaborator';
 import Artisan from './pages/Artisan';
+import Petugas from './pages/Petugas';
 import Reports from './pages/Reports';
 import Events from './pages/Events';
 import EventDetail from './pages/EventDetail';
@@ -82,6 +83,7 @@ const AppShell = () => {
                 <Route path="settings" element={<Settings />} />
                 <Route path="kolaborator" element={<AdminRoute><Kolaborator /></AdminRoute>} />
                 <Route path="artisan" element={<AdminRoute><Artisan /></AdminRoute>} />
+                <Route path="petugas" element={<AdminRoute><Petugas /></AdminRoute>} />
                 <Route path="reports" element={<AdminRoute><Reports /></AdminRoute>} />
                 <Route path="events" element={<AdminRoute><Events /></AdminRoute>} />
                 <Route path="events/:id" element={<AdminRoute><EventDetail /></AdminRoute>} />
