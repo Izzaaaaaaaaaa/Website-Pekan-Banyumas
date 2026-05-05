@@ -6,7 +6,7 @@ from fastapi import HTTPException
 
 # 🔐 LOGIN (SUDAH BAGUS, TETAP)
 def login_user(email: str, password: str):
-    user = supabase.table("users") \
+    user = supabase.table("users_profile") \
         .select("*") \
         .eq("email", email) \
         .execute()
@@ -36,7 +36,7 @@ def login_user(email: str, password: str):
 
 # 🔥 GET CURRENT USER
 def get_me(user_id: str):
-    res = supabase.table("users") \
+    res = supabase.table("users_profile") \
         .select("id, nama, email, role") \
         .eq("id", user_id) \
         .single() \
@@ -50,7 +50,7 @@ def get_me(user_id: str):
 
 # 🔥 UPDATE PROFILE
 def update_profile(user_id: str, nama: str):
-    supabase.table("users") \
+    supabase.table("users_profile") \
         .update({"nama": nama}) \
         .eq("id", user_id) \
         .execute()
@@ -60,7 +60,7 @@ def update_profile(user_id: str, nama: str):
 
 # 🔥 UPDATE PASSWORD
 def update_password(user_id: str, old_password: str, new_password: str):
-    user = supabase.table("users") \
+    supabase.table("users_profile") \
         .select("*") \
         .eq("id", user_id) \
         .single() \
@@ -76,7 +76,7 @@ def update_password(user_id: str, old_password: str, new_password: str):
     # hash password baru
     new_hashed = hash_password(new_password)
 
-    supabase.table("users") \
+    supabase.table("users_profile") \
         .update({"password": new_hashed}) \
         .eq("id", user_id) \
         .execute()

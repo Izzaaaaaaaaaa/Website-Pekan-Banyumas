@@ -1,7 +1,6 @@
 from app.db.supabase import supabase
 from fastapi import HTTPException
 from app.schemas.event_schema import EventResponse
-from datetime import date
 
 
 # =========================
@@ -86,40 +85,38 @@ def get_event_detail(event_id: str):
 
 
 # =========================
-# 🔥 GET ACTIVE EVENT (FIXED)
+# 🔥 GET ACTIVE EVENT (OPTIMIZED)
 # =========================
 def get_active_event():
-    today = date.today()
-
     res = supabase.table("events") \
         .select("*") \
+        .eq("status", "aktif") \
+        .limit(1) \
+        .execute()
+
+    return res.data[0] if res.data else None
+
+
+# =========================
+# 🔥 SET ACTIVE EVENT (IMPORTANT)
+# =========================
+def set_active_event(event_id: str):
+    # 🔥 nonaktifkan semua event
+    supabase.table("events") \
+        .update({"status": "nonaktif"}) \
+        .neq("id", "") \
+        .execute()
+
+    # 🔥 aktifkan yang dipilih
+    res = supabase.table("events") \
+        .update({"status": "aktif"}) \
+        .eq("id", event_id) \
         .execute()
 
     if not res.data:
-        return None
+        raise HTTPException(404, "Event tidak ditemukan")
 
-    for event in res.data:
-        start = event.get("tanggal_mulai")
-        end = event.get("tanggal_selesai")
-
-        # skip kalau kosong
-        if not start or not end:
-            continue
-
-        try:
-            start_date = date.fromisoformat(str(start))
-            end_date = date.fromisoformat(str(end))
-        except:
-            continue
-
-        # optional: cek status aktif
-        if event.get("status") != "aktif":
-            continue
-
-        if start_date <= today <= end_date:
-            return event
-
-    return None
+    return {"message": "Event berhasil diaktifkan"}
 
 
 # =========================

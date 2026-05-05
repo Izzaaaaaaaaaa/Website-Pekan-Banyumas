@@ -27,7 +27,7 @@ def scan_nfc(card_uid: str):
     user_id = nfc.data[0]["user_id"]
 
     # 2. ambil user
-    user = supabase.table("users") \
+    user = supabase.table("users_profile") \
         .select("*") \
         .eq("id", user_id) \
         .execute()
@@ -79,7 +79,7 @@ def scan_nfc(card_uid: str):
 def get_gate_logs(event_id=None, tanggal=None, user_id=None, limit=20):
     try:
         query = supabase.table("gate_logs") \
-            .select("id, gate_type, scan_time, users(nama), events(nama)") \
+            .select("id, gate_type, scan_time, users_profile(nama), events(nama)") \
             .order("scan_time", desc=True) \
             .limit(limit)
 
@@ -103,7 +103,7 @@ def get_gate_logs(event_id=None, tanggal=None, user_id=None, limit=20):
         return [
             {
                 "id": r["id"],
-                "nama": r["users"]["nama"] if r.get("users") else None,
+                "nama": r["users_profile"]["nama"] if r.get("users_profile") else None,
                 "event": r["events"]["nama"] if r.get("events") else None,
                 "status": r["gate_type"],
                 "waktu": r["scan_time"]

@@ -9,7 +9,8 @@ from app.services.event_service import (
     update_event,
     delete_event,
     get_event_detail,
-    get_active_event  # 🔥 FIX: tambahin ini
+    get_active_event,
+    set_active_event  # 🔥 TAMBAHAN
 )
 
 # SCHEMAS
@@ -84,6 +85,17 @@ def update(id: str, data: EventUpdate, user=Depends(get_current_user)):
         raise HTTPException(400, "Tidak ada data yang diupdate")
 
     return update_event(id, clean_data)
+
+
+# =========================
+# 🔥 ACTIVATE EVENT (PENTING BANGET)
+# =========================
+@router.patch("/{id}/activate")
+def activate_event(id: str, user=Depends(get_current_user)):
+    if user["role"] != "admin":
+        raise HTTPException(403, "Hanya admin yang boleh mengaktifkan event")
+
+    return set_active_event(id)
 
 
 # =========================

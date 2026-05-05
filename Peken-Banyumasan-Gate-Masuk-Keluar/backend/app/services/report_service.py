@@ -6,7 +6,7 @@ import io
 # 🔥 EXPORT CSV (TETAP)
 def export_gate_logs_csv(event_id: str):
     res = supabase.table("gate_logs") \
-        .select("scan_time, gate_type, users(nama)") \
+        .select("scan_time, gate_type, users_profile(nama)") \
         .eq("event_id", event_id) \
         .order("scan_time", desc=True) \
         .execute()
@@ -32,7 +32,7 @@ def export_gate_logs_csv(event_id: str):
 # 🔥 LIST REPORTS (FIXED)
 def get_reports(event_id=None, tanggal=None):
     query = supabase.table("gate_logs") \
-        .select("id, gate_type, scan_time, users(nama), events(nama)") \
+        .select("id, gate_type, scan_time, users_profile(nama), events(nama)") \
         .order("scan_time", desc=True)
 
     if event_id:
