@@ -1,18 +1,21 @@
+// Notifikasi.jsx — Peken Banyumasan Design System v2.0
 import React, { useState, useEffect } from 'react';
-import { Bell, CheckCheck, Calendar, Info, Users, Trash2, FileText } from 'lucide-react';
-import { getNotifs, markRead, markAllRead } from '../lib/notifications';
-import api from '../services/api';
+import { Bell, CheckCheck, Calendar, Info, Users, Trash2 } from 'lucide-react';
+import { notifikasiApi } from '../services/endpoints';
+import { extractError } from '../lib/unwrap';
+import { useToast } from '../components/Toast';
+import { T } from '../lib/tokens';
 
-const TYPE_ICON = {
-  member_approved:     { icon:Users,    cls:'bg-green-50 text-green-600'  },
-  event_assigned:      { icon:Calendar, cls:'bg-brand-50 text-brand-600'  },
-  event_status_change: { icon:Bell,     cls:'bg-blue-50 text-blue-600'    },
-  story_deleted:       { icon:Trash2,   cls:'bg-red-50 text-red-500'      },
-  event:               { icon:Calendar, cls:'bg-brand-50 text-brand-600'  },
-  system:              { icon:Info,     cls:'bg-earth-100 text-earth-600' },
+const TYPE_META = {
+  kolaborator_approved: { icon:Users,    style:{ background:T.successBg, color:T.success,  border:`1px solid ${T.successBorder}` } },
+  event_assigned:       { icon:Calendar, style:{ background:T.accentBg,  color:T.sageDark, border:`1px solid ${T.accentBorder}` } },
+  event_status_change:  { icon:Bell,     style:{ background:T.infoBg,    color:T.info,     border:`1px solid ${T.infoBorder}` } },
+  story_deleted:        { icon:Trash2,   style:{ background:T.errorBg,   color:T.error,    border:`1px solid ${T.errorBorder}` } },
+  event:                { icon:Calendar, style:{ background:T.accentBg,  color:T.sageDark, border:`1px solid ${T.accentBorder}` } },
+  system:               { icon:Info,     style:{ background:T.accentBg,  color:T.text2,    border:`1px solid ${T.border}` } },
 };
 
-const fmtTime = (iso) => {
+const fmtTime = iso => {
   if (!iso) return '';
   const diff = Date.now() - new Date(iso).getTime();
   const m = Math.floor(diff/60000), h = Math.floor(m/60), d = Math.floor(h/24);
@@ -23,101 +26,124 @@ const fmtTime = (iso) => {
 };
 
 export default function Notifikasi() {
-  const [list, setList] = useState([]);
-  const [filter, setFilter] = useState('semua'); // semua | belum | sudah
+  const toast = useToast();
+  const [list,   setList]   = useState([]);
+  const [filter, setFilter] = useState('semua');
 
-  const refresh = () => {
-    const local = getNotifs('member');
-    // Merge with dummy if local is empty (first visit)
-    if (local.length === 0) {
-      api.notifikasi.list().then(r => {
-        setList(r.data.map(n => ({
-          ...n, id: n.id, type: n.tipe || 'system', read: n.dibaca,
-          title: n.pesan, message: n.pesan, created_at: new Date().toISOString(),
-          icon: '🔔',
-        })));
-      });
-    } else {
-      setList(local);
-    }
+  const refresh = async () => {
+    try {
+      const remote = await notifikasiApi.list();
+      setList(remote || []);
+    } catch (err) { toast.error(extractError(err, 'Gagal memuat notifikasi')); }
   };
 
   useEffect(() => {
     refresh();
-    window.addEventListener('pekan_notif_update', refresh);
-    return () => window.removeEventListener('pekan_notif_update', refresh);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
-  const baca = (id) => { markRead('member', id); refresh(); };
-  const bacaSemua = () => { markAllRead('member'); refresh(); };
-  const unread = list.filter(n => !n.read && !n.dibaca).length;
+  const baca = async (id) => {
+    try {
+      await notifikasiApi.baca(id);
+      setList(l => l.map(n => n.id === id ? { ...n, read: true } : n));
+    } catch {}
+  };
+  const bacaSemua = async () => {
+    try {
+      await notifikasiApi.bacaSemua();
+      setList(l => l.map(n => ({ ...n, read: true })));
+    } catch {}
+  };
+  const unread = list.filter(n => !n.read).length;
 
   const filtered = list.filter(n => {
-    const isRead = n.read || n.dibaca;
-    if (filter === 'belum') return !isRead;
-    if (filter === 'sudah') return isRead;
+    if (filter === 'belum') return !n.read;
+    if (filter === 'sudah') return n.read;
     return true;
   });
+
+  const filterBtnStyle = active => active
+    ? { background:T.sageDark, color:T.white, border:`1px solid ${T.sageDark}` }
+    : { background:T.surface, border:`1px solid ${T.border}`, color:T.text2 };
 
   return (
     <div className="max-w-xl mx-auto">
       <div className="flex items-center justify-between mb-5">
         <div>
-          <h1 className="font-display text-2xl font-bold text-earth-900">Notifikasi</h1>
-          {unread > 0 && <p className="text-brand-600 text-sm font-medium mt-0.5">{unread} belum dibaca</p>}
+          <h1 className="font-display text-xl font-medium" style={{color:T.text1}}>Notifikasi</h1>
+          {unread > 0 && (
+            <p className="text-sm font-medium mt-0.5" style={{color:T.sageDark}}>
+              {unread} belum dibaca
+            </p>
+          )}
         </div>
         {unread > 0 && (
-          <button onClick={bacaSemua} className="flex items-center gap-1.5 text-sm text-batik-600 hover:text-batik-800 font-medium transition">
+          <button
+            onClick={bacaSemua}
+            className="flex items-center gap-1.5 text-sm font-medium transition"
+            style={{color:T.sageDark}}>
             <CheckCheck size={15}/> Tandai semua dibaca
           </button>
         )}
       </div>
 
-      {/* Filter */}
+      {/* Filter chips */}
       <div className="flex gap-2 mb-4">
         {[['semua','Semua'],['belum','Belum Dibaca'],['sudah','Sudah Dibaca']].map(([v,l]) => (
           <button key={v} onClick={() => setFilter(v)}
-            className={`px-3 py-1.5 rounded-xl text-xs font-semibold border transition
-              ${filter===v ? 'bg-brand-700 text-white border-brand-700' : 'bg-white border-earth-200 text-earth-600 hover:border-brand-400'}`}>
+            className="px-3 py-1.5 rounded-xl text-xs font-semibold transition"
+            style={filterBtnStyle(filter===v)}>
             {l}
           </button>
         ))}
       </div>
 
       {filtered.length === 0 ? (
-        <div className="bg-white rounded-2xl border border-earth-100 p-14 text-center">
-          <Bell size={36} className="text-earth-200 mx-auto mb-3"/>
-          <p className="text-earth-500 text-sm">
-            {filter === 'belum' ? 'Semua notifikasi sudah dibaca' : 'Belum ada notifikasi'}
+        <div className="rounded-2xl p-14 text-center"
+          style={{background:T.surface, border:`1px solid ${T.border}`, boxShadow:T.shadowSm}}>
+          <Bell size={36} className="mx-auto mb-3" style={{color:T.borderStrong}}/>
+          <p className="text-sm" style={{color:T.textMuted}}>
+            {filter==='belum' ? 'Semua notifikasi sudah dibaca' : 'Belum ada notifikasi'}
           </p>
         </div>
       ) : (
         <div className="space-y-2">
           {filtered.map(n => {
-            const isRead = n.read || n.dibaca;
-            const meta = TYPE_ICON[n.type] || TYPE_ICON.system;
-            const Icon = meta.icon;
+            const isRead = n.read;
+            const meta   = TYPE_META[n.type] || TYPE_META.system;
+            const Icon   = meta.icon;
             return (
               <button key={n.id} onClick={() => baca(n.id)}
-                className={`w-full text-left flex gap-3 items-start p-4 rounded-2xl border transition
-                  ${!isRead ? 'bg-white border-brand-200 shadow-sm' : 'bg-white/70 border-earth-100 opacity-80'}`}>
-                <div className={`w-9 h-9 rounded-xl flex items-center justify-center shrink-0 ${meta.cls}`}>
-                  <Icon size={16}/>
+                className="w-full text-left flex gap-3 items-start p-4 rounded-2xl transition"
+                style={{
+                  background: !isRead ? T.surface : 'rgba(255,255,255,0.65)',
+                  border:     !isRead ? `1px solid ${T.accentBorder}` : `1px solid ${T.border}`,
+                  boxShadow:  !isRead ? T.shadowSm : 'none',
+                  opacity:    isRead  ? .85 : 1,
+                }}>
+                <div className="w-9 h-9 rounded-xl flex items-center justify-center shrink-0"
+                  style={meta.style}>
+                  <Icon size={15}/>
                 </div>
                 <div className="flex-1 min-w-0">
                   {n.title && n.title !== n.message && (
-                    <p className={`text-xs font-bold mb-0.5 ${!isRead ? 'text-brand-700' : 'text-earth-500'}`}>
-                      {n.icon} {n.title}
+                    <p className="text-xs font-bold mb-0.5"
+                      style={{color: !isRead ? T.sageDeeper : T.textMuted}}>
+                      {n.title}
                     </p>
                   )}
-                  <p className={`text-sm leading-snug ${!isRead ? 'text-earth-900 font-medium' : 'text-earth-600'}`}>
-                    {n.message || n.pesan}
+                  <p className="text-sm leading-snug"
+                    style={{color: !isRead ? T.text1 : T.text2, fontWeight: !isRead ? 500 : 400}}>
+                    {n.message}
                   </p>
-                  <p className="text-earth-400 text-xs mt-1">
-                    {n.created_at ? fmtTime(n.created_at) : n.waktu}
+                  <p className="text-xs mt-1" style={{color:T.textMuted}}>
+                    {fmtTime(n.created_at)}
                   </p>
                 </div>
-                {!isRead && <div className="w-2 h-2 rounded-full bg-brand-600 shrink-0 mt-2"/>}
+                {!isRead && (
+                  <div className="w-2 h-2 rounded-full shrink-0 mt-2"
+                    style={{background:T.accent}}/>
+                )}
               </button>
             );
           })}

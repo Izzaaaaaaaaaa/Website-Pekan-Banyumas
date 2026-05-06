@@ -1,139 +1,195 @@
-// src/services/api.js
+/**
+ * src/services/apiClient.js
+ * ─────────────────────────
+ * The single axios instance shared by every endpoint in services/endpoints.js.
+ * This file contains ONLY the transport layer (baseURL, interceptors,
+ * auth-header injection, 401 handling). Endpoint definitions live in
+ * endpoints.js. Pages must never import this file directly — always go
+ * through endpoints.js.
+ *
+ * Design rules:
+ *   • baseURL is ORIGIN ONLY (no /api suffix). Every endpoint path in
+ *     endpoints.js begins with `/api/…`. A defensive `normalizeBaseUrl`
+ *     strips a trailing `/api` if the env variable still carries one,
+ *     with a dev-mode warning, so legacy .env files don't silently
+ *     produce /api/api/ double-prefix bugs.
+ *   • On 401, this client does NOT perform navigation itself — it calls
+ *     a caller-registered `onUnauthorized` handler. The router layer
+ *     (App.jsx) wires that handler during bootstrap. This keeps the
+ *     client router-agnostic (works with HashRouter, BrowserRouter, or
+ *     no router at all).
+ *   • Blob responses (responseType: 'blob') pass through intact, including
+ *     when the body is an error blob — the interceptor reads the blob as
+ *     text, parses JSON, and copies the `message` field onto `error.message`
+ *     so consumers see the real backend error text.
+ *   • FormData bodies (multipart uploads) are detected and the default
+ *     JSON Content-Type header is removed so the browser can set the
+ *     correct multipart boundary itself.
+ */
+
 import axios from 'axios';
+import { getToken } from '../lib/auth.js';
 
-const api = axios.create({
-    baseURL: import.meta.env.VITE_API_URL,
-    headers: {
-        'Content-Type': 'application/json',
-    },
-});
-
-// ── REQUEST INTERCEPTOR ───────────────────────────────────────────────────────
-
-api.interceptors.request.use((config) => {
-    const token = localStorage.getItem('token');
-    if (token) {
-        config.headers.Authorization = `Bearer ${token}`;
-    }
-    return config;
-});
-
-// ── HELPER ────────────────────────────────────────────────────────────────────
+// ── 401 handler injection ───────────────────────────────────────────────────
 
 /**
- * Parse pesan error dari response body.
- * Menangani kasus responseType:'blob' (GET /reports/export) — saat error,
- * axios membungkus body sebagai Blob bukan JSON object biasa.
+ * Replaced at app bootstrap (App.jsx) with a router-aware redirect.
+ * Default no-op so the module is importable in environments without
+ * a router (tests, SSR, etc.) without throwing.
+ *
+ * @type {(error: unknown) => void}
  */
-const parseErrorData = async (error) => {
-    try {
-        const data = error.response?.data;
-        if (!data) return null;
-        if (data instanceof Blob) {
-            const text = await data.text();
-            return JSON.parse(text);
-        }
-        return data;
-    } catch {
+let onUnauthorized = () => {};
+
+/**
+ * Register the function to run whenever the backend returns 401. The
+ * handler is invoked ONCE per 401 response, guarded by a token check so
+ * parallel 401s (e.g., fetchStats + fetchActivities firing together)
+ * don't trigger duplicate redirects.
+ *
+ * Typical handler: toast an error, wait briefly so the UI paints it,
+ * clear auth, navigate to /login.
+ *
+ * @param {(error: unknown) => void} handler
+ */
+export function setUnauthorizedHandler(handler) {
+  onUnauthorized = typeof handler === 'function' ? handler : () => {};
+}
+
+// ── baseURL normalization ──────────────────────────────────────────────────
+
+/**
+ * Accept `https://host` or `https://host/api` (with or without trailing
+ * slash) and return the canonical origin-only form. Warns in dev mode
+ * when stripping `/api` so the misconfiguration is visible.
+ */
+function normalizeBaseUrl(url) {
+  if (typeof url !== 'string' || !url) return '';
+  const trimmed = url.replace(/\/+$/, '');
+  if (/\/api$/.test(trimmed)) {
+    if (import.meta.env?.DEV) {
+      console.warn(
+        '[apiClient] VITE_API_URL ends with "/api". The canonical convention is ' +
+        'origin-only (e.g., https://example.com) because every endpoint path in ' +
+        'services/endpoints.js already carries the /api/ prefix. Stripping the ' +
+        'trailing /api to prevent /api/api/ double-prefix bugs.'
+      );
+    }
+    return trimmed.replace(/\/api$/, '');
+  }
+  return trimmed;
+}
+
+// ── Blob-error body parsing ─────────────────────────────────────────────────
+
+/**
+ * When responseType is 'blob' (e.g., the /reports/export download) and
+ * the server returns an error, axios wraps the body as a Blob instead
+ * of a JSON object. Read the blob as text, try to parse JSON, and pull
+ * the `message` field.
+ *
+ * Returns `null` on any parsing failure — the caller must treat that
+ * as "no backend message available" and fall through to other error
+ * sources.
+ */
+async function parseBackendMessage(error) {
+  try {
+    const data = error?.response?.data;
+    if (!data) return null;
+    if (data instanceof Blob) {
+      const text = await data.text();
+      try {
+        const parsed = JSON.parse(text);
+        return typeof parsed?.message === 'string' ? parsed.message : null;
+      } catch {
         return null;
+      }
     }
-};
-
-// ── RESPONSE INTERCEPTOR ──────────────────────────────────────────────────────
-
-api.interceptors.response.use(
-    (response) => response,
-    async (error) => {
-        if (!error.response) {
-            // Network error: server mati, CORS, timeout
-            return Promise.reject(error);
-        }
-
-        const errorData = await parseErrorData(error);
-        const message = errorData?.message || '';
-        if (message) error.message = message;
-
-        switch (error.response.status) {
-            case 401:
-                // Token tidak ada, kadaluarsa, atau tidak valid.
-                // Delay 1500ms agar komponen sempat render pesan error
-                // sebelum halaman berpindah ke /login.
-                // Guard token: mencegah double-logout dari race condition
-                // (misal fetchStats + fetchActivities gagal bersamaan).
-                //
-                // [FIX] Gunakan '/#/login' bukan '/login' agar kompatibel
-                // dengan HashRouter. window.location.href = '/login' akan
-                // mengarah ke path server yang tidak dikenal oleh Flask
-                // (Flask hanya punya /api/*), sehingga tidak ada redirect
-                // yang tepat. Dengan '/#/login', hash diproses di sisi
-                // browser oleh HashRouter tanpa menyentuh server.
-                setTimeout(() => {
-                    if (localStorage.getItem('token')) {
-                        localStorage.removeItem('token');
-                        localStorage.removeItem('user');
-                        window.location.href = '/#/login';
-                    }
-                }, 1500);
-                break;
-
-            case 403:
-                // User login tapi role tidak mencukupi (petugas → endpoint admin-only).
-                // Tidak redirect dan tidak alert — biarkan komponen menampilkan error
-                // via catch block mereka sendiri (toast.error sudah ada di setiap halaman).
-                // Alert di sini akan menyebabkan notifikasi ganda (alert + toast).
-                break;
-
-            default:
-                break;
-        }
-
-        return Promise.reject(error);
+    if (typeof data === 'object' && typeof data.message === 'string') {
+      return data.message;
     }
+    return null;
+  } catch {
+    return null;
+  }
+}
+
+// ── The client ──────────────────────────────────────────────────────────────
+
+const apiClient = axios.create({
+  baseURL: normalizeBaseUrl(import.meta.env?.VITE_API_URL),
+  headers: {
+    'Content-Type': 'application/json',
+  },
+});
+
+// Request interceptor: attach the Bearer token on every call, and strip
+// the manual Content-Type on FormData bodies so the browser can set the
+// multipart boundary.
+apiClient.interceptors.request.use((config) => {
+  const token = getToken();
+  if (token) {
+    config.headers = config.headers || {};
+    config.headers.Authorization = `Bearer ${token}`;
+  }
+
+  if (config.data instanceof FormData) {
+    if (config.headers) {
+      delete config.headers['Content-Type'];
+      delete config.headers['content-type'];
+    }
+  }
+
+  return config;
+});
+
+// Response interceptor: copy the backend's error message onto
+// `error.message` (handling JSON and Blob bodies), dispatch to the 401
+// handler on auth failures, and re-reject so endpoint methods throw.
+apiClient.interceptors.response.use(
+  (response) => response,
+  async (error) => {
+    // No response object means network-level failure (server down,
+    // CORS, DNS, timeout). Propagate as-is; extractError will tag these
+    // with a friendly message downstream.
+    if (!error.response) {
+      return Promise.reject(error);
+    }
+
+    // Promote the backend message onto `error.message` so consumers can
+    // rely on a single field regardless of transport (JSON vs. blob).
+    const backendMessage = await parseBackendMessage(error);
+    if (backendMessage) {
+      error.message = backendMessage;
+    }
+
+    switch (error.response.status) {
+      case 401:
+        // Token missing, expired, or invalid. Guard with a token check so
+        // parallel 401s don't trigger duplicate redirects. The handler
+        // owns the actual navigation — this file stays router-agnostic.
+        if (getToken()) {
+          try {
+            onUnauthorized(error);
+          } catch {
+            /* never let the handler itself break the rejection chain */
+          }
+        }
+        break;
+
+      case 403:
+        // Authenticated but role-insufficient (e.g., petugas hitting an
+        // admin-only endpoint). Do NOT redirect or alert — pages own
+        // their own toast via the catch block. Alerting here would
+        // double-notify.
+        break;
+
+      default:
+        break;
+    }
+
+    return Promise.reject(error);
+  }
 );
 
-export default api;
-// ── EVENT RELASI ENDPOINTS (stub — siap diganti saat backend ready) ──────────
-
-export const eventApi = {
-  // Event CRUD
-  list:   (params) => api.get('/api/events', { params }),
-  detail: (id)     => api.get(`/api/events/${id}`),
-  create: (data)   => api.post('/api/events', data),
-  update: (id, d)  => api.put(`/api/events/${id}`, d),
-  delete: (id)     => api.delete(`/api/events/${id}`),
-  status: (id, s)  => api.patch(`/api/events/${id}/status`, { status: s }),
-
-  // Event ↔ Member relasi
-  members:       (id)      => api.get(`/api/events/${id}/members`),
-  assignKolaborator:  (id, d)   => api.post(`/api/events/${id}/members`, d),
-  removeKolaborator:  (id, mid) => api.delete(`/api/events/${id}/members/${mid}`),
-  updateKolaborator:  (id, mid, d) => api.patch(`/api/events/${id}/members/${mid}`, d),
-
-  // Event ↔ Tenant relasi
-  tenants:       (id)      => api.get(`/api/events/${id}/tenants`),
-  assignArtisan:  (id, d)   => api.post(`/api/events/${id}/tenants`, d),
-  removeArtisan:  (id, tid) => api.delete(`/api/events/${id}/tenants/${tid}`),
-  updateArtisan:  (id, tid, d) => api.patch(`/api/events/${id}/tenants/${tid}`, d),
-};
-
-export const kolaboratorApi = {
-  list:       (params) => api.get('/api/kolaborator', { params }),
-  detail:     (id)     => api.get(`/api/kolaborator/${id}`),
-  status:     (id, s)  => api.patch(`/api/kolaborator/${id}/status`, { status: s }),
-  events:     (id)     => api.get(`/api/kolaborator/${id}/events`),
-  portfolio:  (id)     => api.get(`/api/kolaborator/${id}/portfolio`),
-  stories:    (id)     => api.get(`/api/kolaborator/${id}/stories`),
-};
-
-export const artisanApi = {
-  list:   (params) => api.get('/api/artisan', { params }),
-  detail: (id)     => api.get(`/api/artisan/${id}`),
-  update: (id, d)  => api.patch(`/api/artisan/${id}`, d),
-  status: (id, s)  => api.patch(`/api/artisan/${id}/status`, { status: s }),
-  events: (id)     => api.get(`/api/artisan/${id}/events`),
-};
-
-export const aktivitasApi = {
-  list:   (params) => api.get('/api/aktivitas', { params }),
-  delete: (id)     => api.delete(`/api/admin/stories/${id}`),
-};
+export default apiClient;

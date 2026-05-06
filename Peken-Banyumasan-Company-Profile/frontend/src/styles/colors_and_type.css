@@ -446,3 +446,8 @@ img { display: block; max-width: 100%; }
   /* Wipe-reveal in v1.3 has no animation — just a static gradient
      bridge — so no reduced-motion override is needed. */
 }
+
+/* Loading spinner — used in ProgramDetailScreen */
+@keyframes spin {
+  to { transform: rotate(360deg); }
+}

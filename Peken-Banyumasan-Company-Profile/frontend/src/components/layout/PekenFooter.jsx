@@ -41,7 +41,7 @@ export default function PekenFooter({ onNavigate }) {
             }}
           >
             Ruang budaya dan ekonomi kreatif di Banyumas yang mempertemukan
-            seni, UMKM, dan masyarakat dalam satu ruang kolaborasi yang
+            seni, Artisan, dan masyarakat dalam satu ruang kolaborasi yang
             hidup dan berkelanjutan.
           </p>
           <div

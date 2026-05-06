@@ -31,7 +31,7 @@ export default function ImageUpload({
 
   return (
     <div className={className}>
-      {label && <label className="text-gray-600 text-xs font-semibold mb-1.5 block">{label}</label>}
+      {label && <label className="text-[#5a6040] text-xs font-semibold mb-1.5 block">{label}</label>}
 
       <div
         onClick={() => inputRef.current?.click()}
@@ -39,7 +39,7 @@ export default function ImageUpload({
         onDragLeave={() => setDragging(false)}
         onDrop={onDrop}
         className={`relative overflow-hidden rounded-xl border-2 border-dashed cursor-pointer transition w-full ${aspectClass}
-          ${dragging ? 'border-green-400 bg-green-50' : value ? 'border-transparent' : 'border-gray-200 hover:border-green-400 bg-gray-50 hover:bg-green-50/30'}`}
+          ${dragging ? 'border-[#7a8a52] bg-[#eef0e0]' : value ? 'border-transparent' : 'border-[#e4e7d4] hover:border-[#7a8a52] bg-[#f7f8f2] hover:bg-[#eef0e0]/30'}`}
       >
         {value ? (
           <>
@@ -53,7 +53,7 @@ export default function ImageUpload({
         ) : (
           <div className="absolute inset-0 flex flex-col items-center justify-center gap-2 text-gray-400 p-4">
             <ImageIcon size={28} className="text-gray-300"/>
-            <p className="text-xs font-medium text-center text-gray-500">
+            <p className="text-xs font-medium text-center text-[#8a9070]">
               {dragging ? 'Lepaskan di sini' : 'Klik atau drag foto ke sini'}
             </p>
             <p className="text-[10px] text-gray-400 text-center">{hint}</p>

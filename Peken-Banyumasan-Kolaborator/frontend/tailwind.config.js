@@ -1,40 +1,68 @@
 /** @type {import('tailwindcss').Config} */
-// FINAL color system — charcoal sidebar, green action, amber accent, earth text
+// Peken Banyumasan Design System v2.0
+// Primary accent: sage (#C3CA96). Sidebar: charcoal (#1B1B1B).
+// Dashboard bg: pale sage (#f2f4e8). Cards: white w/ sage borders (#e4e7d4).
 export default {
   content: ["./index.html","./src/**/*.{js,ts,jsx,tsx}"],
   theme: {
     extend: {
       fontFamily: {
-        sans:    ['Plus Jakarta Sans', 'system-ui', 'sans-serif'],
-        display: ['Playfair Display', 'Georgia', 'serif'],
+        sans:    ['"Montserrat"', 'system-ui', 'sans-serif'],
+        display: ['"Clash Display"', 'system-ui', 'sans-serif'],
+        italic:  ['"Playfair Display"', 'Georgia', 'serif'],
       },
       colors: {
-        // PRIMARY action green — exact match with gate #2f6f4e
+        // PRIMARY — dark sage for interactive elements (buttons, links, active states)
         primary: {
-          50:'#f0fdf4', 100:'#dcfce7', 200:'#bbf7d0',
-          300:'#86efac', 400:'#4ade80', 500:'#22c55e',
-          600:'#16a34a', 700:'#2f6f4e',
-          800:'#166534', 900:'#14532d', 950:'#052e16',
+          50:  '#f2f4e8',
+          100: '#eef0e0',
+          200: '#dde3c0',
+          300: '#c8d09a',
+          400: '#a8b07a',
+          500: '#C3CA96',
+          600: '#7A8A52',
+          700: '#4F5C30',
+          800: '#3a4520',
+          900: '#1e2010',
+          950: '#131508',
         },
-        // SIDEBAR — near-black charcoal (professional dark, NOT green)
-        batik: {
-          50:'#f7f8f7', 100:'#edefed', 200:'#d1d5d1',
-          300:'#a8ada8', 400:'#787c78', 500:'#565a56',
-          600:'#3a3d3a', 700:'#282b28', 800:'#1d1f1d',
-          900:'#141514', 950:'#0d0f0d',
-        },
-        // AMBER GOLD — cultural accent (logo, highlights, NOT buttons)
+        // BRAND — unified sage (was amber, now sage)
         brand: {
-          50:'#fdf8f2', 100:'#f8edda', 200:'#f0d9af',
-          300:'#e5be7a', 400:'#d9a24a', 500:'#c48930',
-          600:'#a97025', 700:'#8a551c',
+          50:  '#f2f4e8',
+          100: '#eef0e0',
+          200: '#dde3c0',
+          300: '#c8d09a',
+          400: '#a8b07a',
+          500: '#C3CA96',
+          600: '#7A8A52',
+          700: '#4F5C30',
+          800: '#3a4520',
         },
-        // WARM EARTH — text, backgrounds, borders
+        // EARTH — text & neutral with sage undertone
         earth: {
-          50:'#faf7f4', 100:'#f3ede5', 200:'#e5d8c9',
-          300:'#d1bc9d', 400:'#b99570', 500:'#a67d52',
-          600:'#8f6742', 700:'#765337', 800:'#614531',
-          900:'#523b2c',
+          50:  '#fafaf8',
+          100: '#f0f2e8',
+          200: '#e4e7d4',
+          300: '#c8ccb0',
+          400: '#8a9070',
+          500: '#5a6040',
+          600: '#404830',
+          700: '#2a3020',
+          800: '#1e2210',
+          900: '#1e2010',
+        },
+        // BATIK — icon containers + sidebar charcoal
+        batik: {
+          50:  '#f2f4e8',
+          100: '#eef0e0',
+          200: '#e4e7d4',
+          300: '#b0bca0',
+          400: '#8a9278',
+          500: '#5a6448',
+          600: '#7A8A52',
+          700: '#4F5C30',
+          800: '#1B1B1B',
+          900: '#0D0D0D',
         },
       },
     },

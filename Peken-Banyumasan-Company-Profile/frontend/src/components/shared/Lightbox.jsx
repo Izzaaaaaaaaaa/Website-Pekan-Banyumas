@@ -21,19 +21,19 @@ export default function Lightbox({ work, onClose, onViewProfile }) {
     <Modal open={!!work} onClose={onClose} labelledBy="lightbox-title" width={1080} padded={false}>
       {work && (
         <div style={{ display: 'grid', gridTemplateColumns: '1.5fr 1fr', minHeight: 480 }}>
-          <div style={{ background: `var(--bg-deep) url('${work.img}') center/contain no-repeat`, aspectRatio: '4/3' }} />
+          <div style={{ background: `var(--bg-deep) url('${work.gambar_url}') center/contain no-repeat`, aspectRatio: '4/3' }} />
           <div style={{ padding: 40, display: 'flex', flexDirection: 'column', gap: 20 }}>
             {/* Top row */}
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', gap: 12 }}>
               <Eyebrow style={{ color: 'var(--accent)' }}>
-                KARYA · {work.role.toUpperCase()} · {work.year}
+                KARYA · {(work.kategori_display || '').toUpperCase()} · {work.tahun}
               </Eyebrow>
               <button onClick={onClose} aria-label="Tutup lightbox" style={{ background: 'transparent', border: 0, color: '#fff', fontSize: 20, lineHeight: 1, cursor: 'pointer', fontFamily: 'var(--font-display)', padding: 4 }}>✕</button>
             </div>
 
             {/* Title */}
             <h2 id="lightbox-title" style={{ fontFamily: 'var(--font-display)', fontWeight: 400, fontSize: 28, lineHeight: 1.25, color: '#fff', margin: 0 }}>
-              {work.title}
+              {work.judul}
             </h2>
 
             {/* Creator — clickable profile link */}
@@ -66,7 +66,7 @@ export default function Lightbox({ work, onClose, onViewProfile }) {
                     {work.owner}
                   </span>
                   <span style={{ fontFamily: 'var(--font-body)', fontSize: 11, color: 'var(--fg-muted)', textTransform: 'uppercase', letterSpacing: '.05em' }}>
-                    {work.role}{onViewProfile ? ' · Lihat profil →' : ''}
+                    {work.kategori_display || ''}{onViewProfile ? ' · Lihat profil →' : ''}
                   </span>
                 </span>
               </button>
@@ -74,14 +74,14 @@ export default function Lightbox({ work, onClose, onViewProfile }) {
 
             {/* Description */}
             <p style={{ fontFamily: 'var(--font-body)', fontSize: 13, lineHeight: 1.8, color: 'var(--fg-secondary)', margin: 0 }}>
-              {work.description || 'Karya ini dirilis sebagai bagian dari katalog kontributor Peken Banyumasan.'}
+              {work.deskripsi || 'Karya ini dirilis sebagai bagian dari katalog kontributor Peken Banyumasan.'}
             </p>
 
             {/* Actions */}
             <div style={{ marginTop: 'auto', paddingTop: 16, display: 'flex', gap: 12, flexWrap: 'wrap' }}>
               {onViewProfile && (
                 <PillButton onClick={handleProfile}>
-                  Profil Kreator
+                  Profil Kolaborator
                 </PillButton>
               )}
               <PillButton inverse onClick={onClose}>Tutup Karya</PillButton>

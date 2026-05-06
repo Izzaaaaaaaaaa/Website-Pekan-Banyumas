@@ -1,5 +1,5 @@
 /**
- * PublicProfileScreen — profil publik kreator/artisan di company profile.
+ * PublicProfileScreen — profil publik kolaborator/artisan di company profile.
  * Layout persis mengikuti kolaborator dashboard PublicProfile:
  *   - Tanpa cover strip (langsung identity header)
  *   - Tab: Karya / Story / Event
@@ -8,9 +8,12 @@
  * Dibungkus PekenNav + PekenFooter dari App.jsx.
  */
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { MapPin, CheckCircle, Calendar, Share2 } from 'lucide-react';
 import { getProfileByOwner } from '../../data/profiles.js';
+import { profileApi } from '../../services/endpoints.js';
+import { getCategory } from '../../lib/categoryHelper.js';
+import { toSlug } from '../../lib/slug.js';
 import { Eyebrow } from '../shared/Typography.jsx';
 import PillButton from '../shared/PillButton.jsx';
 import PhotoTile from '../shared/PhotoTile.jsx';
@@ -30,16 +33,25 @@ const fmtRel = (d) => {
     return fmtDate(d);
 };
 
+/**
+ * Derive display status dari canonical DB status.
+ * 'upcoming' TIDAK disimpan di DB — FE derive dari published + future date.
+ */
+const deriveEvStatus = (ev) =>
+    ev.status === 'published' && new Date(ev.tanggal) > new Date()
+        ? 'upcoming'
+        : ev.status;
+
 // ─── Avatar ───────────────────────────────────────────────────────
-function Avatar({ foto, nama, size = 86 }) {
+function Avatar({ foto_url, nama, size = 86 }) {
     const initial = (nama || '?').charAt(0).toUpperCase();
     return (
         <div style={{
             width: size, height: size, borderRadius: '50%', flexShrink: 0,
-            background: foto ? `url('${foto}') center/cover` : 'var(--accent)',
+            background: foto_url ? `url('${foto_url}') center/cover` : 'var(--accent)',
             display: 'flex', alignItems: 'center', justifyContent: 'center',
         }}>
-            {!foto && (
+            {!foto_url && (
                 <span style={{ fontFamily: 'var(--font-display)', fontWeight: 700, fontSize: size * 0.38, color: 'var(--accent-ink)' }}>
           {initial}
         </span>
@@ -54,10 +66,10 @@ function KaryaLightbox({ item, onClose }) {
         <Modal open={!!item} onClose={onClose} labelledBy="pp-lb" width={960} padded={false}>
             {item && (
                 <div style={{ display: 'grid', gridTemplateColumns: '1.4fr 1fr', minHeight: 440 }}>
-                    <div style={{ background: `var(--bg-deep) url('${item.img}') center/contain no-repeat`, aspectRatio: '4/3' }} />
+                    <div style={{ background: `var(--bg-deep) url('${item.gambar_url}') center/contain no-repeat`, aspectRatio: '4/3' }} />
                     <div style={{ padding: 36, display: 'flex', flexDirection: 'column', gap: 16 }}>
                         <div style={{ display: 'flex', justifyContent: 'space-between' }}>
-                            <Eyebrow style={{ color: 'var(--accent)' }}>{item.subsektor} · {item.tahun}</Eyebrow>
+                            <Eyebrow style={{ color: 'var(--accent)' }}>{getCategory(item).values.join(', ') || '—'} · {item.tahun}</Eyebrow>
                             <button onClick={onClose} style={{ background: 'none', border: 0, color: '#fff', fontSize: 18, cursor: 'pointer' }}>✕</button>
                         </div>
                         <h3 id="pp-lb" style={{ fontFamily: 'var(--font-display)', fontWeight: 400, fontSize: 24, color: '#fff', margin: 0, lineHeight: 1.25 }}>{item.judul}</h3>
@@ -74,11 +86,11 @@ function KaryaLightbox({ item, onClose }) {
 function KaryaTile({ item, onClick }) {
     return (
         <PhotoTile
-            src={item.img} alt={item.judul} aspect="4/5" mode="caption"
+            src={item.gambar_url} alt={item.judul} aspect="4/5" mode="caption"
             onClick={() => onClick(item)} ariaLabel={`Buka detail ${item.judul}`}
             caption={
                 <div>
-                    <div style={{ fontFamily: 'var(--font-body)', fontSize: 11, color: 'var(--accent)', textTransform: 'uppercase', letterSpacing: '.06em', marginBottom: 6 }}>{item.subsektor}</div>
+                    <div style={{ fontFamily: 'var(--font-body)', fontSize: 11, color: 'var(--accent)', textTransform: 'uppercase', letterSpacing: '.06em', marginBottom: 6 }}>{getCategory(item).values.join(', ')}</div>
                     <div style={{ fontFamily: 'var(--font-display)', fontWeight: 500, fontSize: 15, color: '#fff', marginBottom: 4 }}>{item.judul}</div>
                     <div style={{ fontFamily: 'var(--font-body)', fontSize: 11, color: 'var(--fg-secondary)' }}>{item.tahun}</div>
                 </div>
@@ -95,21 +107,22 @@ function StoryCard({ story }) {
                 <img src={story.media_url} alt="" style={{ width: '100%', aspectRatio: '16/9', objectFit: 'cover', display: 'block' }} />
             )}
             <p style={{ fontFamily: 'var(--font-body)', fontSize: 13, lineHeight: 1.85, color: 'var(--fg-secondary)', margin: 0 }}>{story.konten}</p>
-            <span style={{ fontFamily: 'var(--font-body)', fontSize: 11, color: 'var(--fg-muted)', textTransform: 'uppercase', letterSpacing: '.06em' }}>{fmtRel(story.tanggal)}</span>
+            <span style={{ fontFamily: 'var(--font-body)', fontSize: 11, color: 'var(--fg-muted)', textTransform: 'uppercase', letterSpacing: '.06em' }}>{fmtRel(story.created_at)}</span>
         </article>
     );
 }
 
 // ─── Event card ───────────────────────────────────────────────────
-const EV_COLOR = { upcoming: 'var(--accent)', berlangsung: '#7dd3fc', selesai: 'var(--fg-muted)' };
-const EV_LABEL = { upcoming: 'Akan Datang', berlangsung: 'Berlangsung', selesai: 'Selesai' };
+const EV_COLOR = { upcoming: 'var(--accent)', berlangsung: '#7dd3fc', selesai: 'var(--fg-muted)', published: 'var(--accent)' };
+const EV_LABEL = { upcoming: 'Akan Datang', berlangsung: 'Berlangsung', selesai: 'Selesai', published: 'Akan Datang', draft: 'Draft' };
 
 function EventCard({ ev }) {
-    const col = EV_COLOR[ev.status] || 'var(--fg-muted)';
+    const dispStatus = deriveEvStatus(ev);
+    const col = EV_COLOR[dispStatus] || 'var(--fg-muted)';
     return (
         <div style={{ borderLeft: `2px solid ${col}`, paddingLeft: 24, display: 'flex', flexDirection: 'column', gap: 8 }}>
             <div style={{ display: 'flex', alignItems: 'center', gap: 10, flexWrap: 'wrap' }}>
-                <Eyebrow style={{ color: col }}>{EV_LABEL[ev.status] || ev.status}</Eyebrow>
+                <Eyebrow style={{ color: col }}>{EV_LABEL[dispStatus] || dispStatus}</Eyebrow>
                 {ev.peran && (
                     <span style={{ fontFamily: 'var(--font-body)', fontSize: 10, color: 'var(--fg-muted)', border: '1px solid rgba(255,255,255,.1)', padding: '1px 7px', textTransform: 'uppercase', letterSpacing: '.06em' }}>{ev.peran}</span>
                 )}
@@ -146,9 +159,16 @@ function EmptyState({ label }) {
 
 // ─── MAIN ─────────────────────────────────────────────────────────
 export default function PublicProfileScreen({ ownerName, onBack }) {
-    const profile = getProfileByOwner(ownerName);
+    const staticProfile = getProfileByOwner(ownerName);
+    const [profile, setProfile] = useState(staticProfile);
     const [lightbox, setLightbox] = useState(null);
     const [tab, setTab] = useState('karya');
+
+    useEffect(() => {
+        if (!ownerName) return;
+        const slug = toSlug(ownerName);
+        profileApi.bySlug(slug).then(d => { if (d) setProfile(d); }).catch(() => {});
+    }, [ownerName]);
 
     const handleShare = () => {
         const url = window.location.href;
@@ -165,13 +185,13 @@ export default function PublicProfileScreen({ ownerName, onBack }) {
         </main>
     );
 
-    const featuredKarya = profile.karya.find(k => k.featured);
-    const coverImg = featuredKarya?.img || null;
+    const featuredKarya = (profile?.karya || []).find(k => k.featured);
+    const coverImg = profile?.cover_url || featuredKarya?.gambar_url || null;
 
     const TABS = [
-        { id: 'karya', label: `Karya (${profile.karya.length})` },
-        { id: 'story', label: `Story (${profile.story.length})` },
-        { id: 'event', label: `Event (${(profile.events || []).length})` },
+        { id: 'karya', label: `Karya (${(profile?.karya || []).length})` },
+        { id: 'story', label: `Story (${(profile?.story || []).length})` },
+        { id: 'event', label: `Event (${(profile?.events || []).length})` },
     ];
 
     return (
@@ -187,7 +207,7 @@ export default function PublicProfileScreen({ ownerName, onBack }) {
             }}>
                 {!coverImg && (
                     <div style={{ height: '100%', display: 'flex', alignItems: 'center', justifyContent: 'flex-end', paddingRight: 120 }}>
-                        <span style={{ fontFamily: 'Inter', fontWeight: 300, fontSize: 100, color: 'rgba(195,202,150,.04)', userSelect: 'none' }}>PEKEN</span>
+                        <span style={{ fontFamily: 'Inter', fontWeight: 300, fontSize: 100, color: 'rgba(195,202,150,.04)', userSelect: 'none' }}>PEKEN BANYUMASAN</span>
                     </div>
                 )}
             </div>
@@ -196,23 +216,23 @@ export default function PublicProfileScreen({ ownerName, onBack }) {
             <div style={{ background: 'var(--bg-elevated)', borderBottom: '1px solid rgba(255,255,255,.06)' }}>
                 <div style={{ maxWidth: 1060, margin: '0 auto', padding: '0 120px' }}>
                     <div style={{ display: 'flex', alignItems: 'flex-end', gap: 24, transform: 'translateY(-44px)', marginBottom: -20 }}>
-                        <Avatar foto={profile.foto} nama={profile.nama} size={86} />
+                        <Avatar foto_url={profile?.foto_url} nama={profile?.nama} size={86} />
                         <div style={{ flex: 1, paddingBottom: 14 }}>
                             <div style={{ display: 'flex', alignItems: 'center', gap: 12, flexWrap: 'wrap' }}>
                                 <h1 style={{ fontFamily: 'var(--font-display)', fontWeight: 400, fontSize: 28, color: '#fff', margin: 0, lineHeight: 1.1 }}>
                                     {profile.nama}
                                 </h1>
                                 <span style={{ fontFamily: 'var(--font-display)', fontSize: 9, fontWeight: 500, background: 'var(--accent)', color: 'var(--accent-ink)', padding: '3px 9px', textTransform: 'uppercase', letterSpacing: '.07em' }}>
-                  {profile.role}
+                  {profile?.role ? (profile.role.charAt(0).toUpperCase() + profile.role.slice(1)) : ''}
                 </span>
-                                {profile.verified && (
+                                {profile.status === 'aktif' && (
                                     <span style={{ fontFamily: 'var(--font-display)', fontSize: 9, fontWeight: 500, background: 'rgba(255,255,255,.07)', color: 'var(--fg-secondary)', padding: '3px 8px', textTransform: 'uppercase', letterSpacing: '.07em', display: 'flex', alignItems: 'center', gap: 4 }}>
                     <CheckCircle size={9} /> Terverifikasi
                   </span>
                                 )}
                             </div>
                             <div style={{ display: 'flex', alignItems: 'center', gap: 12, marginTop: 10, flexWrap: 'wrap' }}>
-                                {(profile.subsektor || []).map(s => (
+                                {getCategory(profile).values.map(s => (
                                     <span key={s} style={{ fontFamily: 'var(--font-body)', fontSize: 11, color: 'var(--fg-secondary)', border: '1px solid rgba(255,255,255,.1)', padding: '2px 8px' }}>{s}</span>
                                 ))}
                                 {profile.kota && (
@@ -221,7 +241,7 @@ export default function PublicProfileScreen({ ownerName, onBack }) {
                   </span>
                                 )}
                                 <span style={{ fontFamily: 'var(--font-body)', fontSize: 11, color: 'var(--fg-muted)' }}>
-                  Bergabung {profile.tahun_bergabung}
+                  Bergabung {profile?.tanggal_daftar ? new Date(profile.tanggal_daftar).getFullYear() : '—'}
                 </span>
                             </div>
                         </div>
@@ -243,14 +263,14 @@ export default function PublicProfileScreen({ ownerName, onBack }) {
                     <div>
                         <div style={{ fontFamily: 'var(--font-display)', fontWeight: 500, fontSize: 12, color: 'var(--accent-ink)', letterSpacing: '.03em' }}>PEKEN BANYUMASAN</div>
                         <div style={{ fontFamily: 'var(--font-body)', fontSize: 10, color: 'var(--peken-smoke)', textTransform: 'uppercase', letterSpacing: '.06em', marginTop: 6 }}>
-                            {profile.role} · {profile.tahun_bergabung}
+                            {profile?.role ? (profile.role.charAt(0).toUpperCase() + profile.role.slice(1)) : ''} · {profile?.tanggal_daftar ? new Date(profile.tanggal_daftar).getFullYear() : '—'}
                         </div>
                     </div>
                     <p style={{ fontFamily: 'var(--font-body)', fontSize: 13, lineHeight: 1.85, color: 'var(--accent-ink)', margin: 0, maxWidth: '52ch' }}>
-                        {profile.bio}
+                        {profile?.bio}
                     </p>
                     <div style={{ display: 'flex', gap: 32 }}>
-                        {[['Karya', profile.stats.karya], ['Story', profile.stats.story], ['Event', profile.stats.event]].map(([l, n]) => (
+                        {[['Karya', profile?.total_karya ?? 0], ['Story', profile?.total_story ?? 0], ['Event', profile?.total_event ?? 0]].map(([l, n]) => (
                             <div key={l} style={{ textAlign: 'center' }}>
                                 <div style={{ fontFamily: 'Inter', fontWeight: 300, fontSize: 40, lineHeight: 1, color: 'var(--accent-ink)' }}>{n}</div>
                                 <div style={{ fontFamily: 'var(--font-body)', fontSize: 10, color: 'var(--peken-smoke)', textTransform: 'uppercase', letterSpacing: '.06em', marginTop: 4 }}>{l}</div>
@@ -282,21 +302,21 @@ export default function PublicProfileScreen({ ownerName, onBack }) {
             {/* ── CONTENT ── */}
             <div style={{ maxWidth: 1060, margin: '0 auto', padding: '52px 120px 96px' }}>
                 {tab === 'karya' && (
-                    profile.karya.length === 0
+                    !(profile?.karya?.length)
                         ? <EmptyState label="Belum ada karya yang dipublikasikan." />
                         : <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: 20 }}>
                             {profile.karya.map(k => <KaryaTile key={k.id} item={k} onClick={setLightbox} />)}
                         </div>
                 )}
                 {tab === 'story' && (
-                    profile.story.length === 0
+                    !(profile?.story?.length)
                         ? <EmptyState label="Belum ada story yang ditulis." />
                         : <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '28px 52px', maxWidth: 800 }}>
                             {profile.story.map(s => <StoryCard key={s.id} story={s} />)}
                         </div>
                 )}
                 {tab === 'event' && (
-                    !(profile.events?.length)
+                    !(profile?.events?.length)
                         ? <EmptyState label="Belum ada event yang diikuti." />
                         : <div style={{ display: 'grid', gap: 28, maxWidth: 720 }}>
                             {profile.events.map(ev => <EventCard key={ev.id} ev={ev} />)}
@@ -311,7 +331,7 @@ export default function PublicProfileScreen({ ownerName, onBack }) {
                         Peken Banyumasan · Ekosistem Kreatif Banyumas
                     </div>
                     <div style={{ fontFamily: 'var(--font-body)', fontSize: 10, color: 'var(--fg-muted)' }}>
-                        {profile.nama} · {profile.role}
+                        {profile?.nama} · {profile?.role ? (profile.role.charAt(0).toUpperCase() + profile.role.slice(1)) : ''}
                     </div>
                 </div>
             </div>

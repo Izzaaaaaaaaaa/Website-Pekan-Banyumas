@@ -1,6 +1,6 @@
 // src/pages/CompanyProfile.jsx
 // Admin page untuk mengelola seluruh konten Company Profile Peken Banyumasan.
-// Persisted ke localStorage (prefix "cp_") — swap ke API calls saat backend siap.
+// Setiap tab memanggil companyProfileApi.get(section) saat mount dan companyProfileApi.save(section) saat simpan.
 
 import React, { useState, useEffect, useRef, useCallback } from 'react';
 import {
@@ -9,7 +9,13 @@ import {
   Eye, EyeOff, Star, GripVertical, RefreshCw, ExternalLink,
   Loader2, Upload, ImageIcon, AlertCircle,
 } from 'lucide-react';
+import SimpleMDE from 'react-simplemde-editor';
+import 'easymde/dist/easymde.min.css';
 import { useToast } from '../components/Toast';
+import { companyProfileApi } from '../services/endpoints';
+import { extractError } from '../lib/unwrap';
+import { KATEGORI_USAHA } from '../constants/kategoriUsaha';
+import { SUBSEKTOR } from '../constants/subsektor';
 
 // ─────────────────────────────────────────────
 // DEFAULT DATA (mirrors company profile source)
@@ -23,81 +29,84 @@ const DEFAULT_HOME = {
   ],
   hero_eyebrow: 'MIRAPAT · BANYUMASAN · 2026',
   hero_headline: 'Temukan pertunjukan, karya artisan, dan cerita Banyumasan dalam satu ekosistem.',
-  manifesto_col1: 'Peken Banyumasan adalah sebuah ruang kreatif berbasis budaya lokal yang dirancang sebagai wadah berkumpulnya masyarakat, pelaku UMKM, seniman, dan komunitas dalam satu ekosistem yang hidup, inklusif, dan berkelanjutan.\n\nPeken tidak hanya berfungsi sebagai pasar atau tempat berkumpul biasa, tetapi sebagai ruang interaksi yang menghadirkan pengalaman budaya khas Banyumas melalui berbagai aktivitas seperti pertunjukan seni, kuliner tradisional, produk kreatif, hingga eksplorasi identitas lokal.',
-  manifesto_col2: 'Peken Banyumasan adalah ruang temu budaya dan ekonomi kreatif di Banyumas yang mempertemukan seniman, UMKM, dan masyarakat dalam satu perayaan kearifan lokal.\n\nMenghadirkan kuliner tradisional, pertunjukan seni, serta aktivitas komunitas, Peken menjadi tempat di mana budaya tidak hanya dipamerkan, tetapi dirasakan dan dialami bersama.\n\nSejak pertama kali hadir pada Februari 2022 dan diselenggarakan dua kali setiap bulan di kawasan Kota Lama Banyumas, Peken terus berkembang sebagai ekosistem kreatif.',
+  manifesto_col1: 'Peken Banyumasan adalah sebuah ruang kreatif berbasis budaya lokal yang dirancang sebagai wadah berkumpulnya masyarakat, pelaku Artisan, seniman, dan komunitas dalam satu ekosistem yang hidup, inklusif, dan berkelanjutan.\n\nPeken tidak hanya berfungsi sebagai pasar atau tempat berkumpul biasa, tetapi sebagai ruang interaksi yang menghadirkan pengalaman budaya khas Banyumas melalui berbagai aktivitas seperti pertunjukan seni, kuliner tradisional, produk kreatif, hingga eksplorasi identitas lokal.',
+  manifesto_col2: 'Peken Banyumasan adalah ruang temu budaya dan ekonomi kreatif di Banyumas yang mempertemukan seniman, Artisan, dan masyarakat dalam satu perayaan kearifan lokal.\n\nMenghadirkan kuliner tradisional, pertunjukan seni, serta aktivitas komunitas, Peken menjadi tempat di mana budaya tidak hanya dipamerkan, tetapi dirasakan dan dialami bersama.\n\nSejak pertama kali hadir pada Februari 2022 dan diselenggarakan dua kali setiap bulan di kawasan Kota Lama Banyumas, Peken terus berkembang sebagai ekosistem kreatif.',
   agenda_tanggal: '24',
   agenda_hari: 'Minggu',
   agenda_bulan_tahun: 'Maret 2026',
   agenda_jam: '15:30–20:30 WIB',
   agenda_lokasi: 'Taman Sari · Kecamatan Banyumas',
-  agenda_deskripsi: 'Edisi berikutnya kembali menghadirkan suasana Peken yang hangat dan hidup. Nikmati pertunjukan seni Banyumasan, jelajahi tenant UMKM pilihan, dan temukan karya-karya lokal dalam satu ruang yang penuh kebersamaan.',
+  agenda_deskripsi: 'Edisi berikutnya kembali menghadirkan suasana Peken yang hangat dan hidup. Nikmati pertunjukan seni Banyumasan, jelajahi artisan pilihan, dan temukan karya-karya lokal dalam satu ruang yang penuh kebersamaan.',
   lokasi_nama: 'Kawasan Kota Lama Banyumas. Taman Sari · Sudagaran.',
   lokasi_alamat: 'Banyumas, Sudagaran, Kec. Banyumas, Kabupaten Banyumas, Jawa Tengah 53192',
   lokasi_trans1_nama: 'Trans Banyumas Koridor 4 · Terminal Bulupitu',
+  lokasi_trans1_url: 'https://maps.google.com/?q=Taman+Sari+Kecamatan+Banyumas+Kabupaten+Banyumas+Jawa+Tengah',
   lokasi_trans2_nama: 'Trans Banyumas Koridor 4 · RS Margono — Halte Alun-alun',
+  lokasi_trans2_url: 'https://maps.google.com/?q=Trans+Banyumas+Koridor+4',
   lokasi_trans_jam: '04:40 – 18:30 WIB',
+  lokasi_image_url: '',
 };
 
 const DEFAULT_ABOUT = {
   hero_headline: 'Peken lahir dari keinginan untuk menghidupkan kembali denyut kota lama melalui seni, pasar, dan kebersamaan.',
-  manifesto_col1: 'Peken Banyumasan tumbuh dari percakapan kecil di sudut Kota Lama — antara seniman pertunjukan, pelaku UMKM, dan warga sekitar yang ingin menghidupkan kembali ruang publik sebagai tempat bertemu, bukan sekadar berdagang.\n\nDari obrolan itu, lahir gerakan dwi-mingguan yang konsisten sejak Februari 2022 — sebuah ritual kolektif yang mempertemukan tradisi, kerajinan, dan kuliner Banyumasan dalam satu malam.',
+  manifesto_col1: 'Peken Banyumasan tumbuh dari percakapan kecil di sudut Kota Lama — antara seniman pertunjukan, pelaku Artisan, dan warga sekitar yang ingin menghidupkan kembali ruang publik sebagai tempat bertemu, bukan sekadar berdagang.\n\nDari obrolan itu, lahir gerakan dwi-mingguan yang konsisten sejak Februari 2022 — sebuah ritual kolektif yang mempertemukan tradisi, kerajinan, dan kuliner Banyumasan dalam satu malam.',
   manifesto_col2: 'Kami percaya kebudayaan tidak perlu dipajang di balik kaca. Ia hidup ketika dirayakan secara rutin, dalam skala kecil, oleh orang-orang yang merasa memilikinya.\n\nSetiap edisi Peken adalah usaha sederhana untuk menjaga warisan tetap berdetak — sambil membuka ruang bagi karya baru tumbuh di atasnya.',
-  mirapat_intro: 'Peken Banyumasan bukan event satu-malam — ia adalah mirapat, kata Banyumasan yang berarti perjumpaan rutin yang dijaga bersama. Setiap edisi mempertemukan seniman pertunjukan tradisional, perajin muda, pelaku UMKM, akademisi, hingga warga sekitar dalam satu ruang yang sama.',
+  mirapat_intro: 'Peken Banyumasan bukan event satu-malam — ia adalah mirapat, kata Banyumasan yang berarti perjumpaan rutin yang dijaga bersama. Setiap edisi mempertemukan seniman pertunjukan tradisional, perajin muda, pelaku Artisan, akademisi, hingga warga sekitar dalam satu ruang yang sama.',
   mirapat_quote: '"Bukan pasar yang menjadi tujuan, melainkan perjumpaan yang menjadikan pasar itu bermakna."',
   mirapat_closing: 'Tiga sumbu menjadi fondasi gerakan ini — pelestarian budaya, ruang berkarya bagi pelaku kreatif, dan ekonomi yang berputar di dalam komunitasnya sendiri.',
   pillars: [
     { n: '01', label: 'CULTURE', body: 'Melestarikan kearifan lokal, seni pertunjukan tradisional, dan warisan budaya takbenda Banyumas sebagai fondasi gerakan.' },
     { n: '02', label: 'CREATIVE', body: 'Memberikan ruang bagi seniman, perajin, dan kolektif muda untuk berkarya dan bertemu audiens yang sebenarnya.' },
-    { n: '03', label: 'CIRCULAR', body: 'Mendorong ekonomi berputar di dalam komunitas — dari tenant lokal, bahan lokal, hingga pengunjung lokal.' },
+    { n: '03', label: 'CIRCULAR', body: 'Mendorong ekonomi berputar di dalam komunitas — dari artisan lokal, bahan lokal, hingga pengunjung lokal.' },
   ],
   visi: 'Menjadi ekosistem budaya dan ekonomi kreatif yang menjaga kearifan lokal Banyumas tetap berdetak — relevan, hidup, dan berkelanjutan.',
-  tujuan: 'Menyediakan ruang publik dwi-mingguan yang mempertemukan pelaku seni, UMKM, dan masyarakat — sehingga warisan budaya Banyumasan dirawat melalui praktik bersama, bukan sekadar dipamerkan.',
-  sasaran: 'Seniman pertunjukan tradisional, perajin & UMKM Banyumas, komunitas kreatif muda, akademisi, mitra pemerintah dan swasta, serta pengunjung lokal-regional yang menjadi audiens sekaligus pelaku.',
+  tujuan: 'Menyediakan ruang publik dwi-mingguan yang mempertemukan pelaku seni, Artisan, dan masyarakat — sehingga warisan budaya Banyumasan dirawat melalui praktik bersama, bukan sekadar dipamerkan.',
+  sasaran: 'Seniman pertunjukan tradisional, perajin & Artisan Banyumas, komunitas kreatif muda, akademisi, mitra pemerintah dan swasta, serta pengunjung lokal-regional yang menjadi audiens sekaligus pelaku.',
   stats: [
     { n: '86', label: 'Edisi Peken diselenggarakan' },
-    { n: '240', label: 'Seniman & kolektif tampil' },
-    { n: '1.2k', label: 'UMKM & tenant terlibat' },
+    { n: '240', label: 'Kolaborator aktif' },
+    { n: '1.2k', label: 'Artisan terlibat' },
     { n: '38k', label: 'Pengunjung setiap edisi' },
   ],
 };
 
 const DEFAULT_TIM = {
   key_people: [
-    { id: 'kp1', photo: '/assets/tokoh-portrait-1.png', role: 'FOUNDER', name: 'Gilang Ramadhan, S.Sn., M.Ds.', title: 'Founder & Program Director', bio: 'Menggagas Peken pada Februari 2022 dan mengawal kurasi setiap edisi sejak. Latar belakang antropologi pertunjukan, dengan fokus pada kesenian Banyumasan kontemporer.' },
-    { id: 'kp2', photo: '/assets/tokoh-portrait-2.png', role: 'CURATOR', name: 'Galih Putra Pamungkas, S.Sn., M.Sn.', title: 'Curator — Artisan & UMKM', bio: 'Mengkurasi tenant artisan dan UMKM yang masuk ke setiap edisi Peken. Sebelumnya menjalankan kolektif batik di Sokaraja; membangun program pendampingan tenant dari hulu ke hilir.' },
-    { id: 'kp3', photo: '/assets/tokoh-portrait-3.png', role: 'STRATEGIC PARTNER', name: 'Jakarta Tisam S.STP, M.Si', title: 'Strategic Partner & Community Lead', bio: 'Menjaga jaringan kolaborator, sponsor, dan mitra institusi — kampus, pemerintah daerah, swasta. Memegang rasio kolaborasi yang sehat antar enam helix.' },
+    { id: 'kp1', foto_url: '/assets/tokoh-portrait-1.png', jabatan: 'FOUNDER', name: 'Gilang Ramadhan, S.Sn., M.Ds.', title: 'Founder & Program Director', bio: 'Menggagas Peken pada Februari 2022 dan mengawal kurasi setiap edisi sejak. Latar belakang antropologi pertunjukan, dengan fokus pada kesenian Banyumasan kontemporer.' },
+    { id: 'kp2', foto_url: '/assets/tokoh-portrait-2.png', jabatan: 'CURATOR', name: 'Galih Putra Pamungkas, S.Sn., M.Sn.', title: 'Curator — Artisan', bio: 'Mengkurasi artisan yang masuk ke setiap edisi Peken. Sebelumnya menjalankan kolektif batik di Sokaraja; membangun program pendampingan artisan dari hulu ke hilir.' },
+    { id: 'kp3', foto_url: '/assets/tokoh-portrait-3.png', jabatan: 'STRATEGIC PARTNER', name: 'Jakarta Tisam S.STP, M.Si', title: 'Strategic Partner & Community Lead', bio: 'Menjaga jaringan kolaborator, sponsor, dan mitra institusi — kampus, pemerintah daerah, swasta. Memegang rasio kolaborasi yang sehat antar enam helix.' },
   ],
   hexa_helix: [
     { id: 'hh1', name: 'Government', body: 'Pemerintah Kabupaten Banyumas dan instansi terkait sebagai mitra kebijakan dan ruang publik.' },
     { id: 'hh2', name: 'Academia', body: 'Kampus dan lembaga riset sebagai sumber kajian, kurikulum, dan tenaga kurasi muda.' },
-    { id: 'hh3', name: 'Industry', body: 'Pelaku usaha skala UMKM hingga korporasi sebagai mitra ekonomi dan ekosistem produk.' },
+    { id: 'hh3', name: 'Industry', body: 'Pelaku usaha skala Artisan hingga korporasi sebagai mitra ekonomi dan ekosistem produk.' },
     { id: 'hh4', name: 'Community', body: 'Warga, kolektif seni, dan komunitas hobi sebagai inti gerakan dan audiens setia Peken.' },
     { id: 'hh5', name: 'Media', body: 'Jejaring media independen dan jurnalisme budaya sebagai penjaga narasi gerakan.' },
     { id: 'hh6', name: 'Finance', body: 'Mitra pembiayaan — bank, koperasi, hingga skema gotong royong — yang menjaga sirkulasi ekonomi tetap sehat.' },
   ],
-  legalitas_dukungan: 'Peken Banyumasan didukung oleh jaringan mitra lintas sektor: Pemerintah Kabupaten Banyumas dan Dinas Kebudayaan sebagai mitra kebijakan; Universitas Jenderal Soedirman sebagai mitra riset dan pendampingan kurasi; Bank BPD Jawa Tengah sebagai mitra pembiayaan UMKM; Komunitas Kota Lama Banyumas sebagai mitra penyelenggara di lokasi.\n\nDukungan ini terdokumentasi dalam Memorandum of Understanding yang diperbarui setiap dua tahun, dan operasional tahunan dilaporkan secara terbuka kepada para mitra sebagai bagian dari prinsip akuntabilitas gerakan.',
+  legalitas_dukungan: 'Peken Banyumasan didukung oleh jaringan mitra lintas sektor: Pemerintah Kabupaten Banyumas dan Dinas Kebudayaan sebagai mitra kebijakan; Universitas Jenderal Soedirman sebagai mitra riset dan pendampingan kurasi; Bank BPD Jawa Tengah sebagai mitra pembiayaan Artisan; Komunitas Kota Lama Banyumas sebagai mitra penyelenggara di lokasi.\n\nDukungan ini terdokumentasi dalam Memorandum of Understanding yang diperbarui setiap dua tahun, dan operasional tahunan dilaporkan secara terbuka kepada para mitra sebagai bagian dari prinsip akuntabilitas gerakan.',
   legalitas_hukum: 'Peken Banyumasan beroperasi di bawah payung Yayasan Peken Banyumasan, dengan landasan hukum nasional pada UU No. 5/2017 tentang Pemajuan Kebudayaan dan UU No. 24/2019 tentang Ekonomi Kreatif, serta payung daerah pada Peraturan Daerah Kabupaten Banyumas No. 6/2020 tentang Pemajuan Kebudayaan Daerah.\n\nYayasan terdaftar resmi dengan NPWP 00.000.000.0-000.000 dan NIB 0000000000000, tunduk pada laporan keuangan dan tata kelola yayasan sebagaimana diatur dalam UU Yayasan.',
 };
 
 const DEFAULT_PROGRAMS = [
-  { n: '01', title: 'Banyumasan Fashionshow', img: '/assets/program-fashion.jpg', body: 'Peragaan busana bertema kebudayaan Banyumas dengan materi tenun, batik, dan karya desainer lokal.', body_short: 'Peragaan busana bertema kebudayaan Banyumas — tenun, batik, karya desainer lokal.' },
-  { n: '02', title: 'Bring Your Own Bowl', img: '/assets/program-byob.jpg', body: 'Gerakan zero-waste — pengunjung membawa wadah sendiri, tenant kuliner melayani tanpa kemasan sekali pakai.', body_short: 'Gerakan zero-waste — pengunjung membawa wadah sendiri, tenant kuliner tanpa kemasan sekali pakai.' },
-  { n: '03', title: 'Local Market', img: '/assets/program-local-market.jpg', body: 'Pasar produk kerajinan, makanan, dan kebutuhan rumah tangga dari UMKM Banyumasan.', body_short: 'Pasar produk kerajinan, makanan, dan kebutuhan rumah tangga dari UMKM Banyumasan.' },
-  { n: '04', title: 'Pitutur Banyumasan', img: '/assets/program-pitutur.jpg', body: 'Panggung cerita lisan: kidung, wayang, geguritan. Dipandu oleh para pelaku pertunjukan setempat.', body_short: 'Panggung cerita lisan: kidung, wayang, geguritan, dipandu pelaku pertunjukan setempat.' },
-  { n: '05', title: 'Coffee & Conversation', img: '/assets/program-coffee.jpg', body: 'Ruang ngopi lambat untuk percakapan lintas komunitas: seniman, perajin, pemerintah, akademisi.', body_short: 'Ruang ngopi lambat untuk percakapan lintas komunitas — seniman, perajin, akademisi.' },
-  { n: '06', title: 'Makers Workshop', img: '/assets/program-makers.jpg', body: 'Workshop dua-jam: batik ecoprint, tenun mini, aksara Jawa, sablon manual. Terbuka untuk pengunjung.', body_short: 'Workshop dua-jam: batik ecoprint, tenun mini, aksara Jawa, sablon manual.' },
+  { n: '01', slug: 'banyumasan-fashionshow',  title: 'Banyumasan Fashionshow',  image_url: '/assets/program-fashion.jpg',      body: 'Peragaan busana bertema kebudayaan Banyumas dengan materi tenun, batik, dan karya desainer lokal.', body_short: 'Peragaan busana bertema kebudayaan Banyumas — tenun, batik, karya desainer lokal.',         target_peserta: 'Umum', durasi: '±90 menit' },
+  { n: '02', slug: 'bring-your-own-bowl',     title: 'Bring Your Own Bowl',     image_url: '/assets/program-byob.jpg',         body: 'Gerakan zero-waste — pengunjung membawa wadah sendiri, artisan kuliner melayani tanpa kemasan sekali pakai.', body_short: 'Gerakan zero-waste — pengunjung membawa wadah sendiri, artisan kuliner tanpa kemasan sekali pakai.', target_peserta: 'Umum', durasi: 'Sepanjang event' },
+  { n: '03', slug: 'local-market',            title: 'Local Market',            image_url: '/assets/program-local-market.jpg', body: 'Pasar produk kerajinan, makanan, dan kebutuhan rumah tangga dari Artisan Banyumasan.', body_short: 'Pasar produk kerajinan, makanan, dan kebutuhan rumah tangga dari Artisan Banyumasan.', target_peserta: 'Umum', durasi: 'Sepanjang event' },
+  { n: '04', slug: 'pitutur-banyumasan',      title: 'Pitutur Banyumasan',      image_url: '/assets/program-pitutur.jpg',      body: 'Panggung cerita lisan: kidung, wayang, geguritan. Dipandu oleh para pelaku pertunjukan setempat.', body_short: 'Panggung cerita lisan: kidung, wayang, geguritan, dipandu pelaku pertunjukan setempat.', target_peserta: 'Umum', durasi: '±60 menit' },
+  { n: '05', slug: 'coffee-and-conversation', title: 'Coffee & Conversation',   image_url: '/assets/program-coffee.jpg',       body: 'Ruang ngopi lambat untuk percakapan lintas komunitas: seniman, perajin, pemerintah, akademisi.', body_short: 'Ruang ngopi lambat untuk percakapan lintas komunitas — seniman, perajin, akademisi.', target_peserta: 'Komunitas & undangan', durasi: '±120 menit' },
+  { n: '06', slug: 'makers-workshop',         title: 'Makers Workshop',         image_url: '/assets/program-makers.jpg',       body: 'Workshop dua-jam: batik ecoprint, tenun mini, aksara Jawa, sablon manual. Terbuka untuk pengunjung.', body_short: 'Workshop dua-jam: batik ecoprint, tenun mini, aksara Jawa, sablon manual.',  target_peserta: 'Umum (maks 20 orang)', durasi: '±120 menit' },
 ];
 
 const DEFAULT_WORKS = [
-  { id: 'w-001', title: 'Senja di Pasar Lama', owner: 'Aji Pradana', role: 'Kolaborator · Fotografi', year: '2026', img: '/assets/gallery-1.jpg', description: 'Seri foto malam di kawasan Pasar Lama Banyumas. Diambil dengan kamera analog format 35mm pada Februari 2026 — bagian dari proyek dokumentasi rutin Aji untuk Peken.', source: 'kolaborator', visible: true },
-  { id: 'w-002', title: 'Tenun Lurik Modular', owner: 'Sanggar Lestari Sokaraja', role: 'Artisan · Tekstil', year: '2025', img: '/assets/gallery-2.jpg', description: 'Eksperimen tenun lurik dengan modul lebar tetap untuk memudahkan kombinasi warna oleh desainer pakaian.', source: 'kolaborator', visible: true },
-  { id: 'w-003', title: 'Edisi #54 — Geguritan Malam', owner: 'Komunitas Pitutur', role: 'Kolaborator · Pertunjukan', year: '2025', img: '/assets/gallery-3.jpg', description: 'Dokumentasi panggung geguritan malam pada Peken Edisi #54. Empat pelaku tampil bergantian membawakan cerita rakyat Banyumasan dalam balutan musik akustik.', source: 'kolaborator', visible: true },
-  { id: 'w-004', title: 'Banyumasan Streetwear Cap.1', owner: 'Reka Studio', role: 'Kolaborator · Mode', year: '2025', img: '/assets/program-fashion.jpg', description: 'Lini streetwear pertama dari Reka Studio yang mengadaptasi motif batik banyumasan ke siluet kontemporer.', source: 'kolaborator', visible: true },
-  { id: 'w-005', title: 'Wadah Bambu Lipat', owner: 'UMKM Tirta Karya', role: 'Artisan · Kriya', year: '2024', img: '/assets/gallery-4.jpg', description: 'Wadah makanan bambu lipat untuk mendukung Bring Your Own Bowl. Dibuat tanpa lem sintetis, dirakit hanya dengan ikatan rotan.', source: 'kolaborator', visible: true },
-  { id: 'w-006', title: 'Mural Kota Lama', owner: 'Kolektif Coret', role: 'Kolaborator · Seni Publik', year: '2024', img: '/assets/gallery-5.jpg', description: 'Mural permanen pada dinding selatan Taman Sari, dilukis selama dua minggu oleh enam seniman muda Kolektif Coret.', source: 'kolaborator', visible: true },
-  { id: 'w-007', title: 'Kopi Robusta Banyumas', owner: 'Petani Kopi Baturraden', role: 'Artisan · Kuliner', year: '2024', img: '/assets/program-coffee.jpg', description: 'Robusta single-origin dari ketinggian 800 mdpl di Baturraden. Dipanen, dijemur, dan disangrai sendiri oleh kelompok tani.', source: 'kolaborator', visible: true },
-  { id: 'w-008', title: 'Aksara Jawa Banyumasan', owner: 'Studio Wignya', role: 'Kolaborator · Desain Grafis', year: '2023', img: '/assets/gallery-6.jpg', description: 'Tipografi aksara Jawa varian Banyumasan, dirilis sebagai font terbuka. Hasil riset enam bulan bersama akademisi linguistik Universitas Jenderal Soedirman.', source: 'kolaborator', visible: true },
-  { id: 'w-009', title: 'Anyaman Pandan Modular', owner: 'Bu Tasrip & Komunitas', role: 'Artisan · Kriya', year: '2023', img: '/assets/gallery-perform-1.jpg', description: 'Anyaman pandan modular yang bisa dirangkai menjadi tas, alas duduk, atau partisi ruang. Karya kolektif perempuan Desa Banjarsari.', source: 'kolaborator', visible: true },
+  { id: 'w-001', judul: 'Senja di Pasar Lama', owner: 'Aji Pradana', owner_type: 'kolaborator', subsektor: 'Fotografi', tahun: 2026, gambar_url: '/assets/gallery-1.jpg', deskripsi: 'Seri foto malam di kawasan Pasar Lama Banyumas. Diambil dengan kamera analog format 35mm pada Februari 2026 — bagian dari proyek dokumentasi rutin Aji untuk Peken.', visible: true },
+  { id: 'w-002', judul: 'Tenun Lurik Modular', owner: 'Sanggar Lestari Sokaraja', owner_type: 'artisan', kategori_usaha: 'Kriya', tahun: 2025, gambar_url: '/assets/gallery-2.jpg', deskripsi: 'Eksperimen tenun lurik dengan modul lebar tetap untuk memudahkan kombinasi warna oleh desainer pakaian.', visible: true },
+  { id: 'w-003', judul: 'Edisi #54 — Geguritan Malam', owner: 'Komunitas Pitutur', owner_type: 'kolaborator', subsektor: 'Seni Pertunjukan', tahun: 2025, gambar_url: '/assets/gallery-3.jpg', deskripsi: 'Dokumentasi panggung geguritan malam pada Peken Edisi #54. Empat pelaku tampil bergantian membawakan cerita rakyat Banyumasan dalam balutan musik akustik.', visible: true },
+  { id: 'w-004', judul: 'Banyumasan Streetwear Cap.1', owner: 'Reka Studio', owner_type: 'kolaborator', subsektor: 'Fashion', tahun: 2025, gambar_url: '/assets/program-fashion.jpg', deskripsi: 'Lini streetwear pertama dari Reka Studio yang mengadaptasi motif batik banyumasan ke siluet kontemporer.', visible: true },
+  { id: 'w-005', judul: 'Wadah Bambu Lipat', owner: 'Artisan Tirta Karya', owner_type: 'artisan', kategori_usaha: 'Kriya', tahun: 2024, gambar_url: '/assets/gallery-4.jpg', deskripsi: 'Wadah makanan bambu lipat untuk mendukung Bring Your Own Bowl. Dibuat tanpa lem sintetis, dirakit hanya dengan ikatan rotan.', visible: true },
+  { id: 'w-006', judul: 'Mural Kota Lama', owner: 'Kolektif Coret', owner_type: 'kolaborator', subsektor: 'Seni Rupa', tahun: 2024, gambar_url: '/assets/gallery-5.jpg', deskripsi: 'Mural permanen pada dinding selatan Taman Sari, dilukis selama dua minggu oleh enam seniman muda Kolektif Coret.', visible: true },
+  { id: 'w-007', judul: 'Kopi Robusta Banyumas', owner: 'Petani Kopi Baturraden', owner_type: 'artisan', kategori_usaha: 'F&B / Kuliner', tahun: 2024, gambar_url: '/assets/program-coffee.jpg', deskripsi: 'Robusta single-origin dari ketinggian 800 mdpl di Baturraden. Dipanen, dijemur, dan disangrai sendiri oleh kelompok tani.', visible: true },
+  { id: 'w-008', judul: 'Aksara Jawa Banyumasan', owner: 'Studio Wignya', owner_type: 'kolaborator', subsektor: 'Desain Produk', tahun: 2023, gambar_url: '/assets/gallery-6.jpg', deskripsi: 'Tipografi aksara Jawa varian Banyumasan, dirilis sebagai font terbuka. Hasil riset enam bulan bersama akademisi linguistik Universitas Jenderal Soedirman.', visible: true },
+  { id: 'w-009', judul: 'Anyaman Pandan Modular', owner: 'Bu Tasrip & Komunitas', owner_type: 'artisan', kategori_usaha: 'Kriya', tahun: 2023, gambar_url: '/assets/gallery-perform-1.jpg', deskripsi: 'Anyaman pandan modular yang bisa dirangkai menjadi tas, alas duduk, atau partisi ruang. Karya kolektif perempuan Desa Banjarsari.', visible: true },
 ];
 
 const DEFAULT_GALLERY = {
@@ -116,21 +125,7 @@ const DEFAULT_GALLERY = {
   doc_headline: 'Setiap edisi Peken didokumentasikan secara terbuka.',
   doc_body: 'Foto-foto di laman ini diambil oleh tim dokumentasi Peken bersama relawan fotografer komunitas — dirilis di bawah lisensi Creative Commons BY-NC 4.0 untuk penggunaan non-komersial dengan atribusi.\n\nSetiap edisi dikemas sebagai paket gambar resolusi tinggi (RAW + JPEG terkurasi) yang dapat diunduh untuk keperluan riset, jurnalisme, atau kebutuhan komunitas.',
   doc_ukuran: 'ZIP · ±420 MB per edisi',
-};
-
-// ─────────────────────────────────────────────
-// PERSISTENCE HELPERS
-// ─────────────────────────────────────────────
-
-const load = (key, fallback) => {
-  try {
-    const v = localStorage.getItem(`cp_${key}`);
-    return v ? JSON.parse(v) : fallback;
-  } catch { return fallback; }
-};
-
-const persist = (key, val) => {
-  try { localStorage.setItem(`cp_${key}`, JSON.stringify(val)); } catch { /**/ }
+  doc_download_url: '',
 };
 
 // ─────────────────────────────────────────────
@@ -139,11 +134,11 @@ const persist = (key, val) => {
 
 const Field = ({ label, hint, required, children }) => (
   <div>
-    <label className="text-gray-600 text-xs font-semibold mb-1.5 block">
+    <label className="text-[#5a6040] text-xs font-semibold mb-1.5 block">
       {label}{required && <span className="text-red-400 ml-0.5">*</span>}
     </label>
     {children}
-    {hint && <p className="text-[11px] text-gray-400 mt-1">{hint}</p>}
+    {hint && <p className="text-[11px] text-[#8a9070] mt-1">{hint}</p>}
   </div>
 );
 
@@ -153,7 +148,7 @@ const Input = ({ value, onChange, placeholder, type = 'text', className = '' }) 
     value={value}
     onChange={e => onChange(e.target.value)}
     placeholder={placeholder}
-    className={`w-full border border-gray-200 rounded-xl px-4 py-2.5 text-sm focus:outline-none focus:border-green-400 transition ${className}`}
+    className={`w-full border border-[#e4e7d4] rounded-[12px] px-4 py-2.5 text-sm focus:outline-none focus:border-[#7a8a52] transition ${className}`}
   />
 );
 
@@ -163,12 +158,12 @@ const Textarea = ({ value, onChange, placeholder, rows = 3 }) => (
     onChange={e => onChange(e.target.value)}
     placeholder={placeholder}
     rows={rows}
-    className="w-full border border-gray-200 rounded-xl px-4 py-2.5 text-sm focus:outline-none focus:border-green-400 transition resize-none"
+    className="w-full border border-[#e4e7d4] rounded-[12px] px-4 py-2.5 text-sm focus:outline-none focus:border-[#7a8a52] transition resize-none"
   />
 );
 
 const Card = ({ children, className = '' }) => (
-  <div className={`bg-white rounded-2xl border border-gray-100 shadow-sm ${className}`}>
+  <div className={`bg-white rounded-[16px] border border-gray-100 shadow-sm ${className}`}>
     {children}
   </div>
 );
@@ -178,15 +173,15 @@ const SectionCard = ({ title, subtitle, icon: Icon, children, collapsible = fals
   return (
     <Card className="overflow-hidden">
       <div
-        className={`flex items-center gap-3 p-5 border-b border-gray-50 ${collapsible ? 'cursor-pointer select-none hover:bg-gray-50 transition' : ''}`}
+        className={`flex items-center gap-3 p-5 border-b border-[#f2f4e8] ${collapsible ? 'cursor-pointer select-none hover:bg-[#f7f8f2] transition' : ''}`}
         onClick={collapsible ? () => setOpen(o => !o) : undefined}
       >
-        {Icon && <div className="w-8 h-8 rounded-lg bg-green-50 flex items-center justify-center shrink-0"><Icon size={16} className="text-green-700" /></div>}
+        {Icon && <div className="w-8 h-8 rounded-lg bg-[#eef0e0] flex items-center justify-center shrink-0"><Icon size={16} className="text-[#7a8a52]" /></div>}
         <div className="flex-1 min-w-0">
-          <h3 className="font-bold text-gray-800 text-sm">{title}</h3>
-          {subtitle && <p className="text-xs text-gray-400 mt-0.5">{subtitle}</p>}
+          <h3 className="font-bold text-[#1e2010] text-sm">{title}</h3>
+          {subtitle && <p className="text-xs text-[#8a9070] mt-0.5">{subtitle}</p>}
         </div>
-        {collapsible && (open ? <ChevronUp size={16} className="text-gray-400 shrink-0" /> : <ChevronDown size={16} className="text-gray-400 shrink-0" />)}
+        {collapsible && (open ? <ChevronUp size={16} className="text-[#8a9070] shrink-0" /> : <ChevronDown size={16} className="text-[#8a9070] shrink-0" />)}
       </div>
       {open && <div className="p-5">{children}</div>}
     </Card>
@@ -197,7 +192,7 @@ const SaveBtn = ({ onClick, saving, label = 'Simpan Perubahan' }) => (
   <button
     onClick={onClick}
     disabled={saving}
-    className="flex items-center gap-2 bg-green-700 hover:bg-green-800 text-white px-5 py-2.5 rounded-xl text-sm font-semibold transition disabled:opacity-60"
+    className="flex items-center gap-2 bg-[#7a8a52] hover:bg-[#4f5c30] text-white px-5 py-2.5 rounded-[12px] text-sm font-semibold transition disabled:opacity-60"
   >
     {saving ? <Loader2 size={14} className="animate-spin" /> : <Save size={14} />}
     {saving ? 'Menyimpan...' : label}
@@ -206,7 +201,7 @@ const SaveBtn = ({ onClick, saving, label = 'Simpan Perubahan' }) => (
 
 const ToggleSwitch = ({ value, onChange, label }) => (
   <label className="flex items-center gap-3 cursor-pointer">
-    <div onClick={() => onChange(!value)} className={`w-10 h-6 rounded-full transition-colors relative shrink-0 ${value ? 'bg-green-600' : 'bg-gray-200'}`}>
+    <div onClick={() => onChange(!value)} className={`w-10 h-6 rounded-full transition-colors relative shrink-0 ${value ? 'bg-[#7a8a52]' : 'bg-gray-200'}`}>
       <div className={`absolute top-1 w-4 h-4 bg-white rounded-full shadow transition-transform ${value ? 'left-5' : 'left-1'}`} />
     </div>
     {label && <span className="text-sm text-gray-700 font-medium">{label}</span>}
@@ -239,11 +234,11 @@ const ImageInput = ({ value, onChange, label, shape = 'wide' }) => {
 
   return (
     <div>
-      {label && <label className="text-gray-600 text-xs font-semibold mb-1.5 block">{label}</label>}
+      {label && <label className="text-[#5a6040] text-xs font-semibold mb-1.5 block">{label}</label>}
       <div className="flex gap-2 mb-2">
         {['upload', 'url'].map(t => (
           <button key={t} onClick={() => setTab(t)}
-            className={`px-3 py-1 rounded-lg text-xs font-semibold transition ${tab === t ? 'bg-green-700 text-white' : 'bg-gray-100 text-gray-500 hover:bg-gray-200'}`}>
+            className={`px-3 py-1 rounded-lg text-xs font-semibold transition ${tab === t ? 'bg-[#7a8a52] text-white' : 'bg-[#eef0e0] text-[#8a9070] hover:bg-[#eef0e0]'}`}>
             {t === 'upload' ? 'Upload File' : 'URL Gambar'}
           </button>
         ))}
@@ -254,20 +249,20 @@ const ImageInput = ({ value, onChange, label, shape = 'wide' }) => {
           onClick={() => inputRef.current?.click()}
           onDragOver={e => e.preventDefault()}
           onDrop={e => { e.preventDefault(); processFile(e.dataTransfer.files[0]); }}
-          className={`relative overflow-hidden rounded-xl border-2 border-dashed cursor-pointer transition w-full ${aspectClass} ${value ? 'border-transparent' : 'border-gray-200 hover:border-green-400 bg-gray-50'}`}
+          className={`relative overflow-hidden rounded-[12px] border-2 border-dashed cursor-pointer transition w-full ${aspectClass} ${value ? 'border-transparent' : 'border-[#e4e7d4] hover:border-[#c8d09a] bg-[#f7f8f2]'}`}
         >
           {value ? (
             <>
               <img src={value} alt="" className="w-full h-full object-cover" />
               <div className="absolute inset-0 bg-black/0 hover:bg-black/30 transition flex items-center justify-center opacity-0 hover:opacity-100">
-                <span className="bg-white/90 rounded-xl px-3 py-1.5 text-xs font-semibold text-gray-700 flex items-center gap-1"><Upload size={12} /> Ganti</span>
+                <span className="bg-white/90 rounded-[12px] px-3 py-1.5 text-xs font-semibold text-gray-700 flex items-center gap-1"><Upload size={12} /> Ganti</span>
               </div>
             </>
           ) : (
-            <div className="absolute inset-0 flex flex-col items-center justify-center gap-2 text-gray-400">
+            <div className="absolute inset-0 flex flex-col items-center justify-center gap-2 text-[#8a9070]">
               <ImageIcon size={24} className="text-gray-300" />
-              <p className="text-xs font-medium text-center text-gray-500">Klik atau drag foto</p>
-              <p className="text-[10px] text-gray-400">JPG, PNG, WebP · maks 5 MB</p>
+              <p className="text-xs font-medium text-center text-[#8a9070]">Klik atau drag foto</p>
+              <p className="text-[10px] text-[#8a9070]">JPG, PNG, WebP · maks 5 MB</p>
             </div>
           )}
         </div>
@@ -278,9 +273,9 @@ const ImageInput = ({ value, onChange, label, shape = 'wide' }) => {
             onChange={e => setUrlInput(e.target.value)}
             onKeyDown={e => e.key === 'Enter' && applyUrl()}
             placeholder="/assets/nama-file.jpg atau https://..."
-            className="flex-1 border border-gray-200 rounded-xl px-4 py-2.5 text-sm focus:outline-none focus:border-green-400 transition"
+            className="flex-1 border border-[#e4e7d4] rounded-[12px] px-4 py-2.5 text-sm focus:outline-none focus:border-[#7a8a52] transition"
           />
-          <button onClick={applyUrl} className="bg-green-700 text-white px-4 py-2.5 rounded-xl text-sm font-semibold hover:bg-green-800 transition">Terapkan</button>
+          <button onClick={applyUrl} className="bg-[#7a8a52] text-white px-4 py-2.5 rounded-[12px] text-sm font-semibold hover:bg-[#4f5c30] transition">Terapkan</button>
         </div>
       )}
 
@@ -301,8 +296,12 @@ const ImageInput = ({ value, onChange, label, shape = 'wide' }) => {
 
 function TabBeranda() {
   const toast = useToast();
-  const [data, setData] = useState(() => load('home', DEFAULT_HOME));
+  const [data, setData] = useState(DEFAULT_HOME);
   const [saving, setSaving] = useState({});
+
+  useEffect(() => {
+    companyProfileApi.get('home').then(d => d && setData(d)).catch(() => {});
+  }, []);
 
   const set = (k, v) => setData(p => ({ ...p, [k]: v }));
 
@@ -324,10 +323,14 @@ function TabBeranda() {
 
   const save = async (section) => {
     setSaving(s => ({ ...s, [section]: true }));
-    await new Promise(r => setTimeout(r, 400));
-    persist('home', data);
-    setSaving(s => ({ ...s, [section]: false }));
-    toast.success('Berhasil disimpan');
+    try {
+      await companyProfileApi.save('home', data);
+      toast.success('Berhasil disimpan');
+    } catch (err) {
+      toast.error(extractError(err, 'Gagal menyimpan'));
+    } finally {
+      setSaving(s => ({ ...s, [section]: false }));
+    }
   };
 
   return (
@@ -338,9 +341,9 @@ function TabBeranda() {
         <div className="space-y-5">
           <div className="grid gap-4">
             {data.hero_slides.map((slide, idx) => (
-              <div key={slide.id} className="border border-gray-100 rounded-xl p-4 space-y-3">
+              <div key={slide.id} className="border border-gray-100 rounded-[12px] p-4 space-y-3">
                 <div className="flex items-center justify-between">
-                  <span className="text-xs font-bold text-gray-500 uppercase tracking-wider">Slide {idx + 1}</span>
+                  <span className="text-xs font-bold text-[#8a9070] uppercase tracking-wider">Slide {idx + 1}</span>
                   <button onClick={() => removeSlide(idx)} className="text-red-400 hover:text-red-600 transition p-1">
                     <Trash2 size={14} />
                   </button>
@@ -359,10 +362,10 @@ function TabBeranda() {
               </div>
             ))}
           </div>
-          <button onClick={addSlide} className="flex items-center gap-2 border-2 border-dashed border-gray-200 hover:border-green-400 hover:text-green-700 text-gray-400 px-4 py-3 rounded-xl text-sm font-medium transition w-full justify-center">
+          <button onClick={addSlide} className="flex items-center gap-2 border-2 border-dashed border-[#e4e7d4] hover:border-[#c8d09a] hover:text-[#7a8a52] text-[#8a9070] px-4 py-3 rounded-[12px] text-sm font-medium transition w-full justify-center">
             <Plus size={16} /> Tambah Slide
           </button>
-          <div className="flex justify-end pt-2 border-t border-gray-50">
+          <div className="flex justify-end pt-2 border-t border-[#f2f4e8]">
             <SaveBtn onClick={() => save('slides')} saving={saving.slides} />
           </div>
         </div>
@@ -377,7 +380,7 @@ function TabBeranda() {
           <Field label="Headline Utama" hint="Kata yang dicetak miring+aksen: 'pertunjukan' dalam headline">
             <Textarea value={data.hero_headline} onChange={v => set('hero_headline', v)} placeholder="Temukan pertunjukan..." rows={2} />
           </Field>
-          <div className="flex justify-end pt-2 border-t border-gray-50">
+          <div className="flex justify-end pt-2 border-t border-[#f2f4e8]">
             <SaveBtn onClick={() => save('hero_text')} saving={saving.hero_text} />
           </div>
         </div>
@@ -394,40 +397,19 @@ function TabBeranda() {
               <Textarea value={data.manifesto_col2} onChange={v => set('manifesto_col2', v)} rows={6} placeholder="Paragraf kolom kanan..." />
             </Field>
           </div>
-          <div className="flex justify-end pt-2 border-t border-gray-50">
+          <div className="flex justify-end pt-2 border-t border-[#f2f4e8]">
             <SaveBtn onClick={() => save('manifesto')} saving={saving.manifesto} />
           </div>
         </div>
       </SectionCard>
 
-      {/* Agenda Terdekat */}
-      <SectionCard title="Agenda Terdekat" subtitle="Info event berikutnya yang tampil di halaman utama" icon={BookOpen} collapsible>
-        <div className="space-y-4">
-          <div className="grid grid-cols-3 gap-4">
-            <Field label="Angka Tanggal (besar)" required>
-              <Input value={data.agenda_tanggal} onChange={v => set('agenda_tanggal', v)} placeholder="24" />
-            </Field>
-            <Field label="Hari">
-              <Input value={data.agenda_hari} onChange={v => set('agenda_hari', v)} placeholder="Minggu" />
-            </Field>
-            <Field label="Bulan & Tahun">
-              <Input value={data.agenda_bulan_tahun} onChange={v => set('agenda_bulan_tahun', v)} placeholder="Maret 2026" />
-            </Field>
-          </div>
-          <div className="grid grid-cols-2 gap-4">
-            <Field label="Waktu (WIB)">
-              <Input value={data.agenda_jam} onChange={v => set('agenda_jam', v)} placeholder="15:30–20:30 WIB" />
-            </Field>
-            <Field label="Lokasi">
-              <Input value={data.agenda_lokasi} onChange={v => set('agenda_lokasi', v)} placeholder="Taman Sari · Kecamatan Banyumas" />
-            </Field>
-          </div>
-          <Field label="Deskripsi Singkat">
-            <Textarea value={data.agenda_deskripsi} onChange={v => set('agenda_deskripsi', v)} rows={3} />
-          </Field>
-          <div className="flex justify-end pt-2 border-t border-gray-50">
-            <SaveBtn onClick={() => save('agenda')} saving={saving.agenda} />
-          </div>
+      {/* Agenda Terdekat — auto dari event */}
+      <SectionCard title="Agenda Terdekat" subtitle="Diambil otomatis dari event terdekat" icon={BookOpen} collapsible>
+        <div className="bg-blue-50 border border-blue-100 rounded-[12px] px-4 py-3 flex items-start gap-3">
+          <AlertCircle size={16} className="text-blue-500 shrink-0 mt-0.5" />
+          <p className="text-sm text-blue-700">
+            Agenda Terdekat di halaman publik <strong>otomatis menampilkan event dengan tanggal terdekat</strong> dari menu <strong>Kelola Event</strong>. Tidak perlu mengisi manual — buat atau perbarui event dari halaman Kelola Event.
+          </p>
         </div>
       </SectionCard>
 
@@ -444,14 +426,21 @@ function TabBeranda() {
             <Field label="Rute Trans Banyumas 1">
               <Input value={data.lokasi_trans1_nama} onChange={v => set('lokasi_trans1_nama', v)} />
             </Field>
+            <Field label="Link Maps Rute 1">
+              <Input value={data.lokasi_trans1_url} onChange={v => set('lokasi_trans1_url', v)} placeholder="https://maps.google.com/..." />
+            </Field>
             <Field label="Rute Trans Banyumas 2">
               <Input value={data.lokasi_trans2_nama} onChange={v => set('lokasi_trans2_nama', v)} />
+            </Field>
+            <Field label="Link Maps Rute 2">
+              <Input value={data.lokasi_trans2_url} onChange={v => set('lokasi_trans2_url', v)} placeholder="https://maps.google.com/..." />
             </Field>
           </div>
           <Field label="Jam Operasional Trans">
             <Input value={data.lokasi_trans_jam} onChange={v => set('lokasi_trans_jam', v)} placeholder="04:40 – 18:30 WIB" />
           </Field>
-          <div className="flex justify-end pt-2 border-t border-gray-50">
+          <ImageInput label="Gambar Peta Lokasi" hint="Tampil di samping info lokasi pada halaman publik." value={data.lokasi_image_url} onChange={v => set('lokasi_image_url', v)} shape="wide" />
+          <div className="flex justify-end pt-2 border-t border-[#f2f4e8]">
             <SaveBtn onClick={() => save('lokasi')} saving={saving.lokasi} />
           </div>
         </div>
@@ -467,8 +456,12 @@ function TabBeranda() {
 
 function TabTentang() {
   const toast = useToast();
-  const [data, setData] = useState(() => load('about', DEFAULT_ABOUT));
+  const [data, setData] = useState(DEFAULT_ABOUT);
   const [saving, setSaving] = useState({});
+
+  useEffect(() => {
+    companyProfileApi.get('about').then(d => d && setData(d)).catch(() => {});
+  }, []);
 
   const set = (k, v) => setData(p => ({ ...p, [k]: v }));
   const setPillar = (idx, k, v) => setData(p => {
@@ -484,10 +477,14 @@ function TabTentang() {
 
   const save = async (section) => {
     setSaving(s => ({ ...s, [section]: true }));
-    await new Promise(r => setTimeout(r, 400));
-    persist('about', data);
-    setSaving(s => ({ ...s, [section]: false }));
-    toast.success('Berhasil disimpan');
+    try {
+      await companyProfileApi.save('about', data);
+      toast.success('Berhasil disimpan');
+    } catch (err) {
+      toast.error(extractError(err, 'Gagal menyimpan'));
+    } finally {
+      setSaving(s => ({ ...s, [section]: false }));
+    }
   };
 
   return (
@@ -498,7 +495,7 @@ function TabTentang() {
         <Field label="Headline Hero" hint="Kata yang dicetak miring: 'denyut kota lama'">
           <Textarea value={data.hero_headline} onChange={v => set('hero_headline', v)} rows={3} />
         </Field>
-        <div className="flex justify-end pt-4 border-t border-gray-50 mt-4">
+        <div className="flex justify-end pt-4 border-t border-[#f2f4e8] mt-4">
           <SaveBtn onClick={() => save('about_hero')} saving={saving.about_hero} />
         </div>
       </SectionCard>
@@ -513,7 +510,7 @@ function TabTentang() {
             <Textarea value={data.manifesto_col2} onChange={v => set('manifesto_col2', v)} rows={6} />
           </Field>
         </div>
-        <div className="flex justify-end pt-4 border-t border-gray-50 mt-4">
+        <div className="flex justify-end pt-4 border-t border-[#f2f4e8] mt-4">
           <SaveBtn onClick={() => save('about_manifesto')} saving={saving.about_manifesto} />
         </div>
       </SectionCard>
@@ -530,7 +527,7 @@ function TabTentang() {
           <Field label="Paragraf Penutup">
             <Textarea value={data.mirapat_closing} onChange={v => set('mirapat_closing', v)} rows={2} />
           </Field>
-          <div className="flex justify-end pt-2 border-t border-gray-50">
+          <div className="flex justify-end pt-2 border-t border-[#f2f4e8]">
             <SaveBtn onClick={() => save('mirapat')} saving={saving.mirapat} />
           </div>
         </div>
@@ -540,8 +537,8 @@ function TabTentang() {
       <SectionCard title="Tiga Pilar" subtitle="CULTURE · CREATIVE · CIRCULAR" icon={BookOpen} collapsible>
         <div className="grid grid-cols-3 gap-4">
           {data.pillars.map((p, idx) => (
-            <div key={p.n} className="border border-gray-100 rounded-xl p-4 space-y-3">
-              <div className="text-xs font-bold text-green-700 uppercase tracking-wider">Pilar {p.n}</div>
+            <div key={p.n} className="border border-gray-100 rounded-[12px] p-4 space-y-3">
+              <div className="text-xs font-bold text-[#7a8a52] uppercase tracking-wider">Pilar {p.n}</div>
               <Field label="Label">
                 <Input value={p.label} onChange={v => setPillar(idx, 'label', v)} placeholder="CULTURE" />
               </Field>
@@ -551,7 +548,7 @@ function TabTentang() {
             </div>
           ))}
         </div>
-        <div className="flex justify-end pt-4 border-t border-gray-50 mt-4">
+        <div className="flex justify-end pt-4 border-t border-[#f2f4e8] mt-4">
           <SaveBtn onClick={() => save('pillars')} saving={saving.pillars} />
         </div>
       </SectionCard>
@@ -570,28 +567,19 @@ function TabTentang() {
               <Textarea value={data.sasaran} onChange={v => set('sasaran', v)} rows={4} />
             </Field>
           </div>
-          <div className="flex justify-end pt-2 border-t border-gray-50">
+          <div className="flex justify-end pt-2 border-t border-[#f2f4e8]">
             <SaveBtn onClick={() => save('visi')} saving={saving.visi} />
           </div>
         </div>
       </SectionCard>
 
-      {/* Stats */}
-      <SectionCard title="Statistik Ekosistem" subtitle="Empat angka besar di akhir halaman About" icon={BookOpen} collapsible>
-        <div className="grid grid-cols-4 gap-4">
-          {data.stats.map((s, idx) => (
-            <div key={idx} className="border border-gray-100 rounded-xl p-4 space-y-3">
-              <Field label="Angka">
-                <Input value={s.n} onChange={v => setStat(idx, 'n', v)} placeholder="86" />
-              </Field>
-              <Field label="Label">
-                <Input value={s.label} onChange={v => setStat(idx, 'label', v)} placeholder="Edisi..." />
-              </Field>
-            </div>
-          ))}
-        </div>
-        <div className="flex justify-end pt-4 border-t border-gray-50 mt-4">
-          <SaveBtn onClick={() => save('stats')} saving={saving.stats} />
+      {/* Stats — auto dari backend */}
+      <SectionCard title="Statistik Ekosistem" subtitle="Dihitung otomatis dari data aktual" icon={BookOpen} collapsible>
+        <div className="bg-blue-50 border border-blue-100 rounded-[12px] px-4 py-3 flex items-start gap-3">
+          <AlertCircle size={16} className="text-blue-500 shrink-0 mt-0.5" />
+          <p className="text-sm text-blue-700">
+            Angka statistik (<strong>Edisi, Kolaborator aktif, Artisan, Pengunjung</strong>) dihitung otomatis dari data sistem secara real-time. Tidak perlu mengisi manual — data diperbarui setiap kali halaman About dimuat.
+          </p>
         </div>
       </SectionCard>
 
@@ -608,16 +596,16 @@ function PersonModal({ person, onClose, onSave }) {
   const set = (k, v) => setForm(p => ({ ...p, [k]: v }));
   return (
     <div className="fixed inset-0 bg-black/40 z-50 flex items-end md:items-center justify-center p-4" onClick={onClose}>
-      <div className="bg-white rounded-2xl w-full max-w-md shadow-2xl max-h-[90vh] flex flex-col" onClick={e => e.stopPropagation()}>
+      <div className="bg-white rounded-[16px] w-full max-w-md shadow-2xl max-h-[90vh] flex flex-col" onClick={e => e.stopPropagation()}>
         <div className="flex items-center justify-between p-5 border-b border-gray-100 shrink-0">
-          <h3 className="font-bold text-gray-800">Edit Anggota Tim</h3>
-          <button onClick={onClose} className="text-gray-400 hover:text-gray-600"><X size={20} /></button>
+          <h3 className="font-bold text-[#1e2010]">Edit Anggota Tim</h3>
+          <button onClick={onClose} className="text-[#8a9070] hover:text-[#5a6040]"><X size={20} /></button>
         </div>
         <div className="overflow-y-auto flex-1 p-5 space-y-4">
-          <ImageInput label="Foto Profil" value={form.photo} onChange={v => set('photo', v)} shape="square" />
+          <ImageInput label="Foto Profil" value={form.foto_url} onChange={v => set('foto_url', v)} shape="square" />
           <div className="grid grid-cols-2 gap-3">
-            <Field label="Role (label kecil)" required>
-              <Input value={form.role} onChange={v => set('role', v)} placeholder="FOUNDER" />
+            <Field label="Jabatan (label kecil)" required>
+              <Input value={form.jabatan} onChange={v => set('jabatan', v)} placeholder="FOUNDER" />
             </Field>
             <Field label="Nama Lengkap" required>
               <Input value={form.name} onChange={v => set('name', v)} placeholder="Nama + gelar" />
@@ -631,8 +619,8 @@ function PersonModal({ person, onClose, onSave }) {
           </Field>
         </div>
         <div className="flex gap-3 p-5 border-t border-gray-100 shrink-0">
-          <button onClick={onClose} className="flex-1 border border-gray-200 text-gray-600 py-2.5 rounded-xl text-sm font-medium hover:bg-gray-50 transition">Batal</button>
-          <button onClick={() => onSave(form)} className="flex-1 bg-green-700 hover:bg-green-800 text-white py-2.5 rounded-xl text-sm font-semibold transition">Simpan</button>
+          <button onClick={onClose} className="flex-1 border border-[#e4e7d4] text-[#5a6040] py-2.5 rounded-[12px] text-sm font-medium hover:bg-[#f7f8f2] transition">Batal</button>
+          <button onClick={() => onSave(form)} className="flex-1 bg-[#7a8a52] hover:bg-[#4f5c30] text-white py-2.5 rounded-[12px] text-sm font-semibold transition">Simpan</button>
         </div>
       </div>
     </div>
@@ -641,9 +629,13 @@ function PersonModal({ person, onClose, onSave }) {
 
 function TabTim() {
   const toast = useToast();
-  const [data, setData] = useState(() => load('tim', DEFAULT_TIM));
+  const [data, setData] = useState(DEFAULT_TIM);
   const [editPerson, setEditPerson] = useState(null);
   const [saving, setSaving] = useState({});
+
+  useEffect(() => {
+    companyProfileApi.get('tim').then(d => d && setData(d)).catch(() => {});
+  }, []);
 
   const set = (k, v) => setData(p => ({ ...p, [k]: v }));
   const setHelix = (idx, k, v) => setData(p => {
@@ -654,10 +646,14 @@ function TabTim() {
 
   const saveAll = async (section) => {
     setSaving(s => ({ ...s, [section]: true }));
-    await new Promise(r => setTimeout(r, 400));
-    persist('tim', data);
-    setSaving(s => ({ ...s, [section]: false }));
-    toast.success('Berhasil disimpan');
+    try {
+      await companyProfileApi.save('tim', data);
+      toast.success('Berhasil disimpan');
+    } catch (err) {
+      toast.error(extractError(err, 'Gagal menyimpan'));
+    } finally {
+      setSaving(s => ({ ...s, [section]: false }));
+    }
   };
 
   const savePerson = (updated) => {
@@ -667,7 +663,7 @@ function TabTim() {
   };
 
   const addPerson = () => {
-    const newP = { id: `kp${Date.now()}`, photo: '', role: 'MEMBER', name: 'Anggota Baru', title: '', bio: '' };
+    const newP = { id: `kp${Date.now()}`, foto_url: '', jabatan: 'KOLABORATOR', name: 'Anggota Baru', title: '', bio: '' };
     setData(p => ({ ...p, key_people: [...p.key_people, newP] }));
   };
 
@@ -685,29 +681,29 @@ function TabTim() {
         <div className="space-y-4">
           <div className="grid grid-cols-3 gap-4">
             {data.key_people.map((kp) => (
-              <div key={kp.id} className="border border-gray-100 rounded-xl overflow-hidden group relative">
-                <div className="aspect-square bg-gray-100 overflow-hidden">
-                  {kp.photo
-                    ? <img src={kp.photo} alt={kp.name} className="w-full h-full object-cover" />
+              <div key={kp.id} className="border border-gray-100 rounded-[12px] overflow-hidden group relative">
+                <div className="aspect-square bg-[#eef0e0] overflow-hidden">
+                  {kp.foto_url
+                    ? <img src={kp.foto_url} alt={kp.name} className="w-full h-full object-cover" />
                     : <div className="w-full h-full flex items-center justify-center text-gray-300"><Users size={32} /></div>
                   }
                 </div>
                 <div className="p-3">
-                  <div className="text-[10px] font-bold text-green-700 uppercase tracking-wider">{kp.role}</div>
-                  <div className="font-semibold text-gray-800 text-sm mt-1 leading-tight">{kp.name}</div>
-                  <div className="text-xs text-gray-400 mt-0.5">{kp.title}</div>
+                  <div className="text-[10px] font-bold text-[#7a8a52] uppercase tracking-wider">{kp.jabatan}</div>
+                  <div className="font-semibold text-[#1e2010] text-sm mt-1 leading-tight">{kp.name}</div>
+                  <div className="text-xs text-[#8a9070] mt-0.5">{kp.title}</div>
                 </div>
                 <div className="absolute top-2 right-2 flex gap-1 opacity-0 group-hover:opacity-100 transition">
-                  <button onClick={() => setEditPerson(kp)} className="w-7 h-7 bg-white rounded-lg shadow flex items-center justify-center text-gray-500 hover:text-green-700"><Edit2 size={13} /></button>
-                  <button onClick={() => removePerson(kp.id)} className="w-7 h-7 bg-white rounded-lg shadow flex items-center justify-center text-gray-500 hover:text-red-500"><Trash2 size={13} /></button>
+                  <button onClick={() => setEditPerson(kp)} className="w-7 h-7 bg-white rounded-lg shadow flex items-center justify-center text-[#8a9070] hover:text-[#7a8a52]"><Edit2 size={13} /></button>
+                  <button onClick={() => removePerson(kp.id)} className="w-7 h-7 bg-white rounded-lg shadow flex items-center justify-center text-[#8a9070] hover:text-red-500"><Trash2 size={13} /></button>
                 </div>
               </div>
             ))}
           </div>
-          <button onClick={addPerson} className="flex items-center gap-2 border-2 border-dashed border-gray-200 hover:border-green-400 hover:text-green-700 text-gray-400 px-4 py-3 rounded-xl text-sm font-medium transition w-full justify-center">
+          <button onClick={addPerson} className="flex items-center gap-2 border-2 border-dashed border-[#e4e7d4] hover:border-[#c8d09a] hover:text-[#7a8a52] text-[#8a9070] px-4 py-3 rounded-[12px] text-sm font-medium transition w-full justify-center">
             <Plus size={16} /> Tambah Anggota Tim
           </button>
-          <div className="flex justify-end pt-2 border-t border-gray-50">
+          <div className="flex justify-end pt-2 border-t border-[#f2f4e8]">
             <SaveBtn onClick={() => saveAll('key_people')} saving={saving.key_people} />
           </div>
         </div>
@@ -718,8 +714,8 @@ function TabTim() {
         <div className="space-y-4">
           <div className="grid grid-cols-2 gap-4">
             {data.hexa_helix.map((hh, idx) => (
-              <div key={hh.id} className="border border-gray-100 rounded-xl p-4 space-y-3">
-                <div className="text-xs font-bold text-green-700 uppercase tracking-wider">Helix {idx + 1}</div>
+              <div key={hh.id} className="border border-gray-100 rounded-[12px] p-4 space-y-3">
+                <div className="text-xs font-bold text-[#7a8a52] uppercase tracking-wider">Helix {idx + 1}</div>
                 <Field label="Nama Pilar">
                   <Input value={hh.name} onChange={v => setHelix(idx, 'name', v)} placeholder="Government" />
                 </Field>
@@ -729,7 +725,7 @@ function TabTim() {
               </div>
             ))}
           </div>
-          <div className="flex justify-end pt-2 border-t border-gray-50">
+          <div className="flex justify-end pt-2 border-t border-[#f2f4e8]">
             <SaveBtn onClick={() => saveAll('hexa_helix')} saving={saving.hexa_helix} />
           </div>
         </div>
@@ -746,7 +742,7 @@ function TabTim() {
               <Textarea value={data.legalitas_hukum} onChange={v => set('legalitas_hukum', v)} rows={8} />
             </Field>
           </div>
-          <div className="flex justify-end pt-2 border-t border-gray-50">
+          <div className="flex justify-end pt-2 border-t border-[#f2f4e8]">
             <SaveBtn onClick={() => saveAll('legalitas')} saving={saving.legalitas} />
           </div>
         </div>
@@ -762,26 +758,47 @@ function TabTim() {
 
 function TabProgram() {
   const toast = useToast();
-  const [programs, setPrograms] = useState(() => load('programs', DEFAULT_PROGRAMS));
+  const [programs, setPrograms] = useState(DEFAULT_PROGRAMS);
   const [saving, setSaving] = useState(false);
+
+  useEffect(() => {
+    companyProfileApi.get('programs').then(d => d && setPrograms(d)).catch(() => {});
+  }, []);
+
+  const mdeOptions = React.useMemo(() => ({
+    autofocus: false,
+    spellChecker: false,
+    toolbar: ['bold', 'italic', 'heading', '|', 'unordered-list', 'ordered-list', '|', 'preview'],
+    status: false,
+    minHeight: '120px',
+  }), []);
+
+  const toSlug = (s) => s.toLowerCase().replace(/[^a-z0-9\s-]/g, '').trim().replace(/\s+/g, '-');
 
   const setP = (idx, k, v) => setPrograms(p => {
     const arr = [...p];
     arr[idx] = { ...arr[idx], [k]: v };
+    if (k === 'title' && !arr[idx].slug) {
+      arr[idx].slug = toSlug(v);
+    }
     return arr;
   });
 
   const save = async () => {
     setSaving(true);
-    await new Promise(r => setTimeout(r, 400));
-    persist('programs', programs);
-    setSaving(false);
-    toast.success('Data program berhasil disimpan');
+    try {
+      await companyProfileApi.save('programs', programs);
+      toast.success('Data program berhasil disimpan');
+    } catch (err) {
+      toast.error(extractError(err, 'Gagal menyimpan'));
+    } finally {
+      setSaving(false);
+    }
   };
 
   return (
     <div className="space-y-5">
-      <div className="bg-blue-50 border border-blue-100 rounded-xl px-4 py-3 flex items-start gap-3">
+      <div className="bg-blue-50 border border-blue-100 rounded-[12px] px-4 py-3 flex items-start gap-3">
         <AlertCircle size={16} className="text-blue-500 shrink-0 mt-0.5" />
         <p className="text-sm text-blue-700">Program yang sama tampil di halaman <strong>Program</strong> (deskripsi panjang) dan <strong>Home</strong> (deskripsi pendek). Isi kedua versi agar tampilan konsisten.</p>
       </div>
@@ -793,15 +810,23 @@ function TabProgram() {
               <Field label="Judul Program" required>
                 <Input value={p.title} onChange={v => setP(idx, 'title', v)} />
               </Field>
-              <div />
-            </div>
-            <ImageInput label="Foto Program" value={p.img} onChange={v => setP(idx, 'img', v)} shape="wide" />
-            <div className="grid grid-cols-2 gap-4">
-              <Field label="Deskripsi Panjang (halaman Program)" hint="Ditampilkan di halaman /program">
-                <Textarea value={p.body} onChange={v => setP(idx, 'body', v)} rows={4} />
+              <Field label="Slug URL" hint="Otomatis dari judul. Digunakan di URL halaman detail program.">
+                <Input value={p.slug || ''} onChange={v => setP(idx, 'slug', toSlug(v))} placeholder="contoh-nama-program" />
               </Field>
-              <Field label="Deskripsi Pendek (tile di Home)" hint="Versi ringkas untuk tile grid di halaman utama">
-                <Textarea value={p.body_short} onChange={v => setP(idx, 'body_short', v)} rows={4} />
+            </div>
+            <ImageInput label="Foto Program" value={p.image_url} onChange={v => setP(idx, 'image_url', v)} shape="wide" />
+            <Field label="Deskripsi Panjang (halaman Program)" hint="Mendukung Markdown: **tebal**, *miring*, ## Judul, - daftar">
+              <SimpleMDE value={p.body || ''} onChange={v => setP(idx, 'body', v)} options={mdeOptions} />
+            </Field>
+            <Field label="Deskripsi Pendek (tile di Home)" hint="Versi ringkas plain text untuk tile grid di halaman utama">
+              <Textarea value={p.body_short || ''} onChange={v => setP(idx, 'body_short', v)} rows={3} />
+            </Field>
+            <div className="grid grid-cols-2 gap-4">
+              <Field label="Target Peserta" hint="Opsional. Contoh: Umum, Komunitas & undangan">
+                <Input value={p.target_peserta || ''} onChange={v => setP(idx, 'target_peserta', v)} placeholder="Umum" />
+              </Field>
+              <Field label="Durasi" hint="Opsional. Contoh: ±90 menit, Sepanjang event">
+                <Input value={p.durasi || ''} onChange={v => setP(idx, 'durasi', v)} placeholder="±120 menit" />
               </Field>
             </div>
           </div>
@@ -809,7 +834,7 @@ function TabProgram() {
       ))}
 
       <div className="flex justify-end sticky bottom-4">
-        <div className="bg-white rounded-2xl shadow-lg border border-gray-100 p-3">
+        <div className="bg-white rounded-[16px] shadow-lg border border-gray-100 p-3">
           <SaveBtn onClick={save} saving={saving} label="Simpan Semua Program" />
         </div>
       </div>
@@ -822,43 +847,60 @@ function TabProgram() {
 // ─────────────────────────────────────────────
 
 function WorkModal({ work, onClose, onSave }) {
-  const ROLES = ['Kolaborator · Fotografi', 'Kolaborator · Mode', 'Kolaborator · Pertunjukan', 'Kolaborator · Desain Grafis', 'Kolaborator · Seni Publik', 'Artisan · Tekstil', 'Artisan · Kriya', 'Artisan · Kuliner', 'Lainnya'];
   const [form, setForm] = useState({ ...work });
   const set = (k, v) => setForm(p => ({ ...p, [k]: v }));
+  const isArtisan = form.owner_type === 'artisan';
   return (
     <div className="fixed inset-0 bg-black/40 z-50 flex items-end md:items-center justify-center p-4" onClick={onClose}>
-      <div className="bg-white rounded-2xl w-full max-w-lg shadow-2xl max-h-[90vh] flex flex-col" onClick={e => e.stopPropagation()}>
+      <div className="bg-white rounded-[16px] w-full max-w-lg shadow-2xl max-h-[90vh] flex flex-col" onClick={e => e.stopPropagation()}>
         <div className="flex items-center justify-between p-5 border-b border-gray-100 shrink-0">
-          <h3 className="font-bold text-gray-800">{work.id ? 'Edit Karya' : 'Tambah Karya Manual'}</h3>
-          <button onClick={onClose} className="text-gray-400 hover:text-gray-600"><X size={20} /></button>
+          <h3 className="font-bold text-[#1e2010]">{work.id ? 'Edit Karya' : 'Tambah Karya Manual'}</h3>
+          <button onClick={onClose} className="text-[#8a9070] hover:text-[#5a6040]"><X size={20} /></button>
         </div>
         <div className="overflow-y-auto flex-1 p-5 space-y-4">
-          <ImageInput label="Foto Karya" value={form.img} onChange={v => set('img', v)} shape="wide" />
+          <ImageInput label="Foto Karya" value={form.gambar_url} onChange={v => set('gambar_url', v)} shape="wide" />
           <Field label="Judul Karya" required>
-            <Input value={form.title} onChange={v => set('title', v)} placeholder="Nama karya" />
+            <Input value={form.judul} onChange={v => set('judul', v)} placeholder="Nama karya" />
           </Field>
           <div className="grid grid-cols-2 gap-3">
-            <Field label="Nama Pembuat/Kreator" required>
+            <Field label="Nama Pembuat/Kolaborator" required>
               <Input value={form.owner} onChange={v => set('owner', v)} placeholder="Nama individu/komunitas" />
             </Field>
             <Field label="Tahun">
-              <Input value={form.year} onChange={v => set('year', v)} placeholder="2026" />
+              <Input type="number" value={form.tahun} onChange={v => set('tahun', parseInt(v, 10) || new Date().getFullYear())} placeholder="2026" />
             </Field>
           </div>
-          <Field label="Peran / Kategori">
-            <select value={form.role} onChange={e => set('role', e.target.value)}
-              className="w-full border border-gray-200 rounded-xl px-4 py-2.5 text-sm focus:outline-none focus:border-green-400 transition bg-white">
-              {ROLES.map(r => <option key={r}>{r}</option>)}
+          <Field label="Tipe Pembuat" required>
+            <select value={form.owner_type || ''} onChange={e => set('owner_type', e.target.value || null)}
+              className="w-full border border-[#e4e7d4] rounded-[12px] px-4 py-2.5 text-sm focus:outline-none focus:border-[#7a8a52] transition bg-white">
+              <option value="">Pilih tipe pembuat...</option>
+              <option value="artisan">Artisan (UMKM)</option>
+              <option value="kolaborator">Kolaborator (Kreatif)</option>
             </select>
           </Field>
+          {form.owner_type && (isArtisan ? (
+            <Field label="Kategori Usaha">
+              <select value={form.kategori_usaha || ''} onChange={e => set('kategori_usaha', e.target.value)}
+                className="w-full border border-[#e4e7d4] rounded-[12px] px-4 py-2.5 text-sm focus:outline-none focus:border-[#7a8a52] transition bg-white">
+                {KATEGORI_USAHA.map(s => <option key={s}>{s}</option>)}
+              </select>
+            </Field>
+          ) : (
+            <Field label="Subsektor">
+              <select value={form.subsektor || ''} onChange={e => set('subsektor', e.target.value)}
+                className="w-full border border-[#e4e7d4] rounded-[12px] px-4 py-2.5 text-sm focus:outline-none focus:border-[#7a8a52] transition bg-white">
+                {SUBSEKTOR.map(s => <option key={s}>{s}</option>)}
+              </select>
+            </Field>
+          ))}
           <Field label="Deskripsi">
-            <Textarea value={form.description} onChange={v => set('description', v)} rows={4} />
+            <Textarea value={form.deskripsi} onChange={v => set('deskripsi', v)} rows={4} />
           </Field>
           <ToggleSwitch value={form.visible} onChange={v => set('visible', v)} label="Tampilkan di company profile" />
         </div>
         <div className="flex gap-3 p-5 border-t border-gray-100 shrink-0">
-          <button onClick={onClose} className="flex-1 border border-gray-200 text-gray-600 py-2.5 rounded-xl text-sm font-medium hover:bg-gray-50 transition">Batal</button>
-          <button onClick={() => onSave(form)} className="flex-1 bg-green-700 hover:bg-green-800 text-white py-2.5 rounded-xl text-sm font-semibold transition">Simpan Karya</button>
+          <button onClick={onClose} className="flex-1 border border-[#e4e7d4] text-[#5a6040] py-2.5 rounded-[12px] text-sm font-medium hover:bg-[#f7f8f2] transition">Batal</button>
+          <button onClick={() => onSave(form)} className="flex-1 bg-[#7a8a52] hover:bg-[#4f5c30] text-white py-2.5 rounded-[12px] text-sm font-semibold transition">Simpan Karya</button>
         </div>
       </div>
     </div>
@@ -867,31 +909,39 @@ function WorkModal({ work, onClose, onSave }) {
 
 function TabKarya() {
   const toast = useToast();
-  const [works, setWorks] = useState(() => load('works', DEFAULT_WORKS));
+  const [works, setWorks] = useState(DEFAULT_WORKS);
   const [editWork, setEditWork] = useState(null);
   const [filter, setFilter] = useState('all'); // 'all' | 'kolaborator' | 'manual'
   const [saving, setSaving] = useState(false);
 
+  useEffect(() => {
+    companyProfileApi.get('works').then(d => d && setWorks(d)).catch(() => {});
+  }, []);
+
   const save = async () => {
     setSaving(true);
-    await new Promise(r => setTimeout(r, 400));
-    persist('works', works);
-    setSaving(false);
-    toast.success('Data karya berhasil disimpan');
+    try {
+      await companyProfileApi.save('works', works);
+      toast.success('Data karya berhasil disimpan');
+    } catch (err) {
+      toast.error(extractError(err, 'Gagal menyimpan'));
+    } finally {
+      setSaving(false);
+    }
   };
 
   const toggleVisible = (id) => {
     setWorks(w => w.map(x => x.id === id ? { ...x, visible: !x.visible } : x));
   };
 
-  const openAdd = () => setEditWork({ id: null, title: '', owner: '', role: 'Kolaborator · Fotografi', year: String(new Date().getFullYear()), img: '', description: '', source: 'manual', visible: true });
+  const openAdd = () => setEditWork({ id: null, judul: '', owner: '', owner_type: null, subsektor: '', kategori_usaha: '', tahun: new Date().getFullYear(), gambar_url: '', deskripsi: '', visible: true });
 
   const saveWork = (updated) => {
     if (updated.id) {
       setWorks(w => w.map(x => x.id === updated.id ? updated : x));
       toast.success('Karya diperbarui');
     } else {
-      const newW = { ...updated, id: `w-m-${Date.now()}`, source: 'manual' };
+      const newW = { ...updated, id: `w-m-${Date.now()}` };
       setWorks(w => [newW, ...w]);
       toast.success('Karya ditambahkan');
     }
@@ -900,25 +950,28 @@ function TabKarya() {
 
   const removeWork = (id) => {
     const w = works.find(x => x.id === id);
-    if (w?.source === 'kolaborator') { toast.warning('Karya dari kolaborator tidak bisa dihapus dari sini — hanya bisa disembunyikan'); return; }
+    if (w?.owner_type === 'kolaborator' || w?.owner_type === 'artisan') {
+      toast.warning('Karya dari kolaborator/artisan tidak bisa dihapus dari sini — hanya bisa disembunyikan');
+      return;
+    }
     if (!window.confirm('Hapus karya ini?')) return;
     setWorks(w => w.filter(x => x.id !== id));
     toast.success('Karya dihapus');
   };
 
   const filtered = works.filter(w =>
-    filter === 'all' ? true : filter === 'kolaborator' ? w.source === 'kolaborator' : w.source === 'manual'
+    filter === 'all' ? true : filter === 'kolaborator' ? (w.owner_type === 'kolaborator' || w.owner_type === 'artisan') : !w.owner_type
   );
 
   const visibleCount = works.filter(w => w.visible).length;
-  const kolabCount = works.filter(w => w.source === 'kolaborator').length;
-  const manualCount = works.filter(w => w.source === 'manual').length;
+  const kolabCount = works.filter(w => w.owner_type === 'kolaborator' || w.owner_type === 'artisan').length;
+  const manualCount = works.filter(w => !w.owner_type).length;
 
   return (
     <div className="space-y-5">
       {editWork !== null && <WorkModal work={editWork} onClose={() => setEditWork(null)} onSave={saveWork} />}
 
-      <div className="bg-blue-50 border border-blue-100 rounded-xl px-4 py-3 flex items-start gap-3">
+      <div className="bg-blue-50 border border-blue-100 rounded-[12px] px-4 py-3 flex items-start gap-3">
         <AlertCircle size={16} className="text-blue-500 shrink-0 mt-0.5" />
         <p className="text-sm text-blue-700">
           Karya dari <strong>Kolaborator</strong> otomatis muncul sesuai upload di portal kolaborator. Admin dapat menyembunyikan karya tertentu atau menambah karya manual. Karya dari kolaborator tidak bisa dihapus, hanya disembunyikan.
@@ -928,12 +981,12 @@ function TabKarya() {
       {/* Stats bar */}
       <div className="grid grid-cols-4 gap-3">
         {[
-          { label: 'Total Karya', value: works.length, color: 'bg-gray-50 text-gray-800' },
-          { label: 'Dari Kolaborator', value: kolabCount, color: 'bg-green-50 text-green-800' },
+          { label: 'Total Karya', value: works.length, color: 'bg-[#f7f8f2] text-[#1e2010]' },
+          { label: 'Dari Kolaborator', value: kolabCount, color: 'bg-[#eef0e0] text-[#4f5c30]' },
           { label: 'Tambahan Manual', value: manualCount, color: 'bg-blue-50 text-blue-800' },
           { label: 'Ditampilkan', value: visibleCount, color: 'bg-amber-50 text-amber-800' },
         ].map(s => (
-          <div key={s.label} className={`${s.color} rounded-xl p-3 border border-white`}>
+          <div key={s.label} className={`${s.color} rounded-[12px] p-3 border border-white`}>
             <div className="text-2xl font-bold">{s.value}</div>
             <div className="text-xs font-medium mt-0.5 opacity-70">{s.label}</div>
           </div>
@@ -945,13 +998,13 @@ function TabKarya() {
           <div className="flex gap-2">
             {[['all', 'Semua'], ['kolaborator', 'Dari Kolaborator'], ['manual', 'Manual Admin']].map(([val, lbl]) => (
               <button key={val} onClick={() => setFilter(val)}
-                className={`px-4 py-2 rounded-xl text-sm font-semibold transition ${filter === val ? 'bg-green-700 text-white' : 'bg-gray-100 text-gray-600 hover:bg-gray-200'}`}>
+                className={`px-4 py-2 rounded-[12px] text-sm font-semibold transition ${filter === val ? 'bg-[#7a8a52] text-white' : 'bg-[#eef0e0] text-[#5a6040] hover:bg-[#eef0e0]'}`}>
                 {lbl}
               </button>
             ))}
           </div>
           <div className="flex gap-2">
-            <button onClick={openAdd} className="flex items-center gap-2 bg-green-700 hover:bg-green-800 text-white px-4 py-2 rounded-xl text-sm font-semibold transition">
+            <button onClick={openAdd} className="flex items-center gap-2 bg-[#7a8a52] hover:bg-[#4f5c30] text-white px-4 py-2 rounded-[12px] text-sm font-semibold transition">
               <Plus size={15} /> Tambah Manual
             </button>
             <SaveBtn onClick={save} saving={saving} label="Simpan Semua" />
@@ -962,39 +1015,42 @@ function TabKarya() {
       {/* Works list */}
       <div className="space-y-2">
         {filtered.length === 0 && (
-          <div className="bg-white rounded-2xl border border-gray-100 p-10 text-center text-gray-400">
+          <div className="bg-white rounded-[16px] border border-gray-100 p-10 text-center text-[#8a9070]">
             <Image size={32} className="mx-auto mb-2 text-gray-200" />
             <p className="text-sm">Belum ada karya di kategori ini</p>
           </div>
         )}
         {filtered.map((w) => (
-          <div key={w.id} className={`bg-white rounded-xl border border-gray-100 p-4 flex items-center gap-4 transition ${!w.visible ? 'opacity-50' : ''}`}>
-            <div className="w-16 h-16 rounded-xl overflow-hidden bg-gray-100 shrink-0">
-              {w.img
-                ? <img src={w.img} alt={w.title} className="w-full h-full object-cover" />
+          <div key={w.id} className={`bg-white rounded-[12px] border border-gray-100 p-4 flex items-center gap-4 transition ${!w.visible ? 'opacity-50' : ''}`}>
+            <div className="w-16 h-16 rounded-[12px] overflow-hidden bg-[#eef0e0] shrink-0">
+              {w.gambar_url
+                ? <img src={w.gambar_url} alt={w.judul} className="w-full h-full object-cover" />
                 : <div className="w-full h-full flex items-center justify-center text-gray-300"><Image size={20} /></div>
               }
             </div>
             <div className="flex-1 min-w-0">
               <div className="flex items-center gap-2">
-                <span className="font-semibold text-gray-800 text-sm truncate">{w.title}</span>
-                {w.source === 'kolaborator' && (
-                  <span className="shrink-0 text-[10px] font-bold bg-green-50 text-green-700 border border-green-200 px-1.5 py-0.5 rounded-full">Kolaborator</span>
+                <span className="font-semibold text-[#1e2010] text-sm truncate">{w.judul}</span>
+                {w.owner_type === 'kolaborator' && (
+                  <span className="shrink-0 text-[10px] font-bold bg-[#eef0e0] text-[#7a8a52] border border-[#c8d09a] px-1.5 py-0.5 rounded-full">Kolaborator</span>
                 )}
-                {w.source === 'manual' && (
+                {w.owner_type === 'artisan' && (
+                  <span className="shrink-0 text-[10px] font-bold bg-blue-50 text-blue-700 border border-blue-200 px-1.5 py-0.5 rounded-full">Artisan</span>
+                )}
+                {!w.owner_type && (
                   <span className="shrink-0 text-[10px] font-bold bg-blue-50 text-blue-700 border border-blue-200 px-1.5 py-0.5 rounded-full">Manual</span>
                 )}
               </div>
-              <div className="text-xs text-gray-500 mt-0.5">{w.owner} · {w.role} · {w.year}</div>
-              {w.description && <p className="text-xs text-gray-400 mt-1 line-clamp-1">{w.description}</p>}
+              <div className="text-xs text-[#8a9070] mt-0.5">{w.owner} · {w.subsektor || w.kategori_usaha} · {w.tahun}</div>
+              {w.deskripsi && <p className="text-xs text-[#8a9070] mt-1 line-clamp-1">{w.deskripsi}</p>}
             </div>
             <div className="flex items-center gap-2 shrink-0">
               <ToggleSwitch value={w.visible} onChange={() => toggleVisible(w.id)} />
-              <button onClick={() => setEditWork(w)} className="w-8 h-8 rounded-lg border border-gray-200 flex items-center justify-center text-gray-400 hover:text-green-700 hover:border-green-300 transition">
+              <button onClick={() => setEditWork(w)} className="w-8 h-8 rounded-lg border border-[#e4e7d4] flex items-center justify-center text-[#8a9070] hover:text-[#7a8a52] hover:border-[#c8d09a] transition">
                 <Edit2 size={14} />
               </button>
-              {w.source === 'manual' && (
-                <button onClick={() => removeWork(w.id)} className="w-8 h-8 rounded-lg border border-gray-200 flex items-center justify-center text-gray-400 hover:text-red-500 hover:border-red-200 transition">
+              {!w.owner_type && (
+                <button onClick={() => removeWork(w.id)} className="w-8 h-8 rounded-lg border border-[#e4e7d4] flex items-center justify-center text-[#8a9070] hover:text-red-500 hover:border-red-200 transition">
                   <Trash2 size={14} />
                 </button>
               )}
@@ -1015,10 +1071,10 @@ function GalleryImageModal({ item, onClose, onSave }) {
   const set = (k, v) => setForm(p => ({ ...p, [k]: v }));
   return (
     <div className="fixed inset-0 bg-black/40 z-50 flex items-end md:items-center justify-center p-4" onClick={onClose}>
-      <div className="bg-white rounded-2xl w-full max-w-md shadow-2xl" onClick={e => e.stopPropagation()}>
+      <div className="bg-white rounded-[16px] w-full max-w-md shadow-2xl" onClick={e => e.stopPropagation()}>
         <div className="flex items-center justify-between p-5 border-b border-gray-100">
-          <h3 className="font-bold text-gray-800">Edit Foto Galeri</h3>
-          <button onClick={onClose} className="text-gray-400 hover:text-gray-600"><X size={20} /></button>
+          <h3 className="font-bold text-[#1e2010]">Edit Foto Galeri</h3>
+          <button onClick={onClose} className="text-[#8a9070] hover:text-[#5a6040]"><X size={20} /></button>
         </div>
         <div className="p-5 space-y-4">
           <ImageInput label="Gambar (upload atau path /assets/...)" value={form.src || `/assets/${form.filename}.jpg`}
@@ -1034,8 +1090,8 @@ function GalleryImageModal({ item, onClose, onSave }) {
           <ToggleSwitch value={form.visible} onChange={v => set('visible', v)} label="Tampilkan di galeri" />
         </div>
         <div className="flex gap-3 p-5 border-t border-gray-100">
-          <button onClick={onClose} className="flex-1 border border-gray-200 text-gray-600 py-2.5 rounded-xl text-sm font-medium hover:bg-gray-50 transition">Batal</button>
-          <button onClick={() => onSave(form)} className="flex-1 bg-green-700 hover:bg-green-800 text-white py-2.5 rounded-xl text-sm font-semibold transition">Simpan</button>
+          <button onClick={onClose} className="flex-1 border border-[#e4e7d4] text-[#5a6040] py-2.5 rounded-[12px] text-sm font-medium hover:bg-[#f7f8f2] transition">Batal</button>
+          <button onClick={() => onSave(form)} className="flex-1 bg-[#7a8a52] hover:bg-[#4f5c30] text-white py-2.5 rounded-[12px] text-sm font-semibold transition">Simpan</button>
         </div>
       </div>
     </div>
@@ -1044,18 +1100,26 @@ function GalleryImageModal({ item, onClose, onSave }) {
 
 function TabGaleri() {
   const toast = useToast();
-  const [data, setData] = useState(() => load('gallery', DEFAULT_GALLERY));
+  const [data, setData] = useState(DEFAULT_GALLERY);
   const [editImg, setEditImg] = useState(null);
   const [saving, setSaving] = useState({});
+
+  useEffect(() => {
+    companyProfileApi.get('gallery').then(d => d && setData(d)).catch(() => {});
+  }, []);
 
   const set = (k, v) => setData(p => ({ ...p, [k]: v }));
 
   const save = async (section) => {
     setSaving(s => ({ ...s, [section]: true }));
-    await new Promise(r => setTimeout(r, 400));
-    persist('gallery', data);
-    setSaving(s => ({ ...s, [section]: false }));
-    toast.success('Galeri berhasil disimpan');
+    try {
+      await companyProfileApi.save('gallery', data);
+      toast.success('Galeri berhasil disimpan');
+    } catch (err) {
+      toast.error(extractError(err, 'Gagal menyimpan'));
+    } finally {
+      setSaving(s => ({ ...s, [section]: false }));
+    }
   };
 
   const toggleImg = (id) => setData(p => ({ ...p, images: p.images.map(x => x.id === id ? { ...x, visible: !x.visible } : x) }));
@@ -1090,28 +1154,28 @@ function TabGaleri() {
             {data.images.map((img) => {
               const src = img.src || `/assets/${img.filename}.jpg`;
               return (
-                <div key={img.id} className={`group relative rounded-xl overflow-hidden border border-gray-100 ${!img.visible ? 'opacity-40' : ''}`}>
-                  <div className="aspect-square bg-gray-100">
+                <div key={img.id} className={`group relative rounded-[12px] overflow-hidden border border-gray-100 ${!img.visible ? 'opacity-40' : ''}`}>
+                  <div className="aspect-square bg-[#eef0e0]">
                     <img src={src} alt={img.label} className="w-full h-full object-cover" onError={e => { e.target.style.display = 'none'; }} />
                   </div>
                   <div className="p-2">
                     <div className="text-[10px] font-semibold text-gray-700 truncate">{img.label}</div>
-                    <div className="text-[10px] text-gray-400">{img.year}</div>
+                    <div className="text-[10px] text-[#8a9070]">{img.year}</div>
                   </div>
                   <div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 transition flex items-center justify-center gap-2">
-                    <button onClick={() => setEditImg(img)} className="w-7 h-7 bg-white rounded-lg flex items-center justify-center text-gray-600 hover:text-green-700 shadow"><Edit2 size={13} /></button>
-                    <button onClick={() => toggleImg(img.id)} className="w-7 h-7 bg-white rounded-lg flex items-center justify-center text-gray-600 shadow">{img.visible ? <EyeOff size={13} /> : <Eye size={13} />}</button>
-                    <button onClick={() => removeImg(img.id)} className="w-7 h-7 bg-white rounded-lg flex items-center justify-center text-gray-600 hover:text-red-500 shadow"><Trash2 size={13} /></button>
+                    <button onClick={() => setEditImg(img)} className="w-7 h-7 bg-white rounded-lg flex items-center justify-center text-[#5a6040] hover:text-[#7a8a52] shadow"><Edit2 size={13} /></button>
+                    <button onClick={() => toggleImg(img.id)} className="w-7 h-7 bg-white rounded-lg flex items-center justify-center text-[#5a6040] shadow">{img.visible ? <EyeOff size={13} /> : <Eye size={13} />}</button>
+                    <button onClick={() => removeImg(img.id)} className="w-7 h-7 bg-white rounded-lg flex items-center justify-center text-[#5a6040] hover:text-red-500 shadow"><Trash2 size={13} /></button>
                   </div>
                 </div>
               );
             })}
-            <button onClick={addImg} className="aspect-square rounded-xl border-2 border-dashed border-gray-200 hover:border-green-400 hover:text-green-700 text-gray-400 flex flex-col items-center justify-center gap-1 transition text-sm font-medium">
+            <button onClick={addImg} className="aspect-square rounded-[12px] border-2 border-dashed border-[#e4e7d4] hover:border-[#c8d09a] hover:text-[#7a8a52] text-[#8a9070] flex flex-col items-center justify-center gap-1 transition text-sm font-medium">
               <Plus size={20} />
               <span className="text-xs">Tambah</span>
             </button>
           </div>
-          <div className="flex justify-end pt-2 border-t border-gray-50">
+          <div className="flex justify-end pt-2 border-t border-[#f2f4e8]">
             <SaveBtn onClick={() => save('images')} saving={saving.images} label="Simpan Galeri" />
           </div>
         </div>
@@ -1129,7 +1193,10 @@ function TabGaleri() {
           <Field label="Ukuran File Download" hint="Contoh: ZIP · ±420 MB per edisi">
             <Input value={data.doc_ukuran} onChange={v => set('doc_ukuran', v)} />
           </Field>
-          <div className="flex justify-end pt-2 border-t border-gray-50">
+          <Field label="URL Unduh Dokumentasi" hint="Link tombol 'Unduh Paket Dokumentasi' — kosongkan jika belum tersedia">
+            <Input value={data.doc_download_url || ''} onChange={v => set('doc_download_url', v)} placeholder="https://..." />
+          </Field>
+          <div className="flex justify-end pt-2 border-t border-[#f2f4e8]">
             <SaveBtn onClick={() => save('doc')} saving={saving.doc} label="Simpan Teks Dokumentasi" />
           </div>
         </div>
@@ -1154,7 +1221,7 @@ const TABS = [
 
 export default function CompanyProfile() {
   const [activeTab, setActiveTab] = useState('beranda');
-  const profileUrl = import.meta.env.VITE_PUBLIC_EVENT_URL || '/';
+  const profileUrl = import.meta.env.VITE_COMPANY_URL || '/';
 
   return (
     <div className="min-h-full">
@@ -1162,26 +1229,26 @@ export default function CompanyProfile() {
       {/* Page top bar */}
       <div className="flex items-start justify-between mb-6 gap-4 flex-wrap">
         <div>
-          <h2 className="text-lg font-bold text-gray-800">Kelola Konten Company Profile</h2>
-          <p className="text-sm text-gray-500 mt-0.5">Setiap perubahan harus disimpan per-seksi. Data disimpan lokal, siap terkoneksi ke API backend.</p>
+          <h2 className="text-lg font-bold text-[#1e2010]">Kelola Konten Company Profile</h2>
+          <p className="text-sm text-[#8a9070] mt-0.5">Setiap perubahan harus disimpan per-seksi. Data disimpan lokal, siap terkoneksi ke API backend.</p>
         </div>
         {profileUrl && (
           <a href={profileUrl} target="_blank" rel="noopener noreferrer"
-            className="flex items-center gap-2 border border-gray-200 text-gray-600 hover:text-green-700 hover:border-green-300 px-4 py-2 rounded-xl text-sm font-semibold transition">
+            className="flex items-center gap-2 border border-[#e4e7d4] text-[#5a6040] hover:text-[#7a8a52] hover:border-[#c8d09a] px-4 py-2 rounded-[12px] text-sm font-semibold transition">
             <ExternalLink size={15} /> Lihat Company Profile
           </a>
         )}
       </div>
 
       {/* Tab navigation */}
-      <div className="flex gap-1 bg-gray-100 p-1 rounded-2xl mb-6 overflow-x-auto">
+      <div className="flex gap-1 bg-[#eef0e0] p-1 rounded-[16px] mb-6 overflow-x-auto">
         {TABS.map(tab => {
           const Icon = tab.icon;
           const active = activeTab === tab.id;
           return (
             <button key={tab.id} onClick={() => setActiveTab(tab.id)}
-              className={`flex items-center gap-2 px-4 py-2.5 rounded-xl text-sm font-semibold transition whitespace-nowrap flex-shrink-0 ${
-                active ? 'bg-white text-green-800 shadow-sm' : 'text-gray-500 hover:text-gray-700 hover:bg-white/50'
+              className={`flex items-center gap-2 px-4 py-2.5 rounded-[12px] text-sm font-semibold transition whitespace-nowrap flex-shrink-0 ${
+                active ? 'bg-white text-[#4f5c30] shadow-sm' : 'text-[#8a9070] hover:text-gray-700 hover:bg-white/50'
               }`}>
               <Icon size={15} />
               {tab.label}
@@ -1193,8 +1260,8 @@ export default function CompanyProfile() {
       {/* Tab subtitle */}
       <div className="mb-5">
         {TABS.filter(t => t.id === activeTab).map(tab => (
-          <div key={tab.id} className="flex items-center gap-2 text-sm text-gray-500">
-            <tab.icon size={15} className="text-green-600" />
+          <div key={tab.id} className="flex items-center gap-2 text-sm text-[#8a9070]">
+            <tab.icon size={15} className="text-[#7a8a52]" />
             <span>{tab.desc}</span>
           </div>
         ))}

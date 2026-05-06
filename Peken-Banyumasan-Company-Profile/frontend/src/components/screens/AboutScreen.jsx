@@ -1,8 +1,9 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import PillButton from '../shared/PillButton.jsx';
 import { Eyebrow, Wordmark } from '../shared/Typography.jsx';
 import SectionHeader from '../shared/SectionHeader.jsx';
 import WipeReveal from '../shared/WipeReveal.jsx';
+import { companyProfileApi, statsApi } from '../../services/endpoints.js';
 
 // Peken Banyumasan — About screen · v1.2
 // Implements:
@@ -217,7 +218,47 @@ function Stat({ n, label }) {
   );
 }
 
+const STATIC_PEOPLE = [
+  { photo: '/assets/tokoh-portrait-1.png', role: 'FOUNDER', name: 'Gilang Ramadhan, S.Sn., M.Ds.', title: 'Founder & Program Director', bio: 'Menggagas Peken pada Februari 2022 dan mengawal kurasi setiap edisi sejak. Latar belakang antropologi pertunjukan, dengan fokus pada kesenian Banyumasan kontemporer.' },
+  { photo: '/assets/tokoh-portrait-2.png', role: 'CURATOR', name: 'Galih Putra Pamungkas, S.Sn., M.Sn.', title: 'Curator — Artisan', bio: 'Mengkurasi artisan yang masuk ke setiap edisi Peken. Sebelumnya menjalankan kolektif batik di Sokaraja; membangun program pendampingan artisan dari hulu ke hilir.' },
+  { photo: '/assets/tokoh-portrait-3.png', role: 'STRATEGIC PARTNER', name: 'Jakarta Tisam S.STP, M.Si', title: 'Strategic Partner & Community Lead', bio: 'Menjaga jaringan kolaborator, sponsor, dan mitra institusi — kampus, pemerintah daerah, swasta. Memegang rasio kolaborasi yang sehat antar enam helix.' },
+];
+
+const STATIC_STATS = [
+  { n: '86', label: 'Edisi Peken diselenggarakan' },
+  { n: '240', label: 'Kolaborator aktif' },
+  { n: '1.2k', label: 'Artisan terlibat' },
+  { n: '38k', label: 'Pengunjung setiap edisi' },
+];
+
+function fmtStat(n) {
+  if (n >= 1000000) return (n / 1000000).toFixed(1).replace(/\.0$/, '') + 'jt';
+  if (n >= 1000)    return (n / 1000).toFixed(1).replace(/\.0$/, '') + 'k';
+  return String(n);
+}
+
 export default function AboutScreen() {
+  const [timData, setTimData] = useState(null);
+  const [liveStats, setLiveStats] = useState(null);
+
+  useEffect(() => {
+    companyProfileApi.get('tim').then(d => { if (d) setTimData(d); }).catch(() => {});
+    statsApi.public()
+      .then(d => { if (d) setLiveStats(d); })
+      .catch(() => {});
+  }, []);
+
+  const keyPeople = timData?.key_people?.length ? timData.key_people : STATIC_PEOPLE;
+
+  const statsData = liveStats
+    ? [
+        { n: fmtStat(liveStats.edisi_count),        label: 'Edisi Peken diselenggarakan' },
+        { n: fmtStat(liveStats.kolaborator_aktif),   label: 'Kolaborator aktif' },
+        { n: fmtStat(liveStats.artisan_aktif),       label: 'Artisan terlibat' },
+        { n: fmtStat(liveStats.pengunjung_total),    label: 'Pengunjung setiap edisi' },
+      ]
+    : (timData?.stats?.length ? timData.stats : STATIC_STATS);
+
   const Hero = (
     <section
       style={{
@@ -308,7 +349,7 @@ export default function AboutScreen() {
           }}
         >
           Peken Banyumasan tumbuh dari percakapan kecil di sudut Kota Lama —
-          antara seniman pertunjukan, pelaku UMKM, dan warga sekitar yang
+          antara seniman pertunjukan, pelaku Artisan, dan warga sekitar yang
           ingin menghidupkan kembali ruang publik sebagai tempat bertemu,
           bukan sekadar berdagang.
           <br />
@@ -397,7 +438,7 @@ export default function AboutScreen() {
           </em>
           , kata Banyumasan yang berarti perjumpaan rutin yang dijaga bersama.
           Setiap edisi mempertemukan seniman pertunjukan tradisional, perajin
-          muda, pelaku UMKM, akademisi, hingga warga sekitar dalam satu ruang
+          muda, pelaku Artisan, akademisi, hingga warga sekitar dalam satu ruang
           yang sama.
         </p>
         <blockquote
@@ -455,7 +496,7 @@ export default function AboutScreen() {
           <Pillar
             n="03"
             label="CIRCULAR"
-            body="Mendorong ekonomi berputar di dalam komunitas — dari tenant lokal, bahan lokal, hingga pengunjung lokal."
+            body="Mendorong ekonomi berputar di dalam komunitas — dari artisan lokal, bahan lokal, hingga pengunjung lokal."
           />
         </div>
       </section>
@@ -547,7 +588,7 @@ export default function AboutScreen() {
               }}
             >
               Menyediakan ruang publik dwi-mingguan yang mempertemukan
-              pelaku seni, UMKM, dan masyarakat — sehingga warisan budaya
+              pelaku seni, Artisan, dan masyarakat — sehingga warisan budaya
               Banyumasan dirawat melalui praktik bersama, bukan sekadar
               dipamerkan.
             </p>
@@ -575,7 +616,7 @@ export default function AboutScreen() {
                 maxWidth: '56ch',
               }}
             >
-              Seniman pertunjukan tradisional, perajin & UMKM Banyumas,
+              Seniman pertunjukan tradisional, perajin & Artisan Banyumas,
               komunitas kreatif muda, akademisi, mitra pemerintah dan
               swasta, serta pengunjung lokal-regional yang menjadi audiens
               sekaligus pelaku.
@@ -612,27 +653,16 @@ export default function AboutScreen() {
             alignItems: 'flex-start',
           }}
         >
-          <PersonCard
-            photo="/assets/tokoh-portrait-1.png"
-            role="FOUNDER"
-            name="Gilang Ramadhan, S.Sn., M.Ds."
-            title="Founder & Program Director"
-            bio="Menggagas Peken pada Februari 2022 dan mengawal kurasi setiap edisi sejak. Latar belakang antropologi pertunjukan, dengan fokus pada kesenian Banyumasan kontemporer."
-          />
-          <PersonCard
-            photo="/assets/tokoh-portrait-2.png"
-            role="CURATOR"
-            name="Galih Putra Pamungkas, S.Sn., M.Sn."
-            title="Curator — Artisan & UMKM"
-            bio="Mengkurasi tenant artisan dan UMKM yang masuk ke setiap edisi Peken. Sebelumnya menjalankan kolektif batik di Sokaraja; membangun program pendampingan tenant dari hulu ke hilir."
-          />
-          <PersonCard
-            photo="/assets/tokoh-portrait-3.png"
-            role="STRATEGIC PARTNER"
-            name="Jakarta Tisam S.STP, M.Si"
-            title="Strategic Partner & Community Lead"
-            bio="Menjaga jaringan kolaborator, sponsor, dan mitra institusi — kampus, pemerintah daerah, swasta. Memegang rasio kolaborasi yang sehat antar enam helix."
-          />
+          {keyPeople.map((p, i) => (
+            <PersonCard
+              key={i}
+              photo={p.photo || p.foto_url}
+              role={p.role}
+              name={p.name || p.nama}
+              title={p.title}
+              bio={p.bio}
+            />
+          ))}
         </div>
       </section>
 
@@ -680,7 +710,7 @@ export default function AboutScreen() {
           />
           <HelixCard
             name="Industry"
-            body="Pelaku usaha skala UMKM hingga korporasi sebagai mitra ekonomi dan ekosistem produk."
+            body="Pelaku usaha skala Artisan hingga korporasi sebagai mitra ekonomi dan ekosistem produk."
           />
           <HelixCard
             name="Community"
@@ -743,7 +773,7 @@ export default function AboutScreen() {
               Pemerintah Kabupaten Banyumas dan Dinas Kebudayaan sebagai
               mitra kebijakan; Universitas Jenderal Soedirman sebagai mitra
               riset dan pendampingan kurasi; Bank BPD Jawa Tengah sebagai
-              mitra pembiayaan UMKM; Komunitas Kota Lama Banyumas sebagai
+              mitra pembiayaan Artisan; Komunitas Kota Lama Banyumas sebagai
               mitra penyelenggara di lokasi.
               <br />
               <br />
@@ -825,10 +855,9 @@ export default function AboutScreen() {
             gap: 40,
           }}
         >
-          <Stat n="86" label="Edisi Peken diselenggarakan" />
-          <Stat n="240" label="Seniman & kolektif tampil" />
-          <Stat n="1.2k" label="UMKM & tenant terlibat" />
-          <Stat n="38k" label="Pengunjung setiap edisi" />
+          {statsData.map((s, i) => (
+            <Stat key={i} n={s.n} label={s.label} />
+          ))}
         </div>
       </section>
     </main>

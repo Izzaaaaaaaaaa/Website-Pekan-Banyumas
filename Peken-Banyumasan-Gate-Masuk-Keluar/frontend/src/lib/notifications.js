@@ -1,4 +1,5 @@
 import React from "react";
+import { STORAGE_EVENTS, notifKey } from './storageKeys';
 // lib/notifications.js — Event-driven notification queue
 // Works in dummy/offline mode via localStorage
 // Replace addNotif() with API POST when backend ready
@@ -9,7 +10,7 @@ export const NotifType = {
   KOLABORATOR_APPROVED:      'kolaborator_approved',      // admin setujui akun baru
   EVENT_ASSIGNED:       'event_assigned',       // admin assign ke event
   EVENT_STATUS_CHANGE:  'event_status_change',  // event berlangsung/selesai
-  AKTIVITAS_DELETED:        'aktivitas_deleted',         // admin hapus aktivitas
+  STORY_DELETED:            'story_deleted',              // admin hapus story kolaborator
   // Artisan receives
   ARTISAN_APPROVED:        'artisan_approved',         // admin setujui pendaftaran
   ARTISAN_EVENT_APPROVED:  'artisan_event_approved',   // admin setujui request event
@@ -25,7 +26,7 @@ const ICONS = {
   kolaborator_approved:      '✅',
   event_assigned:       '📅',
   event_status_change:  '🔔',
-  aktivitas_deleted:        '🗑️',
+  story_deleted:            '🗑️',
   artisan_approved:        '✅',
   artisan_event_approved:  '📅',
   artisan_event_assigned:  '📍',
@@ -35,8 +36,10 @@ const ICONS = {
   artisan_event_request:   '🏬',
 };
 
-const key = (role) => `peken_notif_${role}`;
-const DISPATCH_EVENT = 'peken_notif_update';
+// Local aliases so the rest of this file stays visually similar to the
+// original while all string literals flow from lib/storageKeys.
+const key = notifKey;                       // role → "peken_notif_{role}"
+const DISPATCH_EVENT = STORAGE_EVENTS.NOTIF_UPDATE;
 
 /** Get notifications for a role (kolaborator | artisan | admin) */
 export function getNotifs(role) {

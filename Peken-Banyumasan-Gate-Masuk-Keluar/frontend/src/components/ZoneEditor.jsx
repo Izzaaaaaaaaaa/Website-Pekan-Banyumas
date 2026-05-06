@@ -75,7 +75,7 @@ export default function ZoneEditor({ zones = [], onZonesChange }) {
                 refresh();
               }
             }}
-            className="flex items-center gap-1 px-2.5 py-1.5 border border-gray-200 rounded-lg text-xs text-gray-500 hover:bg-gray-50 transition"
+            className="flex items-center gap-1 px-2.5 py-1.5 border border-[#e4e7d4] rounded-lg text-xs text-[#8a9070] hover:bg-[#f7f8f2] transition"
             title="Reset ke 4-zona layout festival default">
             <Settings size={11}/> Reset Default
           </button>
@@ -87,14 +87,14 @@ export default function ZoneEditor({ zones = [], onZonesChange }) {
             }}
             className={`flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg text-xs font-semibold transition ${
               isSaved
-                ? 'bg-green-100 text-green-700 border border-green-200'
-                : 'bg-green-700 hover:bg-green-800 text-white'
+                ? 'bg-[#7a8a52] text-[#7a8a52] border border-[#7a8a52]'
+                : 'bg-[#7a8a52] hover:bg-[#7a8a52] text-white'
             }`}
             title="Simpan layout saat ini sebagai default untuk semua event baru">
             {isSaved ? '✓ Tersimpan!' : '⭐ Jadikan Default Venue'}
           </button>
           <button onClick={() => setShowAdd(p=>!p)}
-            className="flex items-center gap-1.5 px-2.5 py-1.5 bg-green-700 hover:bg-green-800 text-white rounded-lg text-xs font-semibold transition">
+            className="flex items-center gap-1.5 px-2.5 py-1.5 bg-[#7a8a52] hover:bg-[#7a8a52] text-white rounded-lg text-xs font-semibold transition">
             <Plus size={11}/> Zona Baru
           </button>
         </div>
@@ -104,27 +104,27 @@ export default function ZoneEditor({ zones = [], onZonesChange }) {
 
       {/* Add zone form */}
       {showAdd && (
-        <div className="bg-gray-50 border border-gray-200 rounded-xl p-4 space-y-3">
-          <p className="text-xs font-bold text-gray-600 uppercase tracking-wider">Tambah Zona</p>
+        <div className="bg-[#f7f8f2] border border-[#e4e7d4] rounded-xl p-4 space-y-3">
+          <p className="text-xs font-bold text-[#5a6040] uppercase tracking-wider">Tambah Zona</p>
           <div className="grid grid-cols-2 gap-3">
             <div>
               <label className="text-[10px] font-semibold text-gray-400 mb-1 block">Kode *</label>
               <input value={nz.zona} maxLength={3} placeholder="D"
                 onChange={e=>setNz(p=>({...p,zona:e.target.value.toUpperCase().slice(0,3)}))}
-                className="w-full border border-gray-200 rounded-lg px-3 py-2 text-sm font-bold uppercase focus:outline-none focus:border-green-400"/>
+                className="w-full border border-[#e4e7d4] rounded-lg px-3 py-2 text-sm font-bold uppercase focus:outline-none focus:border-[#7a8a52]"/>
             </div>
             <div>
               <label className="text-[10px] font-semibold text-gray-400 mb-1 block">Jumlah Stand *</label>
               <input type="number" min={1} max={50} value={nz.kapasitas}
                 onChange={e=>setNz(p=>({...p,kapasitas:+e.target.value}))}
-                className="w-full border border-gray-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:border-green-400"/>
+                className="w-full border border-[#e4e7d4] rounded-lg px-3 py-2 text-sm focus:outline-none focus:border-[#7a8a52]"/>
             </div>
           </div>
           <div>
             <label className="text-[10px] font-semibold text-gray-400 mb-1 block">Label Zona *</label>
             <input value={nz.label} placeholder="Zona D – Desain & Teknologi"
               onChange={e=>setNz(p=>({...p,label:e.target.value}))}
-              className="w-full border border-gray-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:border-green-400"/>
+              className="w-full border border-[#e4e7d4] rounded-lg px-3 py-2 text-sm focus:outline-none focus:border-[#7a8a52]"/>
           </div>
           <div>
             <label className="text-[10px] font-semibold text-gray-400 mb-1 block">Warna</label>
@@ -135,14 +135,14 @@ export default function ZoneEditor({ zones = [], onZonesChange }) {
                   style={{background:w}} title={w}/>
               ))}
               <input type="color" value={nz.warna} onChange={e=>setNz(p=>({...p,warna:e.target.value}))}
-                className="w-6 h-6 rounded-md cursor-pointer border border-gray-200 p-0.5"/>
+                className="w-6 h-6 rounded-md cursor-pointer border border-[#e4e7d4] p-0.5"/>
             </div>
           </div>
           <div className="flex gap-2">
             <button onClick={()=>setShowAdd(false)}
-              className="flex-1 border border-gray-200 text-gray-500 py-2 rounded-xl text-xs font-semibold hover:bg-gray-50 transition">Batal</button>
+              className="flex-1 border border-[#e4e7d4] text-[#8a9070] py-2 rounded-xl text-xs font-semibold hover:bg-[#f7f8f2] transition">Batal</button>
             <button onClick={handleAdd} disabled={!nz.zona||!nz.label}
-              className="flex-1 bg-green-700 hover:bg-green-800 text-white py-2 rounded-xl text-xs font-semibold transition disabled:opacity-50">
+              className="flex-1 bg-[#7a8a52] hover:bg-[#7a8a52] text-white py-2 rounded-xl text-xs font-semibold transition disabled:opacity-50">
               + Zona {nz.zona}
             </button>
           </div>
@@ -161,12 +161,12 @@ export default function ZoneEditor({ zones = [], onZonesChange }) {
             const exp = expanded === z.zona;
             const occ = z.stands.filter(s=>s.occupied).length;
             return (
-              <div key={z.zona} className="border border-gray-100 rounded-2xl overflow-hidden">
-                <div className="flex items-center gap-3 px-4 py-3 bg-gray-50 cursor-pointer select-none"
+              <div key={z.zona} className="border border-[#e4e7d4] rounded-2xl overflow-hidden">
+                <div className="flex items-center gap-3 px-4 py-3 bg-[#f7f8f2] cursor-pointer select-none"
                   onClick={()=>setExpanded(exp?null:z.zona)}>
                   <span className="w-2.5 h-2.5 rounded-full shrink-0" style={{background:z.warna}}/>
                   <div className="flex-1 min-w-0">
-                    <p className="font-bold text-gray-800 text-sm leading-tight">{z.label}</p>
+                    <p className="font-bold text-[#1e2010] text-sm leading-tight">{z.label}</p>
                     <p className="text-[10px] text-gray-400">{z.stands.length} stand · {occ} terisi saat ini</p>
                   </div>
                   {/* Mini bar */}
@@ -186,7 +186,7 @@ export default function ZoneEditor({ zones = [], onZonesChange }) {
                       {z.stands.map(s=>(
                         <div key={s.id} className="relative group">
                           <div className={`flex flex-col items-center px-2 py-1.5 rounded-lg border text-[10px] font-bold min-w-[40px]
-                            ${s.occupied?'bg-red-50 text-red-400 border-red-100':'bg-gray-50 text-gray-600 border-gray-200'}`}>
+                            ${s.occupied?'bg-red-50 text-red-400 border-red-100':'bg-[#f7f8f2] text-[#5a6040] border-[#e4e7d4]'}`}>
                             <span>{s.id}</span>
                             <span className="font-normal text-[7px]">{s.occupied?'✕ Terisi':'○ Bebas'}</span>
                           </div>
@@ -197,14 +197,14 @@ export default function ZoneEditor({ zones = [], onZonesChange }) {
                         </div>
                       ))}
                     </div>
-                    <div className="flex items-center gap-2 pt-2 border-t border-gray-100">
+                    <div className="flex items-center gap-2 pt-2 border-t border-[#e4e7d4]">
                       <span className="text-xs text-gray-400 shrink-0">Tambah:</span>
                       <input type="number" min={1} max={20} placeholder="Jml"
                         value={addCount[z.zona]||''}
                         onChange={e=>setAddCount(p=>({...p,[z.zona]:e.target.value}))}
-                        className="w-16 border border-gray-200 rounded-lg px-2 py-1 text-xs focus:outline-none focus:border-green-400"/>
+                        className="w-16 border border-[#e4e7d4] rounded-lg px-2 py-1 text-xs focus:outline-none focus:border-[#7a8a52]"/>
                       <button onClick={()=>handleAddStands(z.zona)} disabled={!addCount[z.zona]}
-                        className="flex items-center gap-1 px-2.5 py-1.5 bg-green-700 text-white rounded-lg text-[10px] font-semibold disabled:opacity-40 hover:bg-green-800 transition">
+                        className="flex items-center gap-1 px-2.5 py-1.5 bg-[#7a8a52] text-white rounded-lg text-[10px] font-semibold disabled:opacity-40 hover:bg-[#7a8a52] transition">
                         <Plus size={10}/> Stand
                       </button>
                       <div className="flex-1"/>

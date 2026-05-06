@@ -5,13 +5,33 @@ import { Eyebrow } from '../shared/Typography.jsx';
 /**
  * Login role-select modal. Implements Raib §4.10. Centered modal (not
  * dropdown) with two equal role cards. Backdrop, blur, ESC-to-close,
- * focus trap all live in the shared <Modal>. Each CTA does router.push
- * to the route owned by Raib's backend team — stubbed here as console.
+ * focus trap all live in the shared <Modal>.
+ *
+ * Each CTA performs a hard cross-app navigation to the sibling Peken
+ * app's /login page. Origin URLs come from build-time env vars
+ * (VITE_KOLABORATOR_URL, VITE_ARTISAN_URL) — Company-Profile has no
+ * shared router with the dashboard apps, so window.location.href is the
+ * correct primitive here, not router.push.
  */
+const ROLE_TARGETS = {
+  kolaborator: { envVar: 'VITE_KOLABORATOR_URL', url: import.meta.env.VITE_KOLABORATOR_URL },
+  artisan:     { envVar: 'VITE_ARTISAN_URL',     url: import.meta.env.VITE_ARTISAN_URL },
+};
+
 export default function LoginModal({ open, onClose }) {
   const goRole = (role) => () => {
-    // In production: router.push(`/login/${role}`)
-    console.info(`[LoginModal] navigate → /login/${role}`);
+    const target = ROLE_TARGETS[role];
+    const baseUrl = target?.url;
+    if (!baseUrl) {
+      // Env var missing in this build. Don't dump the user onto a broken
+      // URL like "/login" relative to the marketing site. Warn loudly in
+      // dev and leave the modal open so the user can pick the other role.
+      // eslint-disable-next-line no-console
+      console.warn(`[LoginModal] ${target?.envVar ?? 'env var'} is not set; cannot navigate to ${role} login.`);
+      return;
+    }
+    // Origin-only env contract — append the path explicitly here.
+    window.location.href = `${baseUrl}/login`;
     onClose();
   };
 
@@ -78,8 +98,8 @@ export default function LoginModal({ open, onClose }) {
           />
           <RoleCard
             role="Artisan"
-            tagline="UMKM, perajin, & tenant Peken"
-            body="Untuk perajin, pelaku UMKM, dan tenant yang ingin memajang produk dan profil usaha sebagai bagian dari katalog karya Peken."
+            tagline="Perajin & pelaku usaha lokal Peken"
+            body="Untuk perajin dan pelaku usaha lokal yang ingin memajang produk dan profil usaha sebagai bagian dari katalog karya Peken."
             onClick={goRole('artisan')}
           />
         </div>

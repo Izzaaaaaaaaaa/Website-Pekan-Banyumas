@@ -6,7 +6,7 @@ import React, { useState, useEffect, useCallback, useRef } from 'react';
 import logoImg from '../assets/logo.png';
 import { Link } from 'react-router-dom';
 import { Users, LogIn, LogOut, CalendarCheck, RefreshCw, Wifi, WifiOff, ExternalLink } from 'lucide-react';
-import api from '../services/api';
+import { dashboardApi } from '../services/endpoints';
 import { supabaseRealtime } from '../lib/supabase';
 
 const REFRESH_INTERVAL = 10;
@@ -163,8 +163,9 @@ const Monitor = () => {
         if (!silent) setIsLoading(true);
         else setIsRefreshing(true);
         try {
-            const res  = await api.get('/dashboard/stats');
-            const data = res.data.data;
+            // dashboardApi.stats returns the unwrapped payload directly
+            // per the Phase 0 contract — no more response.data.data.
+            const data = await dashboardApi.stats();
             if (!data?.event_id) { setError('no_event'); setStats(null); }
             else { setStats(data); setError(null); }
             setLastUpdated(new Date());
@@ -385,7 +386,7 @@ const BASE = {
         position: 'fixed', inset: 0,
         display: 'flex', flexDirection: 'column',
         overflow: 'hidden', userSelect: 'none', WebkitUserSelect: 'none',
-        fontFamily: 'DM Sans, sans-serif',
+        fontFamily: '"Montserrat", system-ui, sans-serif',
         transition: 'background 2s ease',
     },
     bgDot: {
@@ -420,7 +421,7 @@ const BASE = {
         borderRadius: '0.625rem',
         display: 'flex', alignItems: 'center', justifyContent: 'center',
         color: '#fff',
-        fontFamily: 'Lora, serif',
+        fontFamily: '"Clash Display", system-ui, sans-serif',
         fontSize: 'clamp(1rem,2vw,1.5rem)', letterSpacing: '0.05em',
         transition: 'background 2s ease, box-shadow 2s ease',
     },
@@ -442,7 +443,7 @@ const BASE = {
         transition: 'all 2s ease',
     },
     clockTime: {
-        fontFamily: 'Lora, serif',
+        fontFamily: '"Clash Display", system-ui, sans-serif',
         fontSize: 'clamp(2rem,5.5vw,5rem)',
         letterSpacing: '0.04em', lineHeight: 1,
         transition: 'color 2s ease, text-shadow 2s ease',
@@ -497,7 +498,7 @@ const BASE = {
         transition: 'background 2s ease, border-color 2s ease',
     },
     heroNumber: {
-        fontFamily: 'Lora, serif',
+        fontFamily: '"Clash Display", system-ui, sans-serif',
         fontSize: 'clamp(5rem,18vw,16rem)',
         lineHeight: 0.9, letterSpacing: '0.02em', display: 'block',
         transition: 'color 2s ease, text-shadow 2s ease',
@@ -532,7 +533,7 @@ const BASE = {
         fontWeight: 700, padding: '0.15rem 0.4rem', borderRadius: '0.3rem', letterSpacing: '0.05em',
     },
     secNumber: {
-        fontFamily: 'Lora, serif',
+        fontFamily: '"Clash Display", system-ui, sans-serif',
         fontSize: 'clamp(2.5rem,7vw,6.5rem)',
         lineHeight: 1, letterSpacing: '0.02em', display: 'block',
         transition: 'color 2s ease',
@@ -571,7 +572,7 @@ const GLOBAL_STYLES = `
     
 
     .mon * { box-sizing: border-box; }
-    .mon   { font-family: 'DM Sans', sans-serif; }
+    .mon   { font-family: 'Montserrat', sans-serif; }
 
     @keyframes spin      { to { transform: rotate(360deg); } }
     @keyframes pulseDot  { 0%,100%{opacity:1;transform:scale(1)} 50%{opacity:.5;transform:scale(.85)} }

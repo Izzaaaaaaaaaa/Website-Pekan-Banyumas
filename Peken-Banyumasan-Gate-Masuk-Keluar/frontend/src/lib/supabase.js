@@ -38,3 +38,20 @@ export const supabaseRealtime = (supabaseUrl && supabaseAnon)
  * isRealtimeReady — helper untuk cek apakah Realtime bisa dipakai.
  */
 export const isRealtimeReady = () => Boolean(supabaseRealtime);
+
+/**
+ * supabase — auth client untuk Gate admin/petugas session management.
+ * storageKey 'sb-peken-admin-auth' mengisolasi sesi Gate dari portal UMKM
+ * dan Kolaborator sehingga tidak ada SSO lintas subdomain.
+ * null jika env vars belum diisi — auth.js fallback ke localStorage-only mode.
+ */
+export const supabase = (supabaseUrl && supabaseAnon)
+    ? createClient(supabaseUrl, supabaseAnon, {
+        auth: {
+            persistSession: true,
+            autoRefreshToken: true,
+            detectSessionInUrl: true,
+            storageKey: 'sb-peken-admin-auth',
+        },
+    })
+    : null;
