@@ -1,37 +1,26 @@
-"""
-Supabase JWT verification.
+from fastapi.security import HTTPBearer
+from app.db.supabase import supabase
 
-The frontend uses Supabase Auth (signInWithPassword) and sends the
-Supabase-issued access_token as `Authorization: Bearer <token>`.
-This module verifies that token using the project's JWT secret.
-"""
-
-from jose import JWTError, jwt
-
-from app.core.config import SUPABASE_JWT_SECRET
+security = HTTPBearer(auto_error=False)
 
 
 def verify_supabase_token(token: str) -> dict | None:
-    """Decode and verify a Supabase JWT.
-
-    Returns the full JWT payload on success, or None on any failure.
-    The payload contains:
-        sub          — UUID of the auth.users row
-        email        — user's email
-        app_metadata — { role, status, ... }
-        user_metadata — { nama, ... }
     """
-    if not SUPABASE_JWT_SECRET:
-        return None
+    Memverifikasi token JWT dari Supabase secara aman menggunakan API get_user().
+    Ini mendukung semua algoritma JWT (HS256, RS256, ES256) yang dipakai Supabase
+    tanpa perlu menebak kunci rahasia secara lokal.
+    """
     try:
-        payload = jwt.decode(
-            token,
-            SUPABASE_JWT_SECRET,
-            algorithms=["HS256"],
-            options={
-                "verify_aud": False,  # Supabase JWTs use 'authenticated' audience
-            },
-        )
-        return payload
-    except JWTError:
+        res = supabase.auth.get_user(token)
+        if not res.user:
+            return None
+            
+        return {
+            "sub": res.user.id,
+            "email": res.user.email,
+            "app_metadata": res.user.app_metadata,
+            "user_metadata": res.user.user_metadata,
+            "user_id": res.user.id,
+        }
+    except Exception:
         return None
