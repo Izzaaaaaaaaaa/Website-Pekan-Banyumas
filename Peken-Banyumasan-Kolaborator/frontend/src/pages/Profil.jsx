@@ -24,6 +24,33 @@ export default function Profil() {
   });
   const [saving, setSaving] = useState(false);
 
+  React.useEffect(() => {
+    let mounted = true;
+    (async () => {
+      try {
+        const data = await profilApi.get();
+        if (data && mounted) {
+          setUser(prev => {
+            const merged = { ...prev, ...data };
+            setAuthUser(merged);
+            setForm({
+              nama:      merged.nama||'',
+              kota:      merged.kota||'',
+              bio:       merged.bio||'',
+              subsektor: merged.subsektor || [],
+              foto_url:  merged.foto_url||'',
+              cover_url: merged.cover_url||'',
+            });
+            return merged;
+          });
+        }
+      } catch (err) {
+        if (mounted) toast.error(extractError(err, 'Gagal memuat profil terbaru'));
+      }
+    })();
+    return () => { mounted = false; };
+  }, [toast]);
+
   const toggleSub = s => setForm(p => ({
     ...p,
     subsektor: p.subsektor.includes(s)

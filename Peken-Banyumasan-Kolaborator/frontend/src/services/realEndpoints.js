@@ -182,6 +182,17 @@ export const profilApi = {
 
   /** PATCH /api/kolaborator/me → updated self-record */
   update: async (data) => {
+    // 1. Sync auth metadata directly with Supabase
+    if (supabase) {
+      const supabaseUpdate = {};
+      if (data.nama) supabaseUpdate.data = { nama: data.nama };
+      if (data.email) supabaseUpdate.email = data.email;
+      if (Object.keys(supabaseUpdate).length > 0) {
+        const { error } = await supabase.auth.updateUser(supabaseUpdate);
+        if (error) throw new Error(error.message);
+      }
+    }
+    // 2. Sync all profile fields with the Kolaborator table
     const response = await apiClient.patch('/api/kolaborator/me', data);
     return extractData(response);
   },
@@ -225,6 +236,12 @@ export const storyApi = {
   /** POST /api/kolaborator/me/story → Story */
   create: async (data) => {
     const response = await apiClient.post('/api/kolaborator/me/story', data);
+    return extractData(response);
+  },
+
+  /** PATCH /api/kolaborator/me/story/:id → Story */
+  update: async (id, data) => {
+    const response = await apiClient.patch(`/api/kolaborator/me/story/${id}`, data);
     return extractData(response);
   },
 
