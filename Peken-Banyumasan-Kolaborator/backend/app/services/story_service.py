@@ -44,6 +44,17 @@ def create_story(user_payload: dict, payload: dict) -> dict:
     return result.data[0] if result.data else {}
 
 
+def update_story(user_payload: dict, story_id: str, payload: dict) -> dict:
+    """PATCH /api/kolaborator/me/story/{id} — edit a story."""
+    user_id = user_payload.get("user_id")
+    if not user_id:
+        return {}
+
+    client = supabase_admin or supabase
+    result = client.table("stories").update(payload).eq("id", story_id).eq("author_type", "kolaborator").eq("author_id", user_id).execute()
+    return result.data[0] if result.data else {}
+
+
 def delete_story(user_payload: dict, story_id: str) -> dict:
     """DELETE /api/kolaborator/me/story/{id} — soft-delete (status='dihapus')."""
     user_id = user_payload.get("user_id")

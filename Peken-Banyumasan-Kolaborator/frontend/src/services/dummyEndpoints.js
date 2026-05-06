@@ -119,6 +119,11 @@ export const storyApi = {
     _stories.unshift(s);
     return s;
   },
+  update: async (id, data) => {
+    await delay();
+    _stories = _stories.map(s => s.id === id ? { ...s, ...data } : s);
+    return _stories.find(s => s.id === id);
+  },
   delete: async (id) => {
     await delay();
     _stories = _stories.filter(s => s.id !== id);

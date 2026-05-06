@@ -77,6 +77,13 @@ class CreateStoryBody(BaseModel):
     tags: list[str] = []
 
 
+class PatchStoryBody(BaseModel):
+    """PATCH /api/kolaborator/me/story/{id} body."""
+    konten: str | None = None
+    media_url: str | None = None
+    tags: list[str] | None = None
+
+
 # ── Self-Profile ────────────────────────────────────────────────────────────
 
 @router.get("/me")
@@ -135,6 +142,15 @@ def create_story_route(payload: CreateStoryBody, user: dict = Depends(get_curren
     data = create_story(user, payload.model_dump())
     if not data:
         return _error_envelope("Gagal membuat story", 500)
+    return _envelope(data)
+
+
+@router.patch("/me/story/{story_id}")
+def update_story_route(story_id: str, payload: PatchStoryBody, user: dict = Depends(get_current_user)):
+    from app.services.story_service import update_story
+    data = update_story(user, story_id, payload.model_dump(exclude_unset=True))
+    if not data:
+        return _error_envelope("Story tidak ditemukan", 404)
     return _envelope(data)
 
 
