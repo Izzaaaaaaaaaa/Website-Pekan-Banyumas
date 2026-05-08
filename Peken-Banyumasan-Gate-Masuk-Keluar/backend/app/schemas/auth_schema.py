@@ -1,7 +1,7 @@
 from pydantic import BaseModel, EmailStr
+from typing import Optional
 
 
-# 🔐 LOGIN
 class LoginRequest(BaseModel):
     email: EmailStr
     password: str
@@ -13,7 +13,6 @@ class TokenResponse(BaseModel):
     role: str
 
 
-# 🔥 PROFILE RESPONSE
 class UserResponse(BaseModel):
     id: str
     nama: str
@@ -21,12 +20,12 @@ class UserResponse(BaseModel):
     role: str
 
 
-# 🔥 UPDATE PROFILE
 class ProfileUpdate(BaseModel):
-    nama: str
+    """Update custom profile fields only. Nama/email handled by Supabase."""
+    jabatan: Optional[str] = None
+    extra: Optional[dict] = None  # Additional custom fields
 
 
-# 🔥 UPDATE PASSWORD
 class PasswordUpdate(BaseModel):
     old_password: str
     new_password: str

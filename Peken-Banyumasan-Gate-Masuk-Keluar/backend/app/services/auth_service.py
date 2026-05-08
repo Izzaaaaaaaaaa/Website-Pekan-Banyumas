@@ -1,84 +1,39 @@
 from app.db.supabase import supabase
-from app.core.hash import verify_password, hash_password
-from app.core.security import create_access_token
 from fastapi import HTTPException
 
-
-# 🔐 LOGIN (SUDAH BAGUS, TETAP)
 def login_user(email: str, password: str):
-    user = supabase.table("users_profile") \
-        .select("*") \
-        .eq("email", email) \
-        .execute()
 
-    if not user.data:
-        raise HTTPException(404, "User tidak ditemukan")
-
-    user = user.data[0]
-
-    if not verify_password(password, user["password"]):
-        raise HTTPException(400, "Password salah")
-
-    token = create_access_token({
-        "user_id": user["id"],
-        "role": user["role"]
+    response = supabase.auth.sign_in_with_password({
+        "email": email,
+        "password": password
     })
 
-    return {
-        "access_token": token,
-        "user": {
-            "id": user["id"],
-            "nama": user["nama"],
-            "role": user["role"]
-        }
-    }
+    return response
 
 
-# 🔥 GET CURRENT USER
-def get_me(user_id: str):
-    res = supabase.table("users_profile") \
-        .select("id, nama, email, role") \
-        .eq("id", user_id) \
-        .single() \
-        .execute()
+def update_profile(user_id: str, data: dict):
+    """
+    Update custom profile fields in users_profile table.
+    Nama/email are handled by Supabase auth client on frontend.
+    """
+    try:
+        # Filter out None/empty values
+        update_data = {k: v for k, v in data.items() if v is not None}
 
-    if not res.data:
-        raise HTTPException(404, "User tidak ditemukan")
+        if not update_data:
+            return {"message": "Tidak ada data yang diupdate"}
 
-    return res.data
+        res = supabase.table("users_profile") \
+            .update(update_data) \
+            .eq("id", user_id) \
+            .execute()
 
+        if not res.data:
+            raise HTTPException(404, "User tidak ditemukan")
 
-# 🔥 UPDATE PROFILE
-def update_profile(user_id: str, nama: str):
-    supabase.table("users_profile") \
-        .update({"nama": nama}) \
-        .eq("id", user_id) \
-        .execute()
+        return {"message": "Profile berhasil diupdate"}
 
-    return {"message": "Profile berhasil diupdate"}
-
-
-# 🔥 UPDATE PASSWORD
-def update_password(user_id: str, old_password: str, new_password: str):
-    supabase.table("users_profile") \
-        .select("*") \
-        .eq("id", user_id) \
-        .single() \
-        .execute()
-
-    if not user.data:
-        raise HTTPException(404, "User tidak ditemukan")
-
-    # cek password lama
-    if not verify_password(old_password, user.data["password"]):
-        raise HTTPException(400, "Password lama salah")
-
-    # hash password baru
-    new_hashed = hash_password(new_password)
-
-    supabase.table("users_profile") \
-        .update({"password": new_hashed}) \
-        .eq("id", user_id) \
-        .execute()
-
-    return {"message": "Password berhasil diupdate"}
+    except HTTPException:
+        raise
+    except Exception as e:
+        raise HTTPException(500, f"Error updating profile: {str(e)}")

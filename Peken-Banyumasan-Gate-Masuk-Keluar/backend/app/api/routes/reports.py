@@ -1,44 +1,77 @@
 from fastapi import APIRouter, Depends, Query, HTTPException
-from fastapi.responses import StreamingResponse
-from app.api.deps import get_current_user
+from typing import Optional
 
-# 🔥 import service
-from app.services.report_service import (
-    export_gate_logs_csv,
-    get_reports
-)
+from app.api.deps import get_current_user, get_admin_only
+from app.services import report_service
+from app.utils.response import success_response, error_response
 
-router = APIRouter(prefix="/reports", tags=["Reports"])
+router = APIRouter(prefix="/api/reports", tags=["reports"])
 
 
-# 🔥 LIST REPORTS (WAJIB)
-@router.get("/")
-def list_reports(
-    event_id: str = Query(None),
-    tanggal: str = Query(None),
-    user=Depends(get_current_user)
+@router.get("", response_model=dict)
+def get_report(
+    event_id: Optional[str] = Query(None),
+    tanggal: Optional[str] = Query(None),
+    user=Depends(get_admin_only)
 ):
-    return get_reports(event_id, tanggal)
+    """Get visitor report (admin only)."""
+    try:
+        report = report_service.get_visitor_report(event_id, tanggal)
+        return success_response(report)
+    except HTTPException as e:
+        raise
+    except Exception as e:
+        raise HTTPException(500, detail=error_response(str(e), 500))
 
 
-# 🔥 EXPORT CSV
-@router.get("/export")
-def export(
-    event_id: str = Query(...),
-    user=Depends(get_current_user)
+@router.get("/export", response_model=dict)
+def export_report(
+    format: str = Query(...),
+    event_id: Optional[str] = Query(None),
+    tanggal: Optional[str] = Query(None),
+    user=Depends(get_admin_only)
 ):
-    # 🔐 hanya admin boleh export
-    if user["role"] != "admin":
-        raise HTTPException(403, "Hanya admin yang boleh export laporan")
+    """Export visitor report as file (admin only)."""
+    try:
+        if format not in ["excel", "pdf"]:
+            raise HTTPException(422, detail=error_response(
+                "format harus 'excel' atau 'pdf'",
+                422
+            ))
 
-    csv_file = export_gate_logs_csv(event_id)
+        csv_data = report_service.export_visitor_report_csv(event_id, tanggal)
+        return success_response(csv_data)
+    except HTTPException as e:
+        raise
+    except Exception as e:
+        raise HTTPException(500, detail=error_response(str(e), 500))
 
-    filename = f"report_event_{event_id}.csv"
 
-    return StreamingResponse(
-        csv_file,
-        media_type="text/csv",
-        headers={
-            "Content-Disposition": f"attachment; filename={filename}"
-        }
-    )
+@router.get("/artisan", response_model=dict)
+def get_artisan_report(
+    event_id: Optional[str] = Query(None),
+    user=Depends(get_admin_only)
+):
+    """Get artisan revenue report (admin only)."""
+    try:
+        rows = report_service.get_artisan_report(event_id)
+        return success_response(rows)
+    except HTTPException as e:
+        raise
+    except Exception as e:
+        raise HTTPException(500, detail=error_response(str(e), 500))
+
+
+@router.get("/accumulation", response_model=dict)
+def get_accumulation_report(
+    event_id: Optional[str] = Query(None),
+    user=Depends(get_admin_only)
+):
+    """Get event accumulation report (admin only)."""
+    try:
+        rows = report_service.get_accumulation_report(event_id)
+        return success_response(rows)
+    except HTTPException as e:
+        raise
+    except Exception as e:
+        raise HTTPException(500, detail=error_response(str(e), 500))

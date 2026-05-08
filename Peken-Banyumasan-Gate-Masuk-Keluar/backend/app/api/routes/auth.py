@@ -1,45 +1,59 @@
-from fastapi import APIRouter, Depends
-from app.api.deps import get_current_user
+from fastapi import APIRouter, Depends, HTTPException
+from app.api.deps import get_current_user, get_current_user_id
+from pydantic import BaseModel
 
 from app.services.auth_service import (
-    login_user,
-    get_me,
-    update_profile,
-    update_password
+    update_profile
 )
 
-from app.schemas.auth_schema import (
-    LoginRequest,
-    ProfileUpdate,
-    PasswordUpdate
-)
+from app.schemas.auth_schema import ProfileUpdate
+from app.utils.response import success_response, error_response
+from app.schemas.auth_schema import LoginRequest
+from app.services.auth_service import login_user
 
-router = APIRouter(prefix="/auth", tags=["Auth"])
+router = APIRouter(prefix="/api/auth", tags=["Auth"])
 
-
-# 🔐 LOGIN
-@router.post("/login")
+class LoginRequest(BaseModel):
+    email: str
+    password: str
+    
+@router.post("/login", response_model=dict)
 def login(data: LoginRequest):
-    return login_user(data.email, data.password)
 
+    try:
+        response = login_user(
+            data.email,
+            data.password
+        )
 
-# 🔥 GET CURRENT USER
-@router.get("/me")
-def me(user=Depends(get_current_user)):
-    return get_me(user["user_id"])
+        user = response.user
+        session = response.session
 
+        return {
+            "token": session.access_token,
+            "user": {
+                "id": user.id,
+                "email": user.email,
+                "role": user.user_metadata.get("role"),
+                "nama": user.user_metadata.get("nama")
+            }
+        }
 
-# 🔥 UPDATE PROFILE
-@router.put("/profile")
-def profile(data: ProfileUpdate, user=Depends(get_current_user)):
-    return update_profile(user["user_id"], data.nama)
+    except Exception as e:
+        raise HTTPException(
+            status_code=401,
+            detail=str(e)
+        )
 
-
-# 🔥 UPDATE PASSWORD
-@router.put("/password")
-def password(data: PasswordUpdate, user=Depends(get_current_user)):
-    return update_password(
-        user["user_id"],
-        data.old_password,
-        data.new_password
-    )
+@router.put("/profile", response_model=dict)
+def update_user_profile(
+    data: ProfileUpdate,
+    user=Depends(get_current_user),
+    user_id: str = Depends(get_current_user_id)
+):
+    """Update custom profile fields (nama/email handled by Supabase client)."""
+    try:
+        result = update_profile(user_id, data.dict(exclude_unset=True))
+        return success_response(None, message=result.get("message", "Profile berhasil diupdate"))
+    except Exception as e:
+        raise HTTPException(500, detail=error_response(str(e), 500))

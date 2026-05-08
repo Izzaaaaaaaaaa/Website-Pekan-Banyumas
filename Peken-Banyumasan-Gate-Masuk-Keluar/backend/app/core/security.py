@@ -1,23 +1,24 @@
 from jose import JWTError, jwt
-from datetime import datetime, timedelta
+from app.core.config import SUPABASE_JWT_SECRET
 
-SECRET_KEY = "supersecretkey"
-ALGORITHM = "HS256"
-ACCESS_TOKEN_EXPIRE_MINUTES = 60
 
-def create_access_token(data: dict):
-    to_encode = data.copy()
-    expire = datetime.utcnow() + timedelta(minutes=ACCESS_TOKEN_EXPIRE_MINUTES)
-    to_encode.update({"exp": expire})
-    return jwt.encode(to_encode, SECRET_KEY, algorithm=ALGORITHM)
+def verify_supabase_jwt(token: str):
+    """
+    Verify Supabase JWT token. Decodes and validates using SUPABASE_JWT_SECRET (HS256).
+    Returns payload if valid, None otherwise.
+
+    JWT payload expected: { sub: UUID, email, app_metadata: { role, status }, user_metadata: { nama } }
+    """
+    if not SUPABASE_JWT_SECRET:
+        raise ValueError("SUPABASE_JWT_SECRET not configured")
+
+    try:
+        payload = jwt.decode(token, SUPABASE_JWT_SECRET, algorithms=["HS256"])
+        return payload
+    except JWTError as e:
+        return None
 
 
 def verify_token(token: str):
-    try:
-        print("TOKEN MASUK:", token)
-        payload = jwt.decode(token, SECRET_KEY, algorithms=[ALGORITHM])
-        print("TOKEN VALID:", payload)
-        return payload
-    except Exception as e:
-        print("TOKEN ERROR:", e)
-        return None
+    """Alias for verify_supabase_jwt for backward compatibility."""
+    return verify_supabase_jwt(token)
