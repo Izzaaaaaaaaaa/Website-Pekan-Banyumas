@@ -22,7 +22,7 @@ export const authApi = {
   login: async (payload) => {
 
     const response = await api.post(
-      '/api/auth/login',
+      '/auth/login',
       payload
     );
 
