@@ -3,20 +3,23 @@ from app.api.deps import get_current_user, get_current_user_id
 from pydantic import BaseModel
 
 from app.services.auth_service import (
+    EMAIL_NOT_REGISTERED,
+    WRONG_PASSWORD,
+    login_user,
     update_profile
 )
 
 from app.schemas.auth_schema import ProfileUpdate
 from app.utils.response import success_response, error_response
-from app.schemas.auth_schema import LoginRequest
-from app.services.auth_service import login_user
 
 router = APIRouter(prefix="/api/auth", tags=["Auth"])
+
 
 class LoginRequest(BaseModel):
     email: str
     password: str
-    
+
+
 @router.post("/login", response_model=dict)
 def login(data: LoginRequest):
 
@@ -40,9 +43,23 @@ def login(data: LoginRequest):
         }
 
     except Exception as e:
+        error_message = str(e)
+
+        if error_message == EMAIL_NOT_REGISTERED:
+            raise HTTPException(
+                status_code=404,
+                detail="Email anda tidak terdaftar"
+            )
+
+        if error_message == WRONG_PASSWORD:
+            raise HTTPException(
+                status_code=401,
+                detail="Password anda salah"
+            )
+
         raise HTTPException(
-            status_code=401,
-            detail=str(e)
+            status_code=500,
+            detail=error_message
         )
 
 @router.put("/profile", response_model=dict)
