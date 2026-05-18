@@ -10,13 +10,32 @@
 
 import * as real  from './realEndpoints.js';
 import * as dummy from './dummyEndpoints.js';
+import api from './api.js';
+
 
 // Defensive parse: accept 'true' / 'TRUE' / ' True ' / etc. Anything else → real mode.
 const _rawDummy = import.meta.env.VITE_DUMMY_MODE;
 const _isDummy  = typeof _rawDummy === 'string' && _rawDummy.trim().toLowerCase() === 'true';
 const _mod      = _isDummy ? dummy : real;
 
-export const authApi           = _mod.authApi;
+export const authApi = {
+  login: async (payload) => {
+
+    const response = await api.post(
+      '/auth/login',
+      payload
+    );
+
+    console.log('LOGIN RESPONSE:', response.data);
+
+    // kalau backend pakai envelope:
+    //return response.data.data;
+
+    // kalau backend return langsung:
+    return response.data;
+  },
+};
+
 export const dashboardApi      = _mod.dashboardApi;
 export const eventApi          = _mod.eventApi;
 export const reportsApi        = _mod.reportsApi;

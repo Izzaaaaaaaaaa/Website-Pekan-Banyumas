@@ -1,20 +1,9 @@
 from fastapi import APIRouter, Depends
-from pydantic import BaseModel
 from app.services.member_service import *
 from app.api.deps import get_current_user
+from app.schemas.member_schema import MemberCreate, MemberUpdate  # 🔥 import schema
 
 router = APIRouter(prefix="/members", tags=["Members"])
-
-# REQUEST SCHEMA
-class MemberCreate(BaseModel):
-    nama: str
-    email: str
-    card_uid: str | None = None
-
-
-class MemberUpdate(BaseModel):
-    nama: str | None = None
-    email: str | None = None
 
 
 # GET ALL

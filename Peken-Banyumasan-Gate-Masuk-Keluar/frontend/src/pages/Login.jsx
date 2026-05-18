@@ -26,22 +26,37 @@ const Login = () => {
 
   const handleChange = (e) => setFormData({ ...formData, [e.target.name]: e.target.value });
 
-  const handleLogin = async (e) => {
+    const handleLogin = async (e) => {
     e.preventDefault();
+
     setIsLoading(true);
     setError('');
+
     try {
+
       const { token, user } = await authApi.login(formData);
+
+      console.log('TOKEN:', token);
+      console.log('USER:', user);
+
       setToken(token);
       setUser(user);
+
       navigate('/');
+
     } catch (err) {
-      setError(extractError(err, 'Email atau password salah. Silakan coba lagi.'));
+
+      console.log(err);
+
+      setError(
+        err?.response?.data?.detail ||
+        'Login gagal'
+      );
+
     } finally {
       setIsLoading(false);
     }
   };
-
   return (
     <div style={{
       display: 'flex', height: '100vh', overflow: 'hidden',
