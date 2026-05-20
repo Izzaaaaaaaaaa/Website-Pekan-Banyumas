@@ -38,37 +38,31 @@ def scan_nfc(card_uid: str):
     user_data = user.data[0]
 
     # 3. cek log terakhir (per event)
-    last_log = supabase.table("gate_logs") \
-        .select("*") \
-        .eq("user_id", user_id) \
+    last_log = supabase.table("visitors") \
+        .select("waktu_masuk, waktu_keluar, status") \
+        .eq("uid", card_uid) \
         .eq("event_id", event_id) \
-        .order("scan_time", desc=True) \
+        .order("waktu_masuk", desc=True) \
         .limit(1) \
         .execute()
 
     # 🔥 ANTI DOUBLE SCAN
     if last_log.data:
-        last_time = datetime.fromisoformat(last_log.data[0]["scan_time"])
-        now = datetime.utcnow()
+        last_action_str = last_log.data[0].get("waktu_keluar") if last_log.data[0].get("status") == "keluar" else last_log.data[0].get("waktu_masuk")
+        if last_action_str:
+            # Handle possible 'Z' in ISO format
+            last_action_str = last_action_str.replace("Z", "+00:00")
+            last_time = datetime.fromisoformat(last_action_str)
+            now = datetime.now(last_time.tzinfo)
+            if now - last_time < timedelta(seconds=5):
+                raise HTTPException(400, "Terlalu cepat scan ulang")
 
-        if now - last_time < timedelta(seconds=5):
-            raise HTTPException(400, "Terlalu cepat scan ulang")
-
-    # 4. tentukan masuk / keluar
-    if last_log.data and last_log.data[0]["gate_type"] == "masuk":
-        next_type = "keluar"
-    else:
-        next_type = "masuk"
-
-    # 5. insert log
-    supabase.table("gate_logs").insert({
-        "user_id": user_id,
-        "gate_type": next_type,
-        "event_id": event_id
-    }).execute()
+    # Delegate to process_nfc_tap
+    from app.services.dashboard_service import process_nfc_tap
+    res = process_nfc_tap(uid=card_uid, timestamp=datetime.utcnow().isoformat(), event_id=event_id)
 
     return {
-        "status": next_type,
+        "status": res.aksi,
         "event": event["nama"],
         "user": {
             "id": user_data["id"],
@@ -78,23 +72,19 @@ def scan_nfc(card_uid: str):
     
 def get_gate_logs(event_id=None, tanggal=None, user_id=None, limit=20):
     try:
-        query = supabase.table("gate_logs") \
-            .select("id, gate_type, scan_time, users_profile(nama), events(nama)") \
-            .order("scan_time", desc=True) \
+        query = supabase.table("visitors") \
+            .select("*") \
+            .order("waktu_masuk", desc=True) \
             .limit(limit)
 
         # 🔥 filter event
         if event_id:
             query = query.eq("event_id", event_id)
 
-        # 🔥 filter user
-        if user_id:
-            query = query.eq("user_id", user_id)
-
         # 🔥 filter tanggal (FIX TIMESTAMP)
         if tanggal:
-            query = query.gte("scan_time", f"{tanggal}T00:00:00") \
-                         .lte("scan_time", f"{tanggal}T23:59:59")
+            query = query.gte("waktu_masuk", f"{tanggal}T00:00:00") \
+                         .lte("waktu_masuk", f"{tanggal}T23:59:59")
 
         res = query.execute()
 
@@ -103,10 +93,10 @@ def get_gate_logs(event_id=None, tanggal=None, user_id=None, limit=20):
         return [
             {
                 "id": r["id"],
-                "nama": r["users_profile"]["nama"] if r.get("users_profile") else None,
-                "event": r["events"]["nama"] if r.get("events") else None,
-                "status": r["gate_type"],
-                "waktu": r["scan_time"]
+                "nama": r.get("nama") or "Tamu",
+                "event": "Event",
+                "status": r["status"],
+                "waktu": r["waktu_masuk"]
             }
             for r in data
         ]

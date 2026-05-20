@@ -5,6 +5,7 @@ from app.api.deps import get_current_user, get_admin_only
 from app.services import event_service
 from app.schemas.event_schema import EventCreate, EventUpdate, Event
 from app.utils.response import success_response, error_response
+from fastapi.encoders import jsonable_encoder
 
 router = APIRouter(prefix="/api/events", tags=["events-crud"])
 
@@ -44,7 +45,7 @@ def create_event(
 ):
     """Create new event (admin only)."""
     try:
-        event = event_service.create_event(data.dict())
+        event = event_service.create_event(jsonable_encoder(data))
         return success_response(event, message="Event berhasil dibuat")
     except Exception as e:
         raise HTTPException(500, detail=error_response(str(e), 500))
@@ -58,7 +59,7 @@ def update_event(
 ):
     """Update event (admin only)."""
     try:
-        clean_data = data.dict(exclude_none=True)
+        clean_data = jsonable_encoder(data, exclude_none=True)
         if not clean_data:
             return success_response(None, message="Tidak ada data yang diupdate")
 

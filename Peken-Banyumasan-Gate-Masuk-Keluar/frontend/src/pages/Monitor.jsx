@@ -187,7 +187,7 @@ const Monitor = () => {
                 .channel('monitor-kunjungan-live')
                 .on(
                     'postgres_changes',
-                    { event: '*', schema: 'public', table: 'kunjungan' },
+                    { event: '*', schema: 'public', table: 'visitors' },
                     () => {
                         fetchStats(true);
                     }

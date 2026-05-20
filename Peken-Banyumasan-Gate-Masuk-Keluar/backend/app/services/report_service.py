@@ -7,7 +7,7 @@ import io
 def get_visitor_report(event_id: str = None, tanggal: str = None):
     """Get visitor report for an event/date."""
     try:
-        query = supabase.table("gate_logs").select("*").order("waktu_masuk", desc=True)
+        query = supabase.table("visitors").select("*").order("waktu_masuk", desc=True)
 
         if event_id:
             query = query.eq("event_id", event_id)
@@ -19,9 +19,9 @@ def get_visitor_report(event_id: str = None, tanggal: str = None):
         res = query.execute()
         logs = res.data if res.data else []
 
-        total_masuk = len([l for l in logs if l.get("aksi") == "masuk"])
-        total_keluar = len([l for l in logs if l.get("aksi") == "keluar"])
-        di_dalam = total_masuk - total_keluar
+        total_masuk = len(logs)
+        total_keluar = len([l for l in logs if l.get("status") == "keluar"])
+        di_dalam = len([l for l in logs if l.get("status") == "di_dalam"])
 
         # Get event name if event_id provided
         event_name = ""
@@ -104,7 +104,7 @@ def get_accumulation_report(event_id: str = None):
         report_rows = []
         for event in events:
             # Count visitors
-            visitors_res = supabase.table("gate_logs") \
+            visitors_res = supabase.table("visitors") \
                 .select("id") \
                 .eq("event_id", event["id"]) \
                 .execute()
@@ -158,7 +158,7 @@ def export_visitor_report_csv(event_id: str = None, tanggal: str = None):
                 log.get("nama"),
                 log.get("waktu_masuk"),
                 log.get("waktu_keluar"),
-                log.get("aksi")
+                log.get("status")
             ])
 
         return output.getvalue()

@@ -20,6 +20,9 @@ class Visitor(BaseModel):
     waktu_masuk: datetime
     waktu_keluar: Optional[datetime] = None
     status: str  # di_dalam or keluar
+    tipe_pengunjung: str = "manual"  # nfc or manual
+    nfc_uid: Optional[str] = None
+    nama_pengunjung: Optional[str] = None
 
 
 class ActivityItem(BaseModel):
