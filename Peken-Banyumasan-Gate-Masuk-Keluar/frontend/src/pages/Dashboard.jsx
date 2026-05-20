@@ -180,7 +180,7 @@ const Dashboard = () => {
     if (supabaseRealtime) {
       channel = supabaseRealtime
         .channel('dashboard-kunjungan-privacy')
-        .on('postgres_changes', { event: '*', schema: 'public', table: 'kunjungan' }, () => {
+        .on('postgres_changes', { event: '*', schema: 'public', table: 'visitors' }, () => {
           fetchStats(true);
           fetchActivities(true);
         })

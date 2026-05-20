@@ -10,6 +10,11 @@ from app.services.dashboard_service import (
 from app.api.deps import get_current_user
 from app.schemas.dashboard_schema import Stats, Visitor, VisitorTapResponse
 from app.utils.response import success_response, error_response
+from app.db.supabase import supabase
+from fastapi.encoders import jsonable_encoder
+import logging
+
+logger = logging.getLogger("uvicorn.error")
 
 router = APIRouter(prefix="/api", tags=["Dashboard"])
 
@@ -22,7 +27,7 @@ def get_stats(
     """Get live visitor stats."""
     try:
         stats = get_dashboard_stats(event_id)
-        return success_response(stats)
+        return success_response(jsonable_encoder(stats))
     except HTTPException as e:
         raise
     except Exception as e:
@@ -38,10 +43,12 @@ def get_visitors(
     """List visitors with optional date and event filtering."""
     try:
         visitors = list_visitors(tanggal, event_id)
-        return success_response(visitors)
+        logger.info(f"📊 GET VISITORS - tanggal={tanggal}, event_id={event_id}, count={len(visitors)}")
+        return success_response(jsonable_encoder(visitors))
     except HTTPException as e:
         raise
     except Exception as e:
+        logger.error(f"Error getting visitors: {str(e)}")
         raise HTTPException(500, detail=error_response(str(e), 500))
 
 
@@ -52,14 +59,23 @@ def manual_entry(
 ):
     """Record manual visitor entry."""
     try:
-        result = manual_visitor_entry(
-            aksi=data.get("aksi"),
-            event_id=data.get("event_id")
-        )
-        return success_response(None, message=result.get("message"))
+        aksi = data.get("aksi")
+        event_id = data.get("event_id")
+        logger.info("========================================")
+        logger.info(f"📋 INPUT MANUAL - Aksi: {aksi}")
+        logger.info(f"   Event ID: {event_id}")
+        logger.info(f"   User: {user.get('email', 'unknown')}")
+        
+        result = manual_visitor_entry(aksi=aksi, event_id=event_id)
+        
+        logger.info(f"   ✅ Berhasil: {result.get('message')}")
+        logger.info("========================================")
+        return success_response(result, message=result.get("message"))
     except HTTPException as e:
+        logger.error(f"   ❌ Gagal input manual: {e.detail}")
         raise
     except Exception as e:
+        logger.error(f"   ❌ Error input manual: {str(e)}")
         raise HTTPException(500, detail=error_response(str(e), 500))
 
 
@@ -81,10 +97,27 @@ def nfc_tap(
                 {"uid": ["uid wajib diisi"], "timestamp": ["timestamp wajib diisi"]}
             ))
 
+        logger.info("========================================")
+        logger.info(f"🔖 TAP NFC - UID: {uid}")
+        logger.info(f"   Timestamp: {timestamp}")
+        logger.info(f"   Event ID: {event_id or 'auto-detect'}")
+        logger.info(f"   User: {user.get('email', 'unknown')}")
+        
         result = process_nfc_tap(uid, timestamp, event_id)
         message = f"Selamat datang, {result.nama}!" if result.aksi == "masuk" else f"Sampai jumpa, {result.nama}!"
+        
+        aksi_icon = "🟢 MASUK" if result.aksi == "masuk" else "🔴 KELUAR"
+        logger.info(f"   ✅ Aksi: {aksi_icon}")
+        logger.info(f"   Nama: {result.nama}")
+        logger.info(f"   Status: {result.status}")
+        logger.info(f"   Response: {result.dict()}")
+        logger.info("========================================")
+        
         return success_response(result.dict(), message=message)
     except HTTPException as e:
+        logger.error(f"   ❌ Gagal tap NFC: {e.detail}")
         raise
     except Exception as e:
+        logger.exception(f"   ❌ Error tap NFC")
+        raise HTTPException(500, detail=error_response(f"Error processing NFC tap: {str(e)}", 500))
         raise HTTPException(500, detail=error_response(str(e), 500))

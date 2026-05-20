@@ -5,6 +5,7 @@ from fastapi import HTTPException
 def success_response(data: Any = None, message: Optional[str] = None) -> Dict[str, Any]:
     """Wrap successful response in standard envelope."""
     return {
+        "success": True,
         "status": "success",
         "message": message,
         "data": data,
@@ -19,6 +20,7 @@ def error_response(
 ) -> Dict[str, Any]:
     """Wrap error response in standard envelope."""
     response = {
+        "success": False,
         "status": "error",
         "message": message,
         "data": data,
