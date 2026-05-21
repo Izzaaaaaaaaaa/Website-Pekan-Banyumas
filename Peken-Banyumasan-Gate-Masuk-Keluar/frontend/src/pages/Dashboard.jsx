@@ -96,6 +96,10 @@ const Dashboard = () => {
 
   const activeEventIdRef = useRef(null);
   const scannerInputRef = useRef(null);
+  const errorToastStats = useRef(false);
+  const errorToastActivities = useRef(false);
+  const statsIntervalRef = useRef(null);
+  const activitiesIntervalRef = useRef(null);
 
   const userRole = getUserRole();
 
@@ -112,6 +116,7 @@ const Dashboard = () => {
 
   const fetchStats = useCallback(async (silent = false) => {
     try {
+      console.log("FETCH DASHBOARD: stats", silent ? "(silent)" : "");
       if (!silent) setIsLoadingStats(true);
       // dashboardApi.stats returns the unwrapped data payload per the Phase 0 contract.
       const data = (await dashboardApi.stats()) || {};
@@ -140,7 +145,11 @@ const Dashboard = () => {
       // Silent polling cycles must not spam toasts; only the foreground
       // fetch surfaces an error. Either way we log for diagnostics.
       console.error('Gagal mengambil statistik:', error);
-      if (!silent) toast.error(extractError(error, 'Gagal mengambil statistik.'));
+      if (!silent && !errorToastStats.current) {
+        toast.error(extractError(error, 'Gagal mengambil statistik.'));
+        errorToastStats.current = true;
+        setTimeout(() => { errorToastStats.current = false; }, 10000);
+      }
     } finally {
       if (!silent) setIsLoadingStats(false);
     }
@@ -148,6 +157,7 @@ const Dashboard = () => {
 
   const fetchActivities = useCallback(async (silent = false) => {
     try {
+      console.log("FETCH DASHBOARD: activities", silent ? "(silent)" : "");
       if (!silent) setIsLoadingActivities(true);
       const now = new Date();
       const today = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}-${String(now.getDate()).padStart(2, '0')}`;
@@ -159,24 +169,72 @@ const Dashboard = () => {
       setActivities(sorted.slice(0, 10));
     } catch (error) {
       console.error('Gagal mengambil aktivitas:', error);
-      if (!silent) toast.error(extractError(error, 'Gagal mengambil aktivitas.'));
+      if (!silent && !errorToastActivities.current) {
+        toast.error(extractError(error, 'Gagal mengambil aktivitas.'));
+        errorToastActivities.current = true;
+        setTimeout(() => { errorToastActivities.current = false; }, 10000);
+      }
     } finally {
       if (!silent) setIsLoadingActivities(false);
     }
   }, [toast]);
 
+  const startPolling = useCallback(() => {
+    if (document.visibilityState !== 'visible') return;
+
+    if (!statsIntervalRef.current) {
+      console.log("POLLING STATS START");
+      statsIntervalRef.current = setInterval(() => {
+        fetchStats(true);
+      }, 30000);
+    }
+
+    if (!activitiesIntervalRef.current) {
+      console.log("POLLING ACTIVITIES START");
+      activitiesIntervalRef.current = setInterval(() => {
+        fetchActivities(true);
+      }, 15000);
+    }
+  }, [fetchStats, fetchActivities]);
+
+  const stopPolling = useCallback(() => {
+    if (statsIntervalRef.current) {
+      console.log("CLEAR STATS INTERVAL");
+      clearInterval(statsIntervalRef.current);
+      statsIntervalRef.current = null;
+    }
+    if (activitiesIntervalRef.current) {
+      console.log("CLEAR ACTIVITIES INTERVAL");
+      clearInterval(activitiesIntervalRef.current);
+      activitiesIntervalRef.current = null;
+    }
+  }, []);
+
+  useEffect(() => {
+    const handleVisibilityChange = () => {
+      if (document.visibilityState === 'visible') {
+        console.log("TAB ACTIVE - RESUME POLLING");
+        fetchStats(true);
+        fetchActivities(true);
+        startPolling();
+      } else {
+        console.log("TAB INACTIVE - STOP POLLING");
+        stopPolling();
+      }
+    };
+
+    document.addEventListener('visibilitychange', handleVisibilityChange);
+    return () => {
+      document.removeEventListener('visibilitychange', handleVisibilityChange);
+    };
+  }, [startPolling, stopPolling, fetchStats, fetchActivities]);
+
   useEffect(() => {
     fetchStats();
     fetchActivities();
+    startPolling();
 
     let channel = null;
-    const polling = setInterval(() => {
-      if (document.visibilityState === 'visible') {
-        fetchStats(true);
-        fetchActivities(true);
-      }
-    }, 5000);
-
     if (supabaseRealtime) {
       channel = supabaseRealtime
         .channel('dashboard-kunjungan-privacy')
@@ -195,13 +253,17 @@ const Dashboard = () => {
 
     return () => {
       if (channel) supabaseRealtime.removeChannel(channel);
-      clearInterval(polling);
+      stopPolling();
     };
-  }, [fetchActivities, fetchStats]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
   useEffect(() => {
-    if (activeEventId) fetchActivities(true);
-  }, [activeEventId, fetchActivities]);
+    if (activeEventId) {
+      fetchActivities(true);
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [activeEventId]);
 
   const handleManualInput = async (aksi) => {
     if (!activeEventId) {

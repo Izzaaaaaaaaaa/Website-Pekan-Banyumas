@@ -29,8 +29,12 @@ def get_stats(
         stats = get_dashboard_stats(event_id)
         return success_response(jsonable_encoder(stats))
     except HTTPException as e:
-        raise
+        print(f"ERROR DASHBOARD: {e.detail}")
+        if isinstance(e.detail, dict) and "success" in e.detail:
+            raise
+        raise HTTPException(e.status_code, detail=error_response(str(e.detail), e.status_code))
     except Exception as e:
+        print(f"ERROR DASHBOARD: {str(e)}")
         raise HTTPException(500, detail=error_response(str(e), 500))
 
 
@@ -46,8 +50,12 @@ def get_visitors(
         logger.info(f"📊 GET VISITORS - tanggal={tanggal}, event_id={event_id}, count={len(visitors)}")
         return success_response(jsonable_encoder(visitors))
     except HTTPException as e:
-        raise
+        print(f"ERROR VISITORS: {e.detail}")
+        if isinstance(e.detail, dict) and "success" in e.detail:
+            raise
+        raise HTTPException(e.status_code, detail=error_response(str(e.detail), e.status_code))
     except Exception as e:
+        print(f"ERROR VISITORS: {str(e)}")
         logger.error(f"Error getting visitors: {str(e)}")
         raise HTTPException(500, detail=error_response(str(e), 500))
 
