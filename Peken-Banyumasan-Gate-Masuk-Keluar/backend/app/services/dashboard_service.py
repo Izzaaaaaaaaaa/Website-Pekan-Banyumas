@@ -1,10 +1,9 @@
-from app.db.supabase import supabase, supabase_admin
+from app.db.supabase import supabase, supabase_admin, execute_with_retry
 from fastapi import HTTPException
 from datetime import datetime, timezone
 from app.schemas.dashboard_schema import Stats, Visitor, VisitorTapResponse, NfcTapResponse, NfcTapData
 import time as _time
 import logging
-import traceback
 from typing import Optional, List, Dict, Tuple
 
 logger = logging.getLogger(__name__)
@@ -13,7 +12,7 @@ logger = logging.getLogger(__name__)
 # NFC TAP COOLDOWN CACHE - prevent double/triple taps
 # ──────────────────────────────────────────────────────────────────────
 _tap_cooldown_cache: Dict[str, float] = {}  # {uid: last_tap_timestamp}
-_TAP_COOLDOWN_SECONDS = 2  # Must wait 2 seconds between taps
+_TAP_COOLDOWN_SECONDS = 5  # Must wait 5 seconds between taps
 
 
 def is_tap_on_cooldown(uid: str) -> bool:
@@ -38,13 +37,7 @@ def update_tap_cooldown(uid: str) -> None:
     logger.debug(f"[NFC] Tap cooldown updated for UID: {uid}")
 
 
-# Helper functions removed in favor of unified process_nfc_tap logic
-
-
-
 # ── Active event cache ───────────────────────────────────────────────────────
-# Eliminates a Supabase query on every NFC tap / manual entry.
-# Event status changes are rare, so 30s staleness is acceptable.
 _event_cache = {"data": None, "ts": 0}
 _EVENT_CACHE_TTL = 30  # seconds
 
@@ -58,11 +51,15 @@ def get_active_event():
             return _event_cache["data"]
 
         logger.debug(f"[QUERY] Fetching active event from database")
-        res = supabase_admin.table("events") \
-            .select("id, nama, status") \
-            .eq("status", "berlangsung") \
-            .limit(1) \
-            .execute()
+        
+        def fetch_event():
+            return supabase_admin.table("events") \
+                .select("id, nama, status") \
+                .eq("status", "berlangsung") \
+                .limit(1) \
+                .execute()
+
+        res = execute_with_retry(fetch_event, is_admin=True)
 
         result = res.data[0] if res.data else None
         _event_cache["data"] = result
@@ -75,7 +72,7 @@ def get_active_event():
         
         return result
     except Exception as e:
-        logger.error(f"[ERROR] get_active_event failed: {str(e)}\n{traceback.format_exc()}")
+        logger.error(f"[ERROR] get_active_event failed: {str(e)}")
         return None
 
 
@@ -100,7 +97,6 @@ def get_dashboard_stats(event_id: Optional[str] = None) -> Stats:
             event_id = event["id"]
             logger.debug(f"[STATS] Using active event: {event_id}")
         else:
-            # Validate event_id format (UUID)
             if not event_id or len(event_id.strip()) == 0:
                 logger.error(f"[STATS] Invalid event_id provided")
                 return Stats(
@@ -112,14 +108,18 @@ def get_dashboard_stats(event_id: Optional[str] = None) -> Stats:
                     nama_event=""
                 )
             
-            # Verify event exists
             try:
                 logger.debug(f"[STATS] Verifying event exists: {event_id}")
-                event_res = supabase_admin.table("events") \
-                    .select("id, nama") \
-                    .eq("id", event_id) \
-                    .single() \
-                    .execute()
+                
+                def verify_event():
+                    return supabase_admin.table("events") \
+                        .select("id, nama") \
+                        .eq("id", event_id) \
+                        .single() \
+                        .execute()
+                
+                event_res = execute_with_retry(verify_event, is_admin=True)
+                
                 if not event_res.data:
                     logger.warning(f"[STATS] Event not found: {event_id}")
                     return Stats(
@@ -132,8 +132,7 @@ def get_dashboard_stats(event_id: Optional[str] = None) -> Stats:
                     )
                 event = event_res.data
             except Exception as e:
-                logger.error(f"[STATS] Failed to verify event: {str(e)}\n{traceback.format_exc()}")
-                # Return fallback with provided event_id
+                logger.error(f"[STATS] Failed to verify event: {str(e)}")
                 return Stats(
                     di_dalam=0,
                     total_masuk=0,
@@ -143,13 +142,16 @@ def get_dashboard_stats(event_id: Optional[str] = None) -> Stats:
                     nama_event="Database Error"
                 )
 
-        # Get visitors for stats
         try:
             logger.debug(f"[STATS] Fetching visitor stats for event: {event_id}")
-            logs_res = supabase_admin.table("visitors") \
-                .select("status, uid") \
-                .eq("event_id", event_id) \
-                .execute()
+            
+            def fetch_logs():
+                return supabase_admin.table("visitors") \
+                    .select("status, uid") \
+                    .eq("event_id", event_id) \
+                    .execute()
+            
+            logs_res = execute_with_retry(fetch_logs, is_admin=True)
 
             logs = logs_res.data if logs_res.data else []
             logger.debug(f"[STATS] Found {len(logs)} visitor records")
@@ -158,7 +160,6 @@ def get_dashboard_stats(event_id: Optional[str] = None) -> Stats:
             total_keluar = len([l for l in logs if l.get("status") == "keluar"])
             di_dalam = max(0, total_masuk - total_keluar)
             
-            # Kunjungan Hari Ini = Unique UIDs (NFC) + count of manual 'di_dalam' entries
             unique_uids = set()
             manual_count = 0
             for l in logs:
@@ -182,8 +183,7 @@ def get_dashboard_stats(event_id: Optional[str] = None) -> Stats:
             logger.info(f"[STATS] ✅ Success: di_dalam={di_dalam}, total_masuk={total_masuk}, total_keluar={total_keluar}")
             return stats
         except Exception as e:
-            logger.error(f"[STATS] Failed to fetch visitor data: {str(e)}\n{traceback.format_exc()}")
-            # Return fallback stats
+            logger.error(f"[STATS] Failed to fetch visitor data: {str(e)}")
             return Stats(
                 di_dalam=0,
                 total_masuk=0,
@@ -194,8 +194,7 @@ def get_dashboard_stats(event_id: Optional[str] = None) -> Stats:
             )
 
     except Exception as e:
-        logger.error(f"[STATS] Unexpected error in get_dashboard_stats: {str(e)}\n{traceback.format_exc()}")
-        # Return safe fallback
+        logger.error(f"[STATS] Unexpected error in get_dashboard_stats: {str(e)}")
         return Stats(
             di_dalam=0,
             total_masuk=0,
@@ -211,35 +210,29 @@ def list_visitors(tanggal: Optional[str] = None, event_id: Optional[str] = None)
     try:
         logger.info(f"[VISITORS] Fetching visitors: tanggal={tanggal}, event_id={event_id}")
         
-        # Validate date format if provided
         if tanggal:
             try:
                 datetime.strptime(tanggal, "%Y-%m-%d")
                 logger.debug(f"[VISITORS] Date validated: {tanggal}")
             except ValueError:
                 logger.error(f"[VISITORS] Invalid date format: {tanggal}. Expected YYYY-MM-DD")
-                return []  # Return empty list instead of error
+                return []
         
-        # Build query
         try:
-            query = supabase_admin.table("visitors").select("*")
+            def fetch_visitors():
+                query = supabase_admin.table("visitors").select("*")
 
-            if event_id:
-                if not event_id or len(event_id.strip()) == 0:
-                    logger.error(f"[VISITORS] Invalid event_id provided")
-                    return []  # Return empty list instead of error
-                query = query.eq("event_id", event_id)
-                logger.debug(f"[VISITORS] Filtered by event_id: {event_id}")
+                if event_id:
+                    query = query.eq("event_id", event_id)
 
-            if tanggal:
-                # Filter by date (YYYY-MM-DD) — use >= and < to cover entire day UTC
-                date_start = f"{tanggal}T00:00:00.000Z"
-                date_end = f"{tanggal}T23:59:59.999Z"
-                query = query.gte("waktu_masuk", date_start).lt("waktu_masuk", date_end)
-                logger.debug(f"[VISITORS] Filtered by date range: {date_start} to {date_end}")
+                if tanggal:
+                    date_start = f"{tanggal}T00:00:00.000Z"
+                    date_end = f"{tanggal}T23:59:59.999Z"
+                    query = query.gte("waktu_masuk", date_start).lt("waktu_masuk", date_end)
 
-            logger.debug(f"[VISITORS] Executing query...")
-            res = query.order("waktu_masuk", desc=True).execute()
+                return query.order("waktu_masuk", desc=True).execute()
+
+            res = execute_with_retry(fetch_visitors, is_admin=True)
 
             visitors = []
             for log in res.data or []:
@@ -259,18 +252,18 @@ def list_visitors(tanggal: Optional[str] = None, event_id: Optional[str] = None)
                     visitors.append(visitor)
                 except Exception as item_err:
                     logger.warning(f"[VISITORS] Failed to parse visitor item {log.get('id')}: {str(item_err)}")
-                    continue  # Skip malformed item, continue with others
+                    continue
             
             logger.info(f"[VISITORS] ✅ Success: found {len(visitors)} visitors")
             return visitors
             
         except Exception as e:
-            logger.error(f"[VISITORS] Query execution failed: {str(e)}\n{traceback.format_exc()}")
-            return []  # Return empty list on database error
+            logger.error(f"[VISITORS] Query execution failed: {str(e)}")
+            return []
 
     except Exception as e:
-        logger.error(f"[VISITORS] Unexpected error in list_visitors: {str(e)}\n{traceback.format_exc()}")
-        return []  # Return empty list on any error
+        logger.error(f"[VISITORS] Unexpected error in list_visitors: {str(e)}")
+        return []
 
 
 def manual_visitor_entry(aksi: str, event_id: Optional[str] = None) -> dict:
@@ -278,7 +271,6 @@ def manual_visitor_entry(aksi: str, event_id: Optional[str] = None) -> dict:
     try:
         logger.info(f"[MANUAL] Recording manual entry: aksi={aksi}, event_id={event_id}")
         
-        # Validate aksi parameter
         if aksi not in ["masuk", "keluar"]:
             logger.error(f"[MANUAL] Invalid aksi value: {aksi}")
             raise HTTPException(422, f"aksi harus 'masuk' atau 'keluar', bukan '{aksi}'")
@@ -290,7 +282,6 @@ def manual_visitor_entry(aksi: str, event_id: Optional[str] = None) -> dict:
                 logger.warning(f"[MANUAL] No active event found")
                 raise HTTPException(404, "Tidak ada event yang sedang berlangsung")
             event_id = event["id"]
-            logger.debug(f"[MANUAL] Using active event: {event_id}")
         else:
             if not event_id or len(event_id.strip()) == 0:
                 logger.error(f"[MANUAL] Invalid event_id provided")
@@ -301,40 +292,42 @@ def manual_visitor_entry(aksi: str, event_id: Optional[str] = None) -> dict:
 
         try:
             if aksi == "masuk":
-                logger.debug(f"[MANUAL] Inserting new masuk record using admin client")
-                res = supabase_admin.table("visitors").insert({
-                    "event_id": event_id,
-                    "waktu_masuk": now_iso,
-                    "status": "di_dalam",
-                    "nama": "Tamu Manual"
-                }).execute()
-            else:  # keluar
-                # For "keluar", find an active visitor and exit them
-                logger.debug(f"[MANUAL] Finding active visitor to mark as keluar")
-                active_res = supabase_admin.table("visitors") \
-                    .select("id") \
-                    .eq("event_id", event_id) \
-                    .eq("status", "di_dalam") \
-                    .limit(1) \
-                    .execute()
-                
-                if not active_res.data:
-                    logger.warning(f"[MANUAL] No active visitor found, inserting complete record using admin client")
-                    # If no one is inside, just insert a complete record
-                    res = supabase_admin.table("visitors").insert({
+                def perform_insert():
+                    return supabase_admin.table("visitors").insert({
                         "event_id": event_id,
                         "waktu_masuk": now_iso,
-                        "waktu_keluar": now_iso,
-                        "status": "keluar",
+                        "status": "di_dalam",
                         "nama": "Tamu Manual"
                     }).execute()
+                res = execute_with_retry(perform_insert, is_admin=True)
+            else:
+                def fetch_active():
+                    return supabase_admin.table("visitors") \
+                        .select("id") \
+                        .eq("event_id", event_id) \
+                        .eq("status", "di_dalam") \
+                        .limit(1) \
+                        .execute()
+                active_res = execute_with_retry(fetch_active, is_admin=True)
+                
+                if not active_res.data:
+                    def insert_complete():
+                        return supabase_admin.table("visitors").insert({
+                            "event_id": event_id,
+                            "waktu_masuk": now_iso,
+                            "waktu_keluar": now_iso,
+                            "status": "keluar",
+                            "nama": "Tamu Manual"
+                        }).execute()
+                    res = execute_with_retry(insert_complete, is_admin=True)
                 else:
                     target_id = active_res.data[0]["id"]
-                    logger.debug(f"[MANUAL] Updating visitor {target_id} to keluar using admin client")
-                    res = supabase_admin.table("visitors").update({
-                        "waktu_keluar": now_iso,
-                        "status": "keluar"
-                    }).eq("id", target_id).execute()
+                    def update_active():
+                        return supabase_admin.table("visitors").update({
+                            "waktu_keluar": now_iso,
+                            "status": "keluar"
+                        }).eq("id", target_id).execute()
+                    res = execute_with_retry(update_active, is_admin=True)
 
             if not res.data:
                 logger.error(f"[MANUAL] Database returned empty response")
@@ -346,22 +339,18 @@ def manual_visitor_entry(aksi: str, event_id: Optional[str] = None) -> dict:
         
         except Exception as db_err:
             err_str = str(db_err)
-            logger.error(f"[MANUAL] Database operation failed: {err_str}\n{traceback.format_exc()}")
-            
-            # Handle specific Supabase RLS error
+            logger.error(f"[MANUAL] Database operation failed: {err_str}")
             if "42501" in err_str or "violates row-level security" in err_str:
-                logger.error(f"[MANUAL] RLS policy violation detected. Using admin client for retry.")
                 raise HTTPException(403, f"RLS Policy Error: {err_str}")
-            
             if isinstance(db_err, HTTPException):
                 raise
-            raise HTTPException(500, f"Gagal mencatat pengunjung: {err_str}")
+            raise HTTPException(500, f"Gagal mencatat pengunjung")
 
     except HTTPException:
         raise
     except Exception as e:
-        logger.error(f"[MANUAL] Unexpected error: {str(e)}\n{traceback.format_exc()}")
-        raise HTTPException(500, f"Error recording manual entry: {str(e)}")
+        logger.error(f"[MANUAL] Unexpected error: {str(e)}")
+        raise HTTPException(500, f"Error recording manual entry")
 
 
 def process_nfc_tap(uid: str, timestamp: str, event_id: Optional[str] = None) -> NfcTapResponse:
@@ -370,7 +359,6 @@ def process_nfc_tap(uid: str, timestamp: str, event_id: Optional[str] = None) ->
     Insert a new row for each tap based on the last activity.
     """
     try:
-        # ──── PARAMETER VALIDATION ────
         if not uid or len(uid.strip()) == 0:
             raise HTTPException(422, "uid tidak boleh kosong")
         
@@ -379,16 +367,14 @@ def process_nfc_tap(uid: str, timestamp: str, event_id: Optional[str] = None) ->
         
         uid = uid.strip()
         
-        # ──── COOLDOWN CHECK ────
         if is_tap_on_cooldown(uid):
             logger.info(f"[NFC] TOO FAST TAP: uid={uid}")
             return NfcTapResponse(
                 success=False,
                 code="TOO_FAST_TAP",
-                message="Tap terlalu cepat"
+                message="Kartu baru saja dipindai"
             )
         
-        # ──── EVENT VALIDATION ────
         if not event_id:
             event = get_active_event()
             if not event:
@@ -399,64 +385,61 @@ def process_nfc_tap(uid: str, timestamp: str, event_id: Optional[str] = None) ->
                 )
             event_id = event["id"]
 
-        # STEP 1 & 2: Cari aktivitas terakhir berdasarkan UID NFC
-        last_activity_res = supabase_admin.table("visitors") \
-            .select("*") \
-            .eq("uid", uid) \
-            .order("waktu_masuk", desc=True) \
-            .limit(1) \
-            .execute()
+        def fetch_last_activity():
+            return supabase_admin.table("visitors") \
+                .select("*") \
+                .eq("uid", uid) \
+                .eq("event_id", event_id) \
+                .order("waktu_masuk", desc=True) \
+                .limit(1) \
+                .execute()
         
+        last_activity_res = execute_with_retry(fetch_last_activity, is_admin=True)
         last_activity = last_activity_res.data[0] if last_activity_res.data else None
         
-        # STEP 3: Tentukan status berikutnya
         if not last_activity:
             next_status = "di_dalam"
             action_label = "CHECK_IN"
             msg = "Pengunjung berhasil masuk"
+            
+            insert_data = {
+                "event_id": event_id,
+                "uid": uid,
+                "waktu_masuk": timestamp,
+                "status": next_status,
+                "nama": "Tamu"
+            }
+            def execute_insert():
+                return supabase_admin.table("visitors").insert(insert_data).execute()
+            execute_with_retry(execute_insert, is_admin=True)
         else:
             last_status = last_activity.get("status")
+            record_id = last_activity.get("id")
+            
             if last_status == "di_dalam":
                 next_status = "keluar"
                 action_label = "CHECK_OUT"
                 msg = "Pengunjung berhasil keluar"
+                
+                update_data = {
+                    "status": next_status,
+                    "waktu_keluar": timestamp
+                }
             else:
                 next_status = "di_dalam"
                 action_label = "CHECK_IN"
-                msg = "Pengunjung berhasil masuk"
+                msg = "Pengunjung berhasil masuk kembali"
                 
-        # STEP 4: Insert aktivitas baru ke tabel visitors
-        insert_data = {
-            "event_id": event_id,
-            "uid": uid,
-            "waktu_masuk": timestamp,
-            "status": next_status,
-            "nama": last_activity.get("nama") if last_activity else "Tamu"
-        }
-        
-        # Berikan waktu_keluar jika actionnya keluar agar tidak null di frontend
-        if next_status == "keluar":
-            insert_data["waktu_keluar"] = timestamp
+                update_data = {
+                    "status": next_status,
+                    "waktu_masuk": timestamp,
+                    "waktu_keluar": None
+                }
+                
+            def execute_update():
+                return supabase_admin.table("visitors").update(update_data).eq("id", record_id).execute()
+            execute_with_retry(execute_update, is_admin=True)
 
-        try:
-            res = supabase_admin.table("visitors").insert(insert_data).execute()
-        except Exception as e:
-            err_str = str(e)
-            logger.error(f"[NFC] DB Insert Error: {err_str}")
-            # Fallback jika ternyata ada unique constraint di DB:
-            if "duplicate key" in err_str.lower() or "unique constraint" in err_str.lower():
-                logger.warning(f"[NFC] Menggunakan UPDATE fallback karena constraint")
-                if last_activity:
-                    res = supabase_admin.table("visitors").update({
-                        "waktu_keluar": timestamp if next_status == "keluar" else last_activity.get("waktu_keluar"),
-                        "status": next_status,
-                        "waktu_masuk": timestamp if next_status == "di_dalam" else last_activity.get("waktu_masuk")
-                    }).eq("id", last_activity["id"]).execute()
-                else:
-                    raise e
-            else:
-                raise e
-            
         update_tap_cooldown(uid)
         
         aksi_val = "masuk" if next_status == "di_dalam" else "keluar"
@@ -476,7 +459,7 @@ def process_nfc_tap(uid: str, timestamp: str, event_id: Optional[str] = None) ->
     except HTTPException:
         raise
     except Exception as e:
-        logger.error(f"[NFC] UNEXPECTED ERROR: {str(e)}\n{traceback.format_exc()}")
+        logger.error(f"[NFC] UNEXPECTED ERROR: {str(e)}")
         return NfcTapResponse(
             success=False,
             code="INTERNAL_SERVER_ERROR",
@@ -499,12 +482,16 @@ def get_recent_activity(event_id: Optional[str] = None, limit: int = 10) -> List
 
         try:
             logger.debug(f"[ACTIVITY] Fetching {limit} recent activities")
-            res = supabase_admin.table("visitors") \
-                .select("id, nama, status, waktu_masuk, waktu_keluar") \
-                .eq("event_id", event_id) \
-                .order("waktu_masuk", desc=True) \
-                .limit(limit) \
-                .execute()
+            
+            def fetch_recent():
+                return supabase_admin.table("visitors") \
+                    .select("id, nama, status, waktu_masuk, waktu_keluar") \
+                    .eq("event_id", event_id) \
+                    .order("waktu_masuk", desc=True) \
+                    .limit(limit) \
+                    .execute()
+
+            res = execute_with_retry(fetch_recent, is_admin=True)
 
             activities = []
             for log in res.data or []:
@@ -523,10 +510,9 @@ def get_recent_activity(event_id: Optional[str] = None, limit: int = 10) -> List
             return activities
         
         except Exception as db_err:
-            logger.error(f"[ACTIVITY] Query failed: {str(db_err)}\n{traceback.format_exc()}")
-            return []  # Return empty list on database error
+            logger.error(f"[ACTIVITY] Query failed: {str(db_err)}")
+            return []
 
     except Exception as e:
-        logger.error(f"[ACTIVITY] Unexpected error: {str(e)}\n{traceback.format_exc()}")
+        logger.error(f"[ACTIVITY] Unexpected error: {str(e)}")
         return []
-

@@ -5,6 +5,8 @@ import os
 
 load_dotenv()
 
+from supabase.client import ClientOptions
+
 # Public client - pakai anon key, untuk read operations & respek RLS
 _public_instance = None
 
@@ -12,7 +14,8 @@ def get_supabase_public():
     """Get public Supabase client (anon key) - respects RLS policies."""
     global _public_instance
     if _public_instance is None:
-        _public_instance = create_client(SUPABASE_URL, SUPABASE_KEY)
+        opts = ClientOptions(postgrest_client_timeout=30)
+        _public_instance = create_client(SUPABASE_URL, SUPABASE_KEY, options=opts)
     return _public_instance
 
 # Admin client - pakai service role key, untuk write operations bypass RLS
@@ -24,14 +27,16 @@ def get_supabase_admin():
     if _admin_instance is None:
         if not SUPABASE_SERVICE_ROLE_KEY:
             raise ValueError("SUPABASE_SERVICE_ROLE_KEY is not set in environment")
-        _admin_instance = create_client(SUPABASE_URL, SUPABASE_SERVICE_ROLE_KEY)
+        opts = ClientOptions(postgrest_client_timeout=30)
+        _admin_instance = create_client(SUPABASE_URL, SUPABASE_SERVICE_ROLE_KEY, options=opts)
     return _admin_instance
 
 def recreate_supabase_public():
     """Recreate public Supabase connection."""
     global _public_instance
     print("SUPABASE PUBLIC CLIENT RECONNECTED")
-    _public_instance = create_client(SUPABASE_URL, SUPABASE_KEY)
+    opts = ClientOptions(postgrest_client_timeout=30)
+    _public_instance = create_client(SUPABASE_URL, SUPABASE_KEY, options=opts)
     return _public_instance
 
 def recreate_supabase_admin():
@@ -40,7 +45,8 @@ def recreate_supabase_admin():
     print("SUPABASE ADMIN CLIENT RECONNECTED")
     if not SUPABASE_SERVICE_ROLE_KEY:
         raise ValueError("SUPABASE_SERVICE_ROLE_KEY is not set in environment")
-    _admin_instance = create_client(SUPABASE_URL, SUPABASE_SERVICE_ROLE_KEY)
+    opts = ClientOptions(postgrest_client_timeout=30)
+    _admin_instance = create_client(SUPABASE_URL, SUPABASE_SERVICE_ROLE_KEY, options=opts)
     return _admin_instance
 
 # Backward compatibility proxy - now uses public client

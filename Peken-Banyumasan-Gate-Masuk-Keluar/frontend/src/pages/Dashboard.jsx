@@ -296,6 +296,8 @@ const Dashboard = () => {
     // Start polling
     startPolling();
 
+    let realtimeTimeout = null;
+
     // ── REALTIME SUBSCRIPTION ──────────────────────────────────────────────
     // Guard: hanya subscribe 1x, tidak double-subscribe saat React StrictMode
     if (supabaseRealtime && !isRealtimeSubscribedRef.current) {
@@ -308,9 +310,12 @@ const Dashboard = () => {
           "postgres_changes",
           { event: "*", schema: "public", table: "visitors" },
           () => {
-            console.log("[REALTIME] ▶ RECEIVED UPDATE - refreshing data");
-            fetchStats(true);
-            fetchActivities(true);
+            console.log("[REALTIME] ▶ RECEIVED UPDATE - debouncing refresh");
+            if (realtimeTimeout) clearTimeout(realtimeTimeout);
+            realtimeTimeout = setTimeout(() => {
+              fetchStats(true);
+              fetchActivities(true);
+            }, 2000);
           },
         )
         .subscribe((status) => {
