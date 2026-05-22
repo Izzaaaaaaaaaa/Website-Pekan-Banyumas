@@ -1,4 +1,5 @@
 import { useNavigate } from "react-router-dom";
+import { LogOut } from "lucide-react";
 
 export default function ConfirmLogoutModal({ show, onClose, userName }) {
   const navigate = useNavigate();
@@ -6,8 +7,11 @@ export default function ConfirmLogoutModal({ show, onClose, userName }) {
   if (!show) return null;
 
   const handleLogout = () => {
-    localStorage.removeItem("isLogin");
-    navigate("/login");
+    onClose();
+    localStorage.clear();
+    navigate("/login", {
+      replace: true
+    });
   };
 
   const namaDepan = userName?.split(" ")[0] || "kamu";
@@ -15,7 +19,7 @@ export default function ConfirmLogoutModal({ show, onClose, userName }) {
   return (
     <div className="pf-overlay">
       <div className="pf-modal-logout">
-        <div className="pf-logout-icon">🚪</div>
+        <div className="pf-logout-icon"><LogOut size={16} /></div>
         <h3 className="pf-logout-title">Keluar dari akun?</h3>
         <p className="pf-logout-desc">
           Kamu akan keluar dari dashboard kios {namaDepan}.

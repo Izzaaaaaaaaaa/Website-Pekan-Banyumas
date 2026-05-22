@@ -6,7 +6,7 @@ import {
   Loader2, RefreshCw, ShieldCheck,
 } from "lucide-react";
 import logobanyumas from "../../assets/images/logo-banyumas.png";
-import logo         from "../../assets/images/logo.jpeg";
+import logo         from "../../assets/images/logo.png";
 import "../../assets/styles/lupapass.css";
 
 /* ─── CONFIG ─── */

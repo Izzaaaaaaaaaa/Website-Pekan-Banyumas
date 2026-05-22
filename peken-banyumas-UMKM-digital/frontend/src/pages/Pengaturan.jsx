@@ -17,11 +17,11 @@ export default function Pengaturan() {
     <div className="st-page">
       {/* HEADER */}
       <div className="st-header">
-        <div className="st-eyebrow"><Settings size={16} />Akun</div>
-        <div className="st-title">
+        <div className="pg-eye"><Settings size={16} />Akun</div>
+        <div className="pg-title">
           Pengaturan <em>Akun</em>
         </div>
-        <div className="st-subtitle">Ubah informasi dan preferensi kamu</div>
+        <div className="pg-sub">Ubah informasi dan preferensi kamu</div>
       </div>
 
       {/* GRID */}

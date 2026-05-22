@@ -107,7 +107,11 @@ export default function Register() {
       else if (!/\S+@\S+\.\S+/.test(formData.email)) e.email = "Format email tidak valid";
       if (!formData.username.trim())    e.username    = "Username wajib diisi";
       if (!formData.password)           e.password    = "Password wajib diisi";
-      else if (formData.password.length < 6) e.password = "Password minimal 6 karakter";
+      else if (
+        formData.password.length < 6 ||
+        !/[A-Za-z]/.test(formData.password) ||
+        !/[0-9]/.test(formData.password)
+      ) e.password = "Password minimal 6 karakter dan harus mengandung huruf & angka";
       if (formData.password !== formData.konfirmPassword) e.konfirmPassword = "Password tidak cocok";
       if (!formData.kategori)           e.kategori    = "Pilih kategori usaha";
       if (formData.kategori === "lainnya" && !formData.kategoriCustom.trim())

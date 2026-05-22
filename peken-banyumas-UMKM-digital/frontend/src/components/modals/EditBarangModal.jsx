@@ -45,6 +45,11 @@ export default function EditBarangModal({ show, onClose, item, onSave }) {
           <button className="ms-modal-close" onClick={onClose}>✕</button>
         </div>
 
+        <div className="ms-modal-info">
+        Barang ini akan diperbarui di stok
+        <strong> Sate Blengong Bu Yati</strong>
+        </div>
+
         {/* FORM */}
         <div className="ms-form-grid">
           <div className="ms-fg full">
@@ -97,6 +102,18 @@ export default function EditBarangModal({ show, onClose, item, onSave }) {
           <div className="ms-fg">
             <label>Satuan</label>
             <input name="satuan" value={form.satuan} onChange={handleChange} />
+          </div>
+
+          <div className="ms-fg">
+
+          <label>Keterangan</label>
+
+          <textarea
+          name="deskripsi"
+          value={form.deskripsi || ""}
+          onChange={handleChange}
+          />
+
           </div>
         </div>
 

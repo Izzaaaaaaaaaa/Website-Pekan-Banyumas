@@ -1,5 +1,3 @@
-@import url('https://fonts.googleapis.com/css2?family=Lora:wght@500;600;700&family=DM+Sans:wght@300;400;500;600&display=swap');
-
 /* ─── RESET ─── */
 *, *::before, *::after {
   box-sizing: border-box;
@@ -13,12 +11,12 @@
 
 .reg-root {
   min-height: 100vh;
-  background: #f0ede6;
+  background: #f5f5ec;
   display: flex;
   align-items: flex-start;
   justify-content: center;
   padding: 40px 16px 60px;
-  font-family: 'DM Sans', sans-serif;
+  font-family: "Montserrat", sans-serif;
   position: relative;
 }
 
@@ -60,7 +58,7 @@
 .reg-brand-mark {
   width: 42px;
   height: 42px;
-  background: linear-gradient(135deg, #2f855a, #48bb78);
+  background: linear-gradient(135deg, #7A8A52, #8F9B6A);
   border-radius: 12px;
   display: flex;
   align-items: center;
@@ -70,9 +68,10 @@
 }
 
 .reg-brand-name {
-  font-family: 'Lora', serif;
-  font-size: 18px;
+  font-family: "Montserrat", sans-serif;
   font-weight: 700;
+  letter-spacing: -0.01em;
+  font-size: 18px;
   color: #1a2e1f;
   line-height: 1.2;
 }
@@ -114,7 +113,7 @@
 }
 
 .step-item.done:not(:last-child)::after {
-  background: #2f855a;
+  background: #7A8A52;
 }
 
 .step-circle {
@@ -133,15 +132,15 @@
 }
 
 .step-item.active .step-circle {
-  border-color: #2f855a;
-  background: #2f855a;
+  border-color: #7A8A52;
+  background: #7A8A52;
   color: white;
   box-shadow: 0 0 0 4px rgba(47, 133, 90, 0.15);
 }
 
 .step-item.done .step-circle {
-  border-color: #2f855a;
-  background: #2f855a;
+  border-color: #7A8A52;
+  background: #7A8A52;
   color: white;
 }
 
@@ -157,7 +156,7 @@
 
 .step-item.active .step-label,
 .step-item.done .step-label {
-  color: #2f855a;
+  color: #7A8A52;
 }
 
 /* ══════════════════════════════════════════════ */
@@ -174,7 +173,7 @@
 
 .progress-bar-fill {
   height: 100%;
-  background: linear-gradient(90deg, #2f855a, #48bb78);
+  background: linear-gradient(90deg, #7A8A52, #8F9B6A);
   border-radius: 99px;
   transition: width 0.45s cubic-bezier(0.22, 1, 0.36, 1);
 }
@@ -184,12 +183,12 @@
 /* ══════════════════════════════════════════════ */
 
 .reg-card {
-  background: white;
+  background: #fcfcf7;
   border-radius: 24px;
   padding: 40px 44px;
   box-shadow:
     0 0 0 1px rgba(0, 0, 0, 0.05),
-    0 8px 32px rgba(0, 0, 0, 0.07);
+    0 4px 20px rgba(122,138,82,.08);
   animation: slideIn 0.35s cubic-bezier(0.22, 1, 0.36, 1) both;
 }
 
@@ -203,9 +202,9 @@
   display: inline-flex;
   align-items: center;
   gap: 6px;
-  background: #f0fdf4;
-  border: 1px solid #bbf7d0;
-  color: #166534;
+  background: #eef0e0;
+  border: 1px solid #c8d09a;
+  color: #6f7d4e;
   font-size: 11px;
   font-weight: 700;
   letter-spacing: 0.08em;
@@ -216,9 +215,10 @@
 }
 
 .step-title {
-  font-family: 'Lora', serif;
+  font-family: "Montserrat", sans-serif;
   font-size: 22px;
   font-weight: 700;
+  letter-spacing: -0.01em;
   color: #1a2e1f;
   margin-bottom: 4px;
 }
@@ -307,7 +307,7 @@
   transition: color 0.15s;
 }
 
-.toggle-btn:hover { color: #2f855a; }
+.toggle-btn:hover { color: #7A8A52; }
 
 /* Inputs */
 .reg-input,
@@ -319,7 +319,7 @@
   border-radius: 12px;
   font-size: 14px;
   font-family: 'DM Sans', sans-serif;
-  background: #fafafa;
+  background: #fff;
   color: #1a2e1f;
   outline: none;
   -webkit-appearance: none;
@@ -340,9 +340,9 @@
 .reg-input:focus,
 .reg-select:focus,
 .reg-textarea:focus {
-  border-color: #2f855a;
+  border-color: #7A8A52;
   background: #fff;
-  box-shadow: 0 0 0 3px rgba(47, 133, 90, 0.1);
+  box-shadow: 0 0 0 3px rgba(122,138,82,.12);
 }
 
 .reg-input.err,
@@ -395,14 +395,14 @@
 }
 
 .kategori-chip:hover {
-  border-color: #2f855a;
-  color: #2f855a;
+  border-color: #7A8A52;
+  color: #7A8A52;
   background: #f0fdf4;
 }
 
 .kategori-chip.selected {
-  border-color: #2f855a;
-  background: #2f855a;
+  border-color: #7A8A52;
+  background: #7A8A52;
   color: white;
   box-shadow: 0 3px 10px rgba(47, 133, 90, 0.3);
 }
@@ -423,7 +423,7 @@
 }
 
 .upload-zone:hover {
-  border-color: #2f855a;
+  border-color: #7A8A52;
   background: #f0fdf4;
 }
 
@@ -456,7 +456,7 @@
   display: inline-flex;
   align-items: center;
   gap: 6px;
-  background: #2f855a;
+  background: #7A8A52;
   color: white;
   font-size: 13px;
   font-weight: 600;
@@ -468,7 +468,7 @@
   transition: background 0.2s;
 }
 
-.upload-btn:hover { background: #276749; }
+.upload-btn:hover { background: #4F5C30; }
 
 /* Photo preview grid */
 .photo-grid {
@@ -544,11 +544,11 @@
 }
 
 .photo-add-slot:hover {
-  border-color: #2f855a;
+  border-color: #7A8A52;
   background: #f0fdf4;
 }
 
-.photo-add-slot:hover span { color: #2f855a; }
+.photo-add-slot:hover span { color: #7A8A52; }
 
 /* ══════════════════════════════════════════════ */
 /*  SYARAT & KETENTUAN                            */
@@ -594,8 +594,8 @@
   transition: border-color 0.2s, background 0.2s;
 }
 
-.checkbox-row:hover    { border-color: #2f855a; background: #f0fdf4; }
-.checkbox-row.checked  { border-color: #2f855a; background: #f0fdf4; }
+.checkbox-row:hover    { border-color: #7A8A52; background: #f0fdf4; }
+.checkbox-row.checked  { border-color: #7A8A52; background: #f0fdf4; }
 .checkbox-row.err      { border-color: #ef4444; }
 
 .custom-checkbox {
@@ -613,8 +613,8 @@
 }
 
 .custom-checkbox.checked {
-  background: #2f855a;
-  border-color: #2f855a;
+  background: #7A8A52;
+  border-color: #7A8A52;
 }
 
 .checkbox-label {
@@ -686,14 +686,14 @@
 }
 
 .filter-chip:hover {
-  border-color: #2f855a;
-  color: #2f855a;
+  border-color: #7A8A52;
+  color: #7A8A52;
   background: #f0fdf4;
 }
 
 .filter-chip.active {
-  border-color: #2f855a;
-  background: #2f855a;
+  border-color: #7A8A52;
+  background: #7A8A52;
   color: white;
 }
 
@@ -734,11 +734,11 @@
   border-radius: 3px;
 }
 
-.legend-dot.available  { background: #f0fdf4; border: 2px solid #2f855a; }
+.legend-dot.available  { background: #f0fdf4; border: 2px solid #7A8A52; }
 .legend-dot.full       { background: #f3f4f6; border: 2px solid #e5e7eb; opacity: 0.6; }
 .legend-dot.selected-dot {
-  background: #2f855a;
-  border: 2px solid #2f855a;
+  background: #7A8A52;
+  border: 2px solid #7A8A52;
   box-shadow: 0 0 0 3px rgba(47, 133, 90, 0.2);
 }
 
@@ -768,7 +768,7 @@
 }
 
 .seat-btn:hover:not(.full) {
-  border-color: #2f855a;
+  border-color: #7A8A52;
   background: #f0fdf4;
   transform: translateY(-2px);
   box-shadow: 0 6px 16px rgba(47, 133, 90, 0.15);
@@ -782,15 +782,16 @@
 }
 
 .seat-btn.selected {
-  border-color: #2f855a;
-  background: #2f855a;
+  border-color: #7A8A52;
+  background: #7A8A52;
   box-shadow: 0 0 0 3px rgba(47, 133, 90, 0.2);
 }
 
 .seat-id {
-  font-family: 'Lora', serif;
+  font-family: "Montserrat", sans-serif;
   font-size: 15px;
   font-weight: 700;
+  letter-spacing: -0.01em;
   color: #1a2e1f;
   line-height: 1;
 }
@@ -973,7 +974,7 @@
   align-items: center;
   gap: 6px;
   padding: 12px 28px;
-  background: linear-gradient(135deg, #276749, #2f855a);
+  background: #7A8A52;
   color: white;
   border: none;
   border-radius: 12px;
@@ -987,6 +988,7 @@
 }
 
 .btn-next:hover {
+  background: #4F5C30;
   transform: translateY(-1px);
   box-shadow: 0 8px 20px rgba(47, 133, 90, 0.4);
 }
@@ -996,7 +998,7 @@
   align-items: center;
   gap: 8px;
   padding: 13px 28px;
-  background: linear-gradient(135deg, #15803d, #2f855a);
+  background: #7A8A52;
   color: white;
   border: none;
   border-radius: 12px;
@@ -1010,6 +1012,7 @@
 }
 
 .btn-submit:hover {
+  background: #4F5C30;
   transform: translateY(-1px);
   box-shadow: 0 10px 28px rgba(47, 133, 90, 0.45);
 }
@@ -1037,7 +1040,7 @@
 }
 
 .reg-footer-link {
-  color: #2f855a;
+  color: #7A8A52;
   font-weight: 600;
   cursor: pointer;
   transition: opacity 0.15s;
@@ -1048,6 +1051,41 @@
 /* ══════════════════════════════════════════════ */
 /*  RESPONSIVE                                    */
 /* ══════════════════════════════════════════════ */
+
+@media (max-width: 768px) {
+
+  .reg-root {
+    padding: 28px 14px 50px;
+  }
+
+  .reg-card {
+    padding: 28px 22px;
+    border-radius: 20px;
+  }
+
+  .step-title {
+    font-size: 26px;
+  }
+
+  .step-desc {
+    font-size: 13px;
+  }
+
+  .nav-row {
+    gap: 10px;
+  }
+
+  .btn-next,
+  .btn-submit,
+  .btn-back {
+    font-size: 13px;
+    padding: 11px 20px;
+  }
+
+  .kategori-chip {
+    font-size: 12.5px;
+  }
+}
 
 @media (max-width: 600px) {
   .reg-card { padding: 28px 20px; }

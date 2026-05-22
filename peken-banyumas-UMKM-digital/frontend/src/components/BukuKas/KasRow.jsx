@@ -69,14 +69,14 @@ export default function KasRow({ item, index, formatRupiah, onEdit, onDelete }) 
       </td>
 
       {/* NOMINAL */}
-      <td>
+      <td style={{ textAlign: "right" }}>
         <span className={`bk-nominal ${isMasuk ? "bk-nominal-masuk" : "bk-nominal-keluar"}`}>
           {isMasuk ? "+" : "−"}Rp {formatRupiah(item.nominal)}
         </span>
       </td>
 
       {/* SALDO */}
-      <td><span className="bk-saldo">Rp {formatRupiah(item.saldo)}</span></td>
+      <td style={{ textAlign: "right" }}><span className="bk-saldo">Rp {formatRupiah(item.saldo)}</span></td>
 
       {/* AKSI */}
       <td>

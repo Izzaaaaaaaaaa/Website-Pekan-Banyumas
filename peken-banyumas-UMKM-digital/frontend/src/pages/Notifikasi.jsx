@@ -98,7 +98,7 @@ const NOTIF_DATA = [
 // ── TYPE CONFIG ─────────────────────────────────────────────
 const TYPE_META = {
   stok: { label: "Stok", color: "#f97316", bg: "#fff7ed", icon: <Package size={16} /> },
-  transaksi: { label: "Transaksi", color: "#2f6f4e", bg: "#eef5ef", icon: <ShoppingCart size={16} /> },
+  transaksi: { label: "Transaksi", color:"#6E7D47", bg:"#EEF1E2", icon: <ShoppingCart size={16} /> },
   promo: { label: "Promo", color: "#7c3aed", bg: "#f5f3ff", icon: <Tag size={16} /> },
   info: { label: "Info", color: "#0ea5e9", bg: "#f0f9ff", icon: <Info size={16} /> },
 };

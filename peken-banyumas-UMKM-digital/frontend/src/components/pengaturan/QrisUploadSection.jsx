@@ -124,7 +124,7 @@ export default function QrisUploadSection() {
             </div>
             {saved && (
               <p className="qris-info-saved">
-                ✅ QRIS aktif — akan muncul otomatis saat metode QRIS dipilih di Buku Kas
+                QRIS aktif — akan muncul otomatis saat metode QRIS dipilih di Buku Kas
               </p>
             )}
           </div>

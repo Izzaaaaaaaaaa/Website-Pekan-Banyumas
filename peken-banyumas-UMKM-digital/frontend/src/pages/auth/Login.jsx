@@ -2,12 +2,51 @@ import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import {
   Mail, Lock, Eye, EyeOff, AlertCircle,
-  ArrowRight, Loader2, Calendar, MapPin, Ticket,
-  Users, Store,
+  ArrowRight, Loader2, Store,
 } from "lucide-react";
 import logobanyumas from "../../assets/images/logo-banyumas.png";
-import logo from "../../assets/images/logo.jpeg";
+import logo from "../../assets/images/logo.png";
 import "../../assets/styles/login.css";
+
+/* ── Left panel decorative sub-components (inline styles, zero class dependency) ── */
+
+const DotGrid = () => (
+  <div style={{
+    position: "absolute", inset: 0, opacity: 0.04,
+    backgroundImage: "radial-gradient(#C3CA96 1px, transparent 1px)",
+    backgroundSize: "24px 24px",
+    pointerEvents: "none",
+  }} />
+);
+
+const SageGlow = () => (
+  <div style={{
+    position: "absolute", top: -80, right: -80,
+    width: 320, height: 320, borderRadius: "50%",
+    background: "radial-gradient(circle, rgba(195,202,150,.14) 0%, transparent 70%)",
+    pointerEvents: "none",
+  }} />
+);
+
+const PixelSkyline = () => (
+  <div style={{
+    position: "absolute", bottom: 0, left: 0, right: 0, height: 120,
+    backgroundImage: "url(/pixel-skyline.svg)",
+    backgroundRepeat: "repeat-x",
+    backgroundPosition: "bottom",
+    backgroundSize: "auto 80px",
+    opacity: 0.12,
+    pointerEvents: "none",
+  }} />
+);
+
+const FEATURES = [
+  "Kelola stok dan produk kios secara real-time",
+  "Pantau omzet dan transaksi harian dengan mudah",
+  "Daftar event dan jadwal tampil di satu tempat",
+];
+
+/* ── Main component ── */
 
 export default function Login() {
   const navigate = useNavigate();
@@ -36,87 +75,112 @@ export default function Login() {
     }, 800);
   };
 
-  console.log("LOGIN RENDER");
-  
   return (
-    <div className="login-root">
+    <div style={{
+      display: "flex",
+      height: "100vh",
+      overflow: "hidden",
+      fontFamily: "var(--font-body)",
+      background: "#f2f4e8",
+    }}>
 
-      {/* ═══════════════════════════════ */}
-      {/*  LEFT PANEL                     */}
-      {/* ═══════════════════════════════ */}
-      <div className="login-left">
-        <div className="blob blob-1" />
-        <div className="blob blob-2" />
-        <div className="blob blob-3" />
-        <div className="dot-grid" />
+      {/* ══════════════════════════════════════════════════════
+          LEFT — Branding panel (charcoal dark, inline styles)
+          ══════════════════════════════════════════════════════ */}
+      <div className="login-left-panel">
+        <DotGrid />
+        <SageGlow />
+        <PixelSkyline />
 
-        <div className="left-content">
-
-          {/* Logos */}
-          <div className="left-logo-bar">
-            <img src={logobanyumas} alt="Kabupaten Banyumas" className="left-logo" />
-            <div className="left-logo-divider" />
-            <img src={logo} alt="Peken Banyumas" className="left-logo peken" />
+        {/* Logo */}
+        <div style={{ position: "relative", zIndex: 1, display: "flex", alignItems: "center", gap: 12 }}>
+          <img
+            src={logo}
+            alt="Peken Banyumasan"
+            style={{
+              width: 44, height: 44, borderRadius: 10, objectFit: "cover",
+              border: "1px solid rgba(255,255,255,.12)",
+            }}
+          />
+          <div>
+            <div style={{
+              fontFamily: "Montserrat, sans-serif",
+              fontSize: 18, fontWeight: 600, color: "#fff", lineHeight: 1,
+            }}>
+              Peken Banyumasan
+            </div>
+            <div style={{
+              fontSize: 10, color: "#5a6258", marginTop: 4,
+              letterSpacing: ".08em", textTransform: "uppercase",
+            }}>
+              Platform Artisan UMKM
+            </div>
           </div>
+        </div>
 
-          {/* Badge */}
-          <div className="left-badge">
-            <span className="badge-dot" />
-            Peken Banyumas
+        {/* Hero copy */}
+        <div style={{ position: "relative", zIndex: 1, maxWidth: 420 }}>
+          <div style={{
+            fontFamily: "var(--font-display)",
+            fontSize: 32, fontWeight: 400, color: "#fff",
+            lineHeight: 1.25, marginBottom: 20, letterSpacing: "-.01em",
+          }}>
+            Wujudkan karya artisanmu bersama kami.
           </div>
-
-          {/* Headline */}
-          <h1 className="left-heading">
-            Wujudkan karya<br />artisanmu bersama <em>kami</em>
-          </h1>
-
-          {/* Sub */}
-          <p className="left-sub">
-            Platform khusus artisan Peken Banyumas kelola kios, pantau penjualan,
-            dan tampilkan produk terbaikmu dalam satu dasbor yang simpel dan intuitif.
+          <p style={{ fontSize: 14, color: "#8a9278", lineHeight: 1.8, margin: 0 }}>
+            Platform khusus artisan Peken Banyumas — kelola kios, pantau penjualan,
+            dan tampilkan produk terbaikmu dalam satu dasbor yang simpel dan terintegrasi.
           </p>
 
-          {/* Stats */}
-          <div className="stat-row">
-            <div className="stat-card">
-              <div className="stat-icon"><Users    size={15} color="#1e5c3a" strokeWidth={2} /></div>
-              <div className="stat-num">320+</div>
-              <div className="stat-label">Artisan Terdaftar</div>
-            </div>
-            <div className="stat-card">
-              <div className="stat-icon"><Calendar size={15} color="#1e5c3a" strokeWidth={2} /></div>
-              <div className="stat-num">3 Hari</div>
-              <div className="stat-label">22–24 Maret 2026</div>
-            </div>
-            <div className="stat-card">
-              <div className="stat-icon"><Ticket   size={15} color="#1e5c3a" strokeWidth={2} /></div>
-              <div className="stat-num">100%</div>
-              <div className="stat-label">Masuk Gratis</div>
-            </div>
+          {/* Feature bullets */}
+          <div style={{ marginTop: 32, display: "flex", flexDirection: "column", gap: 10 }}>
+            {FEATURES.map(text => (
+              <div key={text} style={{ display: "flex", alignItems: "center", gap: 10 }}>
+                <span style={{
+                  width: 6, height: 6, borderRadius: "50%",
+                  background: "#C3CA96", flexShrink: 0,
+                }} />
+                <span style={{ fontSize: 12, color: "#8a9278" }}>{text}</span>
+              </div>
+            ))}
           </div>
+        </div>
 
-          {/* Venue */}
-          <div className="venue-pill">
-            <MapPin size={13} color="#86efac" strokeWidth={2} />
-            Taman Sari Kota Lama, Banyumas, Jawa Tengah
-          </div>
+        {/* Footer */}
+        <div style={{
+          position: "relative", zIndex: 1,
+          fontSize: 10, color: "#3a4030", letterSpacing: ".04em",
+        }}>
+          &copy; 2026 Panitia Peken Banyumasan
         </div>
       </div>
 
-      {/* ═══════════════════════════════ */}
-      {/*  RIGHT PANEL                    */}
-      {/* ═══════════════════════════════ */}
+      {/* ══════════════════════════════════════════════════════
+          RIGHT — Login form (CSS classes, light krem)
+          ══════════════════════════════════════════════════════ */}
       <div className="login-right">
+        <div style={{ position: 'absolute', top: 16, right: 20 }}>
+          <span
+            onClick={() => navigate("/")}
+            style={{
+              fontSize: 12,
+              color: "#8a9070",
+              cursor: "pointer"
+            }}
+          >
+            ← Beranda Publik
+          </span>
+        </div>
         <div className="login-card">
 
-          {/* Mobile-only logos */}
+          {/* Mobile logo (hidden on desktop) */}
           <div className="card-logos">
             <img src={logobanyumas} alt="Kabupaten Banyumas" className="card-logo" />
             <div className="card-logo-sep" />
             <img src={logo} alt="Peken Banyumas" className="card-logo peken" />
           </div>
 
-          {/* Store icon mark */}
+          {/* Icon mark */}
           <div className="logo-mark">
             <Store size={24} color="white" strokeWidth={2} />
           </div>
@@ -135,50 +199,49 @@ export default function Login() {
           {/* Form */}
           <form onSubmit={handleLogin}>
 
-            {/* Email */}
             <div className="field">
               <label className="field-label">Email</label>
               <div className="input-wrap">
-                <span className="input-icon"><Mail size={17} strokeWidth={1.8} /></span>
-                <input type="email" name="email" value={form.email}
+                <span className="input-icon"><Mail size={16} strokeWidth={1.8} /></span>
+                <input
+                  type="email" name="email" value={form.email}
                   onChange={handleChange} placeholder="nama@email.com"
-                  className="login-input" autoComplete="email" />
+                  className="login-input" autoComplete="email"
+                />
               </div>
             </div>
 
-            {/* Password */}
             <div className="field">
               <label className="field-label">Password</label>
               <div className="input-wrap">
-                <span className="input-icon"><Lock size={17} strokeWidth={1.8} /></span>
-                <input type={showPassword ? "text" : "password"} name="password"
+                <span className="input-icon"><Lock size={16} strokeWidth={1.8} /></span>
+                <input
+                  type={showPassword ? "text" : "password"} name="password"
                   value={form.password} onChange={handleChange}
                   placeholder="Masukkan password"
-                  className="login-input has-toggle" autoComplete="current-password" />
-                <button type="button" className="toggle-pw"
-                  onClick={() => setShowPassword(!showPassword)} tabIndex={-1}>
+                  className="login-input has-toggle" autoComplete="current-password"
+                />
+                <button
+                  type="button" className="toggle-pw"
+                  onClick={() => setShowPassword(p => !p)} tabIndex={-1}
+                >
                   {showPassword
-                    ? <EyeOff size={17} strokeWidth={1.8} />
-                    : <Eye    size={17} strokeWidth={1.8} />}
+                    ? <EyeOff size={16} strokeWidth={1.8} />
+                    : <Eye    size={16} strokeWidth={1.8} />}
                 </button>
               </div>
             </div>
 
-            {/* Forgot */}
             <div className="forgot-row">
-              <span 
-                className="forgot-link" 
-                onClick={() => navigate("/lupa-pass")}
-              >
+              <span className="forgot-link" onClick={() => navigate("/lupa-pass")}>
                 Lupa password?
               </span>
             </div>
 
-            {/* Submit */}
             <button type="submit" className="btn-submit" disabled={loading}>
               {loading
-                ? <><Loader2 size={18} className="spin" /> Memverifikasi...</>
-                : <>Masuk ke Dashboard <ArrowRight size={17} /></>
+                ? <><Loader2 size={16} className="spin" /> Memverifikasi...</>
+                : <>Masuk ke Dashboard <ArrowRight size={16} /></>
               }
             </button>
           </form>
@@ -194,7 +257,7 @@ export default function Login() {
             </span>
           </p>
 
-          {/* Event strip */}
+          {/* Event strip — static */}
           <div className="event-strip">
             <div className="event-strip-left">
               <img src={logo} alt="Peken Banyumas" className="event-strip-logo" />

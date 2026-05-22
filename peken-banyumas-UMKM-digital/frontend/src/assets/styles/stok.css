@@ -2,6 +2,61 @@
    MANAJEMEN STOK — manajemen-stok.css
    ============================================== */
 
+:root{
+
+--dash-bg:#F6F6EF;
+
+--dash-surface:#FCFCF8;
+
+--dash-surface-hover:#F8F8F1;
+
+--dash-border:#E2E5D5;
+
+--dash-border-strong:#C8CFB5;
+
+--dash-text-primary:#1E2418;
+
+--dash-text-secondary:#626954;
+
+--dash-text-muted:#8F9683;
+
+--dash-accent-bg:#F1F3E7;
+
+--dash-accent-border:#CDD5B4;
+
+--dash-accent-dark:#7A8A52;
+
+--dash-accent-deeper:#687747;
+
+--shadow-sm:
+0 2px 10px rgba(0,0,0,.03);
+
+--shadow-accent:
+0 8px 20px rgba(122,138,82,.14);
+
+/* badges */
+
+--peken-success:#4E7A54;
+--peken-success-bg:#EDF6EF;
+--peken-success-border:#CBE0CF;
+
+--peken-warning:#AD8A39;
+--peken-warning-bg:#FBF6E7;
+--peken-warning-border:#E9DBAA;
+
+--peken-error:#B14F4F;
+--peken-error-bg:#FCEEEE;
+--peken-error-border:#F2D0D0;
+
+--peken-info:#5D7CA4;
+--peken-info-bg:#EEF4FC;
+
+}
+
+body {
+  font-family: "Plus Jakarta Sans", sans-serif;
+}
+
 /* ── TOPBAR ── */
 .ms-topbar {
   display: flex;
@@ -25,14 +80,15 @@
   align-items: center;
   gap: 8px;
   background: white;
-  border: 1.5px solid #e5e7eb;
-  border-radius: 12px;
-  padding: 9px 14px;
+  border: 1px solid #DFE3D5;
+  border-radius: 18px;
+  padding: 0 18px;
   font-size: 14px;
   color: #374151;
-  width: 220px;
+  width: 280px;
+  height:46px;
   transition: border-color 0.2s, box-shadow 0.2s;
-  box-shadow: 0 1px 4px rgba(0,0,0,0.04);
+  box-shadow: none;
 }
 
 .ms-search:focus-within {
@@ -58,83 +114,124 @@
   display: flex;
   align-items: center;
   justify-content: space-between;
-  background: linear-gradient(135deg, #f0f7f3 0%, #e8f4ed 100%);
-  border: 1.5px solid #c3dece;
-  border-radius: 18px;
-  padding: 18px 24px;
-  margin-bottom: 20px;
+  background: #F7F8F1;
+  border: 1.5px solid #D4D9BF;
+  border-radius: 30px;
+  padding: 20px 26px;
+  margin-bottom: 22px;
+  transition: .2s ease;
 }
 
+.kios-banner:hover{
+  background:#FAFBF6;
+}
+
+/* kiri */
 .kios-banner-left {
   display: flex;
   align-items: center;
-  gap: 16px;
+  gap: 18px;
 }
 
+/* icon */
 .kios-avatar {
-  color: white;
-  width: 48px;
-  height: 48px;
-  background: linear-gradient(135deg, #2f6f4e, #4a9b6e);
-  border-radius: 14px;
+  width: 56px;
+  height: 56px;
+
+  color: #FCFCF8;
+
+  background:
+    linear-gradient(
+      135deg,
+      #819058 0%,
+      #73824B 100%
+    );
+
+  border-radius: 18px;
+
   display: flex;
   align-items: center;
   justify-content: center;
-  font-size: 22px;
-  box-shadow: 0 4px 12px rgba(47,111,78,0.25);
+
+  box-shadow:
+  0 10px 20px
+  rgba(122,138,82,.16);
+
+  flex-shrink: 0;
 }
 
+/* judul */
 .kios-banner-name {
-  font-size: 16px;
+  font-size: 18px;
   font-weight: 700;
-  color: #1a2e22;
+  color: #1C2417;
+  line-height: 1.25;
+  letter-spacing: -.02em;
 }
 
+/* sub */
 .kios-banner-sub {
-  font-size: 12px;
-  color: #6b7280;
-  margin-top: 2px;
+  margin-top: 4px;
+  font-size: 13px;
+  font-weight: 500;
+  color: #8A907F;
 }
 
+/* kanan */
 .kios-banner-right {
   display: flex;
-  gap: 10px;
   align-items: center;
+  gap: 10px;
+  flex-wrap: wrap;
 }
 
+
+/* BADGE AKTIF */
+.kios-badge-active {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 8px 16px;
+  border-radius: 999px;
+  background: #F0F4EA;
+  border: 1px solid #D2DAC4;
+  color: #68814B;
+  font-size: 13px;
+  font-weight: 700;
+}
+
+/* BADGE WARNING */
 .kios-badge-warn {
   display: inline-flex;
   align-items: center;
   gap: 6px;
+  padding: 8px 16px;
+  border-radius: 999px;
+  background: #FBF6E7;
+  border: 1px solid #E9DBAA;
+  color: #A67A1A;
+  font-size: 13px;
+  font-weight: 700;
 }
 
-.kios-badge-active {
-  background: #dcfce7;
-  color: #166534;
-  border: 1px solid #bbf7d0;
-  padding: 5px 12px;
-  border-radius: 99px;
-  font-size: 12px;
-  font-weight: 600;
-}
-
-.kios-badge-warn {
-  background: #fef3c7;
-  color: #92400e;
-  border: 1px solid #fde68a;
-  padding: 5px 12px;
-  border-radius: 99px;
-  font-size: 12px;
-  font-weight: 600;
+.kios-badge-warn svg{
+  width:14px;
+  height:14px;
 }
 
 /* ── TABLE WRAPPER ── */
-.ms-card {
-  background: white;
-  border-radius: 18px;
-  border: 1px solid #f0f0f0;
-  box-shadow: 0 4px 14px rgba(0,0,0,0.04);
-  overflow: hidden;
+.ms-card{
+  background:#FCFCF8;
+
+  border:1.5px solid #E7E8DE;
+
+  border-radius:30px;
+
+  overflow:hidden;
+
+  box-shadow:
+  0 4px 16px
+  rgba(0,0,0,.02);
 }
 
 .ms-tbl-wrap {
@@ -146,8 +243,33 @@
   border-collapse: collapse;
 }
 
-.ms-table thead tr {
-  background: #f9fafb;
+.ms-table thead tr{
+background:#F7F8F2;
+}
+
+.ms-table th{
+
+padding:16px 18px;
+
+font-size:12px;
+
+font-weight:700;
+
+color:#9CA18D;
+
+letter-spacing:.08em;
+
+text-transform:uppercase;
+
+border-bottom:
+1px solid #ECEDE5;
+
+white-space:nowrap;
+
+background:#F7F8F2;
+
+text-align:center;
+
 }
 
 .ms-table th {
@@ -155,7 +277,8 @@
   text-align: center;
   font-size: 11px;
   font-weight: 700;
-  color: #9ca3af;
+  color:#98A089;
+  background:#FBFBF6;
   letter-spacing: 0.8px;
   text-transform: uppercase;
   border-bottom: 1px solid #f0f0f0;
@@ -164,18 +287,22 @@
 
 .ms-table th:first-child,
 .ms-table td:first-child {
-  padding-left: 24px;
+  padding-left: 28px;
   width: 40px;
 }
 
 .ms-table th:last-child,
 .ms-table td:last-child {
-  padding-right: 24px;
+  padding-right: 28px;
 }
 
-.ms-table tbody tr {
-  border-bottom: 1px solid #f6f7f8;
-  transition: background 0.15s;
+.ms-table tbody tr{
+
+border-bottom:
+1px solid #F2F3EC;
+
+transition:.18s;
+
 }
 
 .ms-table tbody tr:last-child {
@@ -183,58 +310,92 @@
 }
 
 .ms-table tbody tr:hover {
-  background: #fafcfb;
+  background:#FBFBF8;
 }
 
-.ms-table td {
-  padding: 16px;
-  vertical-align: middle;
+.ms-table td{
+
+padding:20px 18px;
+
+font-size:13px;
+
+vertical-align:middle;
+
 }
 
 .ms-idx {
   font-size: 13px;
-  font-weight: 600;
-  color: #d1d5db;
+  font-weight:700;
+  color:#B7BCAC;
 }
 
 /* ── TD NAMA ── */
 .ms-td-name {
   font-size: 14px;
-  font-weight: 600;
-  color: #1a2e22;
+  font-weight:700;
+  color:#20251A;
 }
 
 .ms-td-sub {
-  font-size: 12px;
-  color: #9ca3af;
-  margin-top: 2px;
+  margin-top:4px;
+  font-size:12px;
+  font-weight:500;
+  color:#969B8D;
 }
 
 /* ── KATEGORI PILL ── */
 .ms-kategori {
-  display: inline-block;
-  padding: 4px 12px;
-  border-radius: 99px;
-  font-size: 12px;
-  font-weight: 600;
+  display:inline-flex;
+  align-items:center;
+  padding:7px 14px;
+  border-radius:999px;
+  font-size:12px;
+  font-weight:700;
 }
 
-.ms-kat-makanan  { background: #dcfce7; color: #166534; }
-.ms-kat-minuman  { background: #dbeafe; color: #1e40af; }
-.ms-kat-camilan  { background: #fef3c7; color: #92400e; }
-.ms-kat-lainnya  { background: #f3f4f6; color: #6b7280; }
+.ms-kat-makanan{
+
+background:#EEF3E7;
+
+color:#6C8252;
+
+}
+
+.ms-kat-minuman{
+
+background:#F1F4EF;
+
+color:#7B8471;
+
+}
+
+.ms-kat-camilan{
+
+background:#F8F2E3;
+
+color:#A27D3A;
+
+}
+
+.ms-kat-lainnya{
+
+background:#F4F5F2;
+
+color:#888E81;
+
+}
 
 /* ── STOK PROGRESS ── */
 .ms-stok-wrap {
   display: flex;
   align-items: center;
-  gap: 10px;
+  gap: 12px;
 }
 
 .ms-track {
   height: 7px;
   width: 90px;
-  background: #f0f0f0;
+  background:#ECEEE4;
   border-radius: 99px;
   overflow: hidden;
   flex-shrink: 0;
@@ -243,17 +404,30 @@
 .ms-fill {
   height: 100%;
   border-radius: 99px;
-  transition: width 0.4s ease;
 }
 
-.ms-fill-ok   { background: #22c55e; }
-.ms-fill-warn { background: #f59e0b; }
-.ms-fill-low  { background: #ef4444; }
+.ms-fill-ok{
+
+background:#84985A;
+
+}
+
+.ms-fill-warn{
+
+background:#C7B36A;
+
+}
+
+.ms-fill-low{
+
+background:#D89A93;
+
+}
 
 .ms-stok-num {
   font-size: 12px;
-  font-weight: 600;
-  color: #374151;
+  font-weight:700;
+  color:#5E6655;
   white-space: nowrap;
 }
 
@@ -261,25 +435,45 @@
 .ms-harga {
   font-size: 14px;
   font-weight: 700;
-  color: #1a2e22;
+  color:#2E3428;
   white-space: nowrap;
 }
 
 /* ── STATUS BADGE ── */
 .ms-status {
-  display: inline-flex;
-  align-items: center;
-  gap: 5px;
-  padding: 5px 12px;
-  border-radius: 99px;
-  font-size: 12px;
-  font-weight: 600;
+  display:inline-flex;
+  align-items:center;
+  gap:6px;
+  padding:7px 14px;
+  border-radius:999px;
+  font-size:12px;
+  font-weight:700;
   white-space: nowrap;
 }
 
-.ms-status-ok   { background: #dcfce7; color: #166534; }
-.ms-status-warn { background: #fef3c7; color: #92400e; }
-.ms-status-low  { background: #fee2e2; color: #991b1b; }
+.ms-status-ok{
+
+background:#EEF3E7;
+
+color:#68814B;
+
+}
+
+.ms-status-warn{
+
+background:#FAF4E6;
+
+color:#B48832;
+
+}
+
+.ms-status-low{
+
+background:#FBECEA;
+
+color:#BF6961;
+
+}
 
 /* ── AKSI BUTTONS ── */
 .ms-aksi {
@@ -296,20 +490,20 @@
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  width: 34px;
-  height: 34px;
-  border-radius: 10px;
+  width:36px;
+  height:36px;
+  border-radius:12px;
   font-size: 12px;
   font-weight: 600;
-  border: 1.5px solid #e5e7eb;
-  background: white;
-  color: #374151;
+  background:#FAFAF7;
+  border:1px solid #E6E8DE;
+  color:#737A66;
   cursor: pointer;
-  transition: background 0.15s, border-color 0.15s;
+  transition:.15s;
 }
 
 .ms-btn-edit:hover {
-  background: #f3f4f6;
+  background:#F2F3ED;
   border-color: #d1d5db;
 }
 
@@ -317,47 +511,53 @@
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  width: 34px;
-  height: 34px;
-  border-radius: 10px;
+  width:36px;
+  height:36px;
+  border-radius:12px;
   font-size: 15px;
-  border: 1.5px solid #fee2e2;
-  background: #fff5f5;
-  color: #ef4444;
+  background:#FEF8F7;
+  border:1px solid #F0D9D5;
+  color:#C77D75;
   cursor: pointer;
   transition: background 0.15s, border-color 0.15s;
 }
 
 .ms-btn-del:hover {
-  background: #fee2e2;
+  background:#FAEFED;
   border-color: #fca5a5;
 }
 
 .btn-primary {
-  padding: 10px 20px;
-  border-radius: 12px;
+  height:48px;
+  padding:0 28px;
+  border-radius:18px;
   border: none;
-  background: #2f6f4e;
+  background: #6F8347;
   color: white;
-  font-size: 14px;
-  font-weight: 600;
+  font-size: 13px;
+  font-weight: 700;
   cursor: pointer;
   transition: background 0.15s, transform 0.1s;
-  box-shadow: 0 3px 10px rgba(47,111,78,0.25);
+  box-shadow: 0 6px 18px rgba(122,138,82,.15);
   white-space: nowrap;
+}
+
+.btn-primary:hover{
+background:#60713F;
 }
 
 /* ── EMPTY STATE ── */
 .ms-empty {
   text-align: center;
-  padding: 48px 20px;
-  color: #9ca3af;
+  padding:72px 20px;
+  color:#A0A593;
   font-size: 14px;
 }
 
 .ms-empty-icon {
-  font-size: 40px;
-  margin-bottom: 12px;
+  font-size:34px;
+  opacity:.7;
+  margin-bottom:14px;
 }
 
 /* ══════════════════════════════════════════════
@@ -381,12 +581,12 @@
 }
 
 .ms-modal {
-  background: white;
+  background: #FCFCF8;
   border-radius: 20px;
   padding: 28px;
   width: 500px;
   max-width: 92vw;
-  box-shadow: 0 20px 60px rgba(0,0,0,0.15);
+  box-shadow: 0 40px 80px rgba(0,0,0,.14);
   animation: ms-slide-up 0.2s ease;
 }
 
@@ -421,9 +621,9 @@
 }
 
 .ms-stand-tag {
-  background: #dcfce7;
-  color: #166534;
-  border: 1px solid #bbf7d0;
+  background: #F1F3E7;
+  color: #7A8A52;
+  border: 1px solid #CBD5BF;
   padding: 4px 11px;
   border-radius: 99px;
   font-size: 12px;
@@ -452,8 +652,8 @@
 
 /* INFO BANNER IN MODAL */
 .ms-modal-info {
-  background: #f0f9f4;
-  border: 1px solid #c3dece;
+  background: #F1F3E7;
+  border: 1px solid #CBD5BF;
   border-radius: 10px;
   padding: 10px 14px;
   font-size: 13px;
@@ -462,7 +662,7 @@
 }
 
 .ms-modal-info strong {
-  color: #2f6f4e;
+  color: #7A8A52;
 }
 
 /* FORM GRID */
@@ -485,7 +685,7 @@
 .ms-fg label {
   font-size: 12px;
   font-weight: 600;
-  color: #6b7280;
+  color: #5F654E;
   letter-spacing: 0.3px;
 }
 
@@ -494,7 +694,7 @@
 .ms-fg textarea {
   padding: 10px 13px;
   border-radius: 10px;
-  border: 1.5px solid #e5e7eb;
+  border: 1px solid #D9DDD0;
   font-size: 14px;
   color: #1a2e22;
   outline: none;
@@ -544,7 +744,7 @@
   padding: 10px 22px;
   border-radius: 11px;
   border: none;
-  background: #2f6f4e;
+  background: #7A8A52;
   font-size: 14px;
   font-weight: 600;
   color: white;
@@ -554,7 +754,7 @@
 }
 
 .ms-btn-save:hover {
-  background: #245840;
+  background: #1a2e22;
   transform: translateY(-1px);
 }
 
@@ -562,7 +762,7 @@
   padding: 10px 22px;
   border-radius: 11px;
   border: none;
-  background: #ef4444;
+  background: #B14F4F;
   font-size: 14px;
   font-weight: 600;
   color: white;
@@ -583,6 +783,7 @@
 }
 
 .ms-del-icon {
+  color: #B14F4F;;
   font-size: 48px;
   line-height: 1;
   margin-bottom: 16px;

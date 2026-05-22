@@ -116,9 +116,11 @@ function useSimpleToast() {
   const [msg, setMsg] = useState(null);
   const show = (text, type='success') => { setMsg({text,type}); setTimeout(()=>setMsg(null),3500); };
   const Toast = msg ? (
-    <div style={{position:'fixed',top:20,right:20,zIndex:200,padding:'12px 20px',borderRadius:12,
-      fontSize:13,fontWeight:600,color:'#fff',boxShadow:'0 4px 20px rgba(0,0,0,.15)',maxWidth:320,
-      background:msg.type==='success'?'#2f6f4e':'#dc2626'}}>{msg.text}</div>
+    <div
+    className={`bk-toast ${msg.type}`}
+    >
+    {msg.text}
+    </div>
   ) : null;
   return { show, Toast };
 }
@@ -199,11 +201,11 @@ export default function Event() {
       {Toast}
 
       <div className="ev-header">
-        <div className="ev-eyebrow">
+        <div className="pg-eye">
           <Store size={14} /> Kios Saya
         </div>
-        <div className="ev-title">Kelola <em>Event</em></div>
-        <div className="ev-subtitle">Daftarkan usahamu ke event budaya Banyumasan</div>
+        <div className="pg-title">Kelola <em>Event</em></div>
+        <div className="pg-sub">Daftarkan usahamu ke event budaya Banyumasan</div>
       </div>
 
       <div className="ev-stats">
@@ -279,18 +281,16 @@ export default function Event() {
                   <div className="ev-usaha-top">
                     <div>
                       <div className="ev-usaha-name">{e.nama}</div>
-                      <div className="ev-usaha-sub"><Calendar size={14} /> {fmtTgl(e.tanggal)}{e.jam_mulai ? ` · ${e.jam_mulai.replace(':','.')}${e.jam_selesai?` – ${e.jam_selesai.replace(':','.')}`:''} WIB` : ''}</div>
+                      <div className="ev-usaha-sub"><Calendar size={12} /> {fmtTgl(e.tanggal)}{e.jam_mulai ? ` · ${e.jam_mulai.replace(':','.')}${e.jam_selesai?` – ${e.jam_selesai.replace(':','.')}`:''} WIB` : ''}</div>
                       <div className="ev-usaha-pos">
-                        <MapPin size={14} />{e.posisi_event||'—'}
-                        {/* Stand is locked once approved */}
+                        <MapPin size={12} />{e.posisi_event||'—'}
                         {e.status_request === 'approved' && (
-                          <span style={{marginLeft:6,fontSize:9,background:'#dcfce7',color:'#15803d',padding:'1px 6px',borderRadius:20,fontWeight:700}}><Lock size={12} />Terkunci</span>
+                          <span className="ev-stand-locked"><Lock size={10} />Terkunci</span>
                         )}
                       </div>
-                      {/* Pending change request */}
                       {e.change_request && e.status_request === 'pending_change' && (
-                        <div style={{fontSize:10,color:'#d97706',marginTop:4}}>
-                          <Clock size={14} />Permintaan ubah ke: <b>{e.change_request}</b> (menunggu admin)
+                        <div className="ev-stand-change-notice">
+                          <Clock size={11} />Permintaan ubah ke: <b>{e.change_request}</b> (menunggu admin)
                         </div>
                       )}
                     </div>
@@ -298,23 +298,17 @@ export default function Event() {
                       <span className={`ev-badge ${e.status_request==='approved'?'approved':e.status_request==='pending_change'?'pending':'pending'}`}>
                         {e.status_request==='approved' ? '✓ Disetujui' : e.status_request==='pending_change' ? '⏳ Ubah Stand' : '⏳ Menunggu'}
                       </span>
-                      <div style={{marginTop:4}}>
-                        <span className={`ev-badge ${e.assigned_by==='admin'?'published':'self'}`} style={{fontSize:9}}>
-                          {e.assigned_by==='admin'?'Oleh Admin':'Mandiri'}
-                        </span>
-                      </div>
+                      <span className={`ev-badge ${e.assigned_by==='admin'?'published':'self'}`} style={{fontSize:10}}>
+                        {e.assigned_by==='admin'?'Oleh Admin':'Mandiri'}
+                      </span>
                     </div>
                   </div>
-                  {/* Stand change request — only allowed if approved and no pending change */}
                   {e.status_request === 'approved' && !e.change_request && (
-                    <div style={{marginTop:10,paddingTop:10,borderTop:'1px solid #e5e7eb'}}>
-                      <button
-                        onClick={() => setChangeModal(e)}
-                        style={{fontSize:11,color:'#2f6f4e',background:'#f0fdf4',border:'1px solid #bbf7d0',borderRadius:8,padding:'4px 12px',cursor:'pointer',fontWeight:600}}
-                      >
-                        <RefreshCcw size={14} />Minta Ubah Posisi Stand
+                    <div className="ev-stand-actions">
+                      <button className="ev-btn-ubah-stand" onClick={() => setChangeModal(e)}>
+                        <RefreshCcw size={12} />Minta Ubah Posisi Stand
                       </button>
-                      <p style={{fontSize:10,color:'#9ca3af',marginTop:4}}>Perubahan posisi perlu persetujuan admin</p>
+                      <p className="ev-ubah-hint">Perubahan posisi perlu persetujuan admin</p>
                     </div>
                   )}
                 </div>

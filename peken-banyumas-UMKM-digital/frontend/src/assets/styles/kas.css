@@ -3,6 +3,28 @@
    Semua class pakai prefix bk- agar tidak bentrok
    ============================================== */
 
+   :root{
+  --bk-olive:#7E8D58;
+  --bk-olive-dark:#6C7A4B;
+
+  --bk-bg:#F6F5EF;
+  --bk-card:#FBFBF7;
+
+  --bk-border:#DADCCB;
+
+  --bk-text:#22251F;
+  --bk-muted:#8C907E;
+
+  --bk-success:#7E9A68;
+  --bk-success-bg:#EEF5E8;
+
+  --bk-danger:#b04c4c;
+  --bk-danger-light:#ffe2e2;
+  --bk-danger-bg:#9e2424;
+
+  --bk-warning:#CBA54F;
+}
+
 /* ══════════════════════════════════════════════
    TOPBAR
 ══════════════════════════════════════════════ */
@@ -71,7 +93,7 @@
 .bk-filter-btn {
   padding: 9px 18px;
   border-radius: 11px;
-  border: 1.5px solid #e5e7eb;
+  border: 1.5px solid var(--bk-border);
   background: white;
   font-size: 13px;
   font-weight: 600;
@@ -84,44 +106,44 @@
 }
 
 .bk-filter-btn:hover {
-  background: #f3f4f6;
+  background: #F4F3EE;
 }
 
 .bk-filter-btn.active {
-  background: #2f6f4e;
+  background: var(--bk-olive);
   color: white;
-  border-color: #2f6f4e;
+  border-color: var(--bk-olive-dark);
   box-shadow: 0 3px 10px rgba(47,111,78,0.2);
 }
 
 .bk-filter-btn.active-masuk {
-  background: #dcfce7;
-  color: #166534;
-  border-color: #86efac;
+  background: var(--bk-bg);
+  color: var(--bk-olive);
+  border-color: var(--bk-olive-dark);
 }
 
 .bk-filter-btn.active-keluar {
-  background: #fee2e2;
-  color: #991b1b;
-  border-color: #fca5a5;
+  background: var(--bk-bg);
+  color: var(--bk-danger);
+  border-color: var(--bk-danger-bg);
 }
 
 .bk-btn-add {
   padding: 10px 20px;
   border-radius: 12px;
   border: none;
-  background: #2f6f4e;
+  background: var(--bk-olive);
   color: white;
   font-size: 14px;
   font-weight: 600;
   cursor: pointer;
   transition: background 0.15s, transform 0.1s;
-  box-shadow: 0 3px 10px rgba(47,111,78,0.25);
+  box-shadow: none;
   white-space: nowrap;
 }
 
 .bk-btn-add:hover {
-  background: #245840;
+  background: var(--bk-olive-dark);
   transform: translateY(-1px);
 }
 
@@ -136,10 +158,10 @@
 }
 
 .bk-sum-card {
-  background: white;
+  background: var(--bk-card);
   border-radius: 18px;
   padding: 20px 22px;
-  border: 1px solid #f0f0f0;
+  border: 1px solid var(--bk-border);
   box-shadow: 0 3px 12px rgba(0,0,0,0.04);
   position: relative;
   overflow: hidden;
@@ -155,9 +177,9 @@
   border-radius: 4px 0 0 4px;
 }
 
-.bk-sum-card.saldo::before  { background: #2f6f4e; }
-.bk-sum-card.masuk::before  { background: #2f6f4e; }
-.bk-sum-card.keluar::before { background: #e5a82e; }
+.bk-sum-card.saldo::before  { background: var(--bk-olive); }
+.bk-sum-card.masuk::before  { background: var(--bk-olive); }
+.bk-sum-card.keluar::before { background: var(--bk-warning); }
 
 .bk-sum-label {
   font-size: 11px;
@@ -174,12 +196,12 @@
   font-size: 26px;
   font-weight: 800;
   line-height: 1;
-  color: #2f6f4e;
+  color: var(--bk-olive);;
 }
 
-.bk-sum-card.saldo  .bk-sum-val { color: #2f6f4e; }
-.bk-sum-card.masuk  .bk-sum-val { color: #2f6f4e; }
-.bk-sum-card.keluar .bk-sum-val { color: #e5a82e; }
+.bk-sum-card.saldo  .bk-sum-val { color: var(--bk-olive); }
+.bk-sum-card.masuk  .bk-sum-val { color: var(--bk-olive); }
+.bk-sum-card.keluar .bk-sum-val { color: var(--bk-warning); }
 
 .bk-sum-sub {
   font-size: 12px;
@@ -191,9 +213,9 @@
    TABLE CARD
 ══════════════════════════════════════════════ */
 .bk-card {
-  background: white;
+  background: var(--bk-card);
   border-radius: 18px;
-  border: 1px solid #f0f0f0;
+  border: 1px solid var(--bk-border);
   box-shadow: 0 4px 14px rgba(0,0,0,0.04);
   overflow: hidden;
 }
@@ -203,7 +225,7 @@
   justify-content: space-between;
   align-items: center;
   padding: 20px 24px 16px;
-  border-bottom: 1px solid #f6f7f8;
+  border-bottom: 1px solid var(--bk-border);
 }
 
 .bk-card-head-left h3 {
@@ -247,43 +269,74 @@
 ══════════════════════════════════════════════ */
 .bk-tbl-wrap {
   overflow-x: auto;
+  -webkit-overflow-scrolling: touch;
 }
 
 .bk-table {
   width: 100%;
+  min-width: 640px;
+  table-layout: fixed;
   border-collapse: collapse;
 }
 
+/* ── Column widths — proporsional ── */
+.bk-table col.col-no       { width: 40px; }
+.bk-table col.col-tgl      { width: 98px; }
+.bk-table col.col-ket      { width: auto; }
+.bk-table col.col-kat      { width: 110px; }
+.bk-table col.col-jenis    { width: 90px; }
+.bk-table col.col-nominal  { width: 110px; }
+.bk-table col.col-saldo    { width: 110px; }
+.bk-table col.col-aksi     { width: 72px; }
+
 .bk-table thead tr {
-  background: #f9fafb;
+  background: #F8F8F3;
 }
 
 .bk-table th {
-  padding: 12px 16px;
+  padding: 10px 10px;
   text-align: center;
-  font-size: 11px;
+  font-size: 10px;
   font-weight: 700;
-  color: #9ca3af;
-  letter-spacing: 0.8px;
+  color: #969C86;
+  background: #FBFBF6;
+  letter-spacing: .6px;
   text-transform: uppercase;
-  border-bottom: 1px solid #f0f0f0;
+  border-bottom: 1px solid #ECEDE4;
   white-space: nowrap;
 }
 
+/* NO — rata kiri dengan padding kiri lebih besar */
 .bk-table th:first-child,
 .bk-table td:first-child {
-  padding-left: 24px;
-  width: 40px;
+  padding-left: 16px;
+  text-align: left;
 }
 
+/* AKSI — rata kanan dengan padding kanan lebih besar */
 .bk-table th:last-child,
 .bk-table td:last-child {
-  padding-right: 24px;
+  padding-right: 16px;
+  text-align: center;
+}
+
+/* KETERANGAN — rata kiri */
+.bk-table th:nth-child(3),
+.bk-table td:nth-child(3) {
+  text-align: left;
+}
+
+/* NOMINAL & SALDO — rata kanan */
+.bk-table th:nth-child(6),
+.bk-table td:nth-child(6),
+.bk-table th:nth-child(7),
+.bk-table td:nth-child(7) {
+  text-align: right;
 }
 
 .bk-table tbody tr {
-  border-bottom: 1px solid #f6f7f8;
-  transition: background 0.12s;
+  border-bottom: 1px solid #F2F2EC;
+  transition: background .15s ease;
 }
 
 .bk-table tbody tr:last-child {
@@ -291,147 +344,197 @@
 }
 
 .bk-table tbody tr:hover {
-  background: #fafcfb;
+  background: #FAFBF6;
 }
 
 .bk-table td {
-  padding: 15px 16px;
+  padding: 10px 10px;
   vertical-align: middle;
+  text-align: center;
 }
 
 .bk-idx {
-  font-size: 13px;
-  font-weight: 600;
-  color: #d1d5db;
+  font-size: 12px;
+  font-weight: 700;
+  color: #D2D5C7;
 }
 
 /* ── Tanggal ── */
 .bk-td-tgl {
-  font-size: 13px;
-  color: #6b7280;
+  font-size: 12px;
+  color: #6F7662;
   white-space: nowrap;
 }
 
 /* ── Keterangan ── */
 .bk-td-ket {
-  font-size: 14px;
-  font-weight: 600;
-  color: #1a2e22;
+  font-size: 13px;
+  font-weight: 700;
+  line-height: 1.3;
+  color: #20251A;
+  word-break: break-word;
 }
 
 /* ── Kategori pill ── */
 .bk-kat {
-  display: inline-block;
-  padding: 4px 11px;
-  border-radius: 99px;
-  font-size: 12px;
-  font-weight: 600;
-  background: #f3f4f6;
-  color: #6b7280;
-  white-space: nowrap;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  padding: 4px 10px;
+  border-radius: 999px;
+  font-size: 11px;
+  min-width: 80px;
+  font-weight: 700;
 }
 
-.bk-kat-penjualan  { background: #dcfce7; color: #166534; }
-.bk-kat-restok     { background: #dbeafe; color: #1e40af; }
-.bk-kat-operasional{ background: #fef3c7; color: #92400e; }
-.bk-kat-lainnya    { background: #f3f4f6; color: #6b7280; }
+.bk-kat-penjualan{
+ background:#EEF4E6;
+ color:#7E8D58;
+}
+
+.bk-kat-restok{
+ background:#F3F5EB;
+ color:#7E8D58;
+}
+
+.bk-kat-operasional{
+ background:#FBF2DE;
+ color:#C39A44;
+}
+
+.bk-kat-lainnya{
+ background:#F3F4EE;
+ color:#8E927F;
+}
 
 /* ── Jenis badge ── */
 .bk-jenis {
   display: inline-flex;
   align-items: center;
+  justify-content: center;
   gap: 5px;
-  padding: 5px 12px;
-  border-radius: 99px;
-  font-size: 12px;
-  font-weight: 600;
-  white-space: nowrap;
+  min-width: 80px;
+  padding: 4px 10px;
+  border-radius: 999px;
+  font-size: 11px;
+  font-weight: 700;
 }
 
-.bk-jenis-masuk  { background: #dcfce7; color: #166534; }
-.bk-jenis-keluar { background: #fee2e2; color: #991b1b; }
+.bk-jenis svg{
+ width:14px;
+}
+
+.bk-jenis-masuk{
+ background:#EEF5E8;
+
+ color:#7D9B65;
+}
+
+.bk-jenis-keluar{
+ background:#FBEEEE;
+
+ color:#B76D6D;
+}
 
 /* ── Nominal ── */
 .bk-nominal {
-  font-size: 14px;
+  font-size: 13px;
   font-weight: 700;
   white-space: nowrap;
 }
 
-.bk-nominal-masuk  { color: #16a34a; }
-.bk-nominal-keluar { color: #ef4444; }
+.bk-nominal-masuk{
+ color:#7D9B65;
+}
+
+.bk-nominal-keluar{
+ color:#B76D6D;
+}
 
 /* ── Saldo ── */
 .bk-saldo {
-  font-size: 14px;
-  font-weight: 600;
-  color: #374151;
+  font-size: 13px;
+  font-weight: 700;
+  color: #2F332A;
   white-space: nowrap;
 }
 
 /* ── Aksi ── */
 .bk-aksi {
   display: flex;
-  gap: 8px;
-  align-items: center;
+  justify-content: center;
+  gap: 6px;
 }
 
 .bk-btn-edit {
   display: inline-flex;
   align-items: center;
+  justify-content: center;
   gap: 5px;
-  padding: 7px 13px;
-  border-radius: 9px;
+  width: 28px;
+  height: 28px;
+  padding: 0;
+  border-radius: 8px;
   font-size: 12px;
   font-weight: 600;
-  border: 1.5px solid #e5e7eb;
-  background: white;
-  color: #374151;
+  border: 1px solid #DADCCB;
+  background: #FCFCF8;
+  color: #5B6151;
   cursor: pointer;
-  transition: background 0.15s;
+  transition: .15s;
 }
 
 .bk-btn-edit:hover {
-  background: #f3f4f6;
+  background: #F2F3EB;
+  border-color: #C9CEB8;
 }
 
 .bk-btn-del {
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  width: 34px;
-  height: 34px;
-  border-radius: 9px;
-  border: 1.5px solid #fee2e2;
-  background: #fff5f5;
-  color: #ef4444;
-  font-size: 15px;
+  width: 28px;
+  height: 28px;
+  border-radius: 8px;
+  border: 1px solid #E9D3D3;
+  background: #FFF8F8;
+  color: #BE7E7E;
+  font-size: 12px;
   cursor: pointer;
-  transition: background 0.15s;
+  transition: .15s;
 }
 
 .bk-btn-del:hover {
-  background: #fee2e2;
-  border-color: #fca5a5;
+  background:#FDEEEE;
+  border-color:#DFAAAA;
 }
 
 /* ── Empty state ── */
 .bk-empty {
-  text-align: center;
-  padding: 48px 20px;
-  color: #9ca3af;
-  font-size: 14px;
+  text-align:center;
+  padding:70px 20px;
+  color:#989D8C;
+  font-size:15px;
 }
 
 .bk-empty-icon {
-  font-size: 40px;
-  margin-bottom: 12px;
+  margin-bottom:14px;
+  opacity:.55;
+}
+
+.bk-table td:nth-child(3){
+  text-align:left;
+}
+
+.bk-table td:nth-child(8){
+  width:120px;
 }
 
 /* ══════════════════════════════════════════════
    MODAL BASE
 ══════════════════════════════════════════════ */
 .bk-overlay {
+  padding:24px;
   position: fixed;
   inset: 0;
   background: rgba(0,0,0,0.35);
@@ -441,6 +544,7 @@
   align-items: center;
   z-index: 9999;
   animation: bk-fade 0.15s ease;
+  overflow-y:auto;
 }
 
 @keyframes bk-fade {
@@ -449,13 +553,18 @@
 }
 
 .bk-modal {
-  background: white;
+  display:flex;
+  flex-direction:column;
+  background: var(--bk-card);
+  border:1px solid var(--bk-border);
   border-radius: 20px;
   padding: 28px;
   width: 500px;
+  max-height:90vh;
   max-width: 92vw;
   box-shadow: 0 20px 60px rgba(0,0,0,0.15);
   animation: bk-up 0.2s ease;
+  overflow:hidden;
 }
 
 .bk-modal-sm {
@@ -489,9 +598,9 @@
 }
 
 .bk-stand-tag {
-  background: #dcfce7;
-  color: #166534;
-  border: 1px solid #bbf7d0;
+  background: var(--bk-bg);
+  color: var(--bk-olive);
+  border: 1px solid var(--bk-border);
   padding: 4px 11px;
   border-radius: 99px;
   font-size: 12px;
@@ -520,8 +629,8 @@
 
 /* Modal info banner */
 .bk-modal-info {
-  background: #f0f9f4;
-  border: 1px solid #c3dece;
+  background: #F4F5EA;
+  border: 1px solid #D9DEC3;
   border-radius: 10px;
   padding: 10px 14px;
   font-size: 13px;
@@ -534,9 +643,21 @@
 
 /* Form grid */
 .bk-form-grid {
+  overflow-y:auto;
   display: grid;
   grid-template-columns: 1fr 1fr;
   gap: 14px;
+  max-height:calc(90vh - 250px);
+  padding-right:8px;
+}
+
+.bk-form-grid::-webkit-scrollbar{
+ width:6px;
+}
+
+.bk-form-grid::-webkit-scrollbar-thumb{
+ background:#D8DCC7;
+ border-radius:999px;
 }
 
 .bk-fg {
@@ -571,12 +692,17 @@
 
 .bk-fg input:focus,
 .bk-fg select:focus {
-  border-color: #2f6f4e;
-  box-shadow: 0 0 0 3px rgba(47,111,78,0.1);
+  border-color:var(--bk-olive);
+ box-shadow:0 0 0 3px rgba(126,141,88,.12);
 }
 
 /* Form actions */
 .bk-form-act {
+  position:sticky;
+  bottom:0;
+  background:var(--bk-card);
+  padding-top:18px;
+  z-index:5;
   display: flex;
   justify-content: flex-end;
   gap: 10px;
@@ -602,17 +728,17 @@
   padding: 10px 22px;
   border-radius: 11px;
   border: none;
-  background: #2f6f4e;
+  background: var(--bk-olive);
   font-size: 14px;
   font-weight: 600;
   color: white;
   cursor: pointer;
   transition: background 0.15s, transform 0.1s;
-  box-shadow: 0 3px 10px rgba(47,111,78,0.25);
+  box-shadow: none;
 }
 
 .bk-btn-save:hover {
-  background: #245840;
+  background: var(--bk-olive-dark);
   transform: translateY(-1px);
 }
 
@@ -651,32 +777,6 @@
 }
 
 /* ══════════════════════════════════════════════
-   TOAST
-══════════════════════════════════════════════ */
-.bk-toast {
-  position: fixed;
-  bottom: 28px;
-  right: 28px;
-  background: #166534;
-  color: white;
-  padding: 13px 20px;
-  border-radius: 14px;
-  font-size: 14px;
-  font-weight: 600;
-  box-shadow: 0 8px 24px rgba(0,0,0,0.2);
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  z-index: 10000;
-  animation: bk-toast-in 0.25s ease;
-}
-
-@keyframes bk-toast-in {
-  from { transform: translateY(12px); opacity: 0; }
-  to   { transform: translateY(0);    opacity: 1; }
-}
-
-/* ══════════════════════════════════════════════
    RESPONSIVE
 ══════════════════════════════════════════════ */
 @media (max-width: 768px) {
@@ -710,7 +810,7 @@
   padding: 24px 16px;
   border-radius: 16px;
   border: 2px solid #e5e7eb;
-  background: #fafafa;
+  background: var(--bk-bg);
   cursor: pointer;
   transition: all 0.18s ease;
   text-align: center;
@@ -722,14 +822,14 @@
 }
 
 .bk-jenis-card.masuk:hover {
-  border-color: #86efac;
-  background: #f0fdf4;
+  border-color: var(--bk-border);
+  background: var(--bk-success-bg);
   box-shadow: 0 6px 20px rgba(22,163,74,0.12);
 }
 
 .bk-jenis-card.keluar:hover {
-  border-color: #fca5a5;
-  background: #fff5f5;
+  border-color: var(--bk-danger-bg);
+  background: var(--bk-danger-light);
   box-shadow: 0 6px 20px rgba(239,68,68,0.1);
 }
 
@@ -741,11 +841,11 @@
 .bk-jenis-card-title {
   font-size: 16px;
   font-weight: 800;
-  color: #1a2e22;
+  color: var(--bk-olive-dark);
 }
 
-.bk-jenis-card.masuk .bk-jenis-card-title  { color: #166534; }
-.bk-jenis-card.keluar .bk-jenis-card-title { color: #991b1b; }
+.bk-jenis-card.masuk .bk-jenis-card-title  { color: var(--bk-success); }
+.bk-jenis-card.keluar .bk-jenis-card-title { color: var(--bk-danger); }
 
 .bk-jenis-card-desc {
   font-size: 12px;
@@ -771,16 +871,16 @@
   padding: 0 14px;
   height: 40px;
   border-radius: 8px;
-  border: 1.5px solid #16a34a;
-  background: #f0fdf4;
-  color: #16a34a;
+  border: 1.5px solid var(--bk-olive);
+  background: var(--bk-card);
+  color: var(--bk-olive-dark);
   font-size: 13px;
   font-weight: 600;
   cursor: pointer;
   transition: background 0.15s, color 0.15s;
 }
 .bk-qris-preview-btn:hover {
-  background: #16a34a;
+  background: var(--bk-olive);
   color: #fff;
 }
 
@@ -907,7 +1007,7 @@
   color: #374151;
 }
 .bk-qris-nominal strong {
-  color: #16a34a;
+  color: var(--bk-olive);
   font-weight: 700;
 }
 .bk-qris-confirm {
@@ -915,7 +1015,7 @@
   height: 38px;
   border-radius: 8px;
   border: none;
-  background: #16a34a;
+  background: var(--bk-olive);
   color: #fff;
   font-size: 13px;
   font-weight: 600;
@@ -923,50 +1023,76 @@
   transition: background 0.15s;
   white-space: nowrap;
 }
-.bk-qris-confirm:hover { background: #15803d; }
+.bk-qris-confirm:hover { background: var(--bk-olive-dark); }
 
 /* ════════════════════════════════════════════
    KasRow — tambahan CSS (paste ke kas.css)
    ════════════════════════════════════════════ */
 
 /* Wrapper kolom Keterangan */
-.bk-td-ket-wrap {
-  display: flex;
-  flex-direction: column;
-  gap: 4px;
+.bk-td-ket-wrap{
+  display:flex;
+  flex-direction:column;
+  align-items:flex-start;
+  gap:6px;
+  max-width:100%;
 }
 
 /* Baris meta (badge + sub-info) */
 .bk-td-ket-meta {
-  display: flex;
-  align-items: center;
-  gap: 6px;
-  flex-wrap: wrap;
+  display:flex;
+  align-items:center;
+  gap:10px;
+  flex-wrap:wrap;
 }
 
 /* Teks sub-info (nama pelanggan) */
 .bk-td-ket-sub {
-  font-size: 11px;
-  color: #9ca3af;
+  font-size:12px;
+  font-weight:500;
+  color:#979C8E;
+}
+
+/* SUBTEXT */
+.bk-td-sub{
+ font-size:12px;
+
+ color:#9DA18E;
+
+ font-weight:500;
+}
+
+/* BARIS BADGE */
+.bk-ket-meta{
+ display:flex;
+
+ align-items:center;
+
+ gap:10px;
+
+ flex-wrap:wrap;
 }
 
 /* Badge metode pembayaran */
 .bk-metode-badge {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  padding: 3px 8px;
+  border-radius: 999px;
   font-size: 10px;
   font-weight: 700;
-  padding: 2px 7px;
-  border-radius: 999px;
-  letter-spacing: 0.4px;
 }
+
 .bk-metode-tunai {
-  background: #f0fdf4;
-  color: #16a34a;
-  border: 1px solid #bbf7d0;
+  background:#EEF3E7;
+  color:#6F8653;
+  border:1px solid #D6E4C8;
 }
 .bk-metode-qris {
-  background: #eff6ff;
-  color: #2563eb;
-  border: 1px solid #bfdbfe;
+  background:#F2F3EE;
+  color:#798070;
+  border:1px solid #D9DEC3;
 }
 
 /* ══════════════════════════════════════════════════════
@@ -991,15 +1117,15 @@
   transition: border-color 0.15s, background 0.15s;
 }
 .bk-bukti-dropzone:hover {
-  border-color: #16a34a;
-  background: #f0fdf4;
+  border-color: var(--bk-olive-dark);
+  background: var(--bk-success-bg);
 }
 .bk-bukti-dz-icon {
   color: #9ca3af;
   margin-bottom: 8px;
 }
 .bk-bukti-dropzone:hover .bk-bukti-dz-icon {
-  color: #16a34a;
+  color: var(--bk-olive-dark);;
 }
 .bk-bukti-dropzone p {
   margin: 0 0 4px;
@@ -1051,8 +1177,8 @@
 }
 .bk-bukti-btn-change:hover { background: #e5e7eb; }
 .bk-bukti-btn-del {
-  background: #fff1f2;
-  color: #e11d48;
+  background: var(--bk-danger-light);
+  color: var(--bk-danger);
   border: 1px solid #fecdd3;
 }
 .bk-bukti-btn-del:hover { background: #ffe4e6; }
@@ -1075,29 +1201,138 @@
   transition: all 0.15s;
 }
 .bk-jenis-toggle-btn.masuk.active {
-  background: #f0fdf4;
-  border-color: #16a34a;
-  color: #16a34a;
+  background: var(--bk-card);
+  border-color: var(--bk-olive-dark);
+  color: var(--bk-olive-dark);
 }
 .bk-jenis-toggle-btn.keluar.active {
-  background: #fff1f2;
-  border-color: #e11d48;
-  color: #e11d48;
+  background: var(--bk-danger-light);
+  border-color: var(--bk-danger);
+  color: var(--bk-danger);
 }
 .bk-jenis-toggle-btn:hover:not(.active) {
   background: #f3f4f6;
   border-color: #d1d5db;
 }
 
-/* ── QRIS icon svg (ganti emoji) ── */
 .bk-qris-icon-svg {
-  color: #16a34a;
+  color: var(--bk-olive);
   flex-shrink: 0;
 }
 
-/* ── Jenis card icon svg (ganti emoji span) ── */
 .bk-jenis-card-icon-svg {
   margin-bottom: 8px;
 }
-.bk-jenis-card-icon-svg.masuk  { color: #16a34a; }
-.bk-jenis-card-icon-svg.keluar { color: #e11d48; }
+.bk-jenis-card-icon-svg.masuk  { color: var(--bk-olive-dark); }
+.bk-jenis-card-icon-svg.keluar { color: var(--bk-danger); }
+
+/* ══════════════════════════════════════════════
+   RESPONSIVE — tabel & layout
+══════════════════════════════════════════════ */
+
+/* Tablet (≤ 900px): sembunyikan kolom saldo agar muat */
+@media (max-width: 900px) {
+  .bk-table col.col-saldo,
+  .bk-table th:nth-child(7),
+  .bk-table td:nth-child(7) {
+    display: none;
+  }
+
+  .bk-table col.col-kat { width: 95px; }
+  .bk-table col.col-jenis { width: 80px; }
+  .bk-table col.col-nominal { width: 100px; }
+  .bk-table col.col-tgl { width: 85px; }
+
+  .bk-summary {
+    grid-template-columns: repeat(3, 1fr);
+    gap: 10px;
+  }
+
+  .bk-sum-val { font-size: 20px; }
+}
+
+/* Mobile landscape / small tablet (≤ 680px) */
+@media (max-width: 680px) {
+  /* Sembunyikan kolom kategori juga */
+  .bk-table col.col-kat,
+  .bk-table th:nth-child(4),
+  .bk-table td:nth-child(4) {
+    display: none;
+  }
+
+  .bk-table col.col-tgl { width: 78px; }
+  .bk-table col.col-nominal { width: 95px; }
+
+  .bk-topbar {
+    flex-direction: column;
+    align-items: flex-start;
+  }
+
+  .bk-topbar-right {
+    width: 100%;
+    align-items: stretch;
+    margin-left: 0;
+  }
+
+  .bk-topbar-actions {
+    justify-content: flex-start;
+  }
+
+  .bk-search {
+    width: 100%;
+  }
+
+  .bk-summary {
+    grid-template-columns: 1fr;
+    gap: 8px;
+  }
+
+  .bk-sum-card {
+    padding: 14px 16px;
+  }
+
+  .bk-sum-val { font-size: 18px; }
+}
+
+/* Mobile portrait (≤ 480px) */
+@media (max-width: 480px) {
+  /* Sembunyikan kolom tanggal, gunakan min-width agar scroll horizontal tetap bisa */
+  .bk-table {
+    min-width: 380px;
+  }
+
+  .bk-table col.col-tgl,
+  .bk-table th:nth-child(2),
+  .bk-table td:nth-child(2) {
+    display: none;
+  }
+
+  .bk-table col.col-aksi { width: 60px; }
+
+  .bk-card-head {
+    padding: 14px 16px 12px;
+  }
+
+  .bk-card-head-left h3 {
+    font-size: 14px;
+  }
+
+  .bk-td-ket {
+    font-size: 12px;
+  }
+
+  .bk-nominal,
+  .bk-saldo {
+    font-size: 12px;
+  }
+
+  .bk-filter-btn {
+    padding: 7px 12px;
+    font-size: 12px;
+  }
+
+  .bk-btn-add {
+    padding: 8px 14px;
+    font-size: 13px;
+  }
+}

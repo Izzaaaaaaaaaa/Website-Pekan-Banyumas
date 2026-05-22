@@ -20,7 +20,9 @@ export default function Profile() {
   const [showLogout, setShowLogout] = useState(false);
 
   const fileInputRef = useRef(null);
-  const [photo, setPhoto] = useState(null);
+  const [photo, setPhoto] = useState(
+  localStorage.getItem("profilePhoto") || null
+  );
 
   const user = {
     nama: "Bu Yati Wulandari",
@@ -37,14 +39,14 @@ export default function Profile() {
   return (
     <div className="pf-page">
       <div className="pf-header">
-        <div className="pf-eyebrow"><User size={14} />Akun</div>
-        <div className="pf-title">
+        <div className="pg-eye"><User size={14} />Akun</div>
+        <div className="pg-title">
           Profile <em>Saya</em>
         </div>
       </div>
 
       <div className="pf-card">
-        <div className="pf-avatar-wrap" onClick={() => fileInputRef.current.click()}>
+        <div className="pf-avatar-wrap" onClick={() => !photo && fileInputRef.current.click()}>
           <div className="pf-avatar">
             {photo ? (
               <img src={photo} alt="profile" className="pf-avatar-img" />
@@ -92,6 +94,7 @@ export default function Profile() {
 
             const compressed = canvas.toDataURL("image/jpeg", 0.7);
             setPhoto(compressed);
+            localStorage.setItem("profilePhoto", compressed);
           };
           };
 
@@ -100,7 +103,10 @@ export default function Profile() {
         />
 
         {photo && (
-          <button className="pf-remove-photo" onClick={() => setPhoto(null)}>
+          <button className="pf-remove-photo" onClick={() => {
+            setPhoto(null);
+            localStorage.removeItem("profilePhoto");
+          }}>
             Hapus Foto
           </button>
         )}

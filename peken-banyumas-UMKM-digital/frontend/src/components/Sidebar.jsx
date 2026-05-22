@@ -1,14 +1,31 @@
 import { useNavigate, useLocation } from "react-router-dom";
 import { useState } from "react";
-import { Home, Box, Book, Ticket, FileText, Settings, User } from "lucide-react";
+import { useEffect } from "react";
+import { Home, Box, Book, Ticket, FileText, Settings, User, Globe } from "lucide-react";
 import "../assets/styles/sidebar.css";
-import logo from "../assets/images/logo.jpeg";
+import logo from "../assets/images/logo.png";
 import ConfirmLogoutModal from "./modals/ConfirmLogoutModal";
 
 export default function Sidebar({ open, setOpen }) {
   const navigate = useNavigate();
   const location = useLocation();
   const [showLogout, setShowLogout] = useState(false);
+
+  const [profilePhoto,setProfilePhoto]
+  =
+  useState(
+    localStorage.getItem("profilePhoto")
+  );
+
+  useEffect(()=>{const sync=()=>{
+    setProfilePhoto(localStorage.getItem("profilePhoto"));
+  };
+
+  window.addEventListener("storage", sync);
+
+  return()=>{
+    window.removeEventListener("storage", sync);
+  };},[]);
 
   const menu = [
     { path: "/", label: "Dashboard", icon: <Home size={18} /> },
@@ -97,8 +114,22 @@ export default function Sidebar({ open, setOpen }) {
 
         {/* FOOTER PROFILE — klik untuk logout */}
         <div className="sb-divider" />
+        <div
+            className="si"
+            onClick={() => {
+              window.open("/", "_blank");
+              setOpen(false);
+            }}
+          >
+            <span className="icon"><Globe size={15} /></span>
+            <span className="si-label">Beranda Publik</span>
+          </div>
         <div className="sb-profile" onClick={() => setShowLogout(true)}>
-          <div className="avatar">BY</div>
+          <div className="avatar">{profilePhoto ? (
+            <img src={profilePhoto} alt="profile" 
+            className="sb-avatar-img"
+            />):( "BY")}
+          </div>
           <div className="sb-profile-info">
             <strong>Bu Yati</strong>
             <p>Pemilik · Stand A-12</p>

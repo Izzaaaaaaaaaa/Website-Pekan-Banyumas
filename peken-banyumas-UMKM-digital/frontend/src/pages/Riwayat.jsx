@@ -1,21 +1,24 @@
-import { useState } from "react";
-import { useEffect } from "react";
-import { ClipboardList, Search, Download, Utensils } from "lucide-react";
+import { useState, useEffect } from "react";
+import { ClipboardList, Search, Download, Utensils, AlertTriangle } from "lucide-react";
 import "../assets/styles/riwayat.css";
 
 export default function Riwayat() {
   const [transactions, setTransactions] = useState([]);
+  const [search, setSearch] = useState("");
 
   useEffect(() => {
     const data = JSON.parse(localStorage.getItem("riwayat")) || [];
     setTransactions(data);
   }, []);
 
-  const [search, setSearch] = useState("");
+  // Hitung stok kritis dari localStorage (jika ada data stok)
+  const stokData = JSON.parse(localStorage.getItem("stok")) || [];
+  const kritisCount = stokData.filter((s) => s.stok <= (s.minStok ?? 5)).length;
 
-  const filtered = transactions.filter((t) =>
-    t.pelanggan?.toLowerCase().includes(search.toLowerCase()) ||
-    t.barang?.toLowerCase().includes(search.toLowerCase())
+  const filtered = transactions.filter(
+    (t) =>
+      t.pelanggan?.toLowerCase().includes(search.toLowerCase()) ||
+      t.barang?.toLowerCase().includes(search.toLowerCase())
   );
 
   const handleExport = () => {
@@ -35,9 +38,9 @@ export default function Riwayat() {
       .join("\n");
 
     const blob = new Blob([csv], { type: "text/csv" });
-    const url  = window.URL.createObjectURL(blob);
-    const a    = document.createElement("a");
-    a.href     = url;
+    const url = window.URL.createObjectURL(blob);
+    const a = document.createElement("a");
+    a.href = url;
     a.download = "transaksi.csv";
     a.click();
     window.URL.revokeObjectURL(url);
@@ -48,16 +51,20 @@ export default function Riwayat() {
       {/* TOPBAR */}
       <div className="rw-topbar">
         <div>
-          <div className="rw-eyebrow"><ClipboardList size={14} /> Kios Saya</div>
-          <div className="rw-title">Riwayat <em>Transaksi</em></div>
-          <div className="rw-subtitle">
+          <div className="pg-eye">
+            <ClipboardList size={14} /> Kios Saya
+          </div>
+          <div className="pg-title">
+            Riwayat <em>Transaksi</em>
+          </div>
+          <div className="pg-sub">
             Semua transaksi dari Kios Stand A-12 · Sate Blengong Bu Yati
           </div>
         </div>
 
         <div className="rw-topbar-actions">
-          <div className="ms-search">
-            <Search size={16} />
+          <div className="rw-search-box">
+            <Search size={16} className="rw-search-icon" />
             <input
               type="text"
               placeholder="Cari barang atau pelanggan..."
@@ -74,10 +81,23 @@ export default function Riwayat() {
       {/* INFO KIOS */}
       <div className="rw-info-banner">
         <div className="rw-info-left">
-          <div className="rw-info-icon"><Utensils size={18} /></div>
+          <div className="rw-avatar">
+            <Utensils size={20} />
+          </div>
           <div>
-            <strong>Sate Blengong Bu Yati · Stand A-12</strong>
-            <div className="rw-info-sub">Menampilkan transaksi pemasukan kios kamu saja</div>
+            <div className="rw-info-name">Sate Blengong Bu Yati</div>
+            <div className="rw-info-sub">
+              Stand A-12 · Zona Kuliner · Peken Banyumas 2026
+            </div>
+          </div>
+          <div className="rw-banner-right">
+            <span className="rw-badge-active">● Kios Aktif</span>
+            {kritisCount > 0 && (
+              <span className="rw-badge-warn">
+                <AlertTriangle size={14} />
+                {kritisCount} stok kritis
+              </span>
+            )}
           </div>
         </div>
       </div>
@@ -115,11 +135,10 @@ export default function Riwayat() {
                     Rp {Number(trx.total).toLocaleString("id-ID")}
                   </td>
 
-                  {/* METODE — badge warna */}
                   <td>
                     {metode ? (
                       <span className={`rw-metode-badge rw-metode-${metode}`}>
-                        {metode === "qris" ? "📲 QRIS" : "💵 Tunai"}
+                        {metode === "qris" ? "QRIS" : "Tunai"}
                       </span>
                     ) : (
                       <span className="rw-dash">–</span>

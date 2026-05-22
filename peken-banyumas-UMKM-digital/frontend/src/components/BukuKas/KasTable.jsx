@@ -5,9 +5,19 @@ export default function KasTable({ data, formatRupiah, onEdit, onDelete }) {
   return (
     <div className="bk-tbl-wrap">
       <table className="bk-table">
+        <colgroup>
+          <col className="col-no" />
+          <col className="col-tgl" />
+          <col className="col-ket" />
+          <col className="col-kat" />
+          <col className="col-jenis" />
+          <col className="col-nominal" />
+          <col className="col-saldo" />
+          <col className="col-aksi" />
+        </colgroup>
         <thead>
           <tr>
-            <th>No</th>
+            <th>#</th>
             <th>Tanggal</th>
             <th>Keterangan</th>
             <th>Kategori</th>
