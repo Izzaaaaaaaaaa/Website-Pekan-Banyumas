@@ -55,9 +55,10 @@ def get_stats(
 def get_visitors(
     tanggal: Optional[str] = Query(None),
     event_id: Optional[str] = Query(None),
+    limit: Optional[int] = Query(50),
     user=Depends(get_current_user)
 ):
-    """List visitors with optional date and event filtering."""
+    """List visitors with optional date, event filtering, and limit."""
     try:
         if tanggal:
             try:
@@ -87,8 +88,8 @@ def get_visitors(
                     )
                 )
 
-        visitors = list_visitors(tanggal, event_id)
-        logger.info(f"📊 GET VISITORS - tanggal={tanggal}, event_id={event_id}, count={len(visitors)}")
+        visitors = list_visitors(tanggal, event_id, limit)
+        logger.info(f"📊 GET VISITORS - tanggal={tanggal}, event_id={event_id}, limit={limit}, count={len(visitors)}")
         if not visitors:
             return success_response([], message="Belum ada visitor hari ini")
         return success_response(jsonable_encoder(visitors))

@@ -205,7 +205,7 @@ def get_dashboard_stats(event_id: Optional[str] = None) -> Stats:
         )
 
 
-def list_visitors(tanggal: Optional[str] = None, event_id: Optional[str] = None) -> List[Visitor]:
+def list_visitors(tanggal: Optional[str] = None, event_id: Optional[str] = None, limit: Optional[int] = 50) -> List[Visitor]:
     """List all visitor entries with optional date and event filtering. Returns empty list on error."""
     try:
         logger.info(f"[VISITORS] Fetching visitors: tanggal={tanggal}, event_id={event_id}")
@@ -229,6 +229,9 @@ def list_visitors(tanggal: Optional[str] = None, event_id: Optional[str] = None)
                     date_start = f"{tanggal}T00:00:00.000Z"
                     date_end = f"{tanggal}T23:59:59.999Z"
                     query = query.gte("waktu_masuk", date_start).lt("waktu_masuk", date_end)
+
+                if limit:
+                    query = query.limit(limit)
 
                 return query.order("waktu_masuk", desc=True).execute()
 

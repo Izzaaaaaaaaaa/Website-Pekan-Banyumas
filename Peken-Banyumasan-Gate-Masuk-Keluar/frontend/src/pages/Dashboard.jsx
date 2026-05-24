@@ -24,6 +24,7 @@ import { STORAGE_KEYS, STORAGE_EVENTS } from "../lib/storageKeys";
 import { extractError } from "../lib/unwrap";
 import { useToast } from "../components/Toast";
 import { supabaseRealtime } from "../lib/supabase";
+import { eventApi } from "../services/realEndpoints";
 
 // ── Event countdown hook (shared: HARI · JAM · MENIT) ────────────────────────
 function useEventCountdown(tanggal, jamMulai) {
@@ -99,8 +100,10 @@ const Dashboard = () => {
   const [activities, setActivities] = useState([]);
   const [activeEventId, setActiveEventId] = useState(null);
   const [namaEvent, setNamaEvent] = useState(null);
+  const [upcomingEvents, setUpcomingEvents] = useState([]);
   const [isLoadingStats, setIsLoadingStats] = useState(true);
   const [isLoadingActivities, setIsLoadingActivities] = useState(true);
+  const [isLoadingUpcomingEvents, setIsLoadingUpcomingEvents] = useState(true);
   const [submittingAction, setSubmittingAction] = useState(null);
   const [flashKey, setFlashKey] = useState(0);
   const [scannerBuffer, setScannerBuffer] = useState("");
@@ -197,11 +200,11 @@ const Dashboard = () => {
           silent ? "(silent)" : "(foreground)",
         );
         if (!silent) setIsLoadingActivities(true);
-        const now = new Date();
-        const today = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, "0")}-${String(now.getDate()).padStart(2, "0")}`;
-        const params = { tanggal: today };
+        const params = {};
         if (activeEventIdRef.current)
           params.event_id = activeEventIdRef.current;
+        // Limit fetching to recent activities to avoid large payloads
+        params.limit = 50;
         const rows = (await dashboardApi.visitors(params)) || [];
         const sortTime = (row) =>
           row.status === "keluar" && row.waktu_keluar
@@ -224,6 +227,25 @@ const Dashboard = () => {
     },
     [toast],
   );
+
+  const fetchUpcomingEvents = useCallback(async () => {
+    setIsLoadingUpcomingEvents(true);
+    try {
+      const data = await eventApi.list();
+      const rows = Array.isArray(data) ? data : data?.data || [];
+      // Filter published or in-progress events
+      const filtered = rows.filter(
+        (ev) => ev.status === "dipublikasi" || ev.status === "berlangsung" || ev.status === "published",
+      );
+      // Sort by date ascending (closest first)
+      filtered.sort((a, b) => new Date(a.tanggal) - new Date(b.tanggal));
+      setUpcomingEvents(filtered.slice(0, 3));
+    } catch (error) {
+      console.error("[DASHBOARD] FETCH EVENTS ERROR:", error.message);
+    } finally {
+      setIsLoadingUpcomingEvents(false);
+    }
+  }, []);
 
   const startPolling = useCallback(() => {
     if (document.visibilityState !== "visible") {
@@ -292,6 +314,7 @@ const Dashboard = () => {
     // Initial fetch
     fetchStats();
     fetchActivities();
+    fetchUpcomingEvents();
 
     // Start polling
     startPolling();
@@ -637,67 +660,61 @@ const Dashboard = () => {
           </button>
         </div>
         <div className="grid sm:grid-cols-3 gap-3">
-          {[
-            {
-              nama: "Festival Budaya Banyumasan 2025",
-              tanggal: "2025-05-17",
-              jam_mulai: "08:00",
-              jam_selesai: "22:00",
-              lokasi: "Alun-Alun Purwokerto",
-              peserta_count: 34,
-              kapasitas: 200,
-            },
-            {
-              nama: "Workshop Batik & Tenun Nusantara",
-              tanggal: "2025-04-26",
-              jam_mulai: "09:00",
-              jam_selesai: "17:00",
-              lokasi: "Gedung Kebudayaan Cilacap",
-              peserta_count: 18,
-              kapasitas: 30,
-            },
-            {
-              nama: "Pameran Kriya Ekraf Regional",
-              tanggal: "2025-06-10",
-              jam_mulai: "10:00",
-              jam_selesai: "21:00",
-              lokasi: "Mall Cilacap Raya",
-              peserta_count: 0,
-              kapasitas: 500,
-            },
-          ].map((ev) => (
-            <div
-              key={ev.nama}
-              className="bg-[#f7f8f2] border border-[#e4e7d4] rounded-xl p-4 hover:border-[#c8d09a] transition cursor-pointer"
-              onClick={() => navigate("/events")}
-            >
-              <p className="font-semibold text-[#1e2010] text-sm leading-snug line-clamp-2 mb-1">
-                {ev.nama}
-              </p>
-              <p className="text-[#8a9070] text-xs">{ev.lokasi}</p>
-              {/* Countdown badges: H / J / M */}
-              <EventCountdownBadge
-                tanggal={ev.tanggal}
-                jamMulai={ev.jam_mulai}
-              />
-              <div className="mt-2">
-                <div className="flex justify-between text-[10px] text-[#8a9070] mb-1">
-                  <span>{ev.peserta_count} peserta</span>
-                  <span>
-                    {Math.round((ev.peserta_count / ev.kapasitas) * 100)}%
-                  </span>
-                </div>
-                <div className="h-1 bg-gray-200 rounded-full overflow-hidden">
-                  <div
-                    className="h-full bg-[#7a8a52] rounded-full"
-                    style={{
-                      width: `${Math.min(100, (ev.peserta_count / ev.kapasitas) * 100)}%`,
-                    }}
+          {isLoadingUpcomingEvents ? (
+            <div className="col-span-3 text-center py-6 text-sm text-[#8a9070]">
+              Memuat event mendatang...
+            </div>
+          ) : upcomingEvents.length === 0 ? (
+            <div className="col-span-3 text-center py-6 text-sm text-[#8a9070]">
+              Belum ada event mendatang.
+            </div>
+          ) : (
+            upcomingEvents.map((ev) => (
+              <div
+                key={ev.id || ev.nama}
+                className="bg-[#f7f8f2] border border-[#e4e7d4] rounded-xl p-4 hover:border-[#c8d09a] transition cursor-pointer flex flex-col h-full"
+                onClick={() => navigate("/events")}
+              >
+                <div className="flex-1">
+                  <p className="font-semibold text-[#1e2010] text-sm leading-snug line-clamp-2 mb-1">
+                    {ev.nama}
+                  </p>
+                  <p className="text-[#8a9070] text-xs">
+                    {ev.lokasi || "Lokasi belum ditentukan"}
+                  </p>
+                  {/* Countdown badges: H / J / M */}
+                  <EventCountdownBadge
+                    tanggal={ev.tanggal}
+                    jamMulai={ev.jam_mulai}
                   />
                 </div>
+                <div className="mt-4 shrink-0">
+                  <div className="flex justify-between text-[10px] text-[#8a9070] mb-1 font-medium">
+                    <span>{ev.peserta_count || 0} peserta</span>
+                    <span>
+                      {ev.kapasitas
+                        ? Math.round(((ev.peserta_count || 0) / ev.kapasitas) * 100)
+                        : 0}
+                      %
+                    </span>
+                  </div>
+                  <div className="h-1.5 bg-[#e4e7d4] rounded-full overflow-hidden">
+                    <div
+                      className="h-full bg-[#7a8a52] rounded-full transition-all duration-500 ease-out"
+                      style={{
+                        width: `${Math.min(
+                          100,
+                          ev.kapasitas
+                            ? ((ev.peserta_count || 0) / ev.kapasitas) * 100
+                            : 0,
+                        )}%`,
+                      }}
+                    />
+                  </div>
+                </div>
               </div>
-            </div>
-          ))}
+            ))
+          )}
         </div>
       </div>
 

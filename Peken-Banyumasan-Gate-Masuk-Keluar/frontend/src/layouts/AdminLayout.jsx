@@ -159,14 +159,14 @@ const AdminLayout = () => {
   };
 
   const allNavItems = [
-    { path: '/',              label: 'Dashboard',       icon: PieChart,  roles: ['admin', 'petugas'] },
-    { path: '/kolaborator',   label: 'Kolaborator',     icon: Users,     roles: ['admin'] },
-    { path: '/artisan',       label: 'Artisan',         icon: Store,     roles: ['admin'], badge: pendingArtisanCount },
-    { path: '/petugas',       label: 'Petugas',         icon: UserCog,   roles: ['admin'] },
-    { path: '/reports',       label: 'Laporan',         icon: FileText,  roles: ['admin'] },
-    { path: '/events',        label: 'Kelola Event',    icon: Calendar,  roles: ['admin'] },
-    { path: '/company-profile', label: 'Kelola Company Profile', icon: Globe,   roles: ['admin'] },
-    { path: '/settings',      label: 'Pengaturan Akun', icon: Settings,  roles: ['admin', 'petugas'] },
+    { path: '/', label: 'Dashboard', icon: PieChart, roles: ['admin', 'petugas'] },
+    { path: '/kolaborator', label: 'Kolaborator', icon: Users, roles: ['admin'] },
+    { path: '/artisan', label: 'Artisan', icon: Store, roles: ['admin'], badge: pendingArtisanCount },
+    { path: '/petugas', label: 'Petugas', icon: UserCog, roles: ['admin'] },
+    { path: '/reports', label: 'Laporan', icon: FileText, roles: ['admin'] },
+    { path: '/events', label: 'Kelola Event', icon: Calendar, roles: ['admin'] },
+    { path: '/company-profile', label: 'Kelola Company Profile', icon: Globe, roles: ['admin'] },
+    { path: '/settings', label: 'Pengaturan Akun', icon: Settings, roles: ['admin', 'petugas'] },
   ];
   const navItems = allNavItems.filter(item => item.roles.includes(userData.role));
 
@@ -187,14 +187,14 @@ const AdminLayout = () => {
 
   const getPageInfo = () => {
     const m = {
-      '/':               { title: 'Dashboard Real-time',       subtitle: 'Pantau pergerakan pengunjung event hari ini' },
-      '/kolaborator':    { title: 'Kolaborator',               subtitle: 'Kelola dan verifikasi kolaborator kreatif Peken Banyumasan' },
-      '/artisan':        { title: 'Artisan & Revenue Sharing', subtitle: 'Kelola artisan, set posisi, persentase komisi, dan monitoring revenue' },
-      '/reports':        { title: 'Laporan Kunjungan',         subtitle: 'Rekapitulasi data pengunjung selama event' },
-      '/events':         { title: 'Kelola Event',              subtitle: 'Buat, aktifkan, dan nonaktifkan event Peken Banyumasan' },
-      '/company-profile':{ title: 'Company Profile',           subtitle: 'Kelola seluruh konten halaman publik Peken Banyumasan' },
-      '/petugas':        { title: 'Kelola Petugas',           subtitle: 'Buat, edit, enable/disable akun petugas event' },
-      '/settings':       { title: 'Pengaturan Akun',           subtitle: 'Kelola nama tampilan dan password akun Anda' },
+      '/': { title: 'Dashboard Real-time', subtitle: 'Pantau pergerakan pengunjung event hari ini' },
+      '/kolaborator': { title: 'Kolaborator', subtitle: 'Kelola dan verifikasi kolaborator kreatif Peken Banyumasan' },
+      '/artisan': { title: 'Artisan & Revenue Sharing', subtitle: 'Kelola artisan, set posisi, persentase komisi, dan monitoring revenue' },
+      '/reports': { title: 'Laporan Kunjungan', subtitle: 'Rekapitulasi data pengunjung selama event' },
+      '/events': { title: 'Kelola Event', subtitle: 'Buat, aktifkan, dan nonaktifkan event Peken Banyumasan' },
+      '/company-profile': { title: 'Company Profile', subtitle: 'Kelola seluruh konten halaman publik Peken Banyumasan' },
+      '/petugas': { title: 'Kelola Petugas', subtitle: 'Buat, edit, enable/disable akun petugas event' },
+      '/settings': { title: 'Pengaturan Akun', subtitle: 'Kelola nama tampilan dan password akun Anda' },
     };
     if (m[location.pathname]) return m[location.pathname];
     if (location.pathname.startsWith('/events/')) return { title: 'Detail Event', subtitle: 'Kelola relasi kolaborator & artisan di event ini' };
