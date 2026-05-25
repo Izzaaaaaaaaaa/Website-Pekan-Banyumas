@@ -17,41 +17,68 @@
  * Atau aktifkan di Dashboard → Database → Replication → kunjungan.
  */
 
-import { createClient } from '@supabase/supabase-js';
+import { createClient } from "@supabase/supabase-js";
 
-const supabaseUrl  = import.meta.env.VITE_SUPABASE_URL  || '';
-const supabaseAnon = import.meta.env.VITE_SUPABASE_ANON_KEY || '';
+const supabaseUrl = import.meta.env.VITE_SUPABASE_URL || "";
+const supabaseAnon = import.meta.env.VITE_SUPABASE_ANON_KEY || "";
+
+// ── SINGLETON PATTERN: CREATE CLIENT ONLY ONCE ──────────────────────────────
 
 /**
- * supabaseRealtime — client Supabase untuk subscription saja.
- * null jika env vars belum dikonfigurasi (fallback ke polling).
+ * supabaseRealtime — SINGLETON client Supabase untuk subscription saja.
+ * ✅ Dibuat HANYA SATU KALI saat module load
+ * ✅ Tidak di-recreate per component mount
+ * ✅ null jika env vars belum dikonfigurasi (fallback ke polling)
+ *
+ * Log: "CREATE SUPABASE REALTIME CLIENT" → hanya muncul 1x saat app start
  */
-export const supabaseRealtime = (supabaseUrl && supabaseAnon)
-    ? createClient(supabaseUrl, supabaseAnon, {
-        realtime: {
-            params: { eventsPerSecond: 10 },
-        },
-    })
-    : null;
+let _supabaseRealtimeInstance = null;
+
+function getSupabaseRealtimeClient() {
+  if (_supabaseRealtimeInstance === null && supabaseUrl && supabaseAnon) {
+    console.log("CREATE SUPABASE REALTIME CLIENT (singleton)");
+    _supabaseRealtimeInstance = createClient(supabaseUrl, supabaseAnon, {
+      realtime: {
+        params: { eventsPerSecond: 10 },
+      },
+    });
+  }
+  return _supabaseRealtimeInstance || null;
+}
+
+export const supabaseRealtime = getSupabaseRealtimeClient();
 
 /**
  * isRealtimeReady — helper untuk cek apakah Realtime bisa dipakai.
  */
 export const isRealtimeReady = () => Boolean(supabaseRealtime);
 
+// ── AUTH CLIENT SINGLETON ──────────────────────────────────────────────────
+
 /**
- * supabase — auth client untuk Gate admin/petugas session management.
- * storageKey 'sb-peken-admin-auth' mengisolasi sesi Gate dari portal UMKM
- * dan Kolaborator sehingga tidak ada SSO lintas subdomain.
- * null jika env vars belum diisi — auth.js fallback ke localStorage-only mode.
+ * supabase — SINGLETON auth client untuk Gate admin/petugas session management.
+ * ✅ Dibuat HANYA SATU KALI saat module load
+ * ✅ storageKey 'sb-peken-admin-auth' mengisolasi sesi Gate dari portal lain
+ * ✅ Tidak ada SSO lintas subdomain
+ * ✅ null jika env vars belum diisi → auth.js fallback ke localStorage-only
+ *
+ * Log: "CREATE SUPABASE AUTH CLIENT" → hanya muncul 1x saat app start
  */
-export const supabase = (supabaseUrl && supabaseAnon)
-    ? createClient(supabaseUrl, supabaseAnon, {
-        auth: {
-            persistSession: true,
-            autoRefreshToken: true,
-            detectSessionInUrl: true,
-            storageKey: 'sb-peken-admin-auth',
-        },
-    })
-    : null;
+let _supabaseAuthInstance = null;
+
+function getSupabaseAuthClient() {
+  if (_supabaseAuthInstance === null && supabaseUrl && supabaseAnon) {
+    console.log("CREATE SUPABASE AUTH CLIENT (singleton)");
+    _supabaseAuthInstance = createClient(supabaseUrl, supabaseAnon, {
+      auth: {
+        persistSession: true,
+        autoRefreshToken: true,
+        detectSessionInUrl: true,
+        storageKey: "sb-peken-admin-auth",
+      },
+    });
+  }
+  return _supabaseAuthInstance || null;
+}
+
+export const supabase = getSupabaseAuthClient();

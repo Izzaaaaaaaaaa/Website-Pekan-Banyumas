@@ -1,5 +1,5 @@
 from pydantic import BaseModel
-from typing import List, Optional
+from typing import List, Optional, Any, Dict
 from datetime import datetime
 
 
@@ -31,6 +31,29 @@ class ActivityItem(BaseModel):
     waktu: str
 
 
+# ──────────────────────────────────────────────────────────────────────
+# Professional NFC Tap Response Format
+# ──────────────────────────────────────────────────────────────────────
+
+class NfcTapData(BaseModel):
+    """Data payload for NFC tap response."""
+    uid: str
+    status: str  # INSIDE or OUTSIDE
+    action: Optional[str] = None  # CHECK_IN or CHECK_OUT
+    aksi: Optional[str] = None  # backward compatibility for frontend
+
+
+class NfcTapResponse(BaseModel):
+    """Professional NFC tap response with structured data."""
+    success: bool
+    code: str  # CHECK_IN_SUCCESS, CHECK_OUT_SUCCESS, TOO_FAST_TAP, etc
+    action: Optional[str] = None  # CHECK_IN or CHECK_OUT
+    aksi: Optional[str] = None  # backward compatibility for frontend
+    message: str
+    data: Optional[NfcTapData] = None
+
+
+# Backward compatibility - keep old response format
 class VisitorTapResponse(BaseModel):
     """Response from NFC tap - tells frontend what action happened."""
     aksi: str  # masuk or keluar

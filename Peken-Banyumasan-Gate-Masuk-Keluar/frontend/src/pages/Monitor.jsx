@@ -182,6 +182,8 @@ const Monitor = () => {
 
     useEffect(() => {
         let channel = null;
+        let realtimeTimeout = null;
+
         if (supabaseRealtime) {
             channel = supabaseRealtime
                 .channel('monitor-kunjungan-live')
@@ -189,7 +191,10 @@ const Monitor = () => {
                     'postgres_changes',
                     { event: '*', schema: 'public', table: 'visitors' },
                     () => {
-                        fetchStats(true);
+                        if (realtimeTimeout) clearTimeout(realtimeTimeout);
+                        realtimeTimeout = setTimeout(() => {
+                            fetchStats(true);
+                        }, 2000);
                     }
                 )
                 .subscribe((status) => {

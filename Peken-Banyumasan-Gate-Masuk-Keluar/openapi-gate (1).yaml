@@ -1,0 +1,3684 @@
+openapi: 3.1.0
+info:
+  title: Peken Banyumasan — Gate (Admin & Petugas) API
+  version: 2.3.1
+  description: |
+    API consumed by the Gate admin/petugas panel
+    (`Peken-Banyumasan-Gate-Masuk-Keluar/frontend/`).
+
+    **Auth (v2.0 — Supabase):**
+    - Login/logout/me/changePassword are **Supabase-direct** — frontend calls
+      `supabase.auth.signInWithPassword()` etc. without touching this backend.
+    - Gate has **no self-register** — admin and petugas accounts are created by superadmin.
+    - `PUT /api/auth/profile` (custom fields only) is **HYBRID**.
+    - All other endpoints require a valid **Supabase JWT** in `Authorization: Bearer <token>`.
+      Backend verifies using `SUPABASE_JWT_SECRET` and enforces `app_metadata.role IN ('admin', 'petugas')`.
+    - Endpoints exclusive to `role: admin` are noted in their summary. Petugas is limited to
+      dashboard, visitor scan, and basic event/zone read.
+
+    **Vocabulary (CANONICAL — non-negotiable):**
+    - `kolaborator` (NEVER member, kreator)
+    - `artisan` (NEVER tenant, umkm)
+    - `aktivitas` for admin-moderation story feed (NEVER admin/stories)
+    - Path segment `/kolaborator` singular (NEVER `/kolaborators`)
+    - Path segment `/artisan` singular (NEVER `/artisans`)
+
+    ---
+
+    **Response Envelope (ALL endpoints except binary file downloads):**
+    ```
+    Success: { "status": "success", "message": "<optional>", "data": <payload> }
+    Error:   { "status": "error",   "message": "<human-readable>", "data": null, "errors": { "<field>": ["<msg>"] } }
+    ```
+    Frontend `extractData()` strips envelope — backend MUST always wrap in this shape.
+
+    **Authentication:**
+    Supabase JWT in `Authorization: Bearer <token>`.
+    Backend verifies using `SUPABASE_JWT_SECRET` (HS256) or Supabase Admin SDK `getUser(token)`.
+    JWT payload: `{ sub: UUID, email, app_metadata: { role: "admin"|"petugas", status }, user_metadata: { nama } }`.
+    Role enforcement: reject any request where `app_metadata.role NOT IN ('admin', 'petugas')` with 403.
+    Login/logout/me/changePassword are handled **Supabase-direct** on the frontend — this backend
+    does NOT need to implement those endpoints.
+
+    **ID Format:**
+    Production: UUID v4. Mock data uses prefixed short IDs (`evt-XXXX`, `kol-XXXX`,
+    `art-XXXX`, `kar-XXXX`, `vis-XXXX`, `notif-XXXX`) — frontend renders as-is.
+
+    **Pagination:**
+    Currently all endpoints return raw arrays in `data`. Pagination wrapper optional:
+    `{ "data": { "items": [...], "meta": { "page": 1, "per_page": 20, "total": N, "total_pages": M } } }`
+    Query params when supported: `page` (default 1), `per_page` (default 20, max 100), `q` (free-text),
+    `from`/`to` (date range filter, YYYY-MM-DD), `status` (enum filter).
+
+    **Timezone:**
+    - Timestamps: UTC ISO 8601 (`2026-04-10T08:00:00.000Z`)
+    - Date-only fields (`tanggal`, `tanggal_selesai`): WIB local date `YYYY-MM-DD`
+    - Time-only fields (`jam_mulai`, `jam_selesai`): WIB 24-hour `HH:MM`
+
+    **Content Types:**
+    - Default: `application/json`
+    - Uploads (banner, galeri, QRIS images): `multipart/form-data`
+    - Report exports: `application/vnd.openxmlformats-officedocument.spreadsheetml.sheet` (XLSX) or `text/csv`
+
+    **Error messages** are in Bahasa Indonesia — frontend displays them as-is via toast.
+
+    **Error Catalog:**
+    | HTTP | Scenario | Example message |
+    |------|----------|-----------------|
+    | 400  | Invalid params / malformed body | `"Parameter 'page' harus berupa angka"` |
+    | 401  | Missing/expired JWT | `"Token tidak valid atau sudah kedaluwarsa"` |
+    | 403  | Wrong role / insufficient privilege | `"Anda tidak memiliki akses untuk fitur ini"` |
+    | 404  | Resource not found | `"Data tidak ditemukan"` |
+    | 409  | Duplicate / conflict | `"Email sudah terdaftar"` |
+    | 422  | Validation error (field-level) | `"Field 'nama' wajib diisi"` |
+    | 429  | Rate limit exceeded | `"Terlalu banyak permintaan, coba lagi nanti"` |
+    | 500  | Server error | `"Terjadi kesalahan pada server"` |
+
+    ---
+
+    **Changelog:**
+    - v2.1.0 (2026-05-02): G-1 Kolaborator schema add no_hp+internal_notes (admin-only); G-2 Artisan schema add internal_notes (admin-only); G-3 Artisan schema add username (required); G-4 patchKolaborator requestBody expanded; G-5 patchArtisan requestBody expanded; G-6 Karya schema add owner_type/owner_id (required) + owner/owner_slug (computed) — mirrors CP-1/C-1 for cross-spec consistency. Synced with DB v2.1.
+  contact:
+    name: Peken Banyumasan Dev
+  license:
+    name: Private
+
+servers:
+  - url: http://localhost:8001
+    description: Local backend (Gate backend)
+  - url: https://{space}.hf.space
+    description: HuggingFace Space (production)
+    variables:
+      space:
+        default: your-username-peken-gate-api
+        description: HuggingFace Space name
+
+security:
+  - bearerAuth: []
+
+tags:
+  - name: auth
+    description: Auth (HYBRID profile update — custom fields only; login/logout/me/changePassword handled Supabase-direct on FE)
+  - name: dashboard
+    description: Dashboard stats, visitor list, NFC tap, manual entry
+  - name: reports
+    description: Visitor reports, artisan reports, event accumulation, export
+  - name: events-crud
+    description: Event CRUD + status change (admin only)
+  - name: events-kolaborator
+    description: Admin event–kolaborator assignments + self-join request approval
+  - name: events-artisan
+    description: Admin event–artisan assignments + artisan-request approval + stand assignment
+  - name: kolaborator-management
+    description: Admin CRUD of kolaborator records (status, porto, stories)
+  - name: artisan-management
+    description: Admin read of artisan records + finance (read-only)
+  - name: aktivitas
+    description: Admin moderation of all kolaborator stories (cross-author)
+  - name: company-profile
+    description: Company profile section management (per-section JSONB)
+  - name: zones
+    description: Venue zone layout management
+  - name: notifikasi
+    description: Admin notification inbox
+
+paths:
+  # ── Auth ─────────────────────────────────────────────────────────────────────
+
+  /api/auth/profile:
+    put:
+      operationId: updateAdminProfile
+      tags: [auth]
+      summary: Update custom profile fields (HYBRID — custom fields only)
+      description: |
+        Updates custom fields in `users_profile` table. `nama` and `email` are handled by
+        `supabase.auth.updateUser()` on the FE. Backend identifies user from JWT `sub`.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              description: Custom fields (not nama/email)
+              additionalProperties: true
+            example:
+              jabatan: Koordinator Gate
+      responses:
+        '200':
+          description: Profile updated
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Envelope'
+        '422':
+          $ref: '#/components/responses/UnprocessableEntity'
+
+  # ── Dashboard ─────────────────────────────────────────────────────────────────
+
+  /api/dashboard/stats:
+    get:
+      operationId: getDashboardStats
+      tags: [dashboard]
+      summary: Get live visitor stats (admin + petugas)
+      description: Returns current event visitor counts. Live data — suitable for polling.
+      responses:
+        '200':
+          description: Dashboard stats
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: '#/components/schemas/Envelope'
+                  - type: object
+                    properties:
+                      data:
+                        $ref: '#/components/schemas/Stats'
+              example:
+                status: success
+                message: null
+                data:
+                  di_dalam: 143
+                  total_masuk: 312
+                  total_keluar: 169
+                  total_harian: 312
+                  event_id: evt-0001
+                  nama_event: Peken Banyumas #7
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+
+  /api/visitors:
+    get:
+      operationId: listVisitors
+      tags: [dashboard]
+      summary: List visitors (filterable by date + event)
+      parameters:
+        - name: tanggal
+          in: query
+          schema:
+            type: string
+            format: date
+          description: Filter by date (WIB YYYY-MM-DD)
+          example: '2026-05-10'
+        - name: event_id
+          in: query
+          schema:
+            type: string
+          description: Filter by event ID
+      responses:
+        '200':
+          description: Visitor list
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: '#/components/schemas/Envelope'
+                  - type: object
+                    properties:
+                      data:
+                        type: array
+                        items:
+                          $ref: '#/components/schemas/Visitor'
+              example:
+                status: success
+                message: null
+                data:
+                  - id: vis-0001
+                    nama: Bapak Joko
+                    waktu_masuk: '2026-05-10T09:15:00.000Z'
+                    waktu_keluar: null
+                    status: di_dalam
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+
+  /api/visitors/manual:
+    post:
+      operationId: manualVisitorEntry
+      tags: [dashboard]
+      summary: Manual visitor entry (admin + petugas)
+      description: Manual masuk/keluar entry without NFC tap.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [aksi]
+              properties:
+                aksi:
+                  type: string
+                  enum: [masuk, keluar]
+                event_id:
+                  type: string
+                  nullable: true
+            example:
+              aksi: masuk
+              event_id: evt-0001
+      responses:
+        '200':
+          description: Entry recorded
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Envelope'
+              example:
+                status: success
+                message: Pengunjung berhasil dicatat masuk
+                data: null
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '422':
+          $ref: '#/components/responses/UnprocessableEntity'
+
+  /api/visitors/tap:
+    post:
+      operationId: visitorTap
+      tags: [dashboard]
+      summary: NFC tap visitor entry (admin + petugas)
+      description: |
+        Processes NFC UID tap. Backend determines masuk/keluar based on current status.
+        Returns visitor record with resolved action.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [uid, timestamp]
+              properties:
+                uid:
+                  type: string
+                  description: NFC card UID
+                  example: 04:AB:CD:EF
+                timestamp:
+                  type: string
+                  format: date-time
+                  description: Client timestamp (UTC ISO 8601)
+            example:
+              uid: 04:AB:CD:EF
+              timestamp: '2026-05-10T09:15:00.000Z'
+      responses:
+        '200':
+          description: Tap processed
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: '#/components/schemas/Envelope'
+                  - type: object
+                    properties:
+                      data:
+                        type: object
+                        properties:
+                          aksi:
+                            type: string
+                            enum: [masuk, keluar]
+                          nama:
+                            type: string
+                          status:
+                            type: string
+              example:
+                status: success
+                message: Selamat datang, Bapak Joko!
+                data:
+                  aksi: masuk
+                  nama: Bapak Joko
+                  status: di_dalam
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '404':
+          $ref: '#/components/responses/NotFound'
+
+  # ── Reports ───────────────────────────────────────────────────────────────────
+
+  /api/reports:
+    get:
+      operationId: getReport
+      tags: [reports]
+      summary: Get visitor report for an event/date (admin only)
+      parameters:
+        - name: event_id
+          in: query
+          schema:
+            type: string
+        - name: tanggal
+          in: query
+          schema:
+            type: string
+            format: date
+          example: '2026-05-10'
+      responses:
+        '200':
+          description: Visitor report
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: '#/components/schemas/Envelope'
+                  - type: object
+                    properties:
+                      data:
+                        type: object
+                        properties:
+                          nama:
+                            type: string
+                          tanggal_range:
+                            type: array
+                            items:
+                              type: string
+                          rows:
+                            type: array
+                            items:
+                              $ref: '#/components/schemas/Visitor'
+                          total_masuk:
+                            type: integer
+                          total_keluar:
+                            type: integer
+                          di_dalam:
+                            type: integer
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+
+  /api/reports/export:
+    get:
+      operationId: exportReport
+      tags: [reports]
+      summary: Export visitor report as binary file (admin only)
+      description: |
+        Returns a binary file (xlsx or pdf).
+        Backend MUST set `Content-Disposition: attachment; filename="..."`.
+        Frontend triggers download via Blob object URL.
+      parameters:
+        - name: format
+          in: query
+          required: true
+          schema:
+            type: string
+            enum: [excel, pdf]
+          example: excel
+        - name: event_id
+          in: query
+          schema:
+            type: string
+        - name: tanggal
+          in: query
+          schema:
+            type: string
+            format: date
+      responses:
+        '200':
+          description: Binary file download
+          headers:
+            Content-Disposition:
+              schema:
+                type: string
+              example: 'attachment; filename="laporan-peken-7.xlsx"'
+          content:
+            application/vnd.openxmlformats-officedocument.spreadsheetml.sheet:
+              schema:
+                type: string
+                format: binary
+            application/pdf:
+              schema:
+                type: string
+                format: binary
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+
+  /api/reports/artisan:
+    get:
+      operationId: getArtisanReport
+      tags: [reports]
+      summary: Get artisan revenue report (admin only)
+      parameters:
+        - name: event_id
+          in: query
+          schema:
+            type: string
+          description: Filter by event (optional — all events if omitted)
+      responses:
+        '200':
+          description: Artisan report rows
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: '#/components/schemas/Envelope'
+                  - type: object
+                    properties:
+                      data:
+                        type: array
+                        items:
+                          $ref: '#/components/schemas/ArtisanReportRow'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+
+  /api/reports/accumulation:
+    get:
+      operationId: getAccumulationReport
+      tags: [reports]
+      summary: Get event accumulation report (admin only)
+      parameters:
+        - name: event_id
+          in: query
+          schema:
+            type: string
+          description: Filter by event (optional — all events if omitted)
+      responses:
+        '200':
+          description: Event accumulation rows
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: '#/components/schemas/Envelope'
+                  - type: object
+                    properties:
+                      data:
+                        type: array
+                        items:
+                          $ref: '#/components/schemas/EventAccumRow'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+
+  # ── Events CRUD ──────────────────────────────────────────────────────────────
+
+  /api/events:
+    get:
+      operationId: listEvents
+      tags: [events-crud]
+      summary: List all events (admin sees all statuses)
+      parameters:
+        - name: status
+          in: query
+          schema:
+            type: string
+            enum: [draft, published, berlangsung, selesai]
+        - name: q
+          in: query
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Event list
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: '#/components/schemas/Envelope'
+                  - type: object
+                    properties:
+                      data:
+                        type: array
+                        items:
+                          $ref: '#/components/schemas/Event'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+    post:
+      operationId: createEvent
+      tags: [events-crud]
+      summary: Create new event (admin only)
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CreateEventBody'
+            example:
+              nama: Peken Banyumas #8
+              tanggal: '2026-08-10'
+              tanggal_selesai: '2026-08-12'
+              jam_mulai: '09:00'
+              jam_selesai: '21:00'
+              lokasi: Alun-alun Purwokerto
+              status: draft
+              kapasitas: 500
+              deskripsi: Pameran kreatif terbesar ke-8
+              konten_lengkap: '...'
+              subsektor: [Kriya, Fashion, Kuliner]
+              banner_url: null
+              galeri: []
+      responses:
+        '200':
+          description: Created event
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: '#/components/schemas/Envelope'
+                  - type: object
+                    properties:
+                      data:
+                        $ref: '#/components/schemas/Event'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '422':
+          $ref: '#/components/responses/UnprocessableEntity'
+
+  /api/events/{id}:
+    get:
+      operationId: getEvent
+      tags: [events-crud]
+      summary: Get event detail (admin sees all statuses)
+      parameters:
+        - $ref: '#/components/parameters/IdPath'
+      responses:
+        '200':
+          description: Event detail
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: '#/components/schemas/Envelope'
+                  - type: object
+                    properties:
+                      data:
+                        $ref: '#/components/schemas/Event'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '404':
+          $ref: '#/components/responses/NotFound'
+    put:
+      operationId: updateEvent
+      tags: [events-crud]
+      summary: Full update event (admin only)
+      parameters:
+        - $ref: '#/components/parameters/IdPath'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CreateEventBody'
+      responses:
+        '200':
+          description: Updated event
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: '#/components/schemas/Envelope'
+                  - type: object
+                    properties:
+                      data:
+                        $ref: '#/components/schemas/Event'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '404':
+          $ref: '#/components/responses/NotFound'
+    delete:
+      operationId: deleteEvent
+      tags: [events-crud]
+      summary: Delete event (admin only)
+      parameters:
+        - $ref: '#/components/parameters/IdPath'
+      responses:
+        '200':
+          description: Deleted
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Envelope'
+              example:
+                status: success
+                message: Event dihapus
+                data: null
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '404':
+          $ref: '#/components/responses/NotFound'
+
+  /api/events/{id}/status:
+    patch:
+      operationId: patchEventStatus
+      tags: [events-crud]
+      summary: Change event status (admin only)
+      parameters:
+        - $ref: '#/components/parameters/IdPath'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [status]
+              properties:
+                status:
+                  type: string
+                  enum: [draft, published, berlangsung, selesai]
+            example:
+              status: published
+      responses:
+        '200':
+          description: Status updated
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: '#/components/schemas/Envelope'
+                  - type: object
+                    properties:
+                      data:
+                        type: object
+                        properties:
+                          id:
+                            type: string
+                          status:
+                            type: string
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '404':
+          $ref: '#/components/responses/NotFound'
+
+  # ── Events ↔ Kolaborator (Admin Assignment) ───────────────────────────────────
+
+  /api/events/{id}/kolaborator:
+    get:
+      operationId: listEventKolaborator
+      tags: [events-kolaborator]
+      summary: List kolaborators assigned to event (admin only)
+      parameters:
+        - $ref: '#/components/parameters/IdPath'
+      responses:
+        '200':
+          description: EventKolaborator list
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: '#/components/schemas/Envelope'
+                  - type: object
+                    properties:
+                      data:
+                        type: array
+                        items:
+                          $ref: '#/components/schemas/EventKolaborator'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+    post:
+      operationId: assignKolaboratorToEvent
+      tags: [events-kolaborator]
+      summary: Admin-assign kolaborator to event (admin only)
+      parameters:
+        - $ref: '#/components/parameters/IdPath'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [kolaborator_id, peran]
+              properties:
+                kolaborator_id:
+                  type: string
+                peran:
+                  type: string
+                  enum: [performer, panitia, peserta]
+                status_kehadiran:
+                  type: string
+                  enum: [terdaftar, hadir, tidak_hadir, dibatalkan]
+                  default: terdaftar
+            example:
+              kolaborator_id: kol-0001
+              peran: performer
+              status_kehadiran: terdaftar
+      responses:
+        '200':
+          description: Assigned
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: '#/components/schemas/Envelope'
+                  - type: object
+                    properties:
+                      data:
+                        $ref: '#/components/schemas/EventKolaborator'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '409':
+          $ref: '#/components/responses/Conflict'
+
+  /api/events/{id}/kolaborator/{kid}:
+    patch:
+      operationId: updateEventKolaborator
+      tags: [events-kolaborator]
+      summary: Update kolaborator assignment in event (admin only)
+      parameters:
+        - $ref: '#/components/parameters/IdPath'
+        - name: kid
+          in: path
+          required: true
+          schema:
+            type: string
+          description: EventKolaborator junction ID
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                peran:
+                  type: string
+                status_kehadiran:
+                  type: string
+                  enum: [terdaftar, hadir, tidak_hadir, dibatalkan]
+            example:
+              status_kehadiran: hadir
+      responses:
+        '200':
+          description: Updated assignment
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: '#/components/schemas/Envelope'
+                  - type: object
+                    properties:
+                      data:
+                        $ref: '#/components/schemas/EventKolaborator'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '404':
+          $ref: '#/components/responses/NotFound'
+    delete:
+      operationId: removeEventKolaborator
+      tags: [events-kolaborator]
+      summary: Remove kolaborator from event (admin only)
+      parameters:
+        - $ref: '#/components/parameters/IdPath'
+        - name: kid
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Removed
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Envelope'
+              example:
+                status: success
+                message: Kolaborator dihapus dari event
+                data: null
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '404':
+          $ref: '#/components/responses/NotFound'
+
+  /api/events/{id}/kolaborator-requests:
+    get:
+      operationId: listKolaboratorRequests
+      tags: [events-kolaborator]
+      summary: List pending kolaborator self-join requests (admin only)
+      description: Returns requests with status='pending'. Submitted via Kolaborator app.
+      parameters:
+        - $ref: '#/components/parameters/IdPath'
+      responses:
+        '200':
+          description: Pending kolaborator requests
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: '#/components/schemas/Envelope'
+                  - type: object
+                    properties:
+                      data:
+                        type: array
+                        items:
+                          $ref: '#/components/schemas/KolaboratorRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+
+  /api/events/{id}/kolaborator-requests/{rid}:
+    patch:
+      operationId: respondKolaboratorRequest
+      tags: [events-kolaborator]
+      summary: Approve or reject a kolaborator self-join request (admin only)
+      description: |
+        **Side effects on approve:**
+        - Insert `event_kolaborator` row with `assigned_by: 'self'`, `status_kehadiran: 'terdaftar'`
+        - Emit notification to kolaborator (`type: 'event_invite'`)
+      parameters:
+        - $ref: '#/components/parameters/IdPath'
+        - name: rid
+          in: path
+          required: true
+          schema:
+            type: string
+          description: KolaboratorRequest ID
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [action]
+              properties:
+                action:
+                  type: string
+                  enum: [approve, reject]
+            example:
+              action: approve
+      responses:
+        '200':
+          description: Request responded
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Envelope'
+              example:
+                status: success
+                message: Permintaan disetujui
+                data: null
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '404':
+          $ref: '#/components/responses/NotFound'
+
+  # ── Events ↔ Artisan (Admin Assignment) ──────────────────────────────────────
+
+  /api/events/{id}/artisan:
+    get:
+      operationId: listEventArtisan
+      tags: [events-artisan]
+      summary: List artisans assigned to event (admin only)
+      parameters:
+        - $ref: '#/components/parameters/IdPath'
+      responses:
+        '200':
+          description: EventArtisan list
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: '#/components/schemas/Envelope'
+                  - type: object
+                    properties:
+                      data:
+                        type: array
+                        items:
+                          $ref: '#/components/schemas/EventArtisan'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+    post:
+      operationId: assignArtisanToEvent
+      tags: [events-artisan]
+      summary: Admin-assign artisan to event (admin only)
+      parameters:
+        - $ref: '#/components/parameters/IdPath'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [artisan_id]
+              properties:
+                artisan_id:
+                  type: string
+                stand_id:
+                  type: string
+                  nullable: true
+                status_request:
+                  type: string
+                  enum: [approved]
+                  default: approved
+            example:
+              artisan_id: art-0001
+              stand_id: A-3
+              status_request: approved
+      responses:
+        '200':
+          description: Assigned
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: '#/components/schemas/Envelope'
+                  - type: object
+                    properties:
+                      data:
+                        $ref: '#/components/schemas/EventArtisan'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '409':
+          $ref: '#/components/responses/Conflict'
+
+  /api/events/{id}/artisan/{aid}:
+    patch:
+      operationId: updateEventArtisan
+      tags: [events-artisan]
+      summary: Update artisan assignment in event (admin only)
+      parameters:
+        - $ref: '#/components/parameters/IdPath'
+        - name: aid
+          in: path
+          required: true
+          schema:
+            type: string
+          description: EventArtisan junction ID
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                stand_id:
+                  type: string
+                  nullable: true
+                posisi_event:
+                  type: string
+                  nullable: true
+                status_request:
+                  type: string
+                  enum: [pending, pending_change, approved, rejected]
+            example:
+              stand_id: B-2
+              status_request: approved
+      responses:
+        '200':
+          description: Updated assignment
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: '#/components/schemas/Envelope'
+                  - type: object
+                    properties:
+                      data:
+                        $ref: '#/components/schemas/EventArtisan'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '404':
+          $ref: '#/components/responses/NotFound'
+    delete:
+      operationId: removeEventArtisan
+      tags: [events-artisan]
+      summary: Remove artisan from event (admin only)
+      parameters:
+        - $ref: '#/components/parameters/IdPath'
+        - name: aid
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Removed
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Envelope'
+              example:
+                status: success
+                message: Artisan dihapus dari event
+                data: null
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '404':
+          $ref: '#/components/responses/NotFound'
+
+  /api/events/{id}/artisan-requests:
+    get:
+      operationId: listArtisanRequests
+      tags: [events-artisan]
+      summary: List pending/pending_change artisan self-join requests (admin only)
+      parameters:
+        - $ref: '#/components/parameters/IdPath'
+      responses:
+        '200':
+          description: Artisan requests
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: '#/components/schemas/Envelope'
+                  - type: object
+                    properties:
+                      data:
+                        type: array
+                        items:
+                          $ref: '#/components/schemas/ArtisanRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+
+  /api/events/{id}/artisan-requests/{rid}:
+    patch:
+      operationId: respondArtisanRequest
+      tags: [events-artisan]
+      summary: Approve or reject initial artisan join request (admin only)
+      description: |
+        Responds to initial `requestJoin` (step 1 of the artisan-request flow).
+        **Side effects on approve:**
+        - Insert/update `event_artisan` row with `status_request: 'approved'`, `stand_id` assigned
+        - Mark zone stand `occupied: true`
+        - Emit notification to artisan (`type: 'artisan_request_approved'`)
+      parameters:
+        - $ref: '#/components/parameters/IdPath'
+        - name: rid
+          in: path
+          required: true
+          schema:
+            type: string
+          description: ArtisanRequest ID
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [action]
+              properties:
+                action:
+                  type: string
+                  enum: [approve, reject]
+                stand_id:
+                  type: string
+                  description: Required when action='approve'
+                  example: A-3
+            example:
+              action: approve
+              stand_id: A-3
+      responses:
+        '200':
+          description: Request responded
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Envelope'
+              example:
+                status: success
+                message: Permintaan artisan disetujui
+                data: null
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '404':
+          $ref: '#/components/responses/NotFound'
+
+  /api/events/{id}/artisan-requests/{rid}/change:
+    patch:
+      operationId: respondPositionChange
+      tags: [events-artisan]
+      summary: Approve or reject artisan stand-change request (admin only)
+      description: |
+        Responds to `requestPositionChange` (step 3 of artisan-request flow).
+        **Side effects on approve:**
+        - Update existing `event_artisan.stand_id` to `change_request` value
+        - Emit notification to artisan (`type: 'position_change_approved'`)
+      parameters:
+        - $ref: '#/components/parameters/IdPath'
+        - name: rid
+          in: path
+          required: true
+          schema:
+            type: string
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [action]
+              properties:
+                action:
+                  type: string
+                  enum: [approve, reject]
+            example:
+              action: approve
+      responses:
+        '200':
+          description: Position change responded
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Envelope'
+              example:
+                status: success
+                message: Perubahan posisi disetujui
+                data: null
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '404':
+          $ref: '#/components/responses/NotFound'
+
+  # ── Kolaborator Management ────────────────────────────────────────────────────
+
+  /api/kolaborator:
+    get:
+      operationId: listKolaborator
+      tags: [kolaborator-management]
+      summary: List all kolaborators (admin only)
+      parameters:
+        - name: status
+          in: query
+          schema:
+            type: string
+            enum: [aktif, pending, suspended, rejected]
+        - name: q
+          in: query
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Kolaborator list
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: '#/components/schemas/Envelope'
+                  - type: object
+                    properties:
+                      data:
+                        type: array
+                        items:
+                          $ref: '#/components/schemas/Kolaborator'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+
+  /api/kolaborator/{id}:
+    get:
+      operationId: getKolaborator
+      tags: [kolaborator-management]
+      summary: Get kolaborator detail (admin only)
+      parameters:
+        - $ref: '#/components/parameters/IdPath'
+      responses:
+        '200':
+          description: Kolaborator record
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: '#/components/schemas/Envelope'
+                  - type: object
+                    properties:
+                      data:
+                        $ref: '#/components/schemas/Kolaborator'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '404':
+          $ref: '#/components/responses/NotFound'
+    patch:
+      operationId: patchKolaborator
+      tags: [kolaborator-management]
+      summary: Admin update kolaborator record (admin only)
+      description: |
+        Admin can edit: nama, email, kota, bio, foto_url, cover_url, subsektor, no_hp, internal_notes.
+        NOT status (use /status endpoint) — status is exclusively managed via /api/kolaborator/{id}/status.
+      parameters:
+        - $ref: '#/components/parameters/IdPath'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                nama:
+                  type: string
+                email:
+                  type: string
+                  format: email
+                  description: Updates kolaborators.email mirror; backend MUST also update auth.users.
+                kota:
+                  type: string
+                bio:
+                  type: string
+                no_hp:
+                  type: string
+                  description: Admin-collected; backend stores in kolaborators.no_hp.
+                subsektor:
+                  type: array
+                  items:
+                    type: string
+                foto_url:
+                  type: string
+                  nullable: true
+                cover_url:
+                  type: string
+                  nullable: true
+                internal_notes:
+                  type: string
+            example:
+              bio: Desainer tekstil terbaik Banyumas
+              no_hp: '081111223344'
+              internal_notes: Verified via WhatsApp 2026-04-12.
+      responses:
+        '200':
+          description: Updated kolaborator
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: '#/components/schemas/Envelope'
+                  - type: object
+                    properties:
+                      data:
+                        $ref: '#/components/schemas/Kolaborator'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '404':
+          $ref: '#/components/responses/NotFound'
+
+  /api/kolaborator/{id}/status:
+    patch:
+      operationId: patchKolaboratorStatus
+      tags: [kolaborator-management]
+      summary: Update kolaborator status (admin only)
+      description: |
+        **Dual update required:** Both `app_metadata.status` in Supabase Auth (via Admin SDK)
+        AND `status` field in `kolaborators` table must be updated atomically.
+      parameters:
+        - $ref: '#/components/parameters/IdPath'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [status]
+              properties:
+                status:
+                  type: string
+                  enum: [aktif, suspended, rejected]
+            example:
+              status: aktif
+      responses:
+        '200':
+          description: Status updated
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: '#/components/schemas/Envelope'
+                  - type: object
+                    properties:
+                      data:
+                        type: object
+                        properties:
+                          id:
+                            type: string
+                          status:
+                            type: string
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '404':
+          $ref: '#/components/responses/NotFound'
+
+  /api/kolaborator/{id}/events:
+    get:
+      operationId: listKolaboratorEvents
+      tags: [kolaborator-management]
+      summary: List events a kolaborator has joined (admin only)
+      parameters:
+        - $ref: '#/components/parameters/IdPath'
+      responses:
+        '200':
+          description: Events list (EventKolaborator junction rows)
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: '#/components/schemas/Envelope'
+                  - type: object
+                    properties:
+                      data:
+                        type: array
+                        items:
+                          $ref: '#/components/schemas/EventKolaborator'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '404':
+          $ref: '#/components/responses/NotFound'
+
+  /api/kolaborator/{id}/portofolio:
+    get:
+      operationId: listKolaboratorPortofolioAdmin
+      tags: [kolaborator-management]
+      summary: List kolaborator portfolio items (admin view, admin only)
+      parameters:
+        - $ref: '#/components/parameters/IdPath'
+      responses:
+        '200':
+          description: Karya list
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: '#/components/schemas/Envelope'
+                  - type: object
+                    properties:
+                      data:
+                        type: array
+                        items:
+                          $ref: '#/components/schemas/Karya'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '404':
+          $ref: '#/components/responses/NotFound'
+
+  /api/kolaborator/{id}/portofolio/{pid}:
+    patch:
+      operationId: featureKolaboratorPorto
+      tags: [kolaborator-management]
+      summary: Toggle featured flag on portfolio item (admin only)
+      parameters:
+        - $ref: '#/components/parameters/IdPath'
+        - name: pid
+          in: path
+          required: true
+          schema:
+            type: string
+          description: Portfolio/Karya ID
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [featured]
+              properties:
+                featured:
+                  type: boolean
+            example:
+              featured: true
+      responses:
+        '200':
+          description: Updated karya
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: '#/components/schemas/Envelope'
+                  - type: object
+                    properties:
+                      data:
+                        $ref: '#/components/schemas/Karya'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '404':
+          $ref: '#/components/responses/NotFound'
+    delete:
+      operationId: deleteKolaboratorPorto
+      tags: [kolaborator-management]
+      summary: Delete portfolio item (admin only)
+      parameters:
+        - $ref: '#/components/parameters/IdPath'
+        - name: pid
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Deleted
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Envelope'
+              example:
+                status: success
+                message: Item portofolio dihapus
+                data: null
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '404':
+          $ref: '#/components/responses/NotFound'
+
+  /api/kolaborator/{id}/stories:
+    get:
+      operationId: listKolaboratorStoriesAdmin
+      tags: [kolaborator-management]
+      summary: List kolaborator stories (admin view, admin only)
+      parameters:
+        - $ref: '#/components/parameters/IdPath'
+      responses:
+        '200':
+          description: Story list
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: '#/components/schemas/Envelope'
+                  - type: object
+                    properties:
+                      data:
+                        type: array
+                        items:
+                          $ref: '#/components/schemas/Story'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '404':
+          $ref: '#/components/responses/NotFound'
+
+  # ── Petugas Management ───────────────────────────────────────────────────────
+
+  /api/petugas:
+    get:
+      operationId: listPetugas
+      tags: [petugas-management]
+      summary: List all petugas (admin only)
+      parameters:
+        - name: status
+          in: query
+          schema:
+            type: string
+            enum: [aktif, disabled]
+        - name: q
+          in: query
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Petugas list
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: '#/components/schemas/Envelope'
+                  - type: object
+                    properties:
+                      data:
+                        type: array
+                        items:
+                          $ref: '#/components/schemas/Petugas'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+    post:
+      operationId: createPetugas
+      tags: [petugas-management]
+      summary: Create new petugas account (admin only)
+      description: |
+        Creates Supabase Auth user with `app_metadata.role = 'petugas'` and
+        inserts a `users_profile` row via the existing `trg_sync_user_role` trigger.
+        The trigger handles the users_profile insert — backend only needs to call
+        Supabase Auth Admin `createUser`.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [nama, email, password]
+              properties:
+                nama:
+                  type: string
+                  example: Budi Santoso
+                email:
+                  type: string
+                  format: email
+                  example: budi@pekenbanyumasan.id
+                password:
+                  type: string
+                  format: password
+                  minLength: 8
+                  description: Initial password — petugas should change via /settings after first login.
+                jabatan:
+                  type: string
+                  nullable: true
+                  example: Petugas Pengunjung
+      responses:
+        '201':
+          description: Petugas created
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: '#/components/schemas/Envelope'
+                  - type: object
+                    properties:
+                      data:
+                        $ref: '#/components/schemas/Petugas'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '422':
+          $ref: '#/components/responses/UnprocessableEntity'
+
+  /api/petugas/{id}:
+    get:
+      operationId: getPetugas
+      tags: [petugas-management]
+      summary: Get petugas detail (admin only)
+      parameters:
+        - $ref: '#/components/parameters/IdPath'
+      responses:
+        '200':
+          description: Petugas record
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: '#/components/schemas/Envelope'
+                  - type: object
+                    properties:
+                      data:
+                        $ref: '#/components/schemas/Petugas'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '404':
+          $ref: '#/components/responses/NotFound'
+    patch:
+      operationId: patchPetugas
+      tags: [petugas-management]
+      summary: Update petugas profile — nama, jabatan, email (admin only)
+      description: |
+        Admin can edit: nama, jabatan, email.
+        NOT status (use /status endpoint) — status is exclusively managed via
+        /api/petugas/{id}/status.
+        Email update requires backend to also update auth.users.email.
+      parameters:
+        - $ref: '#/components/parameters/IdPath'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                nama:
+                  type: string
+                jabatan:
+                  type: string
+                  nullable: true
+                email:
+                  type: string
+                  format: email
+                  description: Updates users_profile.email mirror; backend MUST also update auth.users.
+            example:
+              nama: Budi Santoso
+              jabatan: Koordinator Pintu Masuk
+      responses:
+        '200':
+          description: Updated petugas
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: '#/components/schemas/Envelope'
+                  - type: object
+                    properties:
+                      data:
+                        $ref: '#/components/schemas/Petugas'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '404':
+          $ref: '#/components/responses/NotFound'
+
+  /api/petugas/{id}/status:
+    patch:
+      operationId: patchPetugasStatus
+      tags: [petugas-management]
+      summary: Enable or disable petugas account (admin only)
+      description: |
+        Disable: sets `banned_until = '2099-12-31T23:59:59Z'` in Supabase Auth
+        (native Auth pattern — no DB column needed).
+        Enable: sets `banned_until = null`.
+        Disabled petugas cannot log in; their users_profile row is preserved.
+      parameters:
+        - $ref: '#/components/parameters/IdPath'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [status]
+              properties:
+                status:
+                  type: string
+                  enum: [aktif, disabled]
+            example:
+              status: disabled
+      responses:
+        '200':
+          description: Status updated
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: '#/components/schemas/Envelope'
+                  - type: object
+                    properties:
+                      data:
+                        type: object
+                        properties:
+                          id:
+                            type: string
+                          status:
+                            type: string
+                            enum: [aktif, disabled]
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '404':
+          $ref: '#/components/responses/NotFound'
+
+  /api/petugas/{id}/reset-password:
+    post:
+      operationId: resetPetugasPassword
+      tags: [petugas-management]
+      summary: Admin-trigger password reset for petugas (admin only)
+      description: |
+        Two modes:
+        - `email_link`: Supabase Auth sends a reset-link email to the petugas.
+          Response returns a confirmation message only (no secret exposed).
+        - `temp_password`: Backend generates a secure random password, sets it
+          via Admin SDK, and returns it **once** in the response for the admin
+          to relay to the petugas. The petugas should change it immediately
+          via `/settings`.
+      parameters:
+        - $ref: '#/components/parameters/IdPath'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [mode]
+              properties:
+                mode:
+                  type: string
+                  enum: [email_link, temp_password]
+            example:
+              mode: temp_password
+      responses:
+        '200':
+          description: Password reset initiated
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: '#/components/schemas/Envelope'
+                  - type: object
+                    properties:
+                      data:
+                        type: object
+                        properties:
+                          message:
+                            type: string
+                            description: Present for mode=email_link
+                          temp_password:
+                            type: string
+                            description: Present for mode=temp_password — one-time display only
+              examples:
+                email_link:
+                  value:
+                    status: success
+                    message: Link reset password telah dikirim
+                    data:
+                      message: Link reset password telah dikirim ke email petugas.
+                temp_password:
+                  value:
+                    status: success
+                    message: Password sementara berhasil dibuat
+                    data:
+                      temp_password: Xk7!mR2qP9
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '404':
+          $ref: '#/components/responses/NotFound'
+
+  # ── Artisan Management ────────────────────────────────────────────────────────
+
+  /api/artisan:
+    get:
+      operationId: listArtisan
+      tags: [artisan-management]
+      summary: List all artisans (admin only)
+      parameters:
+        - name: status
+          in: query
+          schema:
+            type: string
+            enum: [aktif, pending, suspended, rejected]
+        - name: q
+          in: query
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Artisan list
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: '#/components/schemas/Envelope'
+                  - type: object
+                    properties:
+                      data:
+                        type: array
+                        items:
+                          $ref: '#/components/schemas/Artisan'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+
+  /api/artisan/{id}:
+    get:
+      operationId: getArtisan
+      tags: [artisan-management]
+      summary: Get artisan detail (admin only)
+      parameters:
+        - $ref: '#/components/parameters/IdPath'
+      responses:
+        '200':
+          description: Artisan record
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: '#/components/schemas/Envelope'
+                  - type: object
+                    properties:
+                      data:
+                        $ref: '#/components/schemas/Artisan'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '404':
+          $ref: '#/components/responses/NotFound'
+    patch:
+      operationId: patchArtisan
+      tags: [artisan-management]
+      summary: Admin update artisan record (admin only — can edit komisi_persen)
+      parameters:
+        - $ref: '#/components/parameters/IdPath'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                komisi_persen:
+                  type: number
+                  minimum: 0
+                  maximum: 100
+                nama_usaha:
+                  type: string
+                pemilik:
+                  type: string
+                email:
+                  type: string
+                  format: email
+                no_hp:
+                  type: string
+                kota:
+                  type: string
+                deskripsi:
+                  type: string
+                kategori_usaha:
+                  type: array
+                  items:
+                    type: string
+                foto_url:
+                  type: string
+                  nullable: true
+                cover_url:
+                  type: string
+                  nullable: true
+                internal_notes:
+                  type: string
+            example:
+              komisi_persen: 12
+              internal_notes: Awaiting QRIS verification.
+      responses:
+        '200':
+          description: Updated artisan
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: '#/components/schemas/Envelope'
+                  - type: object
+                    properties:
+                      data:
+                        $ref: '#/components/schemas/Artisan'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '404':
+          $ref: '#/components/responses/NotFound'
+
+  /api/artisan/{id}/status:
+    patch:
+      operationId: patchArtisanStatus
+      tags: [artisan-management]
+      summary: Update artisan status (admin only)
+      description: |
+        **Dual update required:** `app_metadata.status` in Supabase Auth (Admin SDK)
+        AND `status` in `artisans` table, atomically.
+      parameters:
+        - $ref: '#/components/parameters/IdPath'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [status]
+              properties:
+                status:
+                  type: string
+                  enum: [aktif, suspended, rejected]
+            example:
+              status: aktif
+      responses:
+        '200':
+          description: Status updated
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Envelope'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '404':
+          $ref: '#/components/responses/NotFound'
+
+  /api/artisan/{id}/events:
+    get:
+      operationId: listArtisanEvents
+      tags: [artisan-management]
+      summary: List events an artisan has joined (admin, read-only)
+      parameters:
+        - $ref: '#/components/parameters/IdPath'
+      responses:
+        '200':
+          description: Events (EventArtisan junction rows)
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: '#/components/schemas/Envelope'
+                  - type: object
+                    properties:
+                      data:
+                        type: array
+                        items:
+                          $ref: '#/components/schemas/EventArtisan'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+
+  /api/artisan/{id}/kas:
+    get:
+      operationId: getArtisanKas
+      tags: [artisan-management]
+      summary: Get artisan cashflow (admin, read-only)
+      parameters:
+        - $ref: '#/components/parameters/IdPath'
+        - name: from
+          in: query
+          schema:
+            type: string
+            format: date
+        - name: to
+          in: query
+          schema:
+            type: string
+            format: date
+      responses:
+        '200':
+          description: Kas list
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: '#/components/schemas/Envelope'
+                  - type: object
+                    properties:
+                      data:
+                        type: array
+                        items:
+                          $ref: '#/components/schemas/Kas'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+
+  /api/artisan/{id}/riwayat:
+    get:
+      operationId: getArtisanRiwayat
+      tags: [artisan-management]
+      summary: Get artisan transaction history (admin, read-only)
+      parameters:
+        - $ref: '#/components/parameters/IdPath'
+        - name: from
+          in: query
+          schema:
+            type: string
+            format: date
+        - name: to
+          in: query
+          schema:
+            type: string
+            format: date
+      responses:
+        '200':
+          description: Riwayat list
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: '#/components/schemas/Envelope'
+                  - type: object
+                    properties:
+                      data:
+                        type: array
+                        items:
+                          $ref: '#/components/schemas/Riwayat'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+
+  /api/artisan/{id}/promo:
+    get:
+      operationId: getArtisanPromo
+      tags: [artisan-management]
+      summary: Get artisan promos (admin, read-only)
+      parameters:
+        - $ref: '#/components/parameters/IdPath'
+      responses:
+        '200':
+          description: Promo list
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: '#/components/schemas/Envelope'
+                  - type: object
+                    properties:
+                      data:
+                        type: array
+                        items:
+                          $ref: '#/components/schemas/Promo'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+
+  /api/artisan/{id}/stok:
+    get:
+      operationId: getArtisanStok
+      tags: [artisan-management]
+      summary: Get artisan inventory (admin, read-only)
+      parameters:
+        - $ref: '#/components/parameters/IdPath'
+      responses:
+        '200':
+          description: Stok list
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: '#/components/schemas/Envelope'
+                  - type: object
+                    properties:
+                      data:
+                        type: array
+                        items:
+                          $ref: '#/components/schemas/Stok'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+
+  /api/artisan/{id}/qris:
+    get:
+      operationId: getArtisanQris
+      tags: [artisan-management]
+      summary: Get artisan QRIS URL (admin, read-only)
+      parameters:
+        - $ref: '#/components/parameters/IdPath'
+      responses:
+        '200':
+          description: QRIS info
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: '#/components/schemas/Envelope'
+                  - type: object
+                    properties:
+                      data:
+                        type: object
+                        properties:
+                          qris_url:
+                            type: string
+                            nullable: true
+                          updated_at:
+                            type: string
+                            format: date-time
+                            nullable: true
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+
+  # ── Aktivitas (Admin Story Moderation) ────────────────────────────────────────
+
+  /api/aktivitas:
+    get:
+      operationId: listAktivitas
+      tags: [aktivitas]
+      summary: List all stories across all kolaborators (admin moderation feed, admin only)
+      description: |
+        Admin moderation cross-author story feed.
+        Vocabulary: `aktivitas` (NEVER `admin/stories`).
+        Returns stories with `kolaborator_id` and `nama` embedded.
+      parameters:
+        - name: q
+          in: query
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Story list with author info
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: '#/components/schemas/Envelope'
+                  - type: object
+                    properties:
+                      data:
+                        type: array
+                        items:
+                          allOf:
+                            - $ref: '#/components/schemas/Story'
+                            - type: object
+                              properties:
+                                kolaborator_id:
+                                  type: string
+                                nama:
+                                  type: string
+              example:
+                status: success
+                message: null
+                data:
+                  - id: sto-0001
+                    konten: Workshop batik di Yogya
+                    media_url: null
+                    tags: [batik]
+                    like_count: 5
+                    status: aktif
+                    created_at: '2026-04-01T08:00:00.000Z'
+                    kolaborator_id: kol-0001
+                    nama: Sari Wulandari
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+
+  /api/aktivitas/{id}:
+    delete:
+      operationId: deleteAktivitas
+      tags: [aktivitas]
+      summary: Soft-delete a story (sets status='dihapus', admin only)
+      parameters:
+        - $ref: '#/components/parameters/IdPath'
+      responses:
+        '200':
+          description: Soft-deleted
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Envelope'
+              example:
+                status: success
+                message: Story dihapus
+                data: null
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '404':
+          $ref: '#/components/responses/NotFound'
+
+  # ── Company Profile Management ─────────────────────────────────────────────────
+
+  /api/company-profile:
+    get:
+      operationId: getCompanyProfileAdmin
+      tags: [company-profile]
+      summary: Get company profile section content (admin only)
+      description: Same source as public `/api/public/company-profile`. Admin sees raw JSONB.
+      parameters:
+        - name: section
+          in: query
+          required: true
+          schema:
+            type: string
+            enum: [home, about, tim, programs, works, gallery]
+      responses:
+        '200':
+          description: Section content
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Envelope'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+    put:
+      operationId: saveCompanyProfile
+      tags: [company-profile]
+      summary: Save company profile section content (admin only)
+      description: Upserts `(section, content)`. Shape of content is FE-driven opaque JSONB.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [section, content]
+              properties:
+                section:
+                  type: string
+                  enum: [home, about, tim, programs, works, gallery]
+                content:
+                  description: >-
+                    Opaque JSONB — shape decided by FE per section. Object-shaped
+                    sections (home/about/tim/gallery) send an object; list-shaped
+                    sections (programs/works) send a bare JSON array. Stored verbatim.
+                  oneOf:
+                    - type: object
+                      additionalProperties: true
+                    - type: array
+            example:
+              section: home
+              content:
+                hero_title: Ruang Kreatif Banyumas
+                hero_subtitle: Wadah kolaborasi artisan dan kolaborator lokal
+      responses:
+        '200':
+          description: Saved
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Envelope'
+              example:
+                status: success
+                message: Company profile berhasil disimpan
+                data: null
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '422':
+          $ref: '#/components/responses/UnprocessableEntity'
+
+  # ── Zones ─────────────────────────────────────────────────────────────────────
+
+  /api/zones:
+    get:
+      operationId: listZonesGlobal
+      tags: [zones]
+      summary: List global venue zone layout (admin only)
+      description: Returns zone layout without per-event occupied state.
+      responses:
+        '200':
+          description: Zone list
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: '#/components/schemas/Envelope'
+                  - type: object
+                    properties:
+                      data:
+                        type: array
+                        items:
+                          $ref: '#/components/schemas/ZoneGlobalLayout'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+    put:
+      operationId: saveZonesGlobal
+      tags: [zones]
+      summary: Replace global venue zone layout (admin only)
+      description: Replaces entire layout. Backend validates no occupied stand is removed.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [zones]
+              properties:
+                zones:
+                  type: array
+                  items:
+                    $ref: '#/components/schemas/ZoneGlobalLayout'
+      responses:
+        '200':
+          description: Layout saved
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Envelope'
+              example:
+                status: success
+                message: Layout zona berhasil disimpan
+                data: null
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '422':
+          $ref: '#/components/responses/UnprocessableEntity'
+
+  /api/events/{id}/zones:
+    get:
+      operationId: listEventZones
+      tags: [zones]
+      summary: List zone layout with per-event occupied state (admin + artisan)
+      parameters:
+        - $ref: '#/components/parameters/IdPath'
+      responses:
+        '200':
+          description: Zone layout with occupied state
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: '#/components/schemas/Envelope'
+                  - type: object
+                    properties:
+                      data:
+                        type: array
+                        items:
+                          $ref: '#/components/schemas/ZoneEventOccupancy'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '404':
+          $ref: '#/components/responses/NotFound'
+
+  /api/events/{id}/artisan/{aid}/stand:
+    post:
+      operationId: assignStand
+      tags: [zones]
+      summary: Assign a stand to artisan in event (admin only)
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+          description: Event ID
+        - name: aid
+          in: path
+          required: true
+          schema:
+            type: string
+          description: Artisan ID
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [stand_id]
+              properties:
+                stand_id:
+                  type: string
+                  description: Stand ID (e.g. 'A-3')
+                  example: A-3
+            example:
+              stand_id: A-3
+      responses:
+        '200':
+          description: Stand assigned
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Envelope'
+              example:
+                status: success
+                message: Stand A-3 berhasil ditetapkan
+                data: null
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '409':
+          $ref: '#/components/responses/Conflict'
+
+  # ── Notifikasi (Shared) ─────────────────────────────────────────────────────
+
+  /api/notifikasi:
+    get:
+      operationId: listNotifikasi
+      tags: [notifikasi]
+      summary: List admin notification inbox (sorted DESC by created_at)
+      responses:
+        '200':
+          description: Notification list
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: '#/components/schemas/Envelope'
+                  - type: object
+                    properties:
+                      data:
+                        type: array
+                        items:
+                          $ref: '#/components/schemas/Notifikasi'
+              example:
+                status: success
+                message: null
+                data:
+                  - id: notif-0001
+                    type: artisan_request
+                    title: Permintaan Artisan Baru
+                    message: Batik Budi ingin bergabung di event Peken #7
+                    read: false
+                    link: /events/evt-0001/artisan-requests
+                    detail: null
+                    created_at: '2026-04-29T10:00:00.000Z'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+
+  /api/notifikasi/{id}/baca:
+    patch:
+      operationId: bacaNotifikasi
+      tags: [notifikasi]
+      summary: Mark notification as read
+      parameters:
+        - $ref: '#/components/parameters/IdPath'
+      responses:
+        '200':
+          description: Marked as read
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Envelope'
+              example:
+                status: success
+                message: Notifikasi ditandai sudah dibaca
+                data:
+                  id: notif-0001
+                  read: true
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '404':
+          $ref: '#/components/responses/NotFound'
+
+  /api/notifikasi/baca-semua:
+    patch:
+      operationId: bacaSemuaNotifikasi
+      tags: [notifikasi]
+      summary: Mark all notifications as read
+      responses:
+        '200':
+          description: All marked as read
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Envelope'
+              example:
+                status: success
+                message: Semua notifikasi ditandai sudah dibaca
+                data:
+                  count: 8
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+
+components:
+  securitySchemes:
+    bearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
+      description: |
+        Supabase JWT (RS256). Issued by `supabase.auth.signInWithPassword()` on the frontend.
+        Backend verifies using `SUPABASE_JWT_SECRET`.
+        Role must be 'admin' OR 'petugas' in `app_metadata.role`.
+        Endpoints marked "admin only" additionally reject role 'petugas' with 403.
+
+  parameters:
+    IdPath:
+      name: id
+      in: path
+      required: true
+      schema:
+        type: string
+      description: Resource UUID or prefixed short ID
+      example: evt-0001
+
+  responses:
+    Unauthorized:
+      description: Missing, invalid, or expired Supabase JWT
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/ErrorEnvelope'
+          example:
+            status: error
+            message: Sesi Anda telah berakhir
+            data: null
+    Forbidden:
+      description: Authenticated but role insufficient (e.g. petugas accessing admin-only endpoint)
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/ErrorEnvelope'
+          example:
+            status: error
+            message: Akses ditolak
+            data: null
+    NotFound:
+      description: Resource not found
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/ErrorEnvelope'
+          example:
+            status: error
+            message: Sumber daya tidak ditemukan
+            data: null
+    Conflict:
+      description: Conflict (e.g. stand already occupied)
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/ErrorEnvelope'
+          example:
+            status: error
+            message: Stand sudah ditempati artisan lain
+            data: null
+    BadRequest:
+      description: Bad request — missing required parameter
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/ErrorEnvelope'
+    UnprocessableEntity:
+      description: Validation error
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/ErrorEnvelope'
+          example:
+            status: error
+            message: Validasi gagal
+            data: null
+            errors:
+              status: [nilai tidak valid]
+
+  schemas:
+    Envelope:
+      type: object
+      required: [status, data]
+      properties:
+        status:
+          type: string
+          enum: [success]
+        message:
+          type: string
+          nullable: true
+        data:
+          description: Actual payload — shape varies per endpoint
+
+    ErrorEnvelope:
+      type: object
+      required: [status, message, data]
+      properties:
+        status:
+          type: string
+          enum: [error]
+        message:
+          type: string
+        data:
+          type: object
+          nullable: true
+        errors:
+          type: object
+          additionalProperties:
+            type: array
+            items:
+              type: string
+
+    Stats:
+      type: object
+      required: [di_dalam, total_masuk, total_keluar, total_harian]
+      properties:
+        di_dalam:
+          type: integer
+          description: Currently inside venue
+          example: 127
+        total_masuk:
+          type: integer
+          description: Total entries today
+          example: 450
+        total_keluar:
+          type: integer
+          description: Total exits today
+          example: 323
+        total_harian:
+          type: integer
+          description: Unique visitors today
+          example: 450
+        event_id:
+          type: string
+          nullable: true
+          description: Active event ID (null if no active event)
+          example: evt-0001
+        nama_event:
+          type: string
+          nullable: true
+          description: Active event name
+          example: Peken Banyumas #7
+
+    Visitor:
+      type: object
+      required: [id, nama, waktu_masuk, status]
+      properties:
+        id:
+          type: string
+          example: vis-0001
+        nama:
+          type: string
+          description: Visitor name (from NFC/manual entry)
+          example: Dewi Lestari
+        waktu_masuk:
+          type: string
+          format: date-time
+          description: UTC ISO 8601
+          example: '2026-04-28T02:30:00.000Z'
+        waktu_keluar:
+          type: string
+          format: date-time
+          nullable: true
+          description: UTC ISO 8601 (null if still inside)
+          example: null
+        status:
+          type: string
+          enum: [di_dalam, keluar]
+          example: di_dalam
+
+    ArtisanReportRow:
+      type: object
+      required: [id, nama_usaha, kategori, omset, komisi_persen, transaksi]
+      properties:
+        id:
+          type: string
+          example: art-0001
+        nama_usaha:
+          type: string
+          example: Batik Budi
+        kategori:
+          type: string
+          description: Display string (joined kategori_usaha, e.g. 'Kriya, Fashion')
+          example: F&B / Kuliner, Kriya
+        omset:
+          type: number
+          description: Total revenue (rupiah)
+          example: 5400000
+        komisi_persen:
+          type: number
+          example: 10
+        transaksi:
+          type: integer
+          description: Total transaction count
+          example: 36
+        event_count:
+          type: integer
+          description: Total events participated
+          example: 3
+        stand_terakhir:
+          type: string
+          nullable: true
+          description: Last assigned stand ID
+          example: A-3
+
+    EventAccumRow:
+      type: object
+      required: [id, nama, tanggal, status, pengunjung, artisan_count, kolaborator_count]
+      properties:
+        id:
+          type: string
+          example: evt-0001
+        nama:
+          type: string
+          example: Peken Banyumas #7
+        tanggal:
+          type: string
+          format: date
+          description: WIB local date YYYY-MM-DD
+          example: '2026-05-10'
+        status:
+          type: string
+          enum: [draft, published, berlangsung, selesai]
+          description: |
+            Event status from events.status (canonical DB enum).
+            FE may derive display label "Mendatang" client-side from
+            (status='published' AND tanggal > today).
+            This derived label is NEVER stored or returned by the API.
+          example: selesai
+        pengunjung:
+          type: integer
+          description: Total visitors for this event
+          example: 4500
+        artisan_count:
+          type: integer
+          example: 42
+        kolaborator_count:
+          type: integer
+          example: 15
+        omset_artisan:
+          type: number
+          description: Combined artisan revenue (rupiah)
+          example: 75000000
+        komisi:
+          type: number
+          description: Commission collected (rupiah)
+          example: 7500000
+
+    Event:
+      type: object
+      required: [id, nama, tanggal, tanggal_selesai, jam_mulai, jam_selesai, lokasi, status, deskripsi, subsektor]
+      properties:
+        id:
+          type: string
+          example: evt-0001
+        nama:
+          type: string
+          description: Event name/title
+          example: Peken Banyumas #7
+        tanggal:
+          type: string
+          format: date
+          description: Start date (WIB local YYYY-MM-DD)
+          example: '2026-05-10'
+        tanggal_selesai:
+          type: string
+          format: date
+          description: End date (WIB local YYYY-MM-DD)
+          example: '2026-05-12'
+        jam_mulai:
+          type: string
+          description: WIB 24-hour HH:MM
+          example: '09:00'
+        jam_selesai:
+          type: string
+          description: WIB 24-hour HH:MM
+          example: '21:00'
+        lokasi:
+          type: string
+          description: Venue/location name
+          example: Alun-alun Purwokerto
+        status:
+          type: string
+          enum: [draft, published, berlangsung, selesai]
+          example: published
+        kapasitas:
+          type: integer
+          nullable: true
+          description: Maximum visitor capacity
+          example: 5000
+        peserta_count:
+          type: integer
+          description: Computed participant count
+          example: 42
+        deskripsi:
+          type: string
+          description: Short event description
+          example: Pameran kreatif terbesar di Banyumas
+        konten_lengkap:
+          type: string
+          nullable: true
+          description: Long-form event content (HTML or markdown)
+        subsektor:
+          type: array
+          items:
+            type: string
+          description: BEKRAF subsektor categories (NOT kategori_usaha)
+          example: [Kriya, Fashion, Kuliner]
+        banner_url:
+          type: string
+          nullable: true
+          description: Event banner image URL
+          example: https://storage.example.com/events/evt-0001-banner.jpg
+        galeri:
+          type: array
+          items:
+            type: string
+          description: Array of gallery image URLs
+
+    CreateEventBody:
+      type: object
+      required: [nama, tanggal, tanggal_selesai, jam_mulai, jam_selesai, lokasi, status, deskripsi, subsektor]
+      properties:
+        nama:
+          type: string
+          example: Peken Banyumas #8
+        tanggal:
+          type: string
+          format: date
+          example: '2026-07-15'
+        tanggal_selesai:
+          type: string
+          format: date
+          example: '2026-07-17'
+        jam_mulai:
+          type: string
+          example: '09:00'
+        jam_selesai:
+          type: string
+          example: '21:00'
+        lokasi:
+          type: string
+          example: GOR Satria Purwokerto
+        status:
+          type: string
+          enum: [draft, published, berlangsung, selesai]
+          default: draft
+          example: draft
+        kapasitas:
+          type: integer
+          example: 3000
+        deskripsi:
+          type: string
+          example: Edisi kedelapan Peken Banyumas
+        konten_lengkap:
+          type: string
+          nullable: true
+          example: null
+        subsektor:
+          type: array
+          items:
+            type: string
+          example: [Kriya, Fashion]
+        banner_url:
+          type: string
+          nullable: true
+          example: null
+        galeri:
+          type: array
+          items:
+            type: string
+          default: []
+
+    EventKolaborator:
+      type: object
+      description: |
+        Approved kolaborator participation row.
+        Fields nama and subsektor are JOINed from kolaborators table
+        (NOT stored in event_kolaborators junction table).
+      required: [id, nama, subsektor, peran, status_kehadiran, assigned_by]
+      properties:
+        id:
+          type: string
+          example: evkol-0001
+        event_id:
+          type: string
+          description: Present when listing by kolaborator
+          example: evt-0001
+        kolaborator_id:
+          type: string
+          description: Present when listing by event
+          example: kol-0001
+        nama:
+          type: string
+          example: Sari Wulandari
+        subsektor:
+          type: array
+          items:
+            type: string
+          description: BEKRAF subsektor
+          example: [Kriya, Fashion]
+        peran:
+          type: string
+          enum: [performer, panitia, peserta]
+          example: performer
+        status_kehadiran:
+          type: string
+          enum: [terdaftar, hadir, tidak_hadir, dibatalkan]
+          example: terdaftar
+        assigned_by:
+          type: string
+          enum: [admin, self]
+          example: admin
+        tanggal:
+          type: string
+          format: date
+          description: Present when listing by kolaborator
+          example: '2026-05-10'
+        jam_mulai:
+          type: string
+          description: Present when listing by kolaborator
+          example: '09:00'
+        jam_selesai:
+          type: string
+          description: Present when listing by kolaborator
+          example: '21:00'
+
+    EventArtisan:
+      type: object
+      description: |
+        Approved artisan participation row.
+        Fields nama_usaha and kategori_usaha are JOINed from artisans table
+        (NOT stored in event_artisans junction table).
+      required: [id, nama_usaha, kategori_usaha, status_request, assigned_by]
+      properties:
+        id:
+          type: string
+          example: evart-0001
+        event_id:
+          type: string
+          example: evt-0001
+        artisan_id:
+          type: string
+          example: art-0001
+        nama_usaha:
+          type: string
+          example: Batik Budi
+        kategori_usaha:
+          type: array
+          items:
+            type: string
+          description: UMKM 9 options (mirrored from Artisan)
+          example: ['F&B / Kuliner', 'Kriya']
+        stand_id:
+          type: string
+          nullable: true
+          description: Assigned stand (e.g. 'A-3')
+          example: A-3
+        posisi_event:
+          type: string
+          nullable: true
+          description: Position/role within the event
+          example: Stand A-3
+        status_request:
+          type: string
+          enum: [pending, pending_change, approved, rejected]
+          example: approved
+        assigned_by:
+          type: string
+          enum: [admin, self]
+          example: admin
+
+    ArtisanRequest:
+      type: object
+      description: |
+        Artisan self-join request (admin moderation queue).
+        Fields nama_usaha, kategori_usaha JOINed from artisans.
+        posisi_event = initial requested stand; change_request = requested new stand for pending_change.
+      required: [id, artisan_id, nama_usaha, kategori_usaha, status_request, assigned_by, created_at]
+      properties:
+        id:
+          type: string
+          example: areq-0001
+        artisan_id:
+          type: string
+          example: art-0005
+        nama_usaha:
+          type: string
+          example: Tenun Serayu
+        kategori_usaha:
+          type: array
+          items:
+            type: string
+          example: [Kriya]
+        posisi_event:
+          type: string
+          nullable: true
+          description: Requested position
+          example: null
+        status_request:
+          type: string
+          enum: [pending, pending_change, approved, rejected]
+          example: pending
+        assigned_by:
+          type: string
+          enum: [self]
+          example: self
+        change_request:
+          type: string
+          nullable: true
+          description: New stand_id requested when status='pending_change'
+          example: null
+        created_at:
+          type: string
+          format: date-time
+          description: UTC ISO 8601
+          example: '2026-04-28T10:00:00.000Z'
+
+    KolaboratorRequest:
+      type: object
+      required: [id, kolaborator_id, nama, peran, status, created_at]
+      properties:
+        id:
+          type: string
+          example: kreq-0001
+        kolaborator_id:
+          type: string
+          example: kol-0003
+        nama:
+          type: string
+          example: Rina Kusuma
+        subsektor:
+          type: array
+          items:
+            type: string
+          description: BEKRAF subsektor
+          example: [Musik, Film]
+        peran:
+          type: string
+          enum: [peserta, performer, panitia]
+          example: performer
+        status:
+          type: string
+          enum: [pending, approved, rejected]
+          example: pending
+        created_at:
+          type: string
+          format: date-time
+          description: UTC ISO 8601
+          example: '2026-04-28T10:00:00.000Z'
+
+    Kolaborator:
+      type: object
+      required: [id, slug, nama, email, kota, bio, subsektor, status, tanggal_daftar]
+      properties:
+        id:
+          type: string
+          example: kol-0001
+        slug:
+          type: string
+          description: URL-safe slug from nama
+          example: sari-wulandari
+        nama:
+          type: string
+          example: Sari Wulandari
+        email:
+          type: string
+          format: email
+          example: sari@example.com
+        kota:
+          type: string
+          example: Purwokerto
+        bio:
+          type: string
+          example: Desainer tekstil dengan 7 tahun pengalaman
+        foto_url:
+          type: string
+          nullable: true
+          example: https://storage.example.com/foto/kol-0001.jpg
+        cover_url:
+          type: string
+          nullable: true
+          example: null
+        subsektor:
+          type: array
+          items:
+            type: string
+          description: BEKRAF 17 subsectors (NOT kategori_usaha)
+          example: [Kriya, Fashion]
+        status:
+          type: string
+          enum: [aktif, pending, suspended, rejected]
+          example: aktif
+        tanggal_daftar:
+          type: string
+          format: date
+          description: WIB local date YYYY-MM-DD
+          example: '2026-01-15'
+        total_karya:
+          type: integer
+          description: Computed by DB trigger
+          example: 5
+        total_story:
+          type: integer
+          description: Computed by DB trigger
+          example: 3
+        total_event:
+          type: integer
+          description: Computed by DB trigger
+          example: 2
+        no_hp:
+          type: string
+          description: |
+            **Admin-only** contact phone — admin-collected via Gate Kolaborator edit drawer.
+            NEVER returned by /api/public/profiles/{slug} or /api/kolaborator/me.
+            Asymmetric by design: only present in gate yaml, not colab yaml.
+          example: '08111122331'
+        internal_notes:
+          type: string
+          description: |
+            **Admin-only** free-text metadata — admin-collected via Gate Kolaborator edit drawer.
+            NEVER returned by /api/public/profiles/{slug} or /api/kolaborator/me.
+          example: Verified via WhatsApp 2026-04-12.
+
+    Petugas:
+      type: object
+      required: [id, nama, email, status, created_at]
+      properties:
+        id:
+          type: string
+          format: uuid
+          description: auth.users.id
+          example: a1b2c3d4-e5f6-7890-abcd-ef1234567890
+        nama:
+          type: string
+          description: users_profile.nama
+          example: Budi Santoso
+        jabatan:
+          type: string
+          nullable: true
+          description: users_profile.jabatan
+          example: Petugas Pengunjung
+        email:
+          type: string
+          format: email
+          description: auth.users.email
+          example: budi@pekenbanyumasan.id
+        status:
+          type: string
+          enum: [aktif, disabled]
+          description: Derived from auth.users.banned_until — disabled if banned_until is set and in the future.
+          example: aktif
+        created_at:
+          type: string
+          format: date-time
+          description: UTC ISO 8601 — auth.users.created_at
+          example: '2026-01-15T08:00:00.000Z'
+        last_sign_in_at:
+          type: string
+          format: date-time
+          nullable: true
+          description: UTC ISO 8601 — auth.users.last_sign_in_at
+          example: '2026-05-01T10:30:00.000Z'
+
+    Artisan:
+      type: object
+      required: [id, slug, username, nama_usaha, pemilik, email, no_hp, kota, kategori_usaha, status, tanggal_daftar, komisi_persen]
+      properties:
+        id:
+          type: string
+          example: art-0001
+        slug:
+          type: string
+          description: URL-safe slug from nama_usaha
+          example: batik-budi
+        username:
+          type: string
+          pattern: '^[a-z0-9][a-z0-9-]{1,30}[a-z0-9]$'
+          description: User-chosen handle for public profile URL (e.g. /profile/{username}).
+          example: batik-budi
+        nama_usaha:
+          type: string
+          description: Business/store name
+          example: Batik Budi
+        pemilik:
+          type: string
+          description: Owner/proprietor name
+          example: Budi Santoso
+        email:
+          type: string
+          format: email
+          example: budi@example.com
+        no_hp:
+          type: string
+          example: '081234567890'
+        kota:
+          type: string
+          example: Purwokerto
+        deskripsi:
+          type: string
+          example: Produsen batik lokal Banyumas
+        foto_url:
+          type: string
+          nullable: true
+          example: https://storage.example.com/foto/art-0001.jpg
+        cover_url:
+          type: string
+          nullable: true
+          example: null
+        qris_url:
+          type: string
+          nullable: true
+          description: QRIS payment image URL
+          example: https://storage.example.com/qris/art-0001.png
+        qris_updated_at:
+          type: string
+          format: date-time
+          nullable: true
+          description: |
+            Set automatically by trg_artisans_qris_ts when qris_url changes.
+            UTC ISO 8601. Read-only — backend should not accept in PATCH body.
+          example: '2026-04-01T08:00:00.000Z'
+        kategori_usaha:
+          type: array
+          items:
+            type: string
+          description: UMKM 9 options (NOT 'subsektor')
+          example: ['F&B / Kuliner', 'Kriya']
+        status:
+          type: string
+          enum: [aktif, pending, suspended, rejected]
+          example: aktif
+        tanggal_daftar:
+          type: string
+          format: date
+          description: WIB local date YYYY-MM-DD
+          example: '2026-01-15'
+        komisi_persen:
+          type: number
+          description: Commission percentage set by admin
+          example: 10
+        total_penjualan:
+          type: number
+          description: Computed running total (rupiah)
+          example: 5400000
+        komisi_terkumpul:
+          type: number
+          description: Computed commission (rupiah)
+          example: 540000
+        internal_notes:
+          type: string
+          description: |
+            **Admin-only** free-text metadata. NEVER returned by /api/public/profiles/{slug} or /api/artisan/me.
+          example: Awaiting QRIS verification.
+
+    Karya:
+      type: object
+      required: [id, judul, subsektor, deskripsi, tahun, featured, owner_type, owner_id]
+      properties:
+        id:
+          type: string
+          example: kar-0001
+        judul:
+          type: string
+          description: Portfolio item title
+          example: Batik Geometrik Banyumas
+        subsektor:
+          type: string
+          description: SINGULAR string (NOT array). BEKRAF subsektor.
+          example: Kriya
+        deskripsi:
+          type: string
+          example: Motif batik kontemporer terinspirasi arsitektur lokal
+        tahun:
+          type: integer
+          description: Year of creation
+          example: 2024
+        gambar_url:
+          type: string
+          nullable: true
+          description: Image URL (always _url suffix)
+          example: https://storage.example.com/karya/kar-0001.jpg
+        featured:
+          type: boolean
+          description: Admin-toggled featured flag. NOT 'is_featured'.
+          example: true
+        owner_type:
+          type: string
+          enum: [artisan, kolaborator]
+          description: Polymorphic owner type — points to artisans.id OR kolaborators.id.
+          example: kolaborator
+        owner_id:
+          type: string
+          description: UUID of owning artisan or kolaborator (resolves via owner_type).
+          example: kol-0001
+        owner:
+          type: string
+          description: Display name of owner (joined from artisans.nama_usaha or kolaborators.nama). Backend computes on read.
+          example: Sari Wulandari
+        owner_slug:
+          type: string
+          description: Slug of owner for navigation to /profile/{slug} (joined from artisans.slug or kolaborators.slug).
+          example: sari-wulandari
+        created_at:
+          type: string
+          format: date-time
+          description: UTC ISO 8601, set on INSERT
+          example: '2026-04-01T08:00:00.000Z'
+        updated_at:
+          type: string
+          format: date-time
+          description: UTC ISO 8601, auto-set by set_updated_at trigger on UPDATE
+          example: '2026-04-15T10:30:00.000Z'
+
+    Story:
+      type: object
+      required: [id, konten, tags, like_count, status, created_at]
+      properties:
+        id:
+          type: string
+          example: sto-0001
+        konten:
+          type: string
+          description: Story text content
+          example: Mengikuti pameran di Jakarta minggu lalu
+        media_url:
+          type: string
+          nullable: true
+          description: Optional attached media URL
+          example: null
+        tags:
+          type: array
+          items:
+            type: string
+          description: Free-form tags
+          example: [pameran, kriya]
+        like_count:
+          type: integer
+          description: Number of likes (computed)
+          example: 12
+        status:
+          type: string
+          enum: [aktif, dihapus, disembunyikan]
+          example: aktif
+        created_at:
+          type: string
+          format: date-time
+          description: UTC ISO 8601
+          example: '2026-04-01T08:00:00.000Z'
+
+    ZoneGlobalLayout:
+      type: object
+      description: |
+        Static venue layout (used by GET/PUT /api/zones).
+        Reflects DB zones table: stands array stores {id, label, kategori} only.
+      required: [zona, label, warna, stands]
+      properties:
+        zona:
+          type: string
+          example: A
+        label:
+          type: string
+          example: Zona A – Kriya & Fashion
+        warna:
+          type: string
+          example: '#8B5E3C'
+        urutan:
+          type: integer
+          description: Display order
+          example: 1
+        stands:
+          type: array
+          items:
+            type: object
+            required: [id, label, kategori]
+            properties:
+              id:
+                type: string
+                example: A-1
+              label:
+                type: string
+                example: Stand A-1
+              kategori:
+                type: string
+                example: Kriya
+
+    ZoneEventOccupancy:
+      type: object
+      description: |
+        Per-event zone occupancy (used by GET /api/events/{id}/zones).
+        Backend joins zones with event_artisans WHERE status_request='approved'
+        OR pending (for orange overlay in FE ZoneSelector).
+      required: [zona, label, warna, stands]
+      properties:
+        zona:
+          type: string
+          example: A
+        label:
+          type: string
+          example: Zona A – Kriya & Fashion
+        warna:
+          type: string
+          example: '#8B5E3C'
+        stands:
+          type: array
+          items:
+            type: object
+            required: [id, occupied]
+            properties:
+              id:
+                type: string
+                example: A-1
+              label:
+                type: string
+              kategori:
+                type: string
+              occupied:
+                type: boolean
+                description: True if stand has approved or pending artisan
+              artisan_id:
+                type: string
+                description: Present when occupied
+              nama_usaha:
+                type: string
+                description: Present when occupied
+              status_request:
+                type: string
+                enum: [approved, pending, pending_change]
+                description: For UI pending overlay (orange in ZoneSelector)
+
+    Kas:
+      type: object
+      required: [id, jenis, kategori, metode, nominal, tgl]
+      description: Read-only view of artisan cash flow (admin sees, cannot edit)
+      properties:
+        id:
+          type: string
+          example: kas-0001
+        jenis:
+          type: string
+          enum: [masuk, keluar]
+          description: Cash flow direction
+          example: masuk
+        kategori:
+          type: string
+          description: Transaction category
+          example: Penjualan
+        pelanggan:
+          type: string
+          nullable: true
+          example: Ibu Sari
+        barang:
+          type: string
+          nullable: true
+          example: Kain Batik Cap
+        qty:
+          type: number
+          example: 2
+        metode:
+          type: string
+          enum: [tunai, qris]
+          description: Payment method — strict whitelist per DB CHECK
+          example: qris
+        ket:
+          type: string
+          description: Notes/remarks
+          example: Pesanan reguler
+        nominal:
+          type: number
+          description: Amount in rupiah
+          example: 300000
+        tgl:
+          type: string
+          format: date
+          description: WIB local date YYYY-MM-DD
+          example: '2026-04-28'
+        saldo_after:
+          type: number
+          description: Computed running balance (rupiah)
+          example: 1500000
+        bukti_url:
+          type: string
+          nullable: true
+          example: null
+        created_at:
+          type: string
+          format: date-time
+          description: UTC ISO 8601, set on INSERT
+          example: '2026-04-01T08:00:00.000Z'
+        updated_at:
+          type: string
+          format: date-time
+          description: UTC ISO 8601, auto-set by set_updated_at trigger on UPDATE
+          example: '2026-04-15T10:30:00.000Z'
+
+    Riwayat:
+      type: object
+      required: [id, pelanggan, barang, qty, total, metode, tgl]
+      description: Read-only view of artisan sales history
+      properties:
+        id:
+          type: string
+          example: rwy-0001
+        pelanggan:
+          type: string
+          description: Customer name
+          example: Ibu Sari
+        barang:
+          type: string
+          description: Product sold
+          example: Kain Batik Cap
+        qty:
+          type: number
+          example: 2
+        total:
+          type: number
+          description: Total amount in rupiah
+          example: 300000
+        metode:
+          type: string
+          enum: [tunai, qris]
+          description: Payment method — strict whitelist per DB CHECK
+          example: qris
+        tgl:
+          type: string
+          format: date
+          description: WIB local date YYYY-MM-DD
+          example: '2026-04-28'
+
+    Stok:
+      type: object
+      required: [id, nama, harga, stok, kategori, satuan, stok_min]
+      description: Read-only view of artisan stock
+      properties:
+        id:
+          type: string
+          example: stok-0001
+        nama:
+          type: string
+          description: Product name
+          example: Kain Batik Cap
+        harga:
+          type: number
+          description: Price in rupiah
+          example: 150000
+        stok:
+          type: integer
+          description: Current stock quantity
+          example: 25
+        kategori:
+          type: string
+          example: Kain
+        satuan:
+          type: string
+          description: Unit (e.g. lembar, meter)
+          example: lembar
+        deskripsi:
+          type: string
+          example: Batik cap motif Banyumas
+        stok_min:
+          type: integer
+          description: Alert threshold
+          example: 5
+        created_at:
+          type: string
+          format: date-time
+          description: UTC ISO 8601, set on INSERT
+          example: '2026-04-01T08:00:00.000Z'
+        updated_at:
+          type: string
+          format: date-time
+          description: UTC ISO 8601, auto-set by set_updated_at trigger on UPDATE
+          example: '2026-04-15T10:30:00.000Z'
+
+    Promo:
+      type: object
+      required: [id, nama, produk, diskon, kategori, berlaku_start, berlaku_end, aktif]
+      description: Read-only view of artisan promotions
+      properties:
+        id:
+          type: string
+          example: prm-0001
+        nama:
+          type: string
+          description: Promotion name
+          example: Diskon Lebaran
+        produk:
+          type: string
+          description: Product the promo applies to
+          example: Kain Batik Cap
+        diskon:
+          type: number
+          description: Discount percentage (0-100)
+          example: 15
+        kategori:
+          type: string
+          example: Seasonal
+        deskripsi:
+          type: string
+          example: Diskon spesial menyambut Lebaran
+        berlaku_start:
+          type: string
+          format: date
+          description: Start date (WIB local YYYY-MM-DD)
+          example: '2026-03-20'
+        berlaku_end:
+          type: string
+          format: date
+          description: End date (WIB local YYYY-MM-DD)
+          example: '2026-04-10'
+        aktif:
+          type: boolean
+          example: true
+        created_at:
+          type: string
+          format: date-time
+          description: UTC ISO 8601, set on INSERT
+          example: '2026-04-01T08:00:00.000Z'
+        updated_at:
+          type: string
+          format: date-time
+          description: UTC ISO 8601, auto-set by set_updated_at trigger on UPDATE
+          example: '2026-04-15T10:30:00.000Z'
+
+    Notifikasi:
+      type: object
+      required: [id, type, title, message, read, created_at]
+      properties:
+        id:
+          type: string
+          example: notif-0001
+        type:
+          type: string
+          description: |
+            Admin type taxonomy:
+            artisan_request, kolaborator_approved, event_published, aktivitas_flagged, system.
+            Safe to add new types without FE changes.
+          example: artisan_request
+        title:
+          type: string
+          description: Notification title
+          example: Permintaan Artisan Baru
+        message:
+          type: string
+          description: Notification body text
+          example: Tenun Serayu mengajukan permintaan bergabung ke Peken Banyumas #7.
+        read:
+          type: boolean
+          description: Read flag. NOT 'dibaca'.
+          example: false
+        link:
+          type: string
+          nullable: true
+          description: Optional deep-link path
+          example: /events/evt-0001
+        detail:
+          type: object
+          nullable: true
+          description: Arbitrary metadata (type-specific)
+          example: null
+        created_at:
+          type: string
+          format: date-time
+          description: UTC ISO 8601
+          example: '2026-04-28T10:00:00.000Z'
