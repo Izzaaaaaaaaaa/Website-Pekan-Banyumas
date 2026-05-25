@@ -241,7 +241,9 @@ export default function EventDetail() {
 
   const refreshZones = (updatedartisanss, updatedRequests) => {
     try {
-      let z = syncOccupiedFromArtisans(id, updatedartisanss.map(t => ({ posisi_event: t.posisi_event })));
+      // event_artisans table uses stand_id; map to posisi_event for syncOccupiedFromArtisans
+      const mapped = (updatedartisanss || []).map(t => ({ posisi_event: t.posisi_event ?? t.stand_id ?? null }));
+      let z = syncOccupiedFromArtisans(id, mapped);
       if (updatedRequests) z = syncPendingFromRequests(id, updatedRequests);
       setZones(z);
     } catch {}
@@ -286,7 +288,9 @@ export default function EventDetail() {
         setartisansRequests(reqs || []);
         setKolaboratorRequests(kReqs || []);
         try {
-          let z = syncOccupiedFromArtisans(id, (arts || []).map(t => ({ posisi_event: t.posisi_event })));
+          // event_artisans table uses stand_id; map to posisi_event for syncOccupiedFromArtisans
+          const mapped = (arts || []).map(t => ({ posisi_event: t.posisi_event ?? t.stand_id ?? null }));
+          let z = syncOccupiedFromArtisans(id, mapped);
           z = syncPendingFromRequests(id, reqs || []);
           setZones(z);
         } catch {

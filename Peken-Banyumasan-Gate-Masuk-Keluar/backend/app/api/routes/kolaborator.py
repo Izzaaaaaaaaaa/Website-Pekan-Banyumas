@@ -87,3 +87,47 @@ def get_stories(id: str, user=Depends(get_current_user)):
         return success_response(stories)
     except Exception as e:
         raise HTTPException(500, detail=error_response(str(e), 500))
+
+
+@router.get("/{id}/portofolio", response_model=dict)
+def get_portofolio(id: str, user=Depends(get_current_user)):
+    """Get kolaborator's portofolio."""
+    try:
+        portofolio = kolaborator_service.get_kolaborator_portofolio(id)
+        return success_response(portofolio)
+    except Exception as e:
+        raise HTTPException(500, detail=error_response(str(e), 500))
+
+
+@router.patch("/{id}/portofolio/{pid}", response_model=dict)
+def feature_portofolio(
+    id: str,
+    pid: str,
+    data: dict,
+    user=Depends(get_admin_only)
+):
+    """Toggle featured status of portofolio (admin only)."""
+    try:
+        featured = data.get("featured", False)
+        result = kolaborator_service.feature_kolaborator_portofolio(id, pid, featured)
+        return success_response(result, message="Status featured berhasil diupdate")
+    except HTTPException as e:
+        raise
+    except Exception as e:
+        raise HTTPException(500, detail=error_response(str(e), 500))
+
+
+@router.delete("/{id}/portofolio/{pid}", response_model=dict)
+def delete_portofolio(
+    id: str,
+    pid: str,
+    user=Depends(get_admin_only)
+):
+    """Delete a portofolio (admin only)."""
+    try:
+        kolaborator_service.delete_kolaborator_portofolio(id, pid)
+        return success_response(None, message="Karya berhasil dihapus")
+    except HTTPException as e:
+        raise
+    except Exception as e:
+        raise HTTPException(500, detail=error_response(str(e), 500))

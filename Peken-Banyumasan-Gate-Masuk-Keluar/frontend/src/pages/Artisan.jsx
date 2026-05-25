@@ -9,7 +9,7 @@ import {
 } from 'lucide-react';
 import { useToast } from '../components/Toast';
 import ZoneSelector from '../components/ZoneSelector';
-import { getEventZones } from '../lib/eventZones';
+import { getEventZones, syncOccupiedFromArtisans } from '../lib/eventZones';
 import { STORAGE_KEYS, STORAGE_EVENTS } from '../lib/storageKeys';
 import { artisanApi, eventApi } from '../services/endpoints';
 import { extractError } from '../lib/unwrap';
@@ -22,7 +22,19 @@ function useDebounce(v,d=300){const[r,s]=useState(v);useEffect(()=>{const t=setT
 // ── PosisiSelectModal ─────────────────────────────────────────────────────────
 function PosisiSelectModal({ value, onClose, onChange, eventId }) {
   const [local, setLocal] = useState(value || '');
-  const zones = eventId ? getEventZones(eventId) : [];
+  const [zones, setZones] = useState(eventId ? getEventZones(eventId) : []);
+
+  useEffect(() => {
+    if (eventId) {
+      eventApi.artisans(eventId).then(list => {
+        // API returns stand_id from event_artisans table; map to posisi_event
+        const mapped = (list || []).map(t => ({
+          posisi_event: t.posisi_event ?? t.stand_id ?? null,
+        }));
+        setZones(syncOccupiedFromArtisans(eventId, mapped));
+      }).catch(console.error);
+    }
+  }, [eventId]);
   return (
     <div className="fixed inset-0 bg-black/50 z-[70] flex items-center justify-center p-4" onClick={onClose}>
       <div className="bg-white rounded-[16px] shadow-2xl w-full max-w-sm" onClick={e => e.stopPropagation()}>
@@ -73,7 +85,23 @@ function AssignEventModal({ artisanId, existingIds, onClose, onAssign, allEvents
   const [selected, setSelected] = useState(null);
   const [posisi, setPosisi] = useState('');
   const [saving, setSaving] = useState(false);
+  const [zones, setZones] = useState([]);
   const available = (allEvents || []).filter(e => !existingIds.includes(e.id));
+
+  useEffect(() => {
+    if (selected) {
+      setZones(getEventZones(selected.id));
+      eventApi.artisans(selected.id).then(list => {
+        // API returns stand_id from event_artisans table; map to posisi_event
+        const mapped = (list || []).map(t => ({
+          posisi_event: t.posisi_event ?? t.stand_id ?? null,
+        }));
+        setZones(syncOccupiedFromArtisans(selected.id, mapped));
+      }).catch(console.error);
+    } else {
+      setZones([]);
+    }
+  }, [selected]);
 
   const save = async () => {
     if (!selected) return;
@@ -106,7 +134,7 @@ function AssignEventModal({ artisanId, existingIds, onClose, onAssign, allEvents
           </div>
           <div>
             <label className="text-xs font-semibold text-[#8a9070] mb-2 block">Posisi Stand di Event</label>
-            <ZoneSelector value={posisi} onChange={setPosisi} zones={selected ? getEventZones(selected.id) : []} compact/>
+            <ZoneSelector value={posisi} onChange={setPosisi} zones={zones} compact/>
             <div className="mt-2">
               <input value={posisi} onChange={e=>setPosisi(e.target.value)} placeholder="Atau ketik manual: cth Zona A - Stand 5"
                 className="w-full border border-[#e4e7d4] rounded-[12px] px-3 py-2 text-xs focus:outline-none focus:border-[#7a8a52]"/>
@@ -240,6 +268,7 @@ const EditDrawer = ({ artisan, onClose, onSave, allEvents }) => {
     setKomisi(artisan.komisi_persen||0);
     setProfilEdit({ nama_usaha: artisan.nama_usaha||'', kota: artisan.kota||'', no_hp: artisan.no_hp||'', email: artisan.email||'', deskripsi: artisan.deskripsi||'', kategori_usaha: artisan.kategori_usaha||[], internal_notes: artisan.internal_notes||'' });
     setTab('usaha');
+    setArtisanEvents([]); // Reset events state before loading new ones
     setEventsLoading(true);
     artisanApi.events(artisan.id)
       .then(list => setArtisanEvents(list || []))
@@ -264,7 +293,7 @@ const EditDrawer = ({ artisan, onClose, onSave, allEvents }) => {
   const removeEvent = async (e) => {
     if (!confirm('Hapus dari event ini?')) return;
     try {
-      await eventApi.removeArtisan(e.event_id, e.id);
+      await eventApi.removeArtisan(e.event_id, artisan.id);
       setArtisanEvents(l => l.filter(x => x.id !== e.id));
       toast.success('Artisan dihapus dari event');
     } catch (err) {
@@ -274,13 +303,24 @@ const EditDrawer = ({ artisan, onClose, onSave, allEvents }) => {
 
   const handleAssignEvent = async ({ event_id, posisi_event }) => {
     try {
-      await eventApi.assignArtisan(event_id, { artisan_id: artisan.id, posisi_event });
+      // Backend mapping: we pass stand_id for posisi_event
+      await eventApi.assignArtisan(event_id, { artisan_id: artisan.id, stand_id: posisi_event });
       const updated = await artisanApi.events(artisan.id);
       setArtisanEvents(updated || []);
       toast.success('Artisan berhasil di-assign ke event');
     } catch (err) {
       toast.error(extractError(err, 'Gagal assign ke event'));
       throw err;
+    }
+  };
+
+  const updatePosition = async (e, val) => {
+    try {
+      await eventApi.updateArtisan(e.event_id, artisan.id, { stand_id: val });
+      setArtisanEvents(l => l.map(x => x.id === e.id ? { ...x, posisi_event: val } : x));
+      toast.success('Posisi stand berhasil diperbarui');
+    } catch (err) {
+      toast.error(extractError(err, 'Gagal memperbarui posisi stand'));
     }
   };
 
@@ -363,7 +403,7 @@ const EditDrawer = ({ artisan, onClose, onSave, allEvents }) => {
                             <div className="flex items-center gap-2 mt-1 flex-wrap">
                               <PosisiInlineEditor
                                 value={e.posisi_event}
-                                onChange={val => setArtisanEvents(l => l.map(x => x.id===e.id ? {...x,posisi_event:val} : x))}
+                                onChange={val => updatePosition(e, val)}
                                 eventId={e.event_id}
                               />
                               <span className={`text-[10px] ${e.assigned_by==='admin'?'text-blue-500':'text-[#8a9070]'}`}>

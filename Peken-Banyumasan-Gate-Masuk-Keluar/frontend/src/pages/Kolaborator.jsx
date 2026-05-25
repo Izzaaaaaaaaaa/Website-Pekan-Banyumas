@@ -10,6 +10,7 @@ import { useToast } from '../components/Toast';
 import { kolaboratorApi, eventApi, aktivitasApi } from '../services/endpoints';
 import { extractError } from '../lib/unwrap';
 import { SUBSEKTOR } from '../constants/subsektor';
+import { supabaseRealtime } from '../lib/supabase';
 
 const SUBSEKTORS = ['Semua', ...SUBSEKTOR];
 
@@ -165,9 +166,6 @@ const DetailDrawer = ({ kolaborator, onClose, onApprove, onSuspend, onUpdate, al
         if (tab === 'event') {
           const list = await kolaboratorApi.events(kolaborator.id);
           setKolaboratorEvents(list || []);
-        } else if (tab === 'portofolio') {
-          const list = await kolaboratorApi.portofolio(kolaborator.id);
-          setPortfolio(list || []);
         } else if (tab === 'aktivitas') {
           const list = await kolaboratorApi.stories(kolaborator.id);
           setStories(list || []);
@@ -178,7 +176,70 @@ const DetailDrawer = ({ kolaborator, onClose, onApprove, onSuspend, onUpdate, al
         setTabLoading(false);
       }
     };
-    if (tab !== 'info') loadTab();
+    if (tab !== 'info' && tab !== 'portofolio') loadTab();
+  }, [tab, kolaborator?.id]);
+
+  // Realtime subscription + polling fallback for porto tab (karya table)
+  useEffect(() => {
+    if (!kolaborator || tab !== 'portofolio') return;
+
+    let active = true;
+
+    // Initial load
+    setTabLoading(true);
+    kolaboratorApi.portofolio(kolaborator.id)
+      .then(list => { if (active) setPortfolio(list || []); })
+      .catch(err => { if (active) toast.error(extractError(err, 'Gagal memuat portofolio')); })
+      .finally(() => { if (active) setTabLoading(false); });
+
+    // Polling fallback every 30 seconds (runs whether or not realtime is available)
+    const pollInterval = setInterval(async () => {
+      if (!active) return;
+      try {
+        const list = await kolaboratorApi.portofolio(kolaborator.id);
+        if (active) setPortfolio(list || []);
+      } catch {
+        // silent — don't toast on background poll errors
+      }
+    }, 30_000);
+
+    // Subscribe to realtime changes on karya table (if supabase is configured)
+    let channel = null;
+    if (supabaseRealtime) {
+      channel = supabaseRealtime
+        .channel(`karya-kolaborator-${kolaborator.id}`)
+        .on(
+          'postgres_changes',
+          {
+            event: '*',
+            schema: 'public',
+            table: 'karya',
+            filter: `owner_id=eq.${kolaborator.id}`,
+          },
+          (payload) => {
+            if (!active) return;
+            if (payload.eventType === 'INSERT') {
+              const newItem = { ...payload.new, kategori: payload.new.subsektor };
+              setPortfolio(prev => {
+                if (prev.find(p => p.id === newItem.id)) return prev;
+                return [newItem, ...prev];
+              });
+            } else if (payload.eventType === 'UPDATE') {
+              const updated = { ...payload.new, kategori: payload.new.subsektor };
+              setPortfolio(prev => prev.map(p => p.id === updated.id ? updated : p));
+            } else if (payload.eventType === 'DELETE') {
+              setPortfolio(prev => prev.filter(p => p.id !== payload.old.id));
+            }
+          }
+        )
+        .subscribe();
+    }
+
+    return () => {
+      active = false;
+      clearInterval(pollInterval);
+      if (channel && supabaseRealtime) supabaseRealtime.removeChannel(channel);
+    };
   }, [tab, kolaborator?.id]);
 
   if (!kolaborator) return null;
@@ -269,7 +330,12 @@ const DetailDrawer = ({ kolaborator, onClose, onApprove, onSuspend, onUpdate, al
           {TABS.map(([v,l]) => (
             <button key={v} onClick={() => setTab(v)}
               className={`flex-1 py-2.5 text-xs font-semibold transition border-b-2 ${tab===v?'border-[#7a8a52] text-[#7a8a52]':'border-transparent text-[#8a9070] hover:text-[#5a6040]'}`}>
-              {l}
+              {v === 'portofolio'
+                ? <span className="inline-flex items-center gap-1 justify-center">
+                    {l}
+                    {supabaseRealtime && <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse inline-block" title="Realtime aktif"/>}
+                  </span>
+                : l}
             </button>
           ))}
         </div>
@@ -419,16 +485,28 @@ const DetailDrawer = ({ kolaborator, onClose, onApprove, onSuspend, onUpdate, al
           {/* TAB: Portofolio */}
           {tab === 'portofolio' && !tabLoading && (
             <div className="p-5">
+              {/* Realtime header */}
+              <div className="flex items-center justify-between mb-3">
+                <p className="text-xs text-[#8a9070]">{portfolio.length} karya</p>
+                {supabaseRealtime && (
+                  <span className="inline-flex items-center gap-1.5 px-2 py-0.5 bg-emerald-50 border border-emerald-200 rounded-full text-[10px] font-semibold text-emerald-600">
+                    <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse"/>
+                    Live
+                  </span>
+                )}
+              </div>
               {portfolio.length === 0
                 ? <div className="py-12 text-center text-[#8a9070] text-sm"><Image size={28} className="text-gray-200 mx-auto mb-2"/>Belum ada portofolio</div>
                 : <div className="space-y-2.5">
                     {portfolio.map(p => (
                       <div key={p.id} className="flex items-center gap-3 p-3 bg-[#f7f8f2] rounded-[12px] border border-[#e4e7d4]">
                         <div className="w-10 h-10 rounded-lg bg-[#f7f2e4] flex items-center justify-center text-[#C4A24D] shrink-0">
-                          <Image size={16}/>
+                          {p.gambar_url
+                            ? <img src={p.gambar_url} alt={p.judul} className="w-10 h-10 rounded-lg object-cover"/>
+                            : <Image size={16}/>}
                         </div>
                         <div className="flex-1 min-w-0">
-                          <p className="font-semibold text-[#1e2010] text-sm">{p.judul}</p>
+                          <p className="font-semibold text-[#1e2010] text-sm truncate">{p.judul}</p>
                           <p className="text-[#8a9070] text-xs">{p.kategori} · {p.tahun}</p>
                         </div>
                         <button onClick={() => toggleFeatured(p.id)}

@@ -1,11 +1,11 @@
-from app.db.supabase import supabase
+from app.db.supabase import supabase, supabase_admin
 from fastapi import HTTPException
 
 
 def list_kolaborators(status: str = None, kota: str = None, q: str = None, page: int = 1, per_page: int = 20):
     """List kolaborators with optional filters."""
     try:
-        query = supabase.table("kolaborators").select("*")
+        query = supabase_admin.table("kolaborators").select("*")
 
         if status:
             query = query.eq("status", status)
@@ -24,7 +24,7 @@ def list_kolaborators(status: str = None, kota: str = None, q: str = None, page:
 def get_kolaborator(kolaborator_id: str):
     """Get kolaborator details."""
     try:
-        res = supabase.table("kolaborators").select("*").eq("id", kolaborator_id).single().execute()
+        res = supabase_admin.table("kolaborators").select("*").eq("id", kolaborator_id).single().execute()
         if not res.data:
             raise HTTPException(404, "Kolaborator tidak ditemukan")
         return res.data
@@ -42,7 +42,7 @@ def update_kolaborator(kolaborator_id: str, data: dict):
         if not update_data:
             return get_kolaborator(kolaborator_id)
 
-        res = supabase.table("kolaborators").update(update_data).eq("id", kolaborator_id).execute()
+        res = supabase_admin.table("kolaborators").update(update_data).eq("id", kolaborator_id).execute()
         if not res.data:
             raise HTTPException(404, "Kolaborator tidak ditemukan")
         return res.data[0]
@@ -61,11 +61,18 @@ def update_kolaborator_status(kolaborator_id: str, status: str):
 def get_kolaborator_events(kolaborator_id: str):
     """Get events this kolaborator is assigned to."""
     try:
-        res = supabase.table("event_kolaborators") \
-            .select("*") \
+        res = supabase_admin.table("event_kolaborators") \
+            .select("*, events(*)") \
             .eq("kolaborator_id", kolaborator_id) \
             .execute()
-        return res.data or []
+        
+        events_list = []
+        for ek in (res.data or []):
+            event_data = ek.pop("events", {}) or {}
+            merged = {**event_data, **ek}
+            events_list.append(merged)
+            
+        return events_list
 
     except Exception as e:
         raise HTTPException(500, f"Error fetching kolaborator events: {str(e)}")
@@ -74,12 +81,50 @@ def get_kolaborator_events(kolaborator_id: str):
 def get_kolaborator_stories(kolaborator_id: str):
     """Get kolaborator's stories."""
     try:
-        res = supabase.table("aktivitas") \
+        res = supabase_admin.table("stories") \
             .select("*") \
-            .eq("user_id", kolaborator_id) \
+            .eq("author_type", "kolaborator") \
+            .eq("author_id", kolaborator_id) \
             .order("created_at", desc=True) \
             .execute()
         return res.data or []
 
     except Exception as e:
         raise HTTPException(500, f"Error fetching kolaborator stories: {str(e)}")
+
+
+def get_kolaborator_portofolio(kolaborator_id: str):
+    """Get kolaborator portofolio (karya)."""
+    try:
+        res = supabase_admin.table("karya").select("*").eq("owner_type", "kolaborator").eq("owner_id", kolaborator_id).order("created_at", desc=True).execute()
+        
+        # map subsektor to kategori for frontend
+        portofolios = []
+        for p in (res.data or []):
+            p["kategori"] = p.get("subsektor")
+            portofolios.append(p)
+        return portofolios
+    except Exception as e:
+        raise HTTPException(500, f"Error fetching portofolio: {str(e)}")
+
+
+def feature_kolaborator_portofolio(kolaborator_id: str, portofolio_id: str, featured: bool):
+    """Toggle featured status of a portofolio."""
+    try:
+        res = supabase_admin.table("karya").update({"featured": featured}).eq("id", portofolio_id).eq("owner_id", kolaborator_id).execute()
+        if not res.data:
+            raise HTTPException(404, "Karya tidak ditemukan")
+        return res.data[0]
+    except HTTPException:
+        raise
+    except Exception as e:
+        raise HTTPException(500, f"Error updating portofolio: {str(e)}")
+
+
+def delete_kolaborator_portofolio(kolaborator_id: str, portofolio_id: str):
+    """Delete a portofolio."""
+    try:
+        res = supabase_admin.table("karya").delete().eq("id", portofolio_id).eq("owner_id", kolaborator_id).execute()
+        return {"message": "Karya berhasil dihapus"}
+    except Exception as e:
+        raise HTTPException(500, f"Error deleting portofolio: {str(e)}")

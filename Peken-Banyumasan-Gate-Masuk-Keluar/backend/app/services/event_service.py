@@ -127,10 +127,16 @@ def get_event_artisans(event_id: str):
 def assign_artisan(event_id: str, data: dict):
     """Assign artisan to event."""
     try:
+        stand_id = data.get("stand_id")
+        if stand_id:
+            existing = supabase_admin.table("event_artisans").select("id").eq("event_id", event_id).eq("stand_id", stand_id).execute()
+            if existing.data:
+                raise HTTPException(400, f"Posisi {stand_id} sudah ditempati oleh usaha lain.")
+
         insert_data = {
             "event_id": event_id,
             "artisan_id": data.get("artisan_id"),
-            "stand_id": data.get("stand_id"),
+            "stand_id": stand_id,
             "status_request": "approved",
             "assigned_by": "admin"
         }
@@ -138,6 +144,8 @@ def assign_artisan(event_id: str, data: dict):
         if not res.data:
             raise HTTPException(500, "Gagal assign artisan")
         return res.data[0]
+    except HTTPException:
+        raise
     except Exception as e:
         raise HTTPException(500, f"Error assigning artisan: {str(e)}")
 
@@ -146,6 +154,13 @@ def update_event_artisan(event_id: str, artisan_id: str, data: dict):
     """Update artisan assignment."""
     try:
         update_data = {k: v for k, v in data.items() if v is not None}
+        
+        stand_id = update_data.get("stand_id")
+        if stand_id:
+            existing = supabase_admin.table("event_artisans").select("artisan_id").eq("event_id", event_id).eq("stand_id", stand_id).execute()
+            if existing.data and existing.data[0].get("artisan_id") != artisan_id:
+                raise HTTPException(400, f"Posisi {stand_id} sudah ditempati oleh usaha lain.")
+
         res = supabase_admin.table("event_artisans").update(update_data).eq("artisan_id", artisan_id).eq("event_id", event_id).execute()
         if not res.data:
             raise HTTPException(404, "Artisan assignment tidak ditemukan")
@@ -186,10 +201,17 @@ def respond_artisan_request(event_id: str, request_id: str, action: str):
                 raise HTTPException(404, "Request tidak ditemukan")
 
             req = req_res.data
+            stand_id = req.get("posisi_event")
+            
+            if stand_id:
+                existing = supabase_admin.table("event_artisans").select("id").eq("event_id", event_id).eq("stand_id", stand_id).execute()
+                if existing.data:
+                    raise HTTPException(400, f"Posisi {stand_id} sudah ditempati oleh usaha lain. Mohon tolak atau minta ganti posisi.")
+
             insert_data = {
                 "event_id": event_id,
                 "artisan_id": req.get("artisan_id"),
-                "stand_id": req.get("posisi_event"),
+                "stand_id": stand_id,
                 "status_request": "approved",
                 "assigned_by": "self"
             }
