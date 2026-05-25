@@ -156,10 +156,16 @@ def get_dashboard_stats(event_id: Optional[str] = None) -> Stats:
             logs = logs_res.data if logs_res.data else []
             logger.debug(f"[STATS] Found {len(logs)} visitor records")
 
-            total_masuk = len([l for l in logs if l.get("status") == "di_dalam"])
+            # Pengunjung yang saat ini masih di dalam (status = "di_dalam")
+            di_dalam = len([l for l in logs if l.get("status") == "di_dalam"])
+            # Total yang pernah masuk = semua record (di_dalam + keluar)
+            total_masuk = len(logs)
+            # Total yang sudah keluar
             total_keluar = len([l for l in logs if l.get("status") == "keluar"])
-            di_dalam = max(0, total_masuk - total_keluar)
             
+            # Total kunjungan keseluruhan event aktif:
+            # - NFC: hitung unique UID (satu pengunjung tap berkali-kali tetap = 1)
+            # - Manual: hitung semua row tanpa uid (di_dalam maupun keluar)
             unique_uids = set()
             manual_count = 0
             for l in logs:
@@ -167,8 +173,7 @@ def get_dashboard_stats(event_id: Optional[str] = None) -> Stats:
                 if uid:
                     unique_uids.add(uid)
                 else:
-                    if l.get("status") == "di_dalam":
-                        manual_count += 1
+                    manual_count += 1  # manual entry selalu = 1 kunjungan baru
                         
             total_harian = len(unique_uids) + manual_count
 
@@ -180,7 +185,7 @@ def get_dashboard_stats(event_id: Optional[str] = None) -> Stats:
                 event_id=event_id,
                 nama_event=event.get("nama", "")
             )
-            logger.info(f"[STATS] ✅ Success: di_dalam={di_dalam}, total_masuk={total_masuk}, total_keluar={total_keluar}")
+            logger.info(f"[STATS] ✅ Success: di_dalam={di_dalam}, total_masuk={total_masuk}, total_keluar={total_keluar}, total_harian={total_harian}")
             return stats
         except Exception as e:
             logger.error(f"[STATS] Failed to fetch visitor data: {str(e)}")
