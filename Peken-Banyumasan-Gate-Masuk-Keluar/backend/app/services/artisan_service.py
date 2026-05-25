@@ -1,11 +1,11 @@
-from app.db.supabase import supabase
+from app.db.supabase import supabase, supabase_admin
 from fastapi import HTTPException
 
 
 def list_artisans(status: str = None, kota: str = None, kategori: str = None, q: str = None):
     """List artisans with optional filters."""
     try:
-        query = supabase.table("artisans").select("*")
+        query = supabase_admin.table("artisans").select("*")
 
         if status:
             query = query.eq("status", status)
@@ -26,7 +26,7 @@ def list_artisans(status: str = None, kota: str = None, kategori: str = None, q:
 def get_artisan(artisan_id: str):
     """Get artisan details."""
     try:
-        res = supabase.table("artisans").select("*").eq("id", artisan_id).single().execute()
+        res = supabase_admin.table("artisans").select("*").eq("id", artisan_id).single().execute()
         if not res.data:
             raise HTTPException(404, "Artisan tidak ditemukan")
         return res.data
@@ -44,7 +44,7 @@ def update_artisan(artisan_id: str, data: dict):
         if not update_data:
             return get_artisan(artisan_id)
 
-        res = supabase.table("artisans").update(update_data).eq("id", artisan_id).execute()
+        res = supabase_admin.table("artisans").update(update_data).eq("id", artisan_id).execute()
         if not res.data:
             raise HTTPException(404, "Artisan tidak ditemukan")
         return res.data[0]
@@ -63,11 +63,26 @@ def update_artisan_status(artisan_id: str, status: str):
 def get_artisan_events(artisan_id: str):
     """Get events this artisan is assigned to."""
     try:
-        res = supabase.table("event_artisans") \
-            .select("*") \
+        res = supabase_admin.table("event_artisans") \
+            .select("*, events(*)") \
             .eq("artisan_id", artisan_id) \
             .execute()
-        return res.data or []
+            
+        data = res.data or []
+        formatted_events = []
+        for item in data:
+            event = item.get("events") or {}
+            formatted_events.append({
+                "id": item.get("id"),
+                "event_id": item.get("event_id"),
+                "nama": event.get("nama", "Unknown Event"),
+                "tanggal": event.get("tanggal", ""),
+                "jam_mulai": event.get("jam_mulai", ""),
+                "jam_selesai": event.get("jam_selesai", ""),
+                "posisi_event": item.get("stand_id", ""),
+                "assigned_by": item.get("assigned_by", "")
+            })
+        return formatted_events
 
     except Exception as e:
         raise HTTPException(500, f"Error fetching artisan events: {str(e)}")
@@ -76,7 +91,7 @@ def get_artisan_events(artisan_id: str):
 def get_artisan_qris(artisan_id: str):
     """Get artisan QRIS code."""
     try:
-        res = supabase.table("artisans").select("qris_url, qris_updated_at").eq("id", artisan_id).single().execute()
+        res = supabase_admin.table("artisans").select("qris_url, qris_updated_at").eq("id", artisan_id).single().execute()
         if not res.data:
             raise HTTPException(404, "Artisan tidak ditemukan")
         return {
