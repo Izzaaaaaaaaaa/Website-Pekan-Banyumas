@@ -14,39 +14,63 @@ import 'easymde/dist/easymde.min.css';
 import { useToast } from '../components/Toast';
 import { companyProfileApi } from '../services/endpoints';
 import { extractError } from '../lib/unwrap';
+import { uploadImage } from '../lib/uploadImage';
 import { KATEGORI_USAHA } from '../constants/kategoriUsaha';
 import { SUBSEKTOR } from '../constants/subsektor';
+
+// Render-time only — resolve legacy CP asset paths (/assets/*) against the
+// public CP origin so admin previews still show even though those files are
+// shipped with the Company-Profile site (not Gate's bundle). Absolute URLs
+// (http(s)://, data:, blob:) pass through unchanged. The SAVED value is never
+// rewritten — fresh uploads go to Supabase Storage as before.
+const CP_ORIGIN = (import.meta.env.VITE_COMPANY_URL || '').replace(/\/$/, '');
+const resolveCpAsset = (v) => {
+  if (!v) return v;
+  if (/^(https?:|data:|blob:)/i.test(v)) return v;
+  if (v.startsWith('/assets/') && CP_ORIGIN) return `${CP_ORIGIN}${v}`;
+  return v;
+};
 
 // ─────────────────────────────────────────────
 // DEFAULT DATA (mirrors company profile source)
 // ─────────────────────────────────────────────
 
+// Canonical 'home' shape — MUST match what the Company Profile public site
+// (HomeScreen.jsx DEFAULT_HOME) consumes:
+//   hero_slides       → array of plain URL strings (NOT {id,src,alt} objects)
+//   hero_headline_*   → headline split in 3 (pre / em / post) so CP can italic-accent
+//   manifesto_col1/2  → two manifesto paragraphs
+//   lokasi_headline   → location heading (was lokasi_nama)
+//   lokasi_alamat     → full address
+//   lokasi_trans      → single combined transport string (CP renders pre-line)
+//   lokasi_trans1_url / lokasi_trans2_url → maps links for the two route buttons
+//   lokasi_image_url  → map image
+// Agenda is NOT part of this section — CP derives it live from the nearest event.
 const DEFAULT_HOME = {
   hero_slides: [
-    { id: 'hs1', src: '/assets/banner-home-1.jpg', alt: 'Banner Peken 1' },
-    { id: 'hs2', src: '/assets/banner-home-2.jpg', alt: 'Banner Peken 2' },
-    { id: 'hs3', src: '/assets/banner-about.png', alt: 'Banner Peken 3' },
+    '/assets/banner-home-1.jpg',
+    '/assets/banner-home-2.jpg',
+    '/assets/banner-about.png',
   ],
   hero_eyebrow: 'MIRAPAT · BANYUMASAN · 2026',
-  hero_headline: 'Temukan pertunjukan, karya artisan, dan cerita Banyumasan dalam satu ekosistem.',
+  hero_headline_pre: 'Temukan',
+  hero_headline_em: 'pertunjukan',
+  hero_headline_post: ', karya artisan, dan cerita Banyumasan dalam satu ekosistem.',
   manifesto_col1: 'Peken Banyumasan adalah sebuah ruang kreatif berbasis budaya lokal yang dirancang sebagai wadah berkumpulnya masyarakat, pelaku Artisan, seniman, dan komunitas dalam satu ekosistem yang hidup, inklusif, dan berkelanjutan.\n\nPeken tidak hanya berfungsi sebagai pasar atau tempat berkumpul biasa, tetapi sebagai ruang interaksi yang menghadirkan pengalaman budaya khas Banyumas melalui berbagai aktivitas seperti pertunjukan seni, kuliner tradisional, produk kreatif, hingga eksplorasi identitas lokal.',
   manifesto_col2: 'Peken Banyumasan adalah ruang temu budaya dan ekonomi kreatif di Banyumas yang mempertemukan seniman, Artisan, dan masyarakat dalam satu perayaan kearifan lokal.\n\nMenghadirkan kuliner tradisional, pertunjukan seni, serta aktivitas komunitas, Peken menjadi tempat di mana budaya tidak hanya dipamerkan, tetapi dirasakan dan dialami bersama.\n\nSejak pertama kali hadir pada Februari 2022 dan diselenggarakan dua kali setiap bulan di kawasan Kota Lama Banyumas, Peken terus berkembang sebagai ekosistem kreatif.',
-  agenda_tanggal: '24',
-  agenda_hari: 'Minggu',
-  agenda_bulan_tahun: 'Maret 2026',
-  agenda_jam: '15:30–20:30 WIB',
-  agenda_lokasi: 'Taman Sari · Kecamatan Banyumas',
-  agenda_deskripsi: 'Edisi berikutnya kembali menghadirkan suasana Peken yang hangat dan hidup. Nikmati pertunjukan seni Banyumasan, jelajahi artisan pilihan, dan temukan karya-karya lokal dalam satu ruang yang penuh kebersamaan.',
-  lokasi_nama: 'Kawasan Kota Lama Banyumas. Taman Sari · Sudagaran.',
-  lokasi_alamat: 'Banyumas, Sudagaran, Kec. Banyumas, Kabupaten Banyumas, Jawa Tengah 53192',
-  lokasi_trans1_nama: 'Trans Banyumas Koridor 4 · Terminal Bulupitu',
+  lokasi_headline: 'Kawasan Kota Lama Banyumas.\nTaman Sari · Sudagaran.',
+  lokasi_alamat: 'Banyumas, Sudagaran, Kec. Banyumas,\nKabupaten Banyumas, Jawa Tengah 53192',
+  lokasi_trans: 'Trans Banyumas Koridor 4 · Terminal Bulupitu\nTrans Banyumas Koridor 4 · RS Margono — Halte Alun-alun\nOperasional · 04:40 – 18:30 WIB',
   lokasi_trans1_url: 'https://maps.google.com/?q=Taman+Sari+Kecamatan+Banyumas+Kabupaten+Banyumas+Jawa+Tengah',
-  lokasi_trans2_nama: 'Trans Banyumas Koridor 4 · RS Margono — Halte Alun-alun',
   lokasi_trans2_url: 'https://maps.google.com/?q=Trans+Banyumas+Koridor+4',
-  lokasi_trans_jam: '04:40 – 18:30 WIB',
   lokasi_image_url: '',
 };
 
+// Canonical 'about' shape — MUST match what the Company Profile public site
+// (AboutScreen.jsx) consumes. AboutScreen reads both the `about` section
+// (hero, manifesto, #MIRAPAT block, pillars, visi/tujuan/sasaran) and the
+// `tim` section (key_people + stats) from the company-profile API.
+// Field names are flat snake_case shared verbatim with the CP renderer.
 const DEFAULT_ABOUT = {
   hero_headline: 'Peken lahir dari keinginan untuk menghidupkan kembali denyut kota lama melalui seni, pasar, dan kebersamaan.',
   manifesto_col1: 'Peken Banyumasan tumbuh dari percakapan kecil di sudut Kota Lama — antara seniman pertunjukan, pelaku Artisan, dan warga sekitar yang ingin menghidupkan kembali ruang publik sebagai tempat bertemu, bukan sekadar berdagang.\n\nDari obrolan itu, lahir gerakan dwi-mingguan yang konsisten sejak Februari 2022 — sebuah ritual kolektif yang mempertemukan tradisi, kerajinan, dan kuliner Banyumasan dalam satu malam.',
@@ -70,11 +94,15 @@ const DEFAULT_ABOUT = {
   ],
 };
 
+// Canonical 'tim' shape — MUST match what the Company Profile public site
+// (AboutScreen.jsx) consumes: each key_people entry is read as
+//   { photo, role, name, title, bio }
+// `id` is kept locally as a stable React key (CP ignores extra keys).
 const DEFAULT_TIM = {
   key_people: [
-    { id: 'kp1', foto_url: '/assets/tokoh-portrait-1.png', jabatan: 'FOUNDER', name: 'Gilang Ramadhan, S.Sn., M.Ds.', title: 'Founder & Program Director', bio: 'Menggagas Peken pada Februari 2022 dan mengawal kurasi setiap edisi sejak. Latar belakang antropologi pertunjukan, dengan fokus pada kesenian Banyumasan kontemporer.' },
-    { id: 'kp2', foto_url: '/assets/tokoh-portrait-2.png', jabatan: 'CURATOR', name: 'Galih Putra Pamungkas, S.Sn., M.Sn.', title: 'Curator — Artisan', bio: 'Mengkurasi artisan yang masuk ke setiap edisi Peken. Sebelumnya menjalankan kolektif batik di Sokaraja; membangun program pendampingan artisan dari hulu ke hilir.' },
-    { id: 'kp3', foto_url: '/assets/tokoh-portrait-3.png', jabatan: 'STRATEGIC PARTNER', name: 'Jakarta Tisam S.STP, M.Si', title: 'Strategic Partner & Community Lead', bio: 'Menjaga jaringan kolaborator, sponsor, dan mitra institusi — kampus, pemerintah daerah, swasta. Memegang rasio kolaborasi yang sehat antar enam helix.' },
+    { id: 'kp1', photo: '/assets/tokoh-portrait-1.png', role: 'FOUNDER', name: 'Gilang Ramadhan, S.Sn., M.Ds.', title: 'Founder & Program Director', bio: 'Menggagas Peken pada Februari 2022 dan mengawal kurasi setiap edisi sejak. Latar belakang antropologi pertunjukan, dengan fokus pada kesenian Banyumasan kontemporer.' },
+    { id: 'kp2', photo: '/assets/tokoh-portrait-2.png', role: 'CURATOR', name: 'Galih Putra Pamungkas, S.Sn., M.Sn.', title: 'Curator — Artisan', bio: 'Mengkurasi artisan yang masuk ke setiap edisi Peken. Sebelumnya menjalankan kolektif batik di Sokaraja; membangun program pendampingan artisan dari hulu ke hilir.' },
+    { id: 'kp3', photo: '/assets/tokoh-portrait-3.png', role: 'STRATEGIC PARTNER', name: 'Jakarta Tisam S.STP, M.Si', title: 'Strategic Partner & Community Lead', bio: 'Menjaga jaringan kolaborator, sponsor, dan mitra institusi — kampus, pemerintah daerah, swasta. Memegang rasio kolaborasi yang sehat antar enam helix.' },
   ],
   hexa_helix: [
     { id: 'hh1', name: 'Government', body: 'Pemerintah Kabupaten Banyumas dan instansi terkait sebagai mitra kebijakan dan ruang publik.' },
@@ -88,6 +116,11 @@ const DEFAULT_TIM = {
   legalitas_hukum: 'Peken Banyumasan beroperasi di bawah payung Yayasan Peken Banyumasan, dengan landasan hukum nasional pada UU No. 5/2017 tentang Pemajuan Kebudayaan dan UU No. 24/2019 tentang Ekonomi Kreatif, serta payung daerah pada Peraturan Daerah Kabupaten Banyumas No. 6/2020 tentang Pemajuan Kebudayaan Daerah.\n\nYayasan terdaftar resmi dengan NPWP 00.000.000.0-000.000 dan NIB 0000000000000, tunduk pada laporan keuangan dan tata kelola yayasan sebagaimana diatur dalam UU Yayasan.',
 };
 
+// Canonical 'programs' shape — a flat array. The CP public site renders
+// programs via { n, slug, title, image_url, body }; `body_short` feeds the
+// Home tiles and `target_peserta`/`durasi` feed the program detail page.
+// CP sources programs from this company-profile section on every screen
+// (HomeScreen tiles, ProgramScreen rows, ProgramDetailScreen).
 const DEFAULT_PROGRAMS = [
   { n: '01', slug: 'banyumasan-fashionshow',  title: 'Banyumasan Fashionshow',  image_url: '/assets/program-fashion.jpg',      body: 'Peragaan busana bertema kebudayaan Banyumas dengan materi tenun, batik, dan karya desainer lokal.', body_short: 'Peragaan busana bertema kebudayaan Banyumas — tenun, batik, karya desainer lokal.',         target_peserta: 'Umum', durasi: '±90 menit' },
   { n: '02', slug: 'bring-your-own-bowl',     title: 'Bring Your Own Bowl',     image_url: '/assets/program-byob.jpg',         body: 'Gerakan zero-waste — pengunjung membawa wadah sendiri, artisan kuliner melayani tanpa kemasan sekali pakai.', body_short: 'Gerakan zero-waste — pengunjung membawa wadah sendiri, artisan kuliner tanpa kemasan sekali pakai.', target_peserta: 'Umum', durasi: 'Sepanjang event' },
@@ -97,18 +130,31 @@ const DEFAULT_PROGRAMS = [
   { n: '06', slug: 'makers-workshop',         title: 'Makers Workshop',         image_url: '/assets/program-makers.jpg',       body: 'Workshop dua-jam: batik ecoprint, tenun mini, aksara Jawa, sablon manual. Terbuka untuk pengunjung.', body_short: 'Workshop dua-jam: batik ecoprint, tenun mini, aksara Jawa, sablon manual.',  target_peserta: 'Umum (maks 20 orang)', durasi: '±120 menit' },
 ];
 
+// Canonical 'works' shape — MUST match what the Company Profile public site
+// (WorksScreen.jsx + Lightbox.jsx) consumes:
+//   { id, judul, gambar_url, owner, owner_type, owner_id, kategori_display,
+//     tahun, deskripsi, visible }
+// `kategori_display` is the single human-readable category string the CP cards
+// render (kategori_usaha for artisan, subsektor for kolaborator). `owner_id` is
+// the profile slug the CP lightbox links to. The Gate WorkModal keeps the
+// separate subsektor/kategori_usaha selectors and derives kategori_display on save.
 const DEFAULT_WORKS = [
-  { id: 'w-001', judul: 'Senja di Pasar Lama', owner: 'Aji Pradana', owner_type: 'kolaborator', subsektor: 'Fotografi', tahun: 2026, gambar_url: '/assets/gallery-1.jpg', deskripsi: 'Seri foto malam di kawasan Pasar Lama Banyumas. Diambil dengan kamera analog format 35mm pada Februari 2026 — bagian dari proyek dokumentasi rutin Aji untuk Peken.', visible: true },
-  { id: 'w-002', judul: 'Tenun Lurik Modular', owner: 'Sanggar Lestari Sokaraja', owner_type: 'artisan', kategori_usaha: 'Kriya', tahun: 2025, gambar_url: '/assets/gallery-2.jpg', deskripsi: 'Eksperimen tenun lurik dengan modul lebar tetap untuk memudahkan kombinasi warna oleh desainer pakaian.', visible: true },
-  { id: 'w-003', judul: 'Edisi #54 — Geguritan Malam', owner: 'Komunitas Pitutur', owner_type: 'kolaborator', subsektor: 'Seni Pertunjukan', tahun: 2025, gambar_url: '/assets/gallery-3.jpg', deskripsi: 'Dokumentasi panggung geguritan malam pada Peken Edisi #54. Empat pelaku tampil bergantian membawakan cerita rakyat Banyumasan dalam balutan musik akustik.', visible: true },
-  { id: 'w-004', judul: 'Banyumasan Streetwear Cap.1', owner: 'Reka Studio', owner_type: 'kolaborator', subsektor: 'Fashion', tahun: 2025, gambar_url: '/assets/program-fashion.jpg', deskripsi: 'Lini streetwear pertama dari Reka Studio yang mengadaptasi motif batik banyumasan ke siluet kontemporer.', visible: true },
-  { id: 'w-005', judul: 'Wadah Bambu Lipat', owner: 'Artisan Tirta Karya', owner_type: 'artisan', kategori_usaha: 'Kriya', tahun: 2024, gambar_url: '/assets/gallery-4.jpg', deskripsi: 'Wadah makanan bambu lipat untuk mendukung Bring Your Own Bowl. Dibuat tanpa lem sintetis, dirakit hanya dengan ikatan rotan.', visible: true },
-  { id: 'w-006', judul: 'Mural Kota Lama', owner: 'Kolektif Coret', owner_type: 'kolaborator', subsektor: 'Seni Rupa', tahun: 2024, gambar_url: '/assets/gallery-5.jpg', deskripsi: 'Mural permanen pada dinding selatan Taman Sari, dilukis selama dua minggu oleh enam seniman muda Kolektif Coret.', visible: true },
-  { id: 'w-007', judul: 'Kopi Robusta Banyumas', owner: 'Petani Kopi Baturraden', owner_type: 'artisan', kategori_usaha: 'F&B / Kuliner', tahun: 2024, gambar_url: '/assets/program-coffee.jpg', deskripsi: 'Robusta single-origin dari ketinggian 800 mdpl di Baturraden. Dipanen, dijemur, dan disangrai sendiri oleh kelompok tani.', visible: true },
-  { id: 'w-008', judul: 'Aksara Jawa Banyumasan', owner: 'Studio Wignya', owner_type: 'kolaborator', subsektor: 'Desain Produk', tahun: 2023, gambar_url: '/assets/gallery-6.jpg', deskripsi: 'Tipografi aksara Jawa varian Banyumasan, dirilis sebagai font terbuka. Hasil riset enam bulan bersama akademisi linguistik Universitas Jenderal Soedirman.', visible: true },
-  { id: 'w-009', judul: 'Anyaman Pandan Modular', owner: 'Bu Tasrip & Komunitas', owner_type: 'artisan', kategori_usaha: 'Kriya', tahun: 2023, gambar_url: '/assets/gallery-perform-1.jpg', deskripsi: 'Anyaman pandan modular yang bisa dirangkai menjadi tas, alas duduk, atau partisi ruang. Karya kolektif perempuan Desa Banjarsari.', visible: true },
+  { id: 'w-001', judul: 'Senja di Pasar Lama', owner: 'Aji Pradana', owner_type: 'kolaborator', owner_id: 'aji-pradana', subsektor: 'Fotografi', kategori_usaha: '', kategori_display: 'Fotografi', tahun: 2026, gambar_url: '/assets/gallery-1.jpg', deskripsi: 'Seri foto malam di kawasan Pasar Lama Banyumas. Diambil dengan kamera analog format 35mm pada Februari 2026 — bagian dari proyek dokumentasi rutin Aji untuk Peken.', visible: true },
+  { id: 'w-002', judul: 'Tenun Lurik Modular', owner: 'Sanggar Lestari Sokaraja', owner_type: 'artisan', owner_id: 'sanggar-lestari-sokaraja', subsektor: '', kategori_usaha: 'Kriya', kategori_display: 'Kriya', tahun: 2025, gambar_url: '/assets/gallery-2.jpg', deskripsi: 'Eksperimen tenun lurik dengan modul lebar tetap untuk memudahkan kombinasi warna oleh desainer pakaian.', visible: true },
+  { id: 'w-003', judul: 'Edisi #54 — Geguritan Malam', owner: 'Komunitas Pitutur', owner_type: 'kolaborator', owner_id: 'komunitas-pitutur', subsektor: 'Seni Pertunjukan', kategori_usaha: '', kategori_display: 'Seni Pertunjukan', tahun: 2025, gambar_url: '/assets/gallery-3.jpg', deskripsi: 'Dokumentasi panggung geguritan malam pada Peken Edisi #54. Empat pelaku tampil bergantian membawakan cerita rakyat Banyumasan dalam balutan musik akustik.', visible: true },
+  { id: 'w-004', judul: 'Banyumasan Streetwear Cap.1', owner: 'Reka Studio', owner_type: 'kolaborator', owner_id: 'reka-studio', subsektor: 'Fashion', kategori_usaha: '', kategori_display: 'Fashion', tahun: 2025, gambar_url: '/assets/program-fashion.jpg', deskripsi: 'Lini streetwear pertama dari Reka Studio yang mengadaptasi motif batik banyumasan ke siluet kontemporer.', visible: true },
+  { id: 'w-005', judul: 'Wadah Bambu Lipat', owner: 'Artisan Tirta Karya', owner_type: 'artisan', owner_id: 'artisan-tirta-karya', subsektor: '', kategori_usaha: 'Kriya', kategori_display: 'Kriya', tahun: 2024, gambar_url: '/assets/gallery-4.jpg', deskripsi: 'Wadah makanan bambu lipat untuk mendukung Bring Your Own Bowl. Dibuat tanpa lem sintetis, dirakit hanya dengan ikatan rotan.', visible: true },
+  { id: 'w-006', judul: 'Mural Kota Lama', owner: 'Kolektif Coret', owner_type: 'kolaborator', owner_id: 'kolektif-coret', subsektor: 'Seni Rupa', kategori_usaha: '', kategori_display: 'Seni Rupa', tahun: 2024, gambar_url: '/assets/gallery-5.jpg', deskripsi: 'Mural permanen pada dinding selatan Taman Sari, dilukis selama dua minggu oleh enam seniman muda Kolektif Coret.', visible: true },
+  { id: 'w-007', judul: 'Kopi Robusta Banyumas', owner: 'Petani Kopi Baturraden', owner_type: 'artisan', owner_id: 'petani-kopi-baturraden', subsektor: '', kategori_usaha: 'F&B / Kuliner', kategori_display: 'F&B / Kuliner', tahun: 2024, gambar_url: '/assets/program-coffee.jpg', deskripsi: 'Robusta single-origin dari ketinggian 800 mdpl di Baturraden. Dipanen, dijemur, dan disangrai sendiri oleh kelompok tani.', visible: true },
+  { id: 'w-008', judul: 'Aksara Jawa Banyumasan', owner: 'Studio Wignya', owner_type: 'kolaborator', owner_id: 'studio-wignya', subsektor: 'Desain Produk', kategori_usaha: '', kategori_display: 'Desain Produk', tahun: 2023, gambar_url: '/assets/gallery-6.jpg', deskripsi: 'Tipografi aksara Jawa varian Banyumasan, dirilis sebagai font terbuka. Hasil riset enam bulan bersama akademisi linguistik Universitas Jenderal Soedirman.', visible: true },
+  { id: 'w-009', judul: 'Anyaman Pandan Modular', owner: 'Bu Tasrip & Komunitas', owner_type: 'artisan', owner_id: 'bu-tasrip-komunitas', subsektor: '', kategori_usaha: 'Kriya', kategori_display: 'Kriya', tahun: 2023, gambar_url: '/assets/gallery-perform-1.jpg', deskripsi: 'Anyaman pandan modular yang bisa dirangkai menjadi tas, alas duduk, atau partisi ruang. Karya kolektif perempuan Desa Banjarsari.', visible: true },
 ];
 
+// Canonical 'gallery' shape — MUST match what the Company Profile public site
+// (GalleryScreen.jsx) consumes: { images: [{ filename|src, label, year,
+// visible }], doc_headline, doc_body, doc_ukuran, doc_download_url }.
+// CP resolves each image as `src || /assets/${filename}.jpg` and filters out
+// entries with `visible === false`. `id` is kept locally as a React key.
 const DEFAULT_GALLERY = {
   images: [
     { id: 'g1', filename: 'gallery-1', label: 'Edisi #01', year: '2022', visible: true },
@@ -209,25 +255,29 @@ const ToggleSwitch = ({ value, onChange, label }) => (
 );
 
 // Image upload OR url input
+// Image picker — FILE UPLOAD ONLY (base64 data URL), matching the artisan/
+// kolaborator ImageUpload component. The old "URL" tab let admins paste
+// /assets/... paths that only exist in the frontend bundle (useless to a
+// client who only has the website, not the codebase) — removed to avoid that
+// foot-gun and keep image handling consistent across all apps. Any existing
+// value (data URL, /assets/, or https://) still renders in the preview.
 const ImageInput = ({ value, onChange, label, shape = 'wide' }) => {
   const inputRef = useRef();
-  const [tab, setTab] = useState(value?.startsWith('data:') ? 'upload' : 'url');
-  const [urlInput, setUrlInput] = useState(value?.startsWith('data:') ? '' : (value || ''));
   const [err, setErr] = useState('');
+  const [uploading, setUploading] = useState(false);
 
-  const processFile = (file) => {
+  const processFile = async (file) => {
     if (!file) return;
     setErr('');
-    if (!file.type.startsWith('image/')) { setErr('Harus file gambar'); return; }
-    if (file.size > 5 * 1024 * 1024) { setErr('Maks 5 MB'); return; }
-    const reader = new FileReader();
-    reader.onload = e => { onChange(e.target.result); };
-    reader.readAsDataURL(file);
-  };
-
-  const applyUrl = () => {
-    if (!urlInput.trim()) { onChange(''); return; }
-    onChange(urlInput.trim());
+    try {
+      setUploading(true);
+      const url = await uploadImage(file, 'cp');
+      onChange(url);
+    } catch (e) {
+      setErr(e?.message || 'Gagal mengunggah gambar');
+    } finally {
+      setUploading(false);
+    }
   };
 
   const aspectClass = shape === 'square' ? 'aspect-square' : 'aspect-video';
@@ -235,52 +285,33 @@ const ImageInput = ({ value, onChange, label, shape = 'wide' }) => {
   return (
     <div>
       {label && <label className="text-[#5a6040] text-xs font-semibold mb-1.5 block">{label}</label>}
-      <div className="flex gap-2 mb-2">
-        {['upload', 'url'].map(t => (
-          <button key={t} onClick={() => setTab(t)}
-            className={`px-3 py-1 rounded-lg text-xs font-semibold transition ${tab === t ? 'bg-[#7a8a52] text-white' : 'bg-[#eef0e0] text-[#8a9070] hover:bg-[#eef0e0]'}`}>
-            {t === 'upload' ? 'Upload File' : 'URL Gambar'}
-          </button>
-        ))}
+      <div
+        onClick={() => inputRef.current?.click()}
+        onDragOver={e => e.preventDefault()}
+        onDrop={e => { e.preventDefault(); processFile(e.dataTransfer.files[0]); }}
+        className={`relative overflow-hidden rounded-[12px] border-2 border-dashed cursor-pointer transition w-full ${aspectClass} ${value ? 'border-transparent' : 'border-[#e4e7d4] hover:border-[#c8d09a] bg-[#f7f8f2]'}`}
+      >
+        {uploading && (
+          <div className="absolute inset-0 z-10 flex items-center justify-center bg-white/80 text-xs font-semibold text-[#5a6040]">Mengunggah…</div>
+        )}
+        {value ? (
+          <>
+            <img src={resolveCpAsset(value)} alt="" className="w-full h-full object-cover" />
+            <div className="absolute inset-0 bg-black/0 hover:bg-black/30 transition flex items-center justify-center opacity-0 hover:opacity-100">
+              <span className="bg-white/90 rounded-[12px] px-3 py-1.5 text-xs font-semibold text-gray-700 flex items-center gap-1"><Upload size={12} /> Ganti</span>
+            </div>
+          </>
+        ) : (
+          <div className="absolute inset-0 flex flex-col items-center justify-center gap-2 text-[#8a9070]">
+            <ImageIcon size={24} className="text-gray-300" />
+            <p className="text-xs font-medium text-center text-[#8a9070]">Klik atau drag foto</p>
+            <p className="text-[10px] text-[#8a9070]">JPG, PNG, WebP · maks 5 MB</p>
+          </div>
+        )}
       </div>
 
-      {tab === 'upload' ? (
-        <div
-          onClick={() => inputRef.current?.click()}
-          onDragOver={e => e.preventDefault()}
-          onDrop={e => { e.preventDefault(); processFile(e.dataTransfer.files[0]); }}
-          className={`relative overflow-hidden rounded-[12px] border-2 border-dashed cursor-pointer transition w-full ${aspectClass} ${value ? 'border-transparent' : 'border-[#e4e7d4] hover:border-[#c8d09a] bg-[#f7f8f2]'}`}
-        >
-          {value ? (
-            <>
-              <img src={value} alt="" className="w-full h-full object-cover" />
-              <div className="absolute inset-0 bg-black/0 hover:bg-black/30 transition flex items-center justify-center opacity-0 hover:opacity-100">
-                <span className="bg-white/90 rounded-[12px] px-3 py-1.5 text-xs font-semibold text-gray-700 flex items-center gap-1"><Upload size={12} /> Ganti</span>
-              </div>
-            </>
-          ) : (
-            <div className="absolute inset-0 flex flex-col items-center justify-center gap-2 text-[#8a9070]">
-              <ImageIcon size={24} className="text-gray-300" />
-              <p className="text-xs font-medium text-center text-[#8a9070]">Klik atau drag foto</p>
-              <p className="text-[10px] text-[#8a9070]">JPG, PNG, WebP · maks 5 MB</p>
-            </div>
-          )}
-        </div>
-      ) : (
-        <div className="flex gap-2">
-          <input
-            value={urlInput}
-            onChange={e => setUrlInput(e.target.value)}
-            onKeyDown={e => e.key === 'Enter' && applyUrl()}
-            placeholder="/assets/nama-file.jpg atau https://..."
-            className="flex-1 border border-[#e4e7d4] rounded-[12px] px-4 py-2.5 text-sm focus:outline-none focus:border-[#7a8a52] transition"
-          />
-          <button onClick={applyUrl} className="bg-[#7a8a52] text-white px-4 py-2.5 rounded-[12px] text-sm font-semibold hover:bg-[#4f5c30] transition">Terapkan</button>
-        </div>
-      )}
-
       {value && (
-        <button onClick={() => { onChange(''); setUrlInput(''); }} className="mt-1 text-[11px] text-red-400 hover:text-red-600 flex items-center gap-1 transition">
+        <button onClick={() => { onChange(''); }} className="mt-1 text-[11px] text-red-400 hover:text-red-600 flex items-center gap-1 transition">
           <X size={10} /> Hapus gambar
         </button>
       )}
@@ -300,20 +331,28 @@ function TabBeranda() {
   const [saving, setSaving] = useState({});
 
   useEffect(() => {
-    companyProfileApi.get('home').then(d => d && setData(d)).catch(() => {});
+    companyProfileApi.get('home').then(d => {
+      if (!d) return;
+      // Tolerate legacy {id,src,alt} slide objects — normalise to URL strings.
+      if (Array.isArray(d.hero_slides)) {
+        d = { ...d, hero_slides: d.hero_slides.map(s => (typeof s === 'string' ? s : (s?.src || ''))) };
+      }
+      setData(p => ({ ...p, ...d }));
+    }).catch(() => {});
   }, []);
 
   const set = (k, v) => setData(p => ({ ...p, [k]: v }));
 
-  const setSlide = (idx, k, v) => setData(p => {
+  // hero_slides is a flat array of URL strings (canonical CP shape).
+  const setSlide = (idx, v) => setData(p => {
     const slides = [...p.hero_slides];
-    slides[idx] = { ...slides[idx], [k]: v };
+    slides[idx] = v;
     return { ...p, hero_slides: slides };
   });
 
   const addSlide = () => {
     if (data.hero_slides.length >= 6) { toast.warning('Maksimal 6 slide'); return; }
-    setData(p => ({ ...p, hero_slides: [...p.hero_slides, { id: `hs${Date.now()}`, src: '', alt: 'Slide baru' }] }));
+    setData(p => ({ ...p, hero_slides: [...p.hero_slides, ''] }));
   };
 
   const removeSlide = (idx) => {
@@ -341,24 +380,19 @@ function TabBeranda() {
         <div className="space-y-5">
           <div className="grid gap-4">
             {data.hero_slides.map((slide, idx) => (
-              <div key={slide.id} className="border border-gray-100 rounded-[12px] p-4 space-y-3">
+              <div key={idx} className="border border-gray-100 rounded-[12px] p-4 space-y-3">
                 <div className="flex items-center justify-between">
                   <span className="text-xs font-bold text-[#8a9070] uppercase tracking-wider">Slide {idx + 1}</span>
                   <button onClick={() => removeSlide(idx)} className="text-red-400 hover:text-red-600 transition p-1">
                     <Trash2 size={14} />
                   </button>
                 </div>
-                <div className="grid grid-cols-2 gap-4">
-                  <ImageInput
-                    label="Gambar Slide"
-                    value={slide.src}
-                    onChange={v => setSlide(idx, 'src', v)}
-                    shape="wide"
-                  />
-                  <Field label="Alt Text (aksesibilitas)">
-                    <Input value={slide.alt} onChange={v => setSlide(idx, 'alt', v)} placeholder="Deskripsi gambar" />
-                  </Field>
-                </div>
+                <ImageInput
+                  label="Gambar Slide"
+                  value={slide}
+                  onChange={v => setSlide(idx, v)}
+                  shape="wide"
+                />
               </div>
             ))}
           </div>
@@ -377,9 +411,17 @@ function TabBeranda() {
           <Field label="Eyebrow (teks kecil atas)">
             <Input value={data.hero_eyebrow} onChange={v => set('hero_eyebrow', v)} placeholder="MIRAPAT · BANYUMASAN · 2026" />
           </Field>
-          <Field label="Headline Utama" hint="Kata yang dicetak miring+aksen: 'pertunjukan' dalam headline">
-            <Textarea value={data.hero_headline} onChange={v => set('hero_headline', v)} placeholder="Temukan pertunjukan..." rows={2} />
-          </Field>
+          <div className="grid grid-cols-3 gap-4">
+            <Field label="Headline — Bagian Awal" hint="Teks sebelum kata aksen">
+              <Input value={data.hero_headline_pre} onChange={v => set('hero_headline_pre', v)} placeholder="Temukan" />
+            </Field>
+            <Field label="Headline — Kata Aksen" hint="Dicetak miring + warna aksen">
+              <Input value={data.hero_headline_em} onChange={v => set('hero_headline_em', v)} placeholder="pertunjukan" />
+            </Field>
+            <Field label="Headline — Bagian Akhir" hint="Teks setelah kata aksen">
+              <Input value={data.hero_headline_post} onChange={v => set('hero_headline_post', v)} placeholder=", karya artisan, dan cerita..." />
+            </Field>
+          </div>
           <div className="flex justify-end pt-2 border-t border-[#f2f4e8]">
             <SaveBtn onClick={() => save('hero_text')} saving={saving.hero_text} />
           </div>
@@ -416,29 +458,23 @@ function TabBeranda() {
       {/* Lokasi */}
       <SectionCard title="Info Lokasi" subtitle="Alamat, transportasi, dan peta Peken" icon={BookOpen} collapsible>
         <div className="space-y-4">
-          <Field label="Nama Lokasi (heading)">
-            <Input value={data.lokasi_nama} onChange={v => set('lokasi_nama', v)} placeholder="Kawasan Kota Lama..." />
+          <Field label="Headline Lokasi" hint="Boleh multi-baris — setiap baris baru tampil terpisah di halaman publik.">
+            <Textarea value={data.lokasi_headline} onChange={v => set('lokasi_headline', v)} rows={2} placeholder="Kawasan Kota Lama Banyumas..." />
           </Field>
-          <Field label="Alamat Lengkap">
-            <Input value={data.lokasi_alamat} onChange={v => set('lokasi_alamat', v)} placeholder="Banyumas, Sudagaran..." />
+          <Field label="Alamat Lengkap" hint="Boleh multi-baris.">
+            <Textarea value={data.lokasi_alamat} onChange={v => set('lokasi_alamat', v)} rows={2} placeholder="Banyumas, Sudagaran..." />
+          </Field>
+          <Field label="Info Transportasi" hint="Satu baris per rute/keterangan. Contoh baris terakhir: 'Operasional · 04:40 – 18:30 WIB'.">
+            <Textarea value={data.lokasi_trans} onChange={v => set('lokasi_trans', v)} rows={3} placeholder={'Trans Banyumas Koridor 4 · Terminal Bulupitu\n...'} />
           </Field>
           <div className="grid grid-cols-2 gap-4">
-            <Field label="Rute Trans Banyumas 1">
-              <Input value={data.lokasi_trans1_nama} onChange={v => set('lokasi_trans1_nama', v)} />
-            </Field>
-            <Field label="Link Maps Rute 1">
+            <Field label="Link Maps — Tombol Rute 1" hint="Tombol 'Rute Peken Banyumasan'">
               <Input value={data.lokasi_trans1_url} onChange={v => set('lokasi_trans1_url', v)} placeholder="https://maps.google.com/..." />
             </Field>
-            <Field label="Rute Trans Banyumas 2">
-              <Input value={data.lokasi_trans2_nama} onChange={v => set('lokasi_trans2_nama', v)} />
-            </Field>
-            <Field label="Link Maps Rute 2">
+            <Field label="Link Maps — Tombol Rute 2" hint="Tombol 'Trayek Trans Banyumas'">
               <Input value={data.lokasi_trans2_url} onChange={v => set('lokasi_trans2_url', v)} placeholder="https://maps.google.com/..." />
             </Field>
           </div>
-          <Field label="Jam Operasional Trans">
-            <Input value={data.lokasi_trans_jam} onChange={v => set('lokasi_trans_jam', v)} placeholder="04:40 – 18:30 WIB" />
-          </Field>
           <ImageInput label="Gambar Peta Lokasi" hint="Tampil di samping info lokasi pada halaman publik." value={data.lokasi_image_url} onChange={v => set('lokasi_image_url', v)} shape="wide" />
           <div className="flex justify-end pt-2 border-t border-[#f2f4e8]">
             <SaveBtn onClick={() => save('lokasi')} saving={saving.lokasi} />
@@ -460,7 +496,7 @@ function TabTentang() {
   const [saving, setSaving] = useState({});
 
   useEffect(() => {
-    companyProfileApi.get('about').then(d => d && setData(d)).catch(() => {});
+    companyProfileApi.get('about').then(d => d && setData(p => ({ ...p, ...d }))).catch(() => {});
   }, []);
 
   const set = (k, v) => setData(p => ({ ...p, [k]: v }));
@@ -602,10 +638,10 @@ function PersonModal({ person, onClose, onSave }) {
           <button onClick={onClose} className="text-[#8a9070] hover:text-[#5a6040]"><X size={20} /></button>
         </div>
         <div className="overflow-y-auto flex-1 p-5 space-y-4">
-          <ImageInput label="Foto Profil" value={form.foto_url} onChange={v => set('foto_url', v)} shape="square" />
+          <ImageInput label="Foto Profil" value={form.photo} onChange={v => set('photo', v)} shape="square" />
           <div className="grid grid-cols-2 gap-3">
             <Field label="Jabatan (label kecil)" required>
-              <Input value={form.jabatan} onChange={v => set('jabatan', v)} placeholder="FOUNDER" />
+              <Input value={form.role} onChange={v => set('role', v)} placeholder="FOUNDER" />
             </Field>
             <Field label="Nama Lengkap" required>
               <Input value={form.name} onChange={v => set('name', v)} placeholder="Nama + gelar" />
@@ -634,7 +670,21 @@ function TabTim() {
   const [saving, setSaving] = useState({});
 
   useEffect(() => {
-    companyProfileApi.get('tim').then(d => d && setData(d)).catch(() => {});
+    companyProfileApi.get('tim').then(d => {
+      if (!d) return;
+      // Tolerate legacy key_people field names (foto_url→photo, jabatan→role).
+      if (Array.isArray(d.key_people)) {
+        d = {
+          ...d,
+          key_people: d.key_people.map(kp => ({
+            ...kp,
+            photo: kp.photo ?? kp.foto_url ?? '',
+            role: kp.role ?? kp.jabatan ?? '',
+          })),
+        };
+      }
+      setData(p => ({ ...p, ...d }));
+    }).catch(() => {});
   }, []);
 
   const set = (k, v) => setData(p => ({ ...p, [k]: v }));
@@ -663,7 +713,7 @@ function TabTim() {
   };
 
   const addPerson = () => {
-    const newP = { id: `kp${Date.now()}`, foto_url: '', jabatan: 'KOLABORATOR', name: 'Anggota Baru', title: '', bio: '' };
+    const newP = { id: `kp${Date.now()}`, photo: '', role: 'KOLABORATOR', name: 'Anggota Baru', title: '', bio: '' };
     setData(p => ({ ...p, key_people: [...p.key_people, newP] }));
   };
 
@@ -683,13 +733,13 @@ function TabTim() {
             {data.key_people.map((kp) => (
               <div key={kp.id} className="border border-gray-100 rounded-[12px] overflow-hidden group relative">
                 <div className="aspect-square bg-[#eef0e0] overflow-hidden">
-                  {kp.foto_url
-                    ? <img src={kp.foto_url} alt={kp.name} className="w-full h-full object-cover" />
+                  {kp.photo
+                    ? <img src={resolveCpAsset(kp.photo)} alt={kp.name} className="w-full h-full object-cover" />
                     : <div className="w-full h-full flex items-center justify-center text-gray-300"><Users size={32} /></div>
                   }
                 </div>
                 <div className="p-3">
-                  <div className="text-[10px] font-bold text-[#7a8a52] uppercase tracking-wider">{kp.jabatan}</div>
+                  <div className="text-[10px] font-bold text-[#7a8a52] uppercase tracking-wider">{kp.role}</div>
                   <div className="font-semibold text-[#1e2010] text-sm mt-1 leading-tight">{kp.name}</div>
                   <div className="text-xs text-[#8a9070] mt-0.5">{kp.title}</div>
                 </div>
@@ -762,7 +812,7 @@ function TabProgram() {
   const [saving, setSaving] = useState(false);
 
   useEffect(() => {
-    companyProfileApi.get('programs').then(d => d && setPrograms(d)).catch(() => {});
+    companyProfileApi.get('programs').then(d => Array.isArray(d) && d.length && setPrograms(d)).catch(() => {});
   }, []);
 
   const mdeOptions = React.useMemo(() => ({
@@ -850,6 +900,9 @@ function WorkModal({ work, onClose, onSave }) {
   const [form, setForm] = useState({ ...work });
   const set = (k, v) => setForm(p => ({ ...p, [k]: v }));
   const isArtisan = form.owner_type === 'artisan';
+  // kategori_display is the single category string the CP public site renders.
+  // Derive it from whichever selector matches the chosen owner_type.
+  const setKategori = (field, v) => setForm(p => ({ ...p, [field]: v, kategori_display: v }));
   return (
     <div className="fixed inset-0 bg-black/40 z-50 flex items-end md:items-center justify-center p-4" onClick={onClose}>
       <div className="bg-white rounded-[16px] w-full max-w-lg shadow-2xl max-h-[90vh] flex flex-col" onClick={e => e.stopPropagation()}>
@@ -879,16 +932,18 @@ function WorkModal({ work, onClose, onSave }) {
             </select>
           </Field>
           {form.owner_type && (isArtisan ? (
-            <Field label="Kategori Usaha">
-              <select value={form.kategori_usaha || ''} onChange={e => set('kategori_usaha', e.target.value)}
+            <Field label="Kategori Usaha" hint="Tampil sebagai kategori karya di halaman publik.">
+              <select value={form.kategori_usaha || ''} onChange={e => setKategori('kategori_usaha', e.target.value)}
                 className="w-full border border-[#e4e7d4] rounded-[12px] px-4 py-2.5 text-sm focus:outline-none focus:border-[#7a8a52] transition bg-white">
+                <option value="">Pilih kategori usaha...</option>
                 {KATEGORI_USAHA.map(s => <option key={s}>{s}</option>)}
               </select>
             </Field>
           ) : (
-            <Field label="Subsektor">
-              <select value={form.subsektor || ''} onChange={e => set('subsektor', e.target.value)}
+            <Field label="Subsektor" hint="Tampil sebagai kategori karya di halaman publik.">
+              <select value={form.subsektor || ''} onChange={e => setKategori('subsektor', e.target.value)}
                 className="w-full border border-[#e4e7d4] rounded-[12px] px-4 py-2.5 text-sm focus:outline-none focus:border-[#7a8a52] transition bg-white">
+                <option value="">Pilih subsektor...</option>
                 {SUBSEKTOR.map(s => <option key={s}>{s}</option>)}
               </select>
             </Field>
@@ -915,7 +970,7 @@ function TabKarya() {
   const [saving, setSaving] = useState(false);
 
   useEffect(() => {
-    companyProfileApi.get('works').then(d => d && setWorks(d)).catch(() => {});
+    companyProfileApi.get('works').then(d => Array.isArray(d) && d.length && setWorks(d)).catch(() => {});
   }, []);
 
   const save = async () => {
@@ -934,7 +989,7 @@ function TabKarya() {
     setWorks(w => w.map(x => x.id === id ? { ...x, visible: !x.visible } : x));
   };
 
-  const openAdd = () => setEditWork({ id: null, judul: '', owner: '', owner_type: null, subsektor: '', kategori_usaha: '', tahun: new Date().getFullYear(), gambar_url: '', deskripsi: '', visible: true });
+  const openAdd = () => setEditWork({ id: null, judul: '', owner: '', owner_type: null, owner_id: '', subsektor: '', kategori_usaha: '', kategori_display: '', tahun: new Date().getFullYear(), gambar_url: '', deskripsi: '', visible: true });
 
   const saveWork = (updated) => {
     if (updated.id) {
@@ -1024,7 +1079,7 @@ function TabKarya() {
           <div key={w.id} className={`bg-white rounded-[12px] border border-gray-100 p-4 flex items-center gap-4 transition ${!w.visible ? 'opacity-50' : ''}`}>
             <div className="w-16 h-16 rounded-[12px] overflow-hidden bg-[#eef0e0] shrink-0">
               {w.gambar_url
-                ? <img src={w.gambar_url} alt={w.judul} className="w-full h-full object-cover" />
+                ? <img src={resolveCpAsset(w.gambar_url)} alt={w.judul} className="w-full h-full object-cover" />
                 : <div className="w-full h-full flex items-center justify-center text-gray-300"><Image size={20} /></div>
               }
             </div>
@@ -1041,7 +1096,7 @@ function TabKarya() {
                   <span className="shrink-0 text-[10px] font-bold bg-blue-50 text-blue-700 border border-blue-200 px-1.5 py-0.5 rounded-full">Manual</span>
                 )}
               </div>
-              <div className="text-xs text-[#8a9070] mt-0.5">{w.owner} · {w.subsektor || w.kategori_usaha} · {w.tahun}</div>
+              <div className="text-xs text-[#8a9070] mt-0.5">{w.owner} · {w.kategori_display || w.subsektor || w.kategori_usaha} · {w.tahun}</div>
               {w.deskripsi && <p className="text-xs text-[#8a9070] mt-1 line-clamp-1">{w.deskripsi}</p>}
             </div>
             <div className="flex items-center gap-2 shrink-0">
@@ -1077,7 +1132,7 @@ function GalleryImageModal({ item, onClose, onSave }) {
           <button onClick={onClose} className="text-[#8a9070] hover:text-[#5a6040]"><X size={20} /></button>
         </div>
         <div className="p-5 space-y-4">
-          <ImageInput label="Gambar (upload atau path /assets/...)" value={form.src || `/assets/${form.filename}.jpg`}
+          <ImageInput label="Gambar Galeri" value={form.src || `/assets/${form.filename}.jpg`}
             onChange={v => set('src', v)} shape="wide" />
           <div className="grid grid-cols-2 gap-3">
             <Field label="Label/Judul">
@@ -1105,7 +1160,7 @@ function TabGaleri() {
   const [saving, setSaving] = useState({});
 
   useEffect(() => {
-    companyProfileApi.get('gallery').then(d => d && setData(d)).catch(() => {});
+    companyProfileApi.get('gallery').then(d => d && setData(p => ({ ...p, ...d }))).catch(() => {});
   }, []);
 
   const set = (k, v) => setData(p => ({ ...p, [k]: v }));
@@ -1156,7 +1211,7 @@ function TabGaleri() {
               return (
                 <div key={img.id} className={`group relative rounded-[12px] overflow-hidden border border-gray-100 ${!img.visible ? 'opacity-40' : ''}`}>
                   <div className="aspect-square bg-[#eef0e0]">
-                    <img src={src} alt={img.label} className="w-full h-full object-cover" onError={e => { e.target.style.display = 'none'; }} />
+                    <img src={resolveCpAsset(src)} alt={img.label} className="w-full h-full object-cover" onError={e => { e.target.style.display = 'none'; }} />
                   </div>
                   <div className="p-2">
                     <div className="text-[10px] font-semibold text-gray-700 truncate">{img.label}</div>
@@ -1215,7 +1270,7 @@ const TABS = [
   { id: 'tentang',  label: 'Tentang',       icon: Info,     desc: 'Visi, misi, pilar, statistik' },
   { id: 'tim',      label: 'Tim & Mitra',   icon: Users,    desc: 'Key people, hexa-helix, legalitas' },
   { id: 'program',  label: 'Program',       icon: Grid,     desc: '6 program tetap per edisi' },
-  { id: 'karya',    label: 'Karya',         icon: Star,     desc: 'Katalog kolaborator & artisan' },
+  { id: 'karya',    label: 'Publication',   icon: Star,     desc: 'Katalog kolaborator & artisan' },
   { id: 'galeri',   label: 'Galeri',        icon: Image,    desc: 'Foto & teks dokumentasi' },
 ];
 
@@ -1230,7 +1285,7 @@ export default function CompanyProfile() {
       <div className="flex items-start justify-between mb-6 gap-4 flex-wrap">
         <div>
           <h2 className="text-lg font-bold text-[#1e2010]">Kelola Konten Company Profile</h2>
-          <p className="text-sm text-[#8a9070] mt-0.5">Setiap perubahan harus disimpan per-seksi. Data disimpan lokal, siap terkoneksi ke API backend.</p>
+          <p className="text-sm text-[#8a9070] mt-0.5">Setiap perubahan disimpan per-seksi dan langsung tampil di situs Company Profile publik.</p>
         </div>
         {profileUrl && (
           <a href={profileUrl} target="_blank" rel="noopener noreferrer"

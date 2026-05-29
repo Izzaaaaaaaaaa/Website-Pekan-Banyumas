@@ -26,37 +26,22 @@ const Login = () => {
 
   const handleChange = (e) => setFormData({ ...formData, [e.target.name]: e.target.value });
 
-    const handleLogin = async (e) => {
+  const handleLogin = async (e) => {
     e.preventDefault();
-
     setIsLoading(true);
     setError('');
-
     try {
-
       const { token, user } = await authApi.login(formData);
-
-      console.log('TOKEN:', token);
-      console.log('USER:', user);
-
       setToken(token);
       setUser(user);
-
       navigate('/');
-
     } catch (err) {
-
-      console.log(err);
-
-      setError(
-        err?.response?.data?.detail ||
-        'Login gagal'
-      );
-
+      setError(extractError(err, 'Email atau password salah. Silakan coba lagi.'));
     } finally {
       setIsLoading(false);
     }
   };
+
   return (
     <div style={{
       display: 'flex', height: '100vh', overflow: 'hidden',
@@ -96,7 +81,7 @@ const Login = () => {
         {/* Logo */}
         <div style={{ position: 'relative', zIndex: 1, display: 'flex', alignItems: 'center', gap: 12 }}>
           <img
-            src="/logo-gate.png"
+            src="/favicon.png"
             alt="Logo Peken Banyumasan"
             style={{ width: 44, height: 44, borderRadius: 10, objectFit: 'cover' }}
           />
@@ -159,7 +144,7 @@ const Login = () => {
 
           {/* Mobile logo */}
           <div className="flex lg:hidden" style={{ alignItems: 'center', gap: 10, marginBottom: 36 }}>
-            <img src="/logo-gate.png" alt="Logo" style={{ width: 36, height: 36, borderRadius: 8 }} />
+            <img src="/favicon.png" alt="Logo" style={{ width: 36, height: 36, borderRadius: 8 }} />
             <span style={{ fontFamily: '"Clash Display", sans-serif', fontSize: 16, fontWeight: 600, color: '#1e2010' }}>
               Peken Banyumasan
             </span>

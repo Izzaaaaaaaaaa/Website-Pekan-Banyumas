@@ -41,6 +41,12 @@ import { getToken } from '../lib/auth.js';
  */
 let onUnauthorized = () => {};
 
+// Dedupe guard: the handler typically toasts then waits ~1.5s before clearing
+// auth, so a burst of parallel 401s would each pass the token check and stack
+// up toasts ("session expired" filling the screen). This flag ensures the
+// handler runs once per expiry; it resets whenever a handler is (re)registered.
+let unauthorizedInFlight = false;
+
 /**
  * Register the function to run whenever the backend returns 401. The
  * handler is invoked ONCE per 401 response, guarded by a token check so
@@ -54,6 +60,7 @@ let onUnauthorized = () => {};
  */
 export function setUnauthorizedHandler(handler) {
   onUnauthorized = typeof handler === 'function' ? handler : () => {};
+  unauthorizedInFlight = false;  // fresh registration ⇒ allow one handler run
 }
 
 // ── baseURL normalization ──────────────────────────────────────────────────
@@ -117,7 +124,7 @@ async function parseBackendMessage(error) {
 // ── The client ──────────────────────────────────────────────────────────────
 
 const apiClient = axios.create({
-  baseURL: normalizeBaseUrl(import.meta.env.VITE_API_URL || 'http://127.0.0.1:8000'),
+  baseURL: normalizeBaseUrl(import.meta.env?.VITE_API_URL),
   headers: {
     'Content-Type': 'application/json',
   },
@@ -165,10 +172,11 @@ apiClient.interceptors.response.use(
 
     switch (error.response.status) {
       case 401:
-        // Token missing, expired, or invalid. Guard with a token check so
-        // parallel 401s don't trigger duplicate redirects. The handler
-        // owns the actual navigation — this file stays router-agnostic.
-        if (getToken()) {
+        // Token missing, expired, or invalid. Guard with a token check AND a
+        // one-shot in-flight flag so a burst of parallel 401s fires the
+        // handler (and its toast) exactly once. The handler owns navigation.
+        if (getToken() && !unauthorizedInFlight) {
+          unauthorizedInFlight = true;
           try {
             onUnauthorized(error);
           } catch {

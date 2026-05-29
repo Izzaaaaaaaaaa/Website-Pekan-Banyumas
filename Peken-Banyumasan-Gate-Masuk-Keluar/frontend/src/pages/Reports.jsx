@@ -156,7 +156,9 @@ const Reports = () => {
 
     // --- FILTER & PAGINATION ---
 
-    const allDetail = reportData?.detail || [];
+    // Backend returns the visitor list under `rows` (with a `ringkasan` summary
+    // block). Older drafts read `detail`; keep it as a defensive fallback.
+    const allDetail = reportData?.rows || reportData?.detail || [];
 
     const filteredReports = allDetail; // semua pengunjung ter-scan NFC
 
@@ -619,7 +621,7 @@ function exportPDF(title, headers, rows, summaryRows) {
   @media print{@page{margin:12mm}}
 </style></head><body>
 <h2>${esc(title)}</h2>
-<div class="meta">Dicetak: ${new Date().toLocaleString('id-ID')} &nbsp;·&nbsp; Peken Banyumasan</div>
+<div class="meta">Dicetak: ${new Date().toLocaleString('id-ID', { day: 'numeric', month: 'long', year: 'numeric', hour: '2-digit', minute: '2-digit' })} &nbsp;·&nbsp; Peken Banyumasan</div>
 <table>
   <thead><tr>${headers.map(h=>`<th>${esc(h)}</th>`).join('')}</tr></thead>
   <tbody>
@@ -693,7 +695,9 @@ const DEMO_ARTISAN_REPORT = [
   { id:'t5', nama_usaha:'Dawet Ayu Bu Tari',    kategori:'Kuliner',         omset:1980000, komisi_persen:12, transaksi:76, event_count:3, stand_terakhir:'B-7' },
   { id:'t6', nama_usaha:'Anyam Bambu Banyumas', kategori:'Kriya & Fashion', omset:890000,  komisi_persen:15, transaksi:15, event_count:1, stand_terakhir:'A-2' },
 ];
-const fmtRp = n => `Rp ${(n||0).toLocaleString('id-ID')}`;
+// Money fields arrive from the API as Decimal strings ("1910000.00") — coerce
+// with Number() so toLocaleString formats them (a raw string is returned as-is).
+const fmtRp = n => `Rp ${Number(n || 0).toLocaleString('id-ID')}`;
 
 const IS_DUMMY = import.meta.env.VITE_DUMMY_MODE === 'true';
 
@@ -736,9 +740,9 @@ function ArtisanReport({ events = [] }) {
     [rawData, sortBy, search]
   );
 
-  const totalOmset  = data.reduce((s, t) => s + t.omset, 0);
-  const totalKomisi = data.reduce((s, t) => s + Math.round(t.omset * t.komisi_persen / 100), 0);
-  const totalTrx    = data.reduce((s, t) => s + t.transaksi, 0);
+  const totalOmset  = data.reduce((s, t) => s + Number(t.omset || 0), 0);
+  const totalKomisi = data.reduce((s, t) => s + Math.round(Number(t.omset || 0) * Number(t.komisi_persen || 0) / 100), 0);
+  const totalTrx    = data.reduce((s, t) => s + Number(t.transaksi || 0), 0);
 
   const HDRS = ['Nama Usaha','Kategori','Stand Terakhir','Omset (Rp)','Komisi (Rp)','% Komisi','Netto (Rp)','Transaksi','Event Diikuti'];
   const makeRows = () => data.map(t => {
@@ -914,12 +918,12 @@ function AccumulationReport({ events = [] }) {
   }, [selEvent]);
 
   const selesai = data.filter(e => e.status === 'selesai');
-  const totP    = selesai.reduce((s,e) => s + e.pengunjung, 0);
-  const totO    = selesai.reduce((s,e) => s + e.omset_artisan, 0);
-  const totK    = selesai.reduce((s,e) => s + e.komisi, 0);
+  const totP    = selesai.reduce((s,e) => s + Number(e.pengunjung || 0), 0);
+  const totO    = selesai.reduce((s,e) => s + Number(e.omset_artisan || 0), 0);
+  const totK    = selesai.reduce((s,e) => s + Number(e.komisi || 0), 0);
 
   const HDRS = ['Nama Event','Tanggal','Status','Pengunjung','Kolaborator Hadir','Artisan','Omset Artisan (Rp)','Komisi (Rp)'];
-  const ROWS = data.map(e => [e.nama, new Date(e.tanggal).toLocaleDateString('id-ID'), e.status, e.pengunjung||0, e.kolaborator_count, e.artisan_count, e.omset_artisan||0, e.komisi||0]);
+  const ROWS = data.map(e => [e.nama, new Date(e.tanggal).toLocaleDateString('id-ID', { day: 'numeric', month: 'short', year: 'numeric' }), e.status, e.pengunjung||0, e.kolaborator_count, e.artisan_count, e.omset_artisan||0, e.komisi||0]);
   const TOT  = selesai.length > 0
     ? [['TOTAL (selesai)','','', totP, selesai.reduce((s,e)=>s+e.kolaborator_count,0), selesai.reduce((s,e)=>s+e.artisan_count,0), totO, totK]]
     : [];

@@ -36,7 +36,7 @@ export default function Profile() {
         textAlign: 'center',
       }}>
         <img
-          src="/logo-gate.png"
+          src="/favicon.png"
           alt="Peken Banyumasan"
           style={{ width: 52, height: 52, borderRadius: 10, objectFit: 'cover', marginBottom: 16, display: 'inline-block' }}
         />

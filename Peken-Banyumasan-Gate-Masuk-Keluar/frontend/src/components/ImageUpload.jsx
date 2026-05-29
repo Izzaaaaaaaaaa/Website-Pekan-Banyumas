@@ -1,6 +1,7 @@
-// ImageUpload.jsx (admin) — FileReader-based, no URL input
+// ImageUpload.jsx (admin) — uploads to Supabase Storage (public URL), base64 fallback
 import React, { useRef, useState } from 'react';
 import { ImageIcon, X, Upload } from 'lucide-react';
+import { uploadImage } from '../lib/uploadImage';
 
 export default function ImageUpload({
   value,
@@ -8,20 +9,26 @@ export default function ImageUpload({
   label = 'Upload Foto',
   hint = 'JPG, PNG, WebP · maks 5 MB',
   shape = 'wide',  // 'wide' | 'square'
+  folder = 'event',
   className = '',
 }) {
   const inputRef = useRef();
   const [dragging, setDragging] = useState(false);
   const [error, setError] = useState('');
+  const [uploading, setUploading] = useState(false);
 
-  const process = (file) => {
+  const process = async (file) => {
     if (!file) return;
     setError('');
-    if (!file.type.startsWith('image/')) { setError('File harus berupa gambar (JPG/PNG/WebP)'); return; }
-    if (file.size > 5 * 1024 * 1024) { setError('Ukuran file maks 5 MB'); return; }
-    const reader = new FileReader();
-    reader.onload = e => onChange(e.target.result);
-    reader.readAsDataURL(file);
+    try {
+      setUploading(true);
+      const url = await uploadImage(file, folder);
+      onChange(url);
+    } catch (e) {
+      setError(e?.message || 'Gagal mengunggah gambar');
+    } finally {
+      setUploading(false);
+    }
   };
 
   const onInput = e => process(e.target.files[0]);
@@ -41,6 +48,9 @@ export default function ImageUpload({
         className={`relative overflow-hidden rounded-xl border-2 border-dashed cursor-pointer transition w-full ${aspectClass}
           ${dragging ? 'border-[#7a8a52] bg-[#eef0e0]' : value ? 'border-transparent' : 'border-[#e4e7d4] hover:border-[#7a8a52] bg-[#f7f8f2] hover:bg-[#eef0e0]/30'}`}
       >
+        {uploading && (
+          <div className="absolute inset-0 z-10 flex items-center justify-center bg-white/80 text-xs font-semibold text-[#5a6040]">Mengunggah…</div>
+        )}
         {value ? (
           <>
             <img src={value} alt="" className="w-full h-full object-cover"/>

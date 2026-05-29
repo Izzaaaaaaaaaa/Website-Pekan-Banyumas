@@ -9,32 +9,22 @@ import {
 } from 'lucide-react';
 import { useToast } from '../components/Toast';
 import ZoneSelector from '../components/ZoneSelector';
-import { getEventZones, syncOccupiedFromArtisans } from '../lib/eventZones';
+import { getEventZones } from '../lib/eventZones';
 import { STORAGE_KEYS, STORAGE_EVENTS } from '../lib/storageKeys';
 import { artisanApi, eventApi } from '../services/endpoints';
 import { extractError } from '../lib/unwrap';
 import { KATEGORI_USAHA } from '../constants/kategoriUsaha';
 
-const fmtRupiah = v => 'Rp ' + (v||0).toLocaleString('id-ID');
+// Money fields arrive from the API as Decimal strings ("1910000.00"); coerce
+// with Number() so toLocaleString formats them (and reduces don't string-concat).
+const fmtRupiah = v => 'Rp ' + Number(v || 0).toLocaleString('id-ID');
 const fmtTgl = d => new Date(d).toLocaleDateString('id-ID',{day:'numeric',month:'short',year:'numeric'});
 function useDebounce(v,d=300){const[r,s]=useState(v);useEffect(()=>{const t=setTimeout(()=>s(v),d);return()=>clearTimeout(t)},[v,d]);return r}
 
 // ── PosisiSelectModal ─────────────────────────────────────────────────────────
 function PosisiSelectModal({ value, onClose, onChange, eventId }) {
   const [local, setLocal] = useState(value || '');
-  const [zones, setZones] = useState(eventId ? getEventZones(eventId) : []);
-
-  useEffect(() => {
-    if (eventId) {
-      eventApi.artisans(eventId).then(list => {
-        // API returns stand_id from event_artisans table; map to posisi_event
-        const mapped = (list || []).map(t => ({
-          posisi_event: t.posisi_event ?? t.stand_id ?? null,
-        }));
-        setZones(syncOccupiedFromArtisans(eventId, mapped));
-      }).catch(console.error);
-    }
-  }, [eventId]);
+  const zones = eventId ? getEventZones(eventId) : [];
   return (
     <div className="fixed inset-0 bg-black/50 z-[70] flex items-center justify-center p-4" onClick={onClose}>
       <div className="bg-white rounded-[16px] shadow-2xl w-full max-w-sm" onClick={e => e.stopPropagation()}>
@@ -85,23 +75,7 @@ function AssignEventModal({ artisanId, existingIds, onClose, onAssign, allEvents
   const [selected, setSelected] = useState(null);
   const [posisi, setPosisi] = useState('');
   const [saving, setSaving] = useState(false);
-  const [zones, setZones] = useState([]);
   const available = (allEvents || []).filter(e => !existingIds.includes(e.id));
-
-  useEffect(() => {
-    if (selected) {
-      setZones(getEventZones(selected.id));
-      eventApi.artisans(selected.id).then(list => {
-        // API returns stand_id from event_artisans table; map to posisi_event
-        const mapped = (list || []).map(t => ({
-          posisi_event: t.posisi_event ?? t.stand_id ?? null,
-        }));
-        setZones(syncOccupiedFromArtisans(selected.id, mapped));
-      }).catch(console.error);
-    } else {
-      setZones([]);
-    }
-  }, [selected]);
 
   const save = async () => {
     if (!selected) return;
@@ -134,7 +108,7 @@ function AssignEventModal({ artisanId, existingIds, onClose, onAssign, allEvents
           </div>
           <div>
             <label className="text-xs font-semibold text-[#8a9070] mb-2 block">Posisi Stand di Event</label>
-            <ZoneSelector value={posisi} onChange={setPosisi} zones={zones} compact/>
+            <ZoneSelector value={posisi} onChange={setPosisi} zones={selected ? getEventZones(selected.id) : []} compact/>
             <div className="mt-2">
               <input value={posisi} onChange={e=>setPosisi(e.target.value)} placeholder="Atau ketik manual: cth Zona A - Stand 5"
                 className="w-full border border-[#e4e7d4] rounded-[12px] px-3 py-2 text-xs focus:outline-none focus:border-[#7a8a52]"/>
@@ -258,6 +232,8 @@ const EditDrawer = ({ artisan, onClose, onSave, allEvents }) => {
   const [saving, setSaving] = useState(false);
   const [savingProfil, setSavingProfil] = useState(false);
   const [artisanEvents, setArtisanEvents] = useState([]);
+  const [artisanRequests, setArtisanRequests] = useState([]);
+  const [reqProcessing, setReqProcessing] = useState(null);
   const [eventsLoading, setEventsLoading] = useState(false);
   const [showAssign, setShowAssign] = useState(false);
   const [profilEdit, setProfilEdit] = useState({ nama_usaha:'', kota:'', no_hp:'', email:'', deskripsi:'', kategori_usaha:[], internal_notes:'' });
@@ -268,15 +244,22 @@ const EditDrawer = ({ artisan, onClose, onSave, allEvents }) => {
     setKomisi(artisan.komisi_persen||0);
     setProfilEdit({ nama_usaha: artisan.nama_usaha||'', kota: artisan.kota||'', no_hp: artisan.no_hp||'', email: artisan.email||'', deskripsi: artisan.deskripsi||'', kategori_usaha: artisan.kategori_usaha||[], internal_notes: artisan.internal_notes||'' });
     setTab('usaha');
-    setArtisanEvents([]); // Reset events state before loading new ones
     setEventsLoading(true);
-    artisanApi.events(artisan.id)
-      .then(list => setArtisanEvents(list || []))
-      .catch(() => setArtisanEvents([]))
+    Promise.all([artisanApi.events(artisan.id), artisanApi.requests(artisan.id)])
+      .then(([list, reqs]) => { setArtisanEvents(list || []); setArtisanRequests(reqs || []); })
+      .catch(() => { setArtisanEvents([]); setArtisanRequests([]); })
       .finally(() => setEventsLoading(false));
   }, [artisan?.id]);
 
   if (!artisan) return null;
+
+  // GATE-5: revenue summary must react to the commission slider, not the
+  // stored komisi_terkumpul. Preview the commission/net at the *current*
+  // slider rate so the admin sees the effect before saving.
+  const totalPenjualan = Number(artisan.total_penjualan || 0);
+  const estimasiKomisi = Math.round(totalPenjualan * (komisi / 100));
+  const estimasiDiterima = totalPenjualan - estimasiKomisi;
+  const komisiBelumDisimpan = Number(komisi) !== Number(artisan.komisi_persen || 0);
 
   const save = async () => {
     setSaving(true);
@@ -293,7 +276,7 @@ const EditDrawer = ({ artisan, onClose, onSave, allEvents }) => {
   const removeEvent = async (e) => {
     if (!confirm('Hapus dari event ini?')) return;
     try {
-      await eventApi.removeArtisan(e.event_id, artisan.id);
+      await eventApi.removeArtisan(e.event_id, e.id);
       setArtisanEvents(l => l.filter(x => x.id !== e.id));
       toast.success('Artisan dihapus dari event');
     } catch (err) {
@@ -301,26 +284,36 @@ const EditDrawer = ({ artisan, onClose, onSave, allEvents }) => {
     }
   };
 
+  // Approve/reject an artisan's event request from this panel. Approve reuses
+  // the requested stand (backend falls back to req.posisi_event when no
+  // stand_id is sent), so the admin can one-click confirm.
+  const respondRequest = async (req, action) => {
+    setReqProcessing(req.id);
+    try {
+      await eventApi.respondArtisanRequest(req.event_id, req.id, { action });
+      const [list, reqs] = await Promise.all([
+        artisanApi.events(artisan.id),
+        artisanApi.requests(artisan.id),
+      ]);
+      setArtisanEvents(list || []);
+      setArtisanRequests(reqs || []);
+      toast.success(action === 'approve' ? 'Permintaan disetujui' : 'Permintaan ditolak');
+    } catch (err) {
+      toast.error(extractError(err, 'Gagal memproses permintaan'));
+    } finally {
+      setReqProcessing(null);
+    }
+  };
+
   const handleAssignEvent = async ({ event_id, posisi_event }) => {
     try {
-      // Backend mapping: we pass stand_id for posisi_event
-      await eventApi.assignArtisan(event_id, { artisan_id: artisan.id, stand_id: posisi_event });
+      await eventApi.assignArtisan(event_id, { artisan_id: artisan.id, posisi_event });
       const updated = await artisanApi.events(artisan.id);
       setArtisanEvents(updated || []);
       toast.success('Artisan berhasil di-assign ke event');
     } catch (err) {
       toast.error(extractError(err, 'Gagal assign ke event'));
       throw err;
-    }
-  };
-
-  const updatePosition = async (e, val) => {
-    try {
-      await eventApi.updateArtisan(e.event_id, artisan.id, { stand_id: val });
-      setArtisanEvents(l => l.map(x => x.id === e.id ? { ...x, posisi_event: val } : x));
-      toast.success('Posisi stand berhasil diperbarui');
-    } catch (err) {
-      toast.error(extractError(err, 'Gagal memperbarui posisi stand'));
     }
   };
 
@@ -354,10 +347,16 @@ const EditDrawer = ({ artisan, onClose, onSave, allEvents }) => {
           {tab === 'usaha' && (
             <div className="p-5 space-y-5">
               <div className="bg-[#eef4eb] border border-emerald-100 rounded-[12px] p-4 space-y-2">
-                <p className="text-[#7A9B6A] text-xs font-semibold uppercase tracking-wide">Ringkasan Revenue</p>
-                {[['Total Penjualan', fmtRupiah(artisan.total_penjualan),'text-[#1e2010]'],
-                  ['Komisi Terkumpul', fmtRupiah(artisan.komisi_terkumpul),'text-[#7A9B6A]'],
-                  ['Diterima Artisan', fmtRupiah(artisan.total_penjualan-artisan.komisi_terkumpul),'text-indigo-700'],
+                <div className="flex items-center justify-between gap-2">
+                  <p className="text-[#7A9B6A] text-xs font-semibold uppercase tracking-wide">Ringkasan Revenue</p>
+                  {komisiBelumDisimpan && (
+                    <span className="text-[10px] font-semibold text-[#C4A24D] bg-[#f7f2e4] border border-[#dcc882] rounded-full px-2 py-0.5 whitespace-nowrap">Estimasi · belum disimpan</span>
+                  )}
+                </div>
+                {[['Total Penjualan', fmtRupiah(totalPenjualan),'text-[#1e2010]'],
+                  ['Komisi Terkumpul (tersimpan)', fmtRupiah(artisan.komisi_terkumpul),'text-[#7A9B6A]'],
+                  [`Estimasi Komisi (${komisi}%)`, fmtRupiah(estimasiKomisi),'text-[#7A9B6A]'],
+                  ['Estimasi Diterima Artisan', fmtRupiah(estimasiDiterima),'text-indigo-700'],
                 ].map(([l,v,c]) => (
                   <div key={l} className="flex justify-between text-sm"><span className="text-[#5a6040]">{l}</span><span className={`font-semibold ${c}`}>{v}</span></div>
                 ))}
@@ -390,6 +389,37 @@ const EditDrawer = ({ artisan, onClose, onSave, allEvents }) => {
                   <Plus size={12}/> Assign Event
                 </button>
               </div>
+
+              {/* Pending requests — approve/reject straight from this panel */}
+              {artisanRequests.length > 0 && (
+                <div className="bg-amber-50/60 border-b border-amber-100">
+                  <p className="px-5 pt-3 pb-1 text-[11px] font-bold uppercase tracking-wide text-amber-700">
+                    Menunggu Persetujuan ({artisanRequests.length})
+                  </p>
+                  <div className="divide-y divide-amber-100/70">
+                    {artisanRequests.map(r => (
+                      <div key={r.id} className="px-5 py-3 flex items-start gap-3">
+                        <div className="flex-1 min-w-0">
+                          <p className="font-semibold text-[#1e2010] text-sm leading-snug">{r.event_nama}</p>
+                          <p className="text-[#8a9070] text-xs mt-0.5">{fmtTgl(r.tanggal)}{r.jam_mulai && <span className="ml-1 text-gray-300">· {r.jam_mulai.slice(0,5).replace(':','.')}{r.jam_selesai?`–${r.jam_selesai.slice(0,5).replace(':','.')}`:''} WIB</span>}</p>
+                          {(r.posisi_event || r.change_request) && (
+                            <span className="inline-block mt-1 text-[10px] px-1.5 py-0.5 rounded bg-white border border-amber-200 text-amber-700">
+                              {r.status_request === 'pending_change' ? `Pindah → ${r.change_request}` : `Posisi: ${r.posisi_event}`}
+                            </span>
+                          )}
+                        </div>
+                        <div className="flex items-center gap-1.5">
+                          <button disabled={reqProcessing===r.id} onClick={() => respondRequest(r,'approve')}
+                            className="px-2.5 py-1.5 rounded-lg text-xs font-semibold bg-[#7a8a52] hover:bg-[#4f5c30] text-white disabled:opacity-50 transition">Setujui</button>
+                          <button disabled={reqProcessing===r.id} onClick={() => respondRequest(r,'reject')}
+                            className="px-2.5 py-1.5 rounded-lg text-xs font-semibold text-[#B87272] hover:bg-[#f7eeee] disabled:opacity-50 transition">Tolak</button>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              )}
+
               {eventsLoading
                 ? <div className="py-12 text-center text-[#8a9070] text-sm"><Loader2 size={20} className="animate-spin mx-auto mb-2 text-[#a8b07a]"/>Memuat event...</div>
                 : artisanEvents.length === 0
@@ -399,11 +429,11 @@ const EditDrawer = ({ artisan, onClose, onSave, allEvents }) => {
                         <div key={e.id} className="px-5 py-3 flex items-start gap-3 group hover:bg-[#f7f8f2]/50 transition">
                           <div className="flex-1 min-w-0">
                             <p className="font-semibold text-[#1e2010] text-sm">{e.nama}</p>
-                            <p className="text-[#8a9070] text-xs mt-0.5">{fmtTgl(e.tanggal)}{e.jam_mulai && <span className="ml-1 text-gray-300">· {e.jam_mulai.replace(':','.')}{e.jam_selesai?`–${e.jam_selesai.replace(':','.')}`:''} WIB</span>}</p>
+                            <p className="text-[#8a9070] text-xs mt-0.5">{fmtTgl(e.tanggal)}{e.jam_mulai && <span className="ml-1 text-gray-300">· {e.jam_mulai.slice(0,5).replace(':','.')}{e.jam_selesai?`–${e.jam_selesai.slice(0,5).replace(':','.')}`:''} WIB</span>}</p>
                             <div className="flex items-center gap-2 mt-1 flex-wrap">
                               <PosisiInlineEditor
                                 value={e.posisi_event}
-                                onChange={val => updatePosition(e, val)}
+                                onChange={val => setArtisanEvents(l => l.map(x => x.id===e.id ? {...x,posisi_event:val} : x))}
                                 eventId={e.event_id}
                               />
                               <span className={`text-[10px] ${e.assigned_by==='admin'?'text-blue-500':'text-[#8a9070]'}`}>
@@ -668,8 +698,8 @@ export default function ArtisanPage() {
     )
     .sort(SORT_FNS[sortBy] || SORT_FNS.newest);
 
-  const totalPenjualan = aktif.reduce((s,t) => s+t.total_penjualan, 0);
-  const totalKomisi    = aktif.reduce((s,t) => s+t.komisi_terkumpul, 0);
+  const totalPenjualan = aktif.reduce((s,t) => s + Number(t.total_penjualan||0), 0);
+  const totalKomisi    = aktif.reduce((s,t) => s + Number(t.komisi_terkumpul||0), 0);
 
   return (
     <div className="space-y-5">

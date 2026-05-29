@@ -237,6 +237,7 @@ export const kolaboratorApi = {
   update:     async (id, data)    => extractData(await apiClient.patch(`/api/kolaborator/${id}`, data)),
   status:     async (id, status)  => extractData(await apiClient.patch(`/api/kolaborator/${id}/status`, { status })),
   events:      async (id)              => extractData(await apiClient.get(`/api/kolaborator/${id}/events`)),
+  requests:    async (id)              => extractData(await apiClient.get(`/api/kolaborator/${id}/requests`)),
   portofolio:  async (id)              => extractData(await apiClient.get(`/api/kolaborator/${id}/portofolio`)),
   stories:     async (id)              => extractData(await apiClient.get(`/api/kolaborator/${id}/stories`)),
   featurePorto: async (id, pid, featured) => extractData(await apiClient.patch(`/api/kolaborator/${id}/portofolio/${pid}`, { featured })),
@@ -250,6 +251,7 @@ export const artisanApi = {
   update:  async (id, data)    => extractData(await apiClient.patch(`/api/artisan/${id}`, data)),
   status:  async (id, status)  => extractData(await apiClient.patch(`/api/artisan/${id}/status`, { status })),
   events:  async (id)          => extractData(await apiClient.get(`/api/artisan/${id}/events`)),
+  requests: async (id)         => extractData(await apiClient.get(`/api/artisan/${id}/requests`)),
   // Admin finance view (read-only aggregates per artisan)
   kas:     async (id, params)  => extractData(await apiClient.get(`/api/artisan/${id}/kas`, { params })),
   riwayat: async (id, params)  => extractData(await apiClient.get(`/api/artisan/${id}/riwayat`, { params })),

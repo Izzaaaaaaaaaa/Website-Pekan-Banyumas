@@ -241,9 +241,7 @@ export default function EventDetail() {
 
   const refreshZones = (updatedartisanss, updatedRequests) => {
     try {
-      // event_artisans table uses stand_id; map to posisi_event for syncOccupiedFromArtisans
-      const mapped = (updatedartisanss || []).map(t => ({ posisi_event: t.posisi_event ?? t.stand_id ?? null }));
-      let z = syncOccupiedFromArtisans(id, mapped);
+      let z = syncOccupiedFromArtisans(id, updatedartisanss.map(t => ({ posisi_event: t.posisi_event })));
       if (updatedRequests) z = syncPendingFromRequests(id, updatedRequests);
       setZones(z);
     } catch {}
@@ -288,9 +286,7 @@ export default function EventDetail() {
         setartisansRequests(reqs || []);
         setKolaboratorRequests(kReqs || []);
         try {
-          // event_artisans table uses stand_id; map to posisi_event for syncOccupiedFromArtisans
-          const mapped = (arts || []).map(t => ({ posisi_event: t.posisi_event ?? t.stand_id ?? null }));
-          let z = syncOccupiedFromArtisans(id, mapped);
+          let z = syncOccupiedFromArtisans(id, (arts || []).map(t => ({ posisi_event: t.posisi_event })));
           z = syncPendingFromRequests(id, reqs || []);
           setZones(z);
         } catch {
@@ -771,7 +767,7 @@ export default function EventDetail() {
                             <div className="flex items-center gap-4 text-xs text-[#8a9070] px-5 pb-1 pl-[68px]">
                               <span>Posisi: <strong className="text-[#5a6040]">{req.posisi_event||'—'}</strong></span>
                               {isPendingChange && <span>→ <strong className="text-[#1d4ed8]">{req.change_request}</strong></span>}
-                              <span>{new Date(req.created_at).toLocaleDateString('id-ID')}</span>
+                              <span>{fmtDate(req.created_at)}</span>
                             </div>
                             {isExpanded && <ExpandPanel reqId={req.id} entityId={req.artisan_id} type="artisan" onViewFull={(profile, entityId) => setSideDrawer({ profile, type: 'artisan', entityId })}/>}
                             {isActive && (
@@ -829,7 +825,7 @@ export default function EventDetail() {
                               </span>
                             </div>
                             <div className="flex items-center gap-4 text-xs text-[#8a9070] px-5 pb-1 pl-[68px]">
-                              <span>{new Date(req.created_at).toLocaleDateString('id-ID')}</span>
+                              <span>{fmtDate(req.created_at)}</span>
                             </div>
                             {isExpanded && <ExpandPanel reqId={req.id} entityId={req.kolaborator_id} type="kolaborator" onViewFull={(profile, entityId) => setSideDrawer({ profile, type: 'kolaborator', entityId })}/>}
                             {isPending && (

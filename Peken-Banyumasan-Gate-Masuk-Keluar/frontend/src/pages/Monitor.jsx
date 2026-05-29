@@ -1,5 +1,6 @@
 // src/pages/Monitor.jsx
-// AUTO THEME: Siang (06:00–17:30) → light | Sore (17:30–19:00) → warm | Malam (19:00–06:00) → dark
+// AUTO THEME (2 modes, sage design-system palette):
+//   Siang (06:00–18:00) → light cream + sage | Malam (18:00–06:00) → dark + light-sage
 // AUTH: GET /dashboard/stats memerlukan JWT — buka dari browser dengan sesi admin aktif.
 
 import React, { useState, useEffect, useCallback, useRef } from 'react';
@@ -14,102 +15,73 @@ const REFRESH_INTERVAL = 10;
 /* ─── Theme Resolver ───────────────────────────────────────────────── */
 const getThemeByHour = (date) => {
     const h = date.getHours() + date.getMinutes() / 60;
-    if (h >= 6 && h < 17.5) return 'day';
-    if (h >= 17.5 && h < 19) return 'dusk';
-    return 'night';
+    // Two modes only: Siang 06:00–18:00 (terang), Malam 18:00–06:00 (gelap).
+    return (h >= 6 && h < 18) ? 'day' : 'night';
 };
 
 const THEMES = {
+    // ── SIANG (light) — sage on cream, matches the Peken design system ──────
     day: {
         name:         'Siang',
-        root:         { background: '#f0fdf4' },
-        bgDot:        { backgroundImage: 'radial-gradient(circle, #2f6f4e 1px, transparent 1px)', opacity: 0.06 },
-        bgGlow1:      { background: 'radial-gradient(ellipse, #bbf7d0 0%, transparent 70%)', opacity: 0.8 },
-        bgGlow2:      { background: 'radial-gradient(ellipse, #d1fae5 0%, transparent 70%)', opacity: 0.6 },
-        header:       { borderBottomColor: 'rgba(0,0,0,0.08)', background: 'rgba(240,253,244,0.85)' },
-        logo:         { background: 'linear-gradient(135deg, #2f6f4e, #245840)', boxShadow: '0 0 20px rgba(22,163,74,0.3)' },
-        brandName:    { color: '#1a3a2a' },
-        eventName:    { color: '#2f6f4e' },
-        clockTime:    { color: '#1a3a2a', textShadow: 'none' },
-        clockDate:    { color: '#6b7280' },
-        heroCard:     { background: 'rgba(255,255,255,0.7)', border: '1px solid rgba(22,163,74,0.25)', boxShadow: '0 8px 40px rgba(22,163,74,0.1)' },
-        heroGlow:     { background: 'radial-gradient(ellipse at 50% 110%, rgba(22,163,74,0.1) 0%, transparent 65%)' },
-        liveBadge:    { background: 'rgba(22,163,74,0.1)', border: '1px solid rgba(22,163,74,0.3)' },
-        liveDot:      { background: '#2f855a', boxShadow: '0 0 8px rgba(22,163,74,0.9)' },
-        liveText:     { color: '#2f6f4e' },
-        heroIconWrap: { background: 'rgba(22,163,74,0.1)', border: '1px solid rgba(22,163,74,0.2)' },
-        heroNumber:   { color: '#2f6f4e', textShadow: '0 2px 20px rgba(22,163,74,0.2)' },
-        heroLabel:    { color: 'rgba(20,83,45,0.55)' },
-        heroDivider:  { background: 'linear-gradient(90deg, transparent, rgba(22,163,74,0.3), transparent)' },
-        secCard:      { background: 'rgba(255,255,255,0.6)', border: '1px solid rgba(0,0,0,0.07)', boxShadow: '0 2px 12px rgba(0,0,0,0.05)' },
-        secLabel:     { color: 'rgba(20,83,45,0.45)' },
-        secAccents:   ['#2f6f4e', '#2f855a', '#4a9b6e'],
-        // [FIX 1] footer pakai borderTop shorthand (bukan hanya borderTopColor) agar garis separator tampil
-        footer:       { borderTop: '1px solid rgba(0,0,0,0.06)', background: 'rgba(240,253,244,0.85)' },
-        footerText:   { color: '#9ca3af' },
-        progressBar:  { background: 'rgba(0,0,0,0.08)' },
-        progressFill: { background: 'linear-gradient(90deg, #2f6f4e, #4ade80)' },
-        themeTag:     { color: '#2f855a', background: 'rgba(22,163,74,0.1)', border: '1px solid rgba(22,163,74,0.2)' },
+        root:         { background: '#f2f4e8' },
+        bgDot:        { backgroundImage: 'radial-gradient(circle, #7a8a52 1px, transparent 1px)', opacity: 0.05 },
+        bgGlow1:      { background: 'radial-gradient(ellipse, #c3ca96 0%, transparent 70%)', opacity: 0.55 },
+        bgGlow2:      { background: 'radial-gradient(ellipse, #dce0c0 0%, transparent 70%)', opacity: 0.45 },
+        header:       { borderBottomColor: 'rgba(30,32,16,0.08)', background: 'rgba(242,244,232,0.85)' },
+        logo:         { background: 'linear-gradient(135deg, #7a8a52, #4f5c30)', boxShadow: '0 0 20px rgba(122,138,82,0.3)' },
+        brandName:    { color: '#1e2010' },
+        eventName:    { color: '#4f5c30' },
+        clockTime:    { color: '#1e2010', textShadow: 'none' },
+        clockDate:    { color: '#8a9070' },
+        heroCard:     { background: 'rgba(255,255,255,0.7)', border: '1px solid rgba(122,138,82,0.25)', boxShadow: '0 8px 40px rgba(122,138,82,0.12)' },
+        heroGlow:     { background: 'radial-gradient(ellipse at 50% 110%, rgba(122,138,82,0.12) 0%, transparent 65%)' },
+        liveBadge:    { background: 'rgba(122,138,82,0.1)', border: '1px solid rgba(122,138,82,0.3)' },
+        liveDot:      { background: '#7a8a52', boxShadow: '0 0 8px rgba(122,138,82,0.9)' },
+        liveText:     { color: '#4f5c30' },
+        heroIconWrap: { background: 'rgba(122,138,82,0.1)', border: '1px solid rgba(122,138,82,0.2)' },
+        heroNumber:   { color: '#4f5c30', textShadow: '0 2px 20px rgba(122,138,82,0.2)' },
+        heroLabel:    { color: 'rgba(30,32,16,0.55)' },
+        heroDivider:  { background: 'linear-gradient(90deg, transparent, rgba(122,138,82,0.3), transparent)' },
+        secCard:      { background: 'rgba(255,255,255,0.6)', border: '1px solid rgba(30,32,16,0.07)', boxShadow: '0 2px 12px rgba(30,32,16,0.05)' },
+        secLabel:     { color: 'rgba(30,32,16,0.45)' },
+        secAccents:   ['#4f5c30', '#7a8a52', '#a8b07a'],
+        // footer pakai borderTop shorthand agar garis separator tampil
+        footer:       { borderTop: '1px solid rgba(30,32,16,0.06)', background: 'rgba(242,244,232,0.85)' },
+        footerText:   { color: '#8a9070' },
+        progressBar:  { background: 'rgba(30,32,16,0.08)' },
+        progressFill: { background: 'linear-gradient(90deg, #4f5c30, #a8b07a)' },
+        themeTag:     { color: '#4f5c30', background: 'rgba(122,138,82,0.1)', border: '1px solid rgba(122,138,82,0.2)' },
     },
-    dusk: {
-        name:         'Sore',
-        root:         { background: '#1c1007' },
-        bgDot:        { backgroundImage: 'radial-gradient(circle, #d97706 1px, transparent 1px)', opacity: 0.04 },
-        bgGlow1:      { background: 'radial-gradient(ellipse, #78350f 0%, transparent 70%)', opacity: 0.6 },
-        bgGlow2:      { background: 'radial-gradient(ellipse, #7c2d12 0%, transparent 70%)', opacity: 0.35 },
-        header:       { borderBottomColor: 'rgba(255,255,255,0.07)', background: 'rgba(28,16,7,0.7)' },
-        logo:         { background: 'linear-gradient(135deg, #b45309, #92400e)', boxShadow: '0 0 20px rgba(217,119,6,0.3)' },
-        brandName:    { color: '#fef3c7' },
-        eventName:    { color: '#fbbf24' },
-        clockTime:    { color: '#fef3c7', textShadow: '0 0 30px rgba(251,191,36,0.2)' },
-        clockDate:    { color: '#6b7280' },
-        heroCard:     { background: 'rgba(120,53,15,0.18)', border: '1px solid rgba(251,191,36,0.2)', boxShadow: 'none' },
-        heroGlow:     { background: 'radial-gradient(ellipse at 50% 120%, rgba(217,119,6,0.12) 0%, transparent 65%)' },
-        liveBadge:    { background: 'rgba(217,119,6,0.12)', border: '1px solid rgba(217,119,6,0.25)' },
-        liveDot:      { background: '#f59e0b', boxShadow: '0 0 8px rgba(245,158,11,0.9)' },
-        liveText:     { color: '#fbbf24' },
-        heroIconWrap: { background: 'rgba(217,119,6,0.12)', border: '1px solid rgba(217,119,6,0.2)' },
-        heroNumber:   { color: '#fbbf24', textShadow: '0 0 60px rgba(251,191,36,0.3), 0 0 120px rgba(251,191,36,0.1)' },
-        heroLabel:    { color: 'rgba(254,243,199,0.45)' },
-        heroDivider:  { background: 'linear-gradient(90deg, transparent, rgba(251,191,36,0.3), transparent)' },
-        secCard:      { background: 'rgba(255,255,255,0.03)', border: '1px solid rgba(255,255,255,0.07)', boxShadow: 'none' },
-        secLabel:     { color: 'rgba(255,255,255,0.35)' },
-        secAccents:   ['#fbbf24', '#f59e0b', '#fb923c'],
-        footer:       { borderTop: '1px solid rgba(255,255,255,0.06)', background: 'rgba(28,16,7,0.7)' },
-        footerText:   { color: '#4b5563' },
-        progressBar:  { background: 'rgba(255,255,255,0.07)' },
-        progressFill: { background: 'linear-gradient(90deg, #b45309, #fbbf24)' },
-        themeTag:     { color: '#f59e0b', background: 'rgba(217,119,6,0.1)', border: '1px solid rgba(217,119,6,0.2)' },
-    },
+    // ── MALAM (dark) — light-sage on deep olive-ink, same brand family ──────
     night: {
         name:         'Malam',
-        root:         { background: '#040d07' },
-        bgDot:        { backgroundImage: 'radial-gradient(circle, #2f855a 1px, transparent 1px)', opacity: 0.03 },
-        bgGlow1:      { background: 'radial-gradient(ellipse, #1a3a2a 0%, transparent 70%)', opacity: 0.5 },
-        bgGlow2:      { background: 'radial-gradient(ellipse, #1a3a2a 0%, transparent 70%)', opacity: 0.3 },
-        header:       { borderBottomColor: 'rgba(255,255,255,0.07)', background: 'rgba(4,13,7,0.6)' },
-        logo:         { background: 'linear-gradient(135deg, #2f6f4e, #245840)', boxShadow: '0 0 20px rgba(34,197,94,0.25)' },
-        brandName:    { color: '#fff' },
-        eventName:    { color: '#4ade80' },
-        clockTime:    { color: '#fff', textShadow: '0 0 30px rgba(74,222,128,0.2)' },
-        clockDate:    { color: '#4b5563' },
-        heroCard:     { background: 'rgba(20,83,45,0.15)', border: '1px solid rgba(74,222,128,0.2)', boxShadow: 'none' },
-        heroGlow:     { background: 'radial-gradient(ellipse at 50% 120%, rgba(34,197,94,0.12) 0%, transparent 65%)' },
-        liveBadge:    { background: 'rgba(34,197,94,0.12)', border: '1px solid rgba(34,197,94,0.25)' },
-        liveDot:      { background: '#4ade80', boxShadow: '0 0 8px rgba(74,222,128,0.8)' },
-        liveText:     { color: '#4ade80' },
-        heroIconWrap: { background: 'rgba(74,222,128,0.1)', border: '1px solid rgba(74,222,128,0.2)' },
-        heroNumber:   { color: '#4ade80', textShadow: '0 0 60px rgba(74,222,128,0.3), 0 0 120px rgba(74,222,128,0.1)' },
-        heroLabel:    { color: 'rgba(255,255,255,0.45)' },
-        heroDivider:  { background: 'linear-gradient(90deg, transparent, rgba(74,222,128,0.3), transparent)' },
+        root:         { background: '#14180c' },
+        bgDot:        { backgroundImage: 'radial-gradient(circle, #7a8a52 1px, transparent 1px)', opacity: 0.04 },
+        bgGlow1:      { background: 'radial-gradient(ellipse, #2e3a1a 0%, transparent 70%)', opacity: 0.55 },
+        bgGlow2:      { background: 'radial-gradient(ellipse, #2e3a1a 0%, transparent 70%)', opacity: 0.3 },
+        header:       { borderBottomColor: 'rgba(255,255,255,0.07)', background: 'rgba(20,24,12,0.65)' },
+        logo:         { background: 'linear-gradient(135deg, #7a8a52, #4f5c30)', boxShadow: '0 0 20px rgba(168,176,122,0.3)' },
+        brandName:    { color: '#f2f4e8' },
+        eventName:    { color: '#c3ca96' },
+        clockTime:    { color: '#f2f4e8', textShadow: '0 0 30px rgba(195,202,150,0.2)' },
+        clockDate:    { color: '#8a9070' },
+        heroCard:     { background: 'rgba(79,92,48,0.18)', border: '1px solid rgba(195,202,150,0.2)', boxShadow: 'none' },
+        heroGlow:     { background: 'radial-gradient(ellipse at 50% 120%, rgba(168,176,122,0.14) 0%, transparent 65%)' },
+        liveBadge:    { background: 'rgba(168,176,122,0.12)', border: '1px solid rgba(168,176,122,0.25)' },
+        liveDot:      { background: '#c3ca96', boxShadow: '0 0 8px rgba(195,202,150,0.85)' },
+        liveText:     { color: '#c3ca96' },
+        heroIconWrap: { background: 'rgba(195,202,150,0.1)', border: '1px solid rgba(195,202,150,0.2)' },
+        heroNumber:   { color: '#c3ca96', textShadow: '0 0 60px rgba(195,202,150,0.3), 0 0 120px rgba(195,202,150,0.1)' },
+        heroLabel:    { color: 'rgba(242,244,232,0.45)' },
+        heroDivider:  { background: 'linear-gradient(90deg, transparent, rgba(195,202,150,0.3), transparent)' },
         secCard:      { background: 'rgba(255,255,255,0.03)', border: '1px solid rgba(255,255,255,0.07)', boxShadow: 'none' },
-        secLabel:     { color: 'rgba(255,255,255,0.35)' },
-        secAccents:   ['#4ade80', '#a3e635', '#86efac'],
-        footer:       { borderTop: '1px solid rgba(255,255,255,0.06)', background: 'rgba(4,13,7,0.6)' },
-        footerText:   { color: '#374151' },
+        secLabel:     { color: 'rgba(242,244,232,0.35)' },
+        secAccents:   ['#c3ca96', '#a8b07a', '#dce0c0'],
+        footer:       { borderTop: '1px solid rgba(255,255,255,0.06)', background: 'rgba(20,24,12,0.65)' },
+        footerText:   { color: '#5a6040' },
         progressBar:  { background: 'rgba(255,255,255,0.07)' },
-        progressFill: { background: 'linear-gradient(90deg, #2f6f4e, #4ade80)' },
-        themeTag:     { color: '#4ade80', background: 'rgba(34,197,94,0.1)', border: '1px solid rgba(34,197,94,0.2)' },
+        progressFill: { background: 'linear-gradient(90deg, #4f5c30, #c3ca96)' },
+        themeTag:     { color: '#c3ca96', background: 'rgba(168,176,122,0.12)', border: '1px solid rgba(168,176,122,0.2)' },
     },
 };
 
@@ -182,19 +154,14 @@ const Monitor = () => {
 
     useEffect(() => {
         let channel = null;
-        let realtimeTimeout = null;
-
         if (supabaseRealtime) {
             channel = supabaseRealtime
                 .channel('monitor-kunjungan-live')
                 .on(
                     'postgres_changes',
-                    { event: '*', schema: 'public', table: 'visitors' },
+                    { event: '*', schema: 'public', table: 'kunjungan' },
                     () => {
-                        if (realtimeTimeout) clearTimeout(realtimeTimeout);
-                        realtimeTimeout = setTimeout(() => {
-                            fetchStats(true);
-                        }, 2000);
+                        fetchStats(true);
                     }
                 )
                 .subscribe((status) => {
@@ -229,7 +196,7 @@ const Monitor = () => {
     const fmtDate = (d) =>
         d.toLocaleDateString('id-ID', { weekday: 'long', day: 'numeric', month: 'long', year: 'numeric' });
     const fmtLast = (d) =>
-        d ? d.toLocaleTimeString('id-ID', { hour: '2-digit', minute: '2-digit', second: '2-digit' }) : '--:--:--';
+        d ? d.toLocaleTimeString('id-ID', { hour: '2-digit', minute: '2-digit' }) : '--:--';
 
     /* ── Error: Auth ── */
     if (error === 'auth') {

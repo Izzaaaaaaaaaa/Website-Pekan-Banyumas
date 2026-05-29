@@ -297,6 +297,7 @@ export const kolaboratorApi = {
     return { id, status };
   },
   events:     async (id) => { await delay(); return [...(_kolabEvents[id]    || [])]; },
+  requests:   async ()   => { await delay(); return []; },
   portofolio: async (id) => { await delay(); return [...(_kolabPorto[id]     || [])]; },
   stories:    async (id) => { await delay(); return [...(_kolabAktivitas[id] || [])]; },
   featurePorto: async (id, pid, featured) => {
@@ -328,6 +329,7 @@ export const artisanApi = {
     return { id, status };
   },
   events:  async (id)          => { await delay(); return [...(_artisanEvents[id] || [])]; },
+  requests: async ()           => { await delay(); return []; },
   kas:     async (id)          => { await delay(); return [...(_artisanKas[id]    || [])]; },
   riwayat: async (id)          => { await delay(); return [...(_artisanRiwayat[id]|| [])]; },
   promo:   async (id)          => { await delay(); return [...(_artisanPromo[id]  || [])]; },

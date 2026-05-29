@@ -10,7 +10,6 @@ import { useToast } from '../components/Toast';
 import { kolaboratorApi, eventApi, aktivitasApi } from '../services/endpoints';
 import { extractError } from '../lib/unwrap';
 import { SUBSEKTOR } from '../constants/subsektor';
-import { supabaseRealtime } from '../lib/supabase';
 
 const SUBSEKTORS = ['Semua', ...SUBSEKTOR];
 
@@ -138,6 +137,8 @@ const KolaboratorRow = React.memo(({ m, onApprove, onSuspend, onDetail, onDelete
 const DetailDrawer = ({ kolaborator, onClose, onApprove, onSuspend, onUpdate, allEvents }) => {
   const [tab, setTab] = useState('info');
   const [kolaboratorEvents, setKolaboratorEvents] = useState([]);
+  const [kolaboratorRequests, setKolaboratorRequests] = useState([]);
+  const [reqProcessing, setReqProcessing] = useState(null);
   const [portfolio, setPortfolio] = useState([]);
   const [stories, setStories] = useState([]);
   const [tabLoading, setTabLoading] = useState(false);
@@ -153,6 +154,7 @@ const DetailDrawer = ({ kolaborator, onClose, onApprove, onSuspend, onUpdate, al
     setEditInfo(false);
     setEditFields({ nama: kolaborator.nama || '', kota: kolaborator.kota || '', bio: kolaborator.bio || '', email: kolaborator.email || '', no_hp: kolaborator.no_hp || '', subsektor: kolaborator.subsektor || [], internal_notes: kolaborator.internal_notes || '' });
     setKolaboratorEvents([]);
+    setKolaboratorRequests([]);
     setPortfolio([]);
     setStories([]);
   }, [kolaborator?.id]);
@@ -164,8 +166,15 @@ const DetailDrawer = ({ kolaborator, onClose, onApprove, onSuspend, onUpdate, al
       setTabLoading(true);
       try {
         if (tab === 'event') {
-          const list = await kolaboratorApi.events(kolaborator.id);
+          const [list, reqs] = await Promise.all([
+            kolaboratorApi.events(kolaborator.id),
+            kolaboratorApi.requests(kolaborator.id),
+          ]);
           setKolaboratorEvents(list || []);
+          setKolaboratorRequests(reqs || []);
+        } else if (tab === 'portofolio') {
+          const list = await kolaboratorApi.portofolio(kolaborator.id);
+          setPortfolio(list || []);
         } else if (tab === 'aktivitas') {
           const list = await kolaboratorApi.stories(kolaborator.id);
           setStories(list || []);
@@ -176,70 +185,7 @@ const DetailDrawer = ({ kolaborator, onClose, onApprove, onSuspend, onUpdate, al
         setTabLoading(false);
       }
     };
-    if (tab !== 'info' && tab !== 'portofolio') loadTab();
-  }, [tab, kolaborator?.id]);
-
-  // Realtime subscription + polling fallback for porto tab (karya table)
-  useEffect(() => {
-    if (!kolaborator || tab !== 'portofolio') return;
-
-    let active = true;
-
-    // Initial load
-    setTabLoading(true);
-    kolaboratorApi.portofolio(kolaborator.id)
-      .then(list => { if (active) setPortfolio(list || []); })
-      .catch(err => { if (active) toast.error(extractError(err, 'Gagal memuat portofolio')); })
-      .finally(() => { if (active) setTabLoading(false); });
-
-    // Polling fallback every 30 seconds (runs whether or not realtime is available)
-    const pollInterval = setInterval(async () => {
-      if (!active) return;
-      try {
-        const list = await kolaboratorApi.portofolio(kolaborator.id);
-        if (active) setPortfolio(list || []);
-      } catch {
-        // silent — don't toast on background poll errors
-      }
-    }, 30_000);
-
-    // Subscribe to realtime changes on karya table (if supabase is configured)
-    let channel = null;
-    if (supabaseRealtime) {
-      channel = supabaseRealtime
-        .channel(`karya-kolaborator-${kolaborator.id}`)
-        .on(
-          'postgres_changes',
-          {
-            event: '*',
-            schema: 'public',
-            table: 'karya',
-            filter: `owner_id=eq.${kolaborator.id}`,
-          },
-          (payload) => {
-            if (!active) return;
-            if (payload.eventType === 'INSERT') {
-              const newItem = { ...payload.new, kategori: payload.new.subsektor };
-              setPortfolio(prev => {
-                if (prev.find(p => p.id === newItem.id)) return prev;
-                return [newItem, ...prev];
-              });
-            } else if (payload.eventType === 'UPDATE') {
-              const updated = { ...payload.new, kategori: payload.new.subsektor };
-              setPortfolio(prev => prev.map(p => p.id === updated.id ? updated : p));
-            } else if (payload.eventType === 'DELETE') {
-              setPortfolio(prev => prev.filter(p => p.id !== payload.old.id));
-            }
-          }
-        )
-        .subscribe();
-    }
-
-    return () => {
-      active = false;
-      clearInterval(pollInterval);
-      if (channel && supabaseRealtime) supabaseRealtime.removeChannel(channel);
-    };
+    if (tab !== 'info') loadTab();
   }, [tab, kolaborator?.id]);
 
   if (!kolaborator) return null;
@@ -265,6 +211,26 @@ const DetailDrawer = ({ kolaborator, onClose, onApprove, onSuspend, onUpdate, al
       toast.success('Kolaborator dihapus dari event');
     } catch (err) {
       toast.error(extractError(err, 'Gagal menghapus dari event'));
+    }
+  };
+
+  // Approve/reject a kolaborator's event request straight from this panel
+  // (no need to open Kelola Event). Re-fetch both lists after.
+  const respondRequest = async (req, action) => {
+    setReqProcessing(req.id);
+    try {
+      await eventApi.respondKolaboratorRequest(req.event_id, req.id, { action });
+      const [list, reqs] = await Promise.all([
+        kolaboratorApi.events(kolaborator.id),
+        kolaboratorApi.requests(kolaborator.id),
+      ]);
+      setKolaboratorEvents(list || []);
+      setKolaboratorRequests(reqs || []);
+      toast.success(action === 'approve' ? 'Permintaan disetujui' : 'Permintaan ditolak');
+    } catch (err) {
+      toast.error(extractError(err, 'Gagal memproses permintaan'));
+    } finally {
+      setReqProcessing(null);
     }
   };
 
@@ -330,12 +296,7 @@ const DetailDrawer = ({ kolaborator, onClose, onApprove, onSuspend, onUpdate, al
           {TABS.map(([v,l]) => (
             <button key={v} onClick={() => setTab(v)}
               className={`flex-1 py-2.5 text-xs font-semibold transition border-b-2 ${tab===v?'border-[#7a8a52] text-[#7a8a52]':'border-transparent text-[#8a9070] hover:text-[#5a6040]'}`}>
-              {v === 'portofolio'
-                ? <span className="inline-flex items-center gap-1 justify-center">
-                    {l}
-                    {supabaseRealtime && <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse inline-block" title="Realtime aktif"/>}
-                  </span>
-                : l}
+              {l}
             </button>
           ))}
         </div>
@@ -443,6 +404,33 @@ const DetailDrawer = ({ kolaborator, onClose, onApprove, onSuspend, onUpdate, al
                   <Plus size={12}/> Assign Event
                 </button>
               </div>
+
+              {/* Pending requests — approve/reject straight from this panel */}
+              {kolaboratorRequests.length > 0 && (
+                <div className="bg-amber-50/60 border-b border-amber-100">
+                  <p className="px-5 pt-3 pb-1 text-[11px] font-bold uppercase tracking-wide text-amber-700">
+                    Menunggu Persetujuan ({kolaboratorRequests.length})
+                  </p>
+                  <div className="divide-y divide-amber-100/70">
+                    {kolaboratorRequests.map(r => (
+                      <div key={r.id} className="px-5 py-3 flex items-start gap-3">
+                        <div className="flex-1 min-w-0">
+                          <p className="font-semibold text-[#1e2010] text-sm leading-snug">{r.event_nama}</p>
+                          <p className="text-[#8a9070] text-xs mt-0.5">{fmtTgl(r.tanggal)}{r.jam_mulai && <span className="ml-1 text-gray-300">· {r.jam_mulai.slice(0,5).replace(':','.')}{r.jam_selesai?`–${r.jam_selesai.slice(0,5).replace(':','.')}`:''} WIB</span>}</p>
+                          <span className="inline-block mt-1 text-[10px] px-1.5 py-0.5 rounded bg-white border border-amber-200 text-amber-700 uppercase">{r.peran}</span>
+                        </div>
+                        <div className="flex items-center gap-1.5">
+                          <button disabled={reqProcessing===r.id} onClick={() => respondRequest(r,'approve')}
+                            className="px-2.5 py-1.5 rounded-lg text-xs font-semibold bg-[#7a8a52] hover:bg-[#4f5c30] text-white disabled:opacity-50 transition">Setujui</button>
+                          <button disabled={reqProcessing===r.id} onClick={() => respondRequest(r,'reject')}
+                            className="px-2.5 py-1.5 rounded-lg text-xs font-semibold text-[#B87272] hover:bg-[#f7eeee] disabled:opacity-50 transition">Tolak</button>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              )}
+
               {kolaboratorEvents.length === 0
                 ? <div className="py-12 text-center text-[#8a9070] text-sm"><Calendar size={28} className="text-gray-200 mx-auto mb-2"/>Belum ada event</div>
                 : <div className="divide-y divide-gray-50">
@@ -450,7 +438,7 @@ const DetailDrawer = ({ kolaborator, onClose, onApprove, onSuspend, onUpdate, al
                       <div key={e.id} className="px-5 py-3 flex items-start gap-3 group hover:bg-[#f7f8f2]/50 transition">
                         <div className="flex-1 min-w-0">
                           <p className="font-semibold text-[#1e2010] text-sm leading-snug">{e.nama}</p>
-                          <p className="text-[#8a9070] text-xs mt-0.5">{fmtTgl(e.tanggal)}{e.jam_mulai && <span className="ml-1 text-gray-300">· {e.jam_mulai.replace(':','.')}{e.jam_selesai?`–${e.jam_selesai.replace(':','.')}`:''} WIB</span>}</p>
+                          <p className="text-[#8a9070] text-xs mt-0.5">{fmtTgl(e.tanggal)}{e.jam_mulai && <span className="ml-1 text-gray-300">· {e.jam_mulai.slice(0,5).replace(':','.')}{e.jam_selesai?`–${e.jam_selesai.slice(0,5).replace(':','.')}`:''} WIB</span>}</p>
                           <div className="flex items-center gap-2 mt-1.5 flex-wrap">
                             <select
                               value={e.peran}
@@ -485,28 +473,16 @@ const DetailDrawer = ({ kolaborator, onClose, onApprove, onSuspend, onUpdate, al
           {/* TAB: Portofolio */}
           {tab === 'portofolio' && !tabLoading && (
             <div className="p-5">
-              {/* Realtime header */}
-              <div className="flex items-center justify-between mb-3">
-                <p className="text-xs text-[#8a9070]">{portfolio.length} karya</p>
-                {supabaseRealtime && (
-                  <span className="inline-flex items-center gap-1.5 px-2 py-0.5 bg-emerald-50 border border-emerald-200 rounded-full text-[10px] font-semibold text-emerald-600">
-                    <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse"/>
-                    Live
-                  </span>
-                )}
-              </div>
               {portfolio.length === 0
                 ? <div className="py-12 text-center text-[#8a9070] text-sm"><Image size={28} className="text-gray-200 mx-auto mb-2"/>Belum ada portofolio</div>
                 : <div className="space-y-2.5">
                     {portfolio.map(p => (
                       <div key={p.id} className="flex items-center gap-3 p-3 bg-[#f7f8f2] rounded-[12px] border border-[#e4e7d4]">
                         <div className="w-10 h-10 rounded-lg bg-[#f7f2e4] flex items-center justify-center text-[#C4A24D] shrink-0">
-                          {p.gambar_url
-                            ? <img src={p.gambar_url} alt={p.judul} className="w-10 h-10 rounded-lg object-cover"/>
-                            : <Image size={16}/>}
+                          <Image size={16}/>
                         </div>
                         <div className="flex-1 min-w-0">
-                          <p className="font-semibold text-[#1e2010] text-sm truncate">{p.judul}</p>
+                          <p className="font-semibold text-[#1e2010] text-sm">{p.judul}</p>
                           <p className="text-[#8a9070] text-xs">{p.kategori} · {p.tahun}</p>
                         </div>
                         <button onClick={() => toggleFeatured(p.id)}

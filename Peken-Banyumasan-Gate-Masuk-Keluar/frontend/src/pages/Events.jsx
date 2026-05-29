@@ -19,6 +19,15 @@ const STATUS_CLS = {
   selesai:     'bg-[#f7f2e4] text-[#C4A24D] border-[#dcc882]',
   berlangsung: 'bg-[#eaf0f4] text-[#6B8FA3] border-[#b0c8d8]',
 };
+const STATUS_LABEL = {
+  published:   'Akan Datang',
+  draft:       'Draft',
+  berlangsung: 'Berlangsung',
+  selesai:     'Selesai',
+};
+// Effective status (derived from schedule) drives display; raw `status`
+// (draft|published) still drives the publish/hide toggle.
+const evStatus = (ev) => ev.status_efektif || ev.status;
 
 function EventFormModal({ editItem, onClose, onSave }) {
   const [form, setForm] = useState(editItem ? {...editItem} : EMPTY);
@@ -187,11 +196,17 @@ export default function Events() {
 
   const handleSave = async (form) => {
     try {
+      // CreateEventBody forbids extras — drop every read-only/derived field the
+      // edit form carries from the loaded Event (id, peserta_count, the derived
+      // status_efektif, and timestamps). Sending status_efektif tripped a 422
+      // on save. Default tanggal_selesai to the start date for single-day events.
+      const { id, peserta_count, status_efektif, created_at, updated_at, ...body } = form;
+      if (!body.tanggal_selesai) body.tanggal_selesai = body.tanggal;
       if (editItem) {
-        await eventApi.update(editItem.id, form);
+        await eventApi.update(editItem.id, body);
         toast.success('Event diperbarui');
       } else {
-        await eventApi.create(form);
+        await eventApi.create(body);
         toast.success('Event dibuat');
       }
       await load();
@@ -230,10 +245,10 @@ export default function Events() {
     <div className="space-y-5">
       <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
         {[
-          ['Dipublikasi', events.filter(e=>e.status==='published').length, 'bg-[#eef0e0] text-[#7a8a52]'],
-          ['Draft',       events.filter(e=>e.status==='draft').length,      'bg-[#f7f8f2] text-[#5a6040]'],
-          ['Berlangsung', events.filter(e=>e.status==='berlangsung').length,'bg-[#eaf0f4] text-[#6B8FA3]'],
-          ['Selesai',     events.filter(e=>e.status==='selesai').length,    'bg-[#f7f2e4] text-[#C4A24D]'],
+          ['Draft',       events.filter(e=>e.status==='draft').length,            'bg-[#f7f8f2] text-[#5a6040]'],
+          ['Akan Datang', events.filter(e=>evStatus(e)==='published').length,     'bg-[#eef0e0] text-[#7a8a52]'],
+          ['Berlangsung', events.filter(e=>evStatus(e)==='berlangsung').length,   'bg-[#eaf0f4] text-[#6B8FA3]'],
+          ['Selesai',     events.filter(e=>evStatus(e)==='selesai').length,       'bg-[#f7f2e4] text-[#C4A24D]'],
         ].map(([l,v,cls]) => (
           <div key={l} className={`${cls} rounded-[16px] p-4 border border-white/60`}>
             <p className="text-2xl font-bold">{v}</p>
@@ -258,14 +273,14 @@ export default function Events() {
         <div className="grid sm:grid-cols-2 gap-4">
           {events.map(ev => (
             <div key={ev.id} className={`bg-white rounded-[16px] border overflow-hidden hover:shadow-md transition-shadow
-              ${ev.status==='published' ? 'border-[#c8d09a]' : ev.status==='berlangsung' ? 'border-[#b0c8d8]' : 'border-[#e4e7d4]'}`}>
+              ${evStatus(ev)==='published' ? 'border-[#c8d09a]' : evStatus(ev)==='berlangsung' ? 'border-[#b0c8d8]' : 'border-[#e4e7d4]'}`}>
               <div className="w-full h-2 bg-gradient-to-r from-green-200 via-yellow-100 to-orange-100"/>
               <div className="p-5">
                 <div className="flex items-start justify-between gap-2 mb-3">
                   <div className="flex-1 min-w-0">
                     <div className="flex items-center gap-2 mb-1 flex-wrap">
                       <h3 className="font-bold text-[#1e2010] text-sm leading-snug">{ev.nama}</h3>
-                      <span className={`px-2 py-0.5 rounded-full text-[10px] font-semibold border ${STATUS_CLS[ev.status]}`}>{ev.status}</span>
+                      <span className={`px-2 py-0.5 rounded-full text-[10px] font-semibold border ${STATUS_CLS[evStatus(ev)]}`}>{STATUS_LABEL[evStatus(ev)] || evStatus(ev)}</span>
                       {pendingCounts[ev.id] > 0 && (
                         <span className="flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-bold bg-amber-50 text-amber-700 border border-amber-200">
                           <Bell size={9} /> {pendingCounts[ev.id]} pending
@@ -299,7 +314,7 @@ export default function Events() {
                   <Settings size={12}/> Kelola
                 </Link>
                 <div className="flex items-center gap-1">
-                  {ev.status !== 'selesai' && (
+                  {evStatus(ev) !== 'selesai' && (
                     <button onClick={(e) => togglePublish(e, ev.id)}
                       className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-semibold transition
                         ${ev.status==='published' ? 'text-[#8a9070] hover:bg-[#eef0e0]' : 'text-[#7a8a52] hover:bg-[#eef0e0]'}`}>
