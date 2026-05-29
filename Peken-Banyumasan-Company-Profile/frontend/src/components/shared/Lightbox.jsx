@@ -3,7 +3,7 @@ import PillButton from './PillButton.jsx';
 import { Eyebrow } from './Typography.jsx';
 
 /**
- * Lightbox — image-first modal used by Works (KARYA).
+ * Lightbox — image-first modal used by Works (PUBLICATION catalog).
  * Owner name is now a clickable link to the creator's public profile.
  * Props:
  *   work          — work object from WORKS catalogue
@@ -14,7 +14,10 @@ export default function Lightbox({ work, onClose, onViewProfile }) {
   const handleProfile = () => {
     if (!work || !onViewProfile) return;
     onClose();
-    onViewProfile(work.owner);
+    // Use the work's canonical slug (owner_id) so the profile lookup matches
+    // the DB slug exactly. Falling back to the display name only happens for
+    // legacy items without owner_id (it gets slugified downstream).
+    onViewProfile(work.owner_id || work.owner);
   };
 
   return (
@@ -26,7 +29,7 @@ export default function Lightbox({ work, onClose, onViewProfile }) {
             {/* Top row */}
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', gap: 12 }}>
               <Eyebrow style={{ color: 'var(--accent)' }}>
-                KARYA · {(work.kategori_display || '').toUpperCase()} · {work.tahun}
+                PUBLICATION · {(work.kategori_display || '').toUpperCase()} · {work.tahun}
               </Eyebrow>
               <button onClick={onClose} aria-label="Tutup lightbox" style={{ background: 'transparent', border: 0, color: '#fff', fontSize: 20, lineHeight: 1, cursor: 'pointer', fontFamily: 'var(--font-display)', padding: 4 }}>✕</button>
             </div>

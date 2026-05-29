@@ -104,7 +104,7 @@ export default function PekenFooter({ onNavigate }) {
               fontSize: 14,
             }}
           >
-            {['HOME', 'ABOUT', 'PROGRAM', 'KARYA', 'PUBLICATION', 'GALLERY'].map(
+            {['HOME', 'ABOUT', 'PROGRAM', 'PUBLICATION', 'GALLERY'].map(
               (p) => (
                 <li key={p}>
                   <a

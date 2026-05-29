@@ -15,9 +15,9 @@ const SCREENS = {
   HOME:        HomeScreen,
   ABOUT:       AboutScreen,
   PROGRAM:     ProgramScreen,
-  KARYA:       WorksScreen,
+  PUBLICATION: WorksScreen,   // the karya catalog — tab relabeled KARYA → PUBLICATION (UI only)
+  KARYA:       WorksScreen,   // back-compat alias for old localStorage / shared links
   GALLERY:     GalleryScreen,
-  PUBLICATION: GalleryScreen,
 };
 
 
@@ -68,8 +68,8 @@ export default function App() {
   if (page === 'PUBLIC_PROFILE' && profileOwner) {
     return (
       <div>
-        <PekenNav current="KARYA" onNavigate={handleNavigate} onLogin={() => setLoginOpen(true)} />
-        <PublicProfileScreen ownerName={profileOwner} onBack={() => handleNavigate('KARYA')} />
+        <PekenNav current="PUBLICATION" onNavigate={handleNavigate} onLogin={() => setLoginOpen(true)} />
+        <PublicProfileScreen ownerName={profileOwner} onBack={() => handleNavigate('PUBLICATION')} />
         <PekenFooter onNavigate={handleNavigate} />
         <LoginModal open={loginOpen} onClose={() => setLoginOpen(false)} />
       </div>

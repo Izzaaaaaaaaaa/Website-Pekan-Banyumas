@@ -2,18 +2,27 @@ import { useState, useEffect } from 'react';
 import PillButton from '../shared/PillButton.jsx';
 import { Eyebrow } from '../shared/Typography.jsx';
 import PhotoTile from '../shared/PhotoTile.jsx';
+import ScreenLoader from '../shared/ScreenLoader.jsx';
 import { PROGRAMS } from '../../data/programs.js';
-import { programsApi } from '../../services/endpoints.js';
+import { companyProfileApi } from '../../services/endpoints.js';
 
 // Peken Banyumasan — Program screen · v1.2
 // §3 — Program rows use mode="hover" (full pixel-step colourise).
 
 export default function ProgramScreen({ onNavigate }) {
   const [programs, setPrograms] = useState(PROGRAMS);
+  const [loading, setLoading] = useState(true);
 
+  // Programs are company-profile content — read the `programs` section
+  // (managed by the Gate "Kelola Company Profile" editor).
   useEffect(() => {
-    programsApi.list().then(data => { if (data?.length) setPrograms(data); }).catch(() => {});
+    companyProfileApi.get('programs')
+      .then(data => { if (Array.isArray(data) && data.length) setPrograms(data); })
+      .catch(() => {})
+      .finally(() => setLoading(false));
   }, []);
+
+  if (loading) return <ScreenLoader />;
 
   return (
     <main style={{ background: 'var(--bg-page)', color: '#fff' }}>

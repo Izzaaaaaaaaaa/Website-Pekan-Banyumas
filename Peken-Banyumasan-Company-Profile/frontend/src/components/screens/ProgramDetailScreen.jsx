@@ -3,18 +3,25 @@ import ReactMarkdown from 'react-markdown';
 import PillButton from '../shared/PillButton.jsx';
 import { Eyebrow } from '../shared/Typography.jsx';
 import { PROGRAMS } from '../../data/programs.js';
-import { programsApi } from '../../services/endpoints.js';
+import { companyProfileApi } from '../../services/endpoints.js';
 
 export default function ProgramDetailScreen({ programId, onBack }) {
   const [program, setProgram] = useState(null);
   const [loading, setLoading] = useState(true);
 
+  // Resolve the program from the `programs` company-profile section
+  // (managed by the Gate editor); fall back to the bundled defaults.
   useEffect(() => {
-    programsApi.detail(programId)
-      .then(data => { if (data) setProgram(data); })
+    const pick = (list) =>
+      (Array.isArray(list) ? list : []).find(
+        p => p.slug === programId || p.n === programId,
+      );
+    companyProfileApi.get('programs')
+      .then(data => {
+        setProgram(pick(data) || pick(PROGRAMS) || null);
+      })
       .catch(() => {
-        const fallback = PROGRAMS.find(p => p.slug === programId || p.n === programId);
-        if (fallback) setProgram(fallback);
+        setProgram(pick(PROGRAMS) || null);
       })
       .finally(() => setLoading(false));
   }, [programId]);

@@ -4,14 +4,14 @@ const NAV_ITEMS = [
   'HOME',
   'ABOUT',
   'PROGRAM',
-  'KARYA',
+  'PUBLICATION',
   'GALLERY',
 ];
 
 /**
  * Global Nav — 80px tall, ink canvas. Pixel logotype left, 6 text links
  * centre with a 6px sage dot marking the selected link, LOGIN pill right.
- * Raib §4.1 (KARYA tab) and §4.10 (LOGIN button) both land here.
+ * Raib §4.1 (PUBLICATION tab — the karya catalog) and §4.10 (LOGIN button).
  */
 export default function PekenNav({ current, onNavigate, onLogin }) {
   return (

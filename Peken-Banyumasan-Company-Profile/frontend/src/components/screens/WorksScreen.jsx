@@ -2,30 +2,68 @@ import { useState, useEffect } from 'react';
 import { Eyebrow } from '../shared/Typography.jsx';
 import PhotoTile from '../shared/PhotoTile.jsx';
 import Lightbox from '../shared/Lightbox.jsx';
+import ScreenLoader from '../shared/ScreenLoader.jsx';
 import { WORKS } from '../../data/works.js';
-import { karyaApi } from '../../services/endpoints.js';
+import { companyProfileApi, karyaApi } from '../../services/endpoints.js';
 
-// Peken Banyumasan — KARYA / Works screen · v1.3
+// Peken Banyumasan — PUBLICATION / Works screen · v1.3 (tab relabeled, UI only)
 // Added: onViewProfile prop passed to Lightbox so clicking a creator
 // name navigates to their public profile page.
 
 export default function WorksScreen({ onNavigate }) {
   const [lightbox, setLightbox] = useState(null);
   const [works, setWorks] = useState(WORKS);
+  const [loading, setLoading] = useState(true);
 
+  // The Publication catalog combines two sources:
+  //  1. real karya UPLOADED by kolaborator/artisan accounts (the `karya` table,
+  //     served by /api/public/karya) — this is what was missing, so uploads
+  //     never showed here; and
+  //  2. the admin-curated `works` company-profile section (Gate "Kelola
+  //     Company Profile"). Hidden entries (visible === false) are dropped.
+  // Uploads are listed first; the static WORKS fallback is used only if both
+  // sources are empty.
   useEffect(() => {
-    karyaApi.list().then(data => { if (data?.length) setWorks(data); }).catch(() => {});
+    Promise.allSettled([
+      companyProfileApi.get('works'),
+      karyaApi.list({ limit: 100 }),
+    ])
+      .then(([sec, kry]) => {
+        const curated = (sec.status === 'fulfilled' && Array.isArray(sec.value))
+          ? sec.value.filter(w => w.visible !== false)
+          : [];
+        const uploaded = (kry.status === 'fulfilled' && Array.isArray(kry.value))
+          ? kry.value.map(k => ({
+              id:              k.id,
+              judul:           k.judul,
+              gambar_url:      k.gambar_url,
+              owner:           k.owner,
+              // owner_slug drives the "view profile" link (real DB slug);
+              // fall back to owner_id only if a slug isn't present.
+              owner_id:        k.owner_slug || k.owner_id,
+              kategori_display: k.subsektor,
+              tahun:           k.tahun,
+              deskripsi:       k.deskripsi,
+            }))
+          : [];
+        const merged = [...uploaded, ...curated];
+        if (merged.length) setWorks(merged);
+      })
+      .catch(() => {})
+      .finally(() => setLoading(false));
   }, []);
 
   const handleViewProfile = (ownerName) => {
     if (onNavigate) onNavigate('PUBLIC_PROFILE', ownerName);
   };
 
+  if (loading) return <ScreenLoader />;
+
   return (
     <main style={{ background: 'var(--bg-page)', color: '#fff' }}>
       <section style={{ padding: '100px 120px 40px' }}>
         <Eyebrow style={{ color: 'var(--accent)' }}>
-          KARYA · KATALOG KOLABORATOR & ARTISAN
+          PUBLICATION · KATALOG KOLABORATOR & ARTISAN
         </Eyebrow>
         <div style={{ display: 'grid', gridTemplateColumns: '1.5fr 1fr', gap: 40, alignItems: 'flex-end', marginTop: 24 }}>
           <h1 style={{ fontFamily: 'var(--font-display)', fontWeight: 400, fontSize: 56, lineHeight: 1.15, margin: 0, maxWidth: 900 }}>

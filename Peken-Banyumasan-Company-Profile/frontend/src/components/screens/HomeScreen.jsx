@@ -6,9 +6,10 @@ import PixelFlicker from '../shared/PixelFlicker.jsx';
 import SectionHeader from '../shared/SectionHeader.jsx';
 import PhotoTile from '../shared/PhotoTile.jsx';
 import { LocationMarker } from '../shared/Atoms.jsx';
+import ScreenLoader from '../shared/ScreenLoader.jsx';
 import { HOME_PROGRAMS } from '../../data/programs.js';
 import { getUpcomingEvent } from '../../data/events.js';
-import { programsApi, companyProfileApi, eventsApi } from '../../services/endpoints.js';
+import { companyProfileApi, eventsApi } from '../../services/endpoints.js';
 
 // Peken Banyumasan — Home screen · v1.3
 // v1.3: hero slides, eyebrow, headline, manifesto, agenda and lokasi
@@ -171,8 +172,10 @@ function deriveAgenda(event) {
   const hari    = HARI[d.getDay()];
   const bulan   = BULAN[d.getMonth()];
   const tahun   = d.getFullYear();
+  // API serializes time as "HH:MM:SS" — slice to "HH:MM" before swapping the
+  // separator, otherwise replace() only hits the first colon ("15.00:00").
   const jamStr  = event.jam_mulai && event.jam_selesai
-    ? ` · ${event.jam_mulai.replace(':', '.')}–${event.jam_selesai.replace(':', '.')} WIB`
+    ? ` · ${event.jam_mulai.slice(0, 5).replace(':', '.')}–${event.jam_selesai.slice(0, 5).replace(':', '.')} WIB`
     : '';
   return {
     agenda_date:      date,
@@ -191,17 +194,24 @@ const DEFAULT_HOME_WITH_AGENDA = _staticUpcoming
 export default function HomeScreen({ onNavigate }) {
   const [homePrograms, setHomePrograms] = useState(HOME_PROGRAMS);
   const [homeData, setHomeData]         = useState(DEFAULT_HOME_WITH_AGENDA);
+  const [loading, setLoading]           = useState(true);
 
+  // Program tiles read the `programs` company-profile section — the same
+  // source as ProgramScreen/ProgramDetailScreen — so an admin edit in the
+  // Gate "Kelola Company Profile" editor is reflected on the homepage too.
   useEffect(() => {
-    programsApi.list()
-      .then(data => { if (data?.length) setHomePrograms(data.slice(0, 6)); })
+    companyProfileApi.get('programs')
+      .then(data => { if (Array.isArray(data) && data.length) setHomePrograms(data.slice(0, 6)); })
       .catch(() => {});
   }, []);
 
+  // The `home` section is the screen's primary content — gate the initial
+  // render on it so visitors never see bundled fallback copy flash to real.
   useEffect(() => {
     companyProfileApi.get('home')
       .then(data => { if (data) setHomeData(prev => ({ ...prev, ...data })); })
-      .catch(() => {});
+      .catch(() => {})
+      .finally(() => setLoading(false));
   }, []);
 
   // Agenda Terdekat — auto-derived dari event upcoming terdekat.
@@ -214,6 +224,8 @@ export default function HomeScreen({ onNavigate }) {
       })
       .catch(() => {});
   }, []);
+
+  if (loading) return <ScreenLoader />;
 
   return (
     <main style={{ background: 'var(--bg-page)' }}>
@@ -509,7 +521,7 @@ export default function HomeScreen({ onNavigate }) {
                       lineHeight: 1.6,
                     }}
                   >
-                    {p.body}
+                    {p.body_short || p.body}
                   </div>
                 </div>
               }

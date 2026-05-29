@@ -3,6 +3,7 @@ import PillButton from '../shared/PillButton.jsx';
 import { Eyebrow } from '../shared/Typography.jsx';
 import PhotoTile from '../shared/PhotoTile.jsx';
 import WipeReveal from '../shared/WipeReveal.jsx';
+import ScreenLoader from '../shared/ScreenLoader.jsx';
 import { companyProfileApi } from '../../services/endpoints.js';
 
 // Peken Banyumasan — Gallery screen · v1.3
@@ -38,6 +39,7 @@ const STATIC_DOC = {
 export default function GalleryScreen() {
   const [images, setImages] = useState(STATIC_IMAGES);
   const [doc,    setDoc]    = useState(STATIC_DOC);
+  const [loading, setLoading] = useState(true);
 
   useEffect(() => {
     companyProfileApi.get('gallery')
@@ -54,7 +56,8 @@ export default function GalleryScreen() {
           });
         }
       })
-      .catch(() => {});
+      .catch(() => {})
+      .finally(() => setLoading(false));
   }, []);
 
   /* The "before" half — the gallery body flows naturally now. No
@@ -259,6 +262,8 @@ export default function GalleryScreen() {
       </p>
     </section>
   );
+
+  if (loading) return <ScreenLoader />;
 
   return (
     <main style={{ background: 'var(--bg-elevated)' }}>
