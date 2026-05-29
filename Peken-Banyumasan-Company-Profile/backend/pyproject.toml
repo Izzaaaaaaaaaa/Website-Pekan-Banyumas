@@ -1,0 +1,68 @@
+[project]
+name = "peken-cp-api"
+version = "2.3.0"
+description = "Peken Banyumasan — Company Profile public read-only API (FastAPI)"
+requires-python = ">=3.12,<3.14"
+license = { text = "Proprietary" }
+dependencies = [
+    "peken-common",
+    "uvicorn[standard]>=0.30,<1.0",
+    "gunicorn>=23.0,<24.0",
+]
+
+[project.optional-dependencies]
+dev = [
+    "pytest>=8.3,<9.0",
+    "pytest-asyncio>=0.24,<1.0",
+    "pytest-cov>=5.0,<7.0",
+    "ruff>=0.7,<1.0",
+    "mypy>=1.11,<2.0",
+    "httpx>=0.27,<1.0",
+    "aiosqlite>=0.20,<1.0",
+    "testcontainers[postgres]>=4.8,<5.0",
+    "asyncpg>=0.29,<1.0",
+]
+
+[build-system]
+requires = ["hatchling>=1.25"]
+build-backend = "hatchling.build"
+
+[tool.hatch.build.targets.wheel]
+packages = ["app"]
+
+[tool.uv.sources]
+peken-common = { workspace = true }
+
+[tool.ruff]
+line-length = 100
+target-version = "py312"
+
+[tool.ruff.lint]
+select = ["E", "F", "I", "B", "UP", "N", "SIM", "RUF"]
+ignore = ["E501", "B008"]
+
+[tool.pytest.ini_options]
+asyncio_mode = "auto"
+testpaths = ["tests"]
+# Prepend backend root so local `app/` wins over sibling backend's installed wheel.
+pythonpath = ["."]
+
+[tool.coverage.run]
+source = ["app"]
+branch = true
+omit = [
+    "app/main.py",
+    "app/__init__.py",
+    # Lazy infra — only runs with a real Supabase URL; covered by integration tests
+    "app/core/dependencies.py",
+]
+
+[tool.coverage.report]
+exclude_lines = [
+    "pragma: no cover",
+    "if TYPE_CHECKING:",
+    "raise NotImplementedError",
+    "\\.\\.\\.",
+]
+show_missing = true
+skip_empty = true
