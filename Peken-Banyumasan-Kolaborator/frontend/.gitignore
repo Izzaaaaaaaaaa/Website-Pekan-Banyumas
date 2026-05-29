@@ -27,3 +27,8 @@ dist-ssr
 .DS_Store
 venv/
 env/
+
+# wrangler files
+.wrangler
+.dev.vars*
+!.dev.vars.example

@@ -7,13 +7,14 @@ import {
   useNavigate,
 } from 'react-router-dom';
 import { ToastProvider, useToast } from './components/Toast';
-import { isAuthenticated, clearAuth } from './lib/auth';
+import { isAuthenticated, clearAuth, getUser } from './lib/auth';
 import { setUnauthorizedHandler } from './services/api';
 import Layout from './components/Layout';
 
 import Login        from './pages/auth/Login';
 import Register     from './pages/auth/Register';
 import LupaPass     from './pages/auth/LupaPass';
+import ResetPassword from './pages/auth/ResetPassword';
 import Status       from './pages/auth/Status';
 import Dashboard    from './pages/Dashboard';
 import Profil       from './pages/Profil';
@@ -24,8 +25,16 @@ import Notifikasi   from './pages/Notifikasi';
 import Pengaturan   from './pages/Pengaturan';
 
 // Auth guards — read state via lib/auth helpers, never touch localStorage directly.
-const Pub  = ({ children }) => isAuthenticated() ? <Navigate to="/dashboard" replace /> : children;
-const Auth = ({ children }) => isAuthenticated() ? children : <Navigate to="/login" replace />;
+// An authenticated account whose status isn't 'aktif' (pending / suspended /
+// rejected) must NOT reach the dashboard — it's bounced to /status so it can't
+// sit on a page that spams the API with 403s. (lib/auth defaults status to
+// 'aktif' when absent, so valid accounts are never blocked.)
+const isBlocked = () => { const s = getUser()?.status; return Boolean(s) && s !== 'aktif'; };
+const Pub  = ({ children }) => (isAuthenticated() && !isBlocked()) ? <Navigate to="/dashboard" replace /> : children;
+const Auth = ({ children }) =>
+  !isAuthenticated() ? <Navigate to="/login" replace />
+  : isBlocked()      ? <Navigate to="/status" replace />
+  : children;
 
 // AppShell lives INSIDE <BrowserRouter> so it can use useNavigate to register
 // the apiClient's 401 handler. Keeping the handler router-aware (vs. a
@@ -57,6 +66,9 @@ const AppShell = () => {
       <Route path="/login"          element={<Pub><Login /></Pub>} />
       <Route path="/register"    element={<Pub><Register /></Pub>} />
       <Route path="/lupa-pass"   element={<Pub><LupaPass /></Pub>} />
+      {/* No Pub guard: the recovery session counts as authenticated, so Pub
+          would bounce the user to /dashboard before they can set a new pw. */}
+      <Route path="/reset-password" element={<ResetPassword />} />
       <Route path="/status"      element={<Pub><Status /></Pub>} />
 
       {/* ── Authenticated dashboard routes ── */}
@@ -72,7 +84,7 @@ const AppShell = () => {
       </Route>
 
       {/* Catch-all */}
-      <Route path="*" element={<Navigate to={isAuthenticated() ? '/dashboard' : '/login'} replace />} />
+      <Route path="*" element={<Navigate to={!isAuthenticated() ? '/login' : isBlocked() ? '/status' : '/dashboard'} replace />} />
     </Routes>
   );
 };

@@ -56,9 +56,11 @@ export const authApi = {
     if (!data.session) throw new Error('Sesi gagal dibuat. Coba lagi.');
     const role = data.user.app_metadata?.role;
     if (role !== 'kolaborator') {
+      // Wrong portal. Sign out + generic message so an artisan email can't be
+      // identified as "registered elsewhere" (anti-enumeration).
       await supabase.auth.signOut();
-      const err = new Error('Akun Anda bukan akun kolaborator');
-      err.response = { status: 403, data: { status: 'error', message: err.message } };
+      const err = new Error('Email atau password salah');
+      err.response = { status: 401, data: { status: 'error', message: err.message } };
       throw err;
     }
     return {
@@ -145,30 +147,38 @@ export const authApi = {
     return { message: 'Password berhasil diubah' };
   },
 
-  // ── OTP password-reset flow (STUBS — via BE WA gateway) ──────────────────
-  // BE akan pakai Fonnte/Twilio untuk kirim OTP via WhatsApp, kemudian
-  // supabase.auth.admin.updateUserById() untuk update password.
-  // Saat backend siap: hapus throw dan uncomment apiClient calls.
+  // ── Password reset (Supabase native email flow) ─────────────────────────
+  // 1) requestPasswordReset → Supabase emails a recovery link to the user.
+  // 2) user clicks the link → lands on /reset-password with a recovery session
+  //    (detectSessionInUrl) → completePasswordReset sets the new password.
 
-  /** POST /api/auth/otp/request → { message } — STUB */
-  requestOtp: async (/* { phone } */) => {
-    throw new Error('Not implemented yet');
-    // const response = await apiClient.post('/api/auth/otp/request', { phone });
-    // return extractData(response);
+  /**
+   * Send a password-reset email. Always resolves with the same message
+   * regardless of whether the address exists (anti-enumeration).
+   */
+  requestPasswordReset: async (email) => {
+    if (!supabase) throw new Error('Supabase belum dikonfigurasi.');
+    const redirectTo = `${window.location.origin}/reset-password`;
+    const { error } = await supabase.auth.resetPasswordForEmail(email, { redirectTo });
+    // Surface only hard/transport errors; "user not found" is intentionally
+    // swallowed by Supabase, so a normal call just succeeds.
+    if (error && !/invalid|not found|exist/i.test(error.message)) {
+      throw new Error(error.message);
+    }
+    return { message: 'Jika email terdaftar, tautan reset telah dikirim. Cek inbox/spam Anda.' };
   },
 
-  /** POST /api/auth/otp/verify → { reset_token } — STUB */
-  verifyOtp: async (/* { phone, otp } */) => {
-    throw new Error('Not implemented yet');
-    // const response = await apiClient.post('/api/auth/otp/verify', { phone, otp });
-    // return extractData(response);
-  },
-
-  /** POST /api/auth/password/reset → { message } — STUB */
-  resetPassword: async (/* { reset_token, password_baru } */) => {
-    throw new Error('Not implemented yet');
-    // const response = await apiClient.post('/api/auth/password/reset', { reset_token, password_baru });
-    // return extractData(response);
+  /**
+   * Set the new password using the recovery session created by the email
+   * link. Throws if there's no active recovery session (link expired/invalid).
+   */
+  completePasswordReset: async (newPassword) => {
+    if (!supabase) throw new Error('Supabase belum dikonfigurasi.');
+    const { data: { session } } = await supabase.auth.getSession();
+    if (!session) throw new Error('Sesi reset tidak ditemukan. Tautan mungkin kedaluwarsa — minta ulang.');
+    const { error } = await supabase.auth.updateUser({ password: newPassword });
+    if (error) throw new Error(error.message);
+    return { message: 'Password berhasil diubah. Silakan masuk dengan password baru.' };
   },
 };
 
@@ -182,17 +192,6 @@ export const profilApi = {
 
   /** PATCH /api/kolaborator/me → updated self-record */
   update: async (data) => {
-    // 1. Sync auth metadata directly with Supabase
-    if (supabase) {
-      const supabaseUpdate = {};
-      if (data.nama) supabaseUpdate.data = { nama: data.nama };
-      if (data.email) supabaseUpdate.email = data.email;
-      if (Object.keys(supabaseUpdate).length > 0) {
-        const { error } = await supabase.auth.updateUser(supabaseUpdate);
-        if (error) throw new Error(error.message);
-      }
-    }
-    // 2. Sync all profile fields with the Kolaborator table
     const response = await apiClient.patch('/api/kolaborator/me', data);
     return extractData(response);
   },
@@ -236,12 +235,6 @@ export const storyApi = {
   /** POST /api/kolaborator/me/story → Story */
   create: async (data) => {
     const response = await apiClient.post('/api/kolaborator/me/story', data);
-    return extractData(response);
-  },
-
-  /** PATCH /api/kolaborator/me/story/:id → Story */
-  update: async (id, data) => {
-    const response = await apiClient.patch(`/api/kolaborator/me/story/${id}`, data);
     return extractData(response);
   },
 

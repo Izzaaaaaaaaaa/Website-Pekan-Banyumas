@@ -1,5 +1,5 @@
 // Profil.jsx — Peken Banyumasan Design System v2.0
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { User, MapPin, Edit2, Save, X, CheckCircle, ExternalLink } from 'lucide-react';
 import { profilApi } from '../services/endpoints';
 import { getUser, setUser as setAuthUser } from '../lib/auth';
@@ -24,32 +24,24 @@ export default function Profil() {
   });
   const [saving, setSaving] = useState(false);
 
-  React.useEffect(() => {
-    let mounted = true;
-    (async () => {
-      try {
-        const data = await profilApi.get();
-        if (data && mounted) {
-          setUser(prev => {
-            const merged = { ...prev, ...data };
-            setAuthUser(merged);
-            setForm({
-              nama:      merged.nama||'',
-              kota:      merged.kota||'',
-              bio:       merged.bio||'',
-              subsektor: merged.subsektor || [],
-              foto_url:  merged.foto_url||'',
-              cover_url: merged.cover_url||'',
-            });
-            return merged;
-          });
-        }
-      } catch (err) {
-        if (mounted) toast.error(extractError(err, 'Gagal memuat profil terbaru'));
-      }
-    })();
-    return () => { mounted = false; };
-  }, [toast]);
+  // getUser() only holds the minimal login payload (id/email/nama/role/status).
+  // GET /api/kolaborator/me has kota/bio/subsektor + the real total_* counts.
+  useEffect(() => {
+    profilApi.get().then(p => {
+      if (!p) return;
+      const merged = { ...getUser(), ...p };
+      setUser(merged);
+      setAuthUser(merged);
+      setForm({
+        nama:      p.nama || '',
+        kota:      p.kota || '',
+        bio:       p.bio || '',
+        subsektor: p.subsektor || [],
+        foto_url:  p.foto_url || '',
+        cover_url: p.cover_url || '',
+      });
+    }).catch(() => {});
+  }, []);
 
   const toggleSub = s => setForm(p => ({
     ...p,
@@ -233,9 +225,9 @@ export default function Profil() {
       {/* ── Stats ── */}
       <div className="grid grid-cols-3 gap-3">
         {[
-          ['Karya', user.total_karya||18, {background:T.accentBg,  border:`1px solid ${T.accentBorder}`, color:T.sageDeeper}],
-          ['Story', user.total_story||24, {background:T.infoBg,    border:`1px solid ${T.infoBorder}`,   color:T.info}],
-          ['Event', user.total_event||6,  {background:T.warningBg, border:`1px solid ${T.warningBorder}`, color:T.warning}],
+          ['Karya', user.total_karya ?? 0, {background:T.accentBg,  border:`1px solid ${T.accentBorder}`, color:T.sageDeeper}],
+          ['Story', user.total_story ?? 0, {background:T.infoBg,    border:`1px solid ${T.infoBorder}`,   color:T.info}],
+          ['Event', user.total_event ?? 0, {background:T.warningBg, border:`1px solid ${T.warningBorder}`, color:T.warning}],
         ].map(([l,v,style]) => (
           <div key={l} className="rounded-2xl px-4 py-5 text-center" style={style}>
             <p className="text-2xl font-bold">{v}</p>

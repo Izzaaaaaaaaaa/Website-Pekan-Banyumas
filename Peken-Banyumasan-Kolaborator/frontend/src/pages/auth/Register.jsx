@@ -83,6 +83,7 @@ export default function Register() {
     const e = {};
     if (step === 1) {
       if (!formData.nama.trim())     e.nama     = 'Nama lengkap wajib diisi';
+      else if (formData.nama.trim().length < 2) e.nama = 'Nama lengkap minimal 2 karakter';
       if (!formData.email.trim())    e.email    = 'Email wajib diisi';
       else if (!/\S+@\S+\.\S+/.test(formData.email)) e.email = 'Format email tidak valid';
       if (!formData.password)        e.password = 'Password wajib diisi';
@@ -117,7 +118,14 @@ export default function Register() {
       try { triggerNewKolaboratorRequest(formData.nama); } catch {}
       setRegSuccess(true);
     } catch (err) {
-      setErrors((p) => ({ ...p, _global: extractError(err, 'Gagal mendaftar. Silakan coba lagi.') }));
+      const msg = extractError(err, 'Gagal mendaftar. Silakan coba lagi.');
+      // Email sudah terpakai (409) → kembali ke Step 1 dan tandai di field email
+      if (/sudah terdaftar|sudah digunakan|sudah terpakai|already|duplicate/i.test(msg)) {
+        setErrors({ email: msg });
+        setStep(1);
+      } else {
+        setErrors((p) => ({ ...p, _global: msg }));
+      }
       setSubmitting(false);
     }
   };
@@ -218,7 +226,9 @@ export default function Register() {
                 <div className="input-wrap">
                   <span className="input-icon"><Mail size={16} /></span>
                   <input type="email" name="email" value={formData.email}
-                    onChange={handleChange} placeholder="nama@email.com"
+                    onChange={handleChange}
+                    onBlur={() => { if (formData.email.trim() && !/\S+@\S+\.\S+/.test(formData.email)) setErrors((p) => ({ ...p, email: 'Format email tidak valid' })); }}
+                    placeholder="nama@email.com"
                     className={`reg-input with-icon${errors.email ? ' err' : ''}`} />
                 </div>
                 {errors.email && <div className="err-msg"><AlertCircle size={12} />{errors.email}</div>}

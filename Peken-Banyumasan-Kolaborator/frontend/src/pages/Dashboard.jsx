@@ -6,7 +6,7 @@ import {
   PenLine, Image, Calendar, ArrowRight,
   MapPin, ChevronRight, BookOpen, Hash
 } from 'lucide-react';
-import { storyApi, eventApi } from '../services/endpoints';
+import { storyApi, eventApi, profilApi } from '../services/endpoints';
 import { getUser } from '../lib/auth';
 import { extractError } from '../lib/unwrap';
 import { useToast } from '../components/Toast';
@@ -29,7 +29,9 @@ function useEventCountdown(tanggal, jamMulai) {
   const [selesai, setSelesai] = React.useState(false);
   React.useEffect(() => {
     if (!tanggal) return;
-    const target = new Date(`${tanggal}T${jamMulai || '08:00'}:00+07:00`);
+    // API jam_mulai is "HH:MM:SS"; slice to HH:MM so the appended ":00" stays valid.
+    const jm = String(jamMulai || '08:00').slice(0, 5);
+    const target = new Date(`${tanggal}T${jm}:00+07:00`);
     function tick() {
       const diff = target - new Date();
       if (diff <= 0) { setTime({d:'00',j:'00',m:'00'}); setSelesai(true); return; }
@@ -149,7 +151,7 @@ function QuickCompose({ user, onPost }) {
 
 // ── Main ─────────────────────────────────────────────────────────────────────
 export default function Dashboard() {
-  const user = getUser() || {};
+  const [user, setUser] = useState(getUser() || {});
   const nav = useNavigate();
   const toast = useToast();
   const [stories, setStories] = useState([]);
@@ -163,12 +165,18 @@ export default function Dashboard() {
           eventApi.list(),
         ]);
         setStories((storyList || []).slice(0, 4));
-        setEvents((eventList || []).filter(e => ['upcoming','berlangsung'].includes(e.status)));
+        setEvents((eventList || []).filter(e => ['published','berlangsung'].includes(e.status)));
       } catch (err) {
         toast.error(extractError(err, 'Gagal memuat dashboard'));
       }
     })();
   }, [toast]);
+
+  // getUser() is only the minimal login payload — hydrate kota/subsektor +
+  // the real total_* counts from GET /api/kolaborator/me.
+  useEffect(() => {
+    profilApi.get().then(p => { if (p) setUser(u => ({ ...u, ...p })); }).catch(() => {});
+  }, []);
 
   const postStory = async (data) => {
     try {
@@ -241,9 +249,9 @@ export default function Dashboard() {
           {/* Stats */}
           <div className="grid grid-cols-3 gap-2 mt-4">
             {[
-              [user.total_karya||18,'Karya'],
-              [user.total_story||24,'Story'],
-              [user.total_event||6, 'Event'],
+              [user.total_karya ?? 0,'Karya'],
+              [user.total_story ?? 0,'Story'],
+              [user.total_event ?? 0, 'Event'],
             ].map(([v,l]) => (
               <div key={l} className="rounded-xl px-2 py-3 text-center"
                 style={{background:'rgba(255,255,255,0.05)'}}>
@@ -414,7 +422,6 @@ export default function Dashboard() {
                 <div className="flex items-center gap-3 mt-2 pt-2"
                   style={{borderTop: `1px solid ${T.border}`}}>
                   <span className="text-xs" style={{color: T.textMuted}}>{fmtDate(s.created_at||s.tanggal)}</span>
-                  <span className="text-xs" style={{color: T.textMuted}}>+{s.like_count||s.suka||0}</span>
                 </div>
               </div>
             ))}

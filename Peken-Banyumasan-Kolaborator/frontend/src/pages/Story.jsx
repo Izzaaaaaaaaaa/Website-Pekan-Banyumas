@@ -23,7 +23,7 @@ const fmtDate = d => {
 };
 
 // ── StoryCard ─────────────────────────────────────────────────────────────────
-const StoryCard = ({ story, onEdit, onDelete }) => {
+const StoryCard = ({ story, onDelete }) => {
   const user = getUser();
   const initial = (user?.nama||'U').charAt(0).toUpperCase();
   return (
@@ -49,20 +49,12 @@ const StoryCard = ({ story, onEdit, onDelete }) => {
               </p>
             </div>
           </div>
-          <div className="opacity-0 group-hover:opacity-100 transition flex items-center">
-            <button
-              onClick={() => onEdit(story)}
-              className="p-1.5 rounded-lg hover:bg-gray-100 transition"
-              style={{color: T.textMuted}}>
-              <span className="text-xs font-medium">Edit</span>
-            </button>
-            <button
-              onClick={() => onDelete(story.id)}
-              className="p-1.5 rounded-lg hover:bg-red-50 transition"
-              style={{color: T.error}}>
-              <Trash2 size={14}/>
-            </button>
-          </div>
+          <button
+            onClick={() => onDelete(story.id)}
+            className="opacity-0 group-hover:opacity-100 transition p-1 rounded-lg"
+            style={{color: T.error}}>
+            <Trash2 size={14}/>
+          </button>
         </div>
 
         <p className="text-sm leading-relaxed" style={{color: T.text2}}>{story.konten}</p>
@@ -83,10 +75,10 @@ const StoryCard = ({ story, onEdit, onDelete }) => {
 };
 
 // ── PostModal ─────────────────────────────────────────────────────────────────
-function PostModal({ initialData, onClose, onPost }) {
-  const [konten,   setKonten]   = useState(initialData?.konten || '');
-  const [foto,     setFoto]     = useState(initialData?.media_url || '');
-  const [tags,     setTags]     = useState(initialData?.tags || []);
+function PostModal({ onClose, onPost }) {
+  const [konten,   setKonten]   = useState('');
+  const [foto,     setFoto]     = useState('');
+  const [tags,     setTags]     = useState([]);
   const [tagInput, setTagInput] = useState('');
   const [saving,   setSaving]   = useState(false);
   const toast = useToast();
@@ -103,13 +95,9 @@ function PostModal({ initialData, onClose, onPost }) {
     if (!konten.trim()) { toast.error('Tulis sesuatu dulu'); return; }
     setSaving(true);
     try {
-      if (initialData) {
-        await onPost(initialData.id, { konten, media_url: foto || null, tags });
-      } else {
-        await onPost({ konten, media_url: foto || null, tags });
-      }
+      await onPost({ konten, media_url: foto || null, tags });
       onClose();
-    } catch { toast.error(initialData ? 'Gagal menyimpan story' : 'Gagal posting'); }
+    } catch { toast.error('Gagal posting'); }
     finally { setSaving(false); }
   };
 
@@ -244,7 +232,6 @@ export default function Story() {
   const [list,      setList]      = useState([]);
   const [loading,   setLoading]   = useState(true);
   const [showModal, setShowModal] = useState(false);
-  const [editingStory, setEditingStory] = useState(null);
   const user = getUser();
   const initial = (user?.nama||'U').charAt(0).toUpperCase();
 
@@ -258,23 +245,12 @@ export default function Story() {
     })();
   }, [toast]);
 
-  const post = async (dataOrId, dataIfEdit) => {
+  const post = async data => {
     try {
-      if (dataIfEdit) {
-        // Edit mode
-        const updated = await storyApi.update(dataOrId, dataIfEdit);
-        setList(l => l.map(x => x.id === dataOrId ? updated : x));
-        toast.success('Story berhasil diperbarui!');
-      } else {
-        // Create mode
-        const created = await storyApi.create(dataOrId);
-        setList(l => [created, ...l]);
-        toast.success('Story berhasil diposting!');
-      }
-    } catch (err) {
-      toast.error(extractError(err, dataIfEdit ? 'Gagal memperbarui story' : 'Gagal memposting story'));
-      throw err;
-    }
+      const created = await storyApi.create(data);
+      setList(l => [created, ...l]);
+      toast.success('Story berhasil diposting!');
+    } catch (err) { toast.error(extractError(err, 'Gagal memposting story')); }
   };
 
   const del = async id => {
@@ -284,16 +260,6 @@ export default function Story() {
       setList(l => l.filter(x => x.id !== id));
       toast.success('Story dihapus');
     } catch (err) { toast.error(extractError(err, 'Gagal menghapus story')); }
-  };
-
-  const openEdit = (story) => {
-    setEditingStory(story);
-    setShowModal(true);
-  };
-
-  const handleCloseModal = () => {
-    setShowModal(false);
-    setEditingStory(null);
   };
 
   return (
@@ -353,11 +319,11 @@ export default function Story() {
         </div>
       ) : (
         <div className="space-y-4">
-          {list.map(s => <StoryCard key={s.id} story={s} onEdit={openEdit} onDelete={del}/>)}
+          {list.map(s => <StoryCard key={s.id} story={s} onDelete={del}/>)}
         </div>
       )}
 
-      {showModal && <PostModal initialData={editingStory} onClose={handleCloseModal} onPost={post}/>}
+      {showModal && <PostModal onClose={() => setShowModal(false)} onPost={post}/>}
     </div>
   );
 }

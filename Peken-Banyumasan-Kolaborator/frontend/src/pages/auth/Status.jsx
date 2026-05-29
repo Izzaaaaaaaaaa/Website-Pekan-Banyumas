@@ -18,6 +18,18 @@ const STATUS_CONFIG = {
       { color: 'var(--peken-warning)', text: 'Proses verifikasi biasanya 1×24 jam' },
     ],
   },
+  suspended: {
+    Icon:      XCircle,
+    iconBg:    'var(--peken-error-bg)',
+    iconColor: 'var(--peken-error)',
+    badge:     'Akun Dinonaktifkan',
+    badgeClass: 'error',
+    title:     'Akun Anda Dinonaktifkan',
+    desc:      'Akun kolaboratormu sedang dinonaktifkan sementara (suspended) oleh admin. Hubungi admin untuk informasi lebih lanjut.',
+    infos: [
+      { color: 'var(--peken-error)', text: 'Hubungi admin untuk mengaktifkan kembali akun' },
+    ],
+  },
   rejected: {
     Icon:      XCircle,
     iconBg:    'var(--peken-error-bg)',
@@ -51,7 +63,6 @@ export default function Status() {
     () => readRaw(STORAGE_KEYS.REGISTER_STATUS) || 'pending'
   );
 
-  const sim = (s) => { writeRaw(STORAGE_KEYS.REGISTER_STATUS, s); setStatus(s); };
   const cfg = STATUS_CONFIG[status] || STATUS_CONFIG.pending;
   const { Icon } = cfg;
 
@@ -182,38 +193,6 @@ export default function Status() {
             </button>
           )}
 
-          {/* Divider */}
-          <div style={{ height: 1, background: 'var(--dash-border)', margin: '20px 0' }} />
-
-          {/* Dev simulator */}
-          <div style={{ textAlign: 'left' }}>
-            <div style={{ fontSize: 10, fontWeight: 700, color: 'var(--dash-text-muted)', letterSpacing: '.1em', textTransform: 'uppercase', marginBottom: 8 }}>
-              Simulasi Status Admin
-            </div>
-            <div style={{ display: 'flex', gap: 8 }}>
-              {[
-                { key: 'pending',  label: 'Pending',   cls: 'peken-badge-warning' },
-                { key: 'rejected', label: 'Ditolak',   cls: 'peken-badge-error' },
-                { key: 'approved', label: 'Disetujui', cls: 'peken-badge-success' },
-              ].map(({ key, label, cls }) => (
-                <button
-                  key={key}
-                  onClick={() => sim(key)}
-                  className={`peken-badge ${cls}`}
-                  style={{
-                    flex: 1, padding: '7px 4px', cursor: 'pointer',
-                    border: '1px solid', borderRadius: 10, fontSize: 11,
-                    fontFamily: 'var(--font-body)', fontWeight: 700,
-                    opacity: status === key ? 1 : 0.6,
-                    outline: status === key ? '2px solid currentColor' : 'none',
-                    outlineOffset: 2,
-                  }}
-                >
-                  {label}
-                </button>
-              ))}
-            </div>
-          </div>
         </div>
 
         {/* Back link */}

@@ -100,13 +100,23 @@ export default function Portofolio() {
   const save = async () => {
     if (!form.judul.trim()) { toast.error('Judul karya wajib diisi'); return; }
     setSaving(true);
+    // Create/PatchKaryaBody forbid extras — send only the editable fields
+    // (the edit form carries id/owner_*/timestamps from the loaded Karya).
+    const body = {
+      judul:      form.judul,
+      subsektor:  form.subsektor,
+      deskripsi:  form.deskripsi,
+      tahun:      form.tahun,
+      featured:   form.featured,
+      gambar_url: form.gambar_url || null,
+    };
     try {
       if (editItem) {
-        const updated = await portofolioApi.update(editItem.id, form);
-        setList(l => l.map(x => x.id === editItem.id ? {...x,...form,...(updated||{})} : x));
+        const updated = await portofolioApi.update(editItem.id, body);
+        setList(l => l.map(x => x.id === editItem.id ? {...x,...body,...(updated||{})} : x));
         toast.success('Karya berhasil diperbarui');
       } else {
-        const created = await portofolioApi.create(form);
+        const created = await portofolioApi.create(body);
         setList(l => [created, ...l]);
         toast.success('Karya berhasil ditambahkan');
       }

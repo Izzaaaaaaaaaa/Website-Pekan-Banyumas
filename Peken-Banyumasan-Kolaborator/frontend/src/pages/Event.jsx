@@ -14,6 +14,15 @@ const STATUS_STYLE = {
   berlangsung: { background: T.infoBg,    border: `1px solid ${T.infoBorder}`,   color: T.info },
   selesai:     { background: T.surfaceHover, border: `1px solid ${T.border}`,   color: T.textMuted },
 };
+const EV_LABEL = { upcoming: 'Akan Datang', berlangsung: 'Berlangsung', selesai: 'Selesai' };
+// Display key from the backend-derived status_efektif (falls back to raw status
+// for dummy mode). 'published' = scheduled → shown as "Akan Datang".
+const dispStatus = (e) => {
+  const s = e.status_efektif || e.status;
+  return s === 'selesai' ? 'selesai'
+    : s === 'berlangsung' ? 'berlangsung'
+    : 'upcoming';
+};
 
 // ── EventDetailModal ──────────────────────────────────────────────────────────
 function EventDetailModal({ event, onClose, onDaftar, loadingId }) {
@@ -113,7 +122,13 @@ function EventDetailModal({ event, onClose, onDaftar, loadingId }) {
           {event.terdaftar ? (
             <span className="w-full flex items-center justify-center gap-2 px-4 py-2.5 text-sm font-semibold rounded-xl"
               style={{background: T.successBg, border: `1px solid ${T.successBorder}`, color: T.success}}>
-              <CheckCircle size={14} fill="currentColor"/> Sudah Terdaftar
+              <CheckCircle size={14} fill="currentColor"/>
+              {event.peran ? `Diterima sebagai ${PERAN_LABEL[event.peran] || event.peran}` : 'Sudah Terdaftar'}
+            </span>
+          ) : event.request_status === 'pending' ? (
+            <span className="w-full flex items-center justify-center gap-2 px-4 py-2.5 text-sm font-semibold rounded-xl"
+              style={{background: T.warningBg, border: `1px solid ${T.warningBorder}`, color: T.warning}}>
+              <Clock size={14}/> Menunggu Persetujuan
             </span>
           ) : event.status !== 'selesai' ? (
             <button onClick={() => onDaftar(event)} disabled={loadingId===event.id}
@@ -207,7 +222,8 @@ function RoleRegisterModal({ event, onClose, onConfirm, loading }) {
 const EventCard = ({ event, onDaftar, loadingId, onClick, showPeran }) => {
   const tgl = new Date(event.tanggal);
   const isLoading = loadingId === event.id;
-  const sts = STATUS_STYLE[event.status] || STATUS_STYLE.upcoming;
+  const ds  = dispStatus(event);
+  const sts = STATUS_STYLE[ds];
 
   return (
     <div className="rounded-2xl cursor-pointer transition-shadow hover:shadow-md"
@@ -237,7 +253,7 @@ const EventCard = ({ event, onDaftar, loadingId, onClick, showPeran }) => {
               {event.nama}
             </h3>
             <span className="px-2 py-0.5 rounded-full text-[10px] font-semibold shrink-0"
-              style={sts}>{event.status}</span>
+              style={sts}>{EV_LABEL[ds]}</span>
           </div>
           <p className="text-xs flex items-center gap-1" style={{color: T.textMuted}}>
             <MapPin size={11}/>{event.lokasi}
@@ -267,7 +283,13 @@ const EventCard = ({ event, onDaftar, loadingId, onClick, showPeran }) => {
             {event.terdaftar ? (
               <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-semibold"
                 style={{background: T.successBg, border: `1px solid ${T.successBorder}`, color: T.success}}>
-                <CheckCircle size={11} fill="currentColor"/> Sudah Terdaftar
+                <CheckCircle size={11} fill="currentColor"/>
+                {event.peran ? `Diterima sebagai ${PERAN_LABEL[event.peran] || event.peran}` : 'Sudah Terdaftar'}
+              </span>
+            ) : event.request_status === 'pending' ? (
+              <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-semibold"
+                style={{background: T.warningBg, border: `1px solid ${T.warningBorder}`, color: T.warning}}>
+                <Clock size={11}/> Menunggu Persetujuan
               </span>
             ) : event.status !== 'selesai' ? (
               <button onClick={() => onDaftar(event)} disabled={isLoading}
@@ -312,7 +334,9 @@ export default function Event() {
     setLoadingId(eventId);
     try {
       await eventApi.requestJoin(eventId, peran);
-      setList(l => l.map(e => e.id===eventId ? {...e, pending_request:true, pending_peran:peran} : e));
+      // Optimistically flip to the pending state so the card updates instantly;
+      // the backend now also returns request_status so it survives a reload.
+      setList(l => l.map(e => e.id===eventId ? {...e, request_status:'pending', peran} : e));
       toast.success(`Permintaan dikirim sebagai ${peran}. Menunggu konfirmasi admin.`);
       try {
         const user = getUser() || {};
@@ -327,9 +351,12 @@ export default function Event() {
 
   const openRegister = event => setRegisterModal(event);
 
-  const jelajahi  = list.filter(e => ['upcoming','berlangsung'].includes(e.status));
-  const sayaIkuti = list.filter(e => e.terdaftar && ['upcoming','berlangsung'].includes(e.status));
-  const selesai   = list.filter(e => e.status==='selesai' && e.terdaftar);
+  // Use the backend-derived status_efektif so finished events leave the
+  // browse/follow lists and land in "Selesai" (raw status is only draft|published).
+  const effStatus = e => e.status_efektif || e.status;
+  const jelajahi  = list.filter(e => ['published','berlangsung'].includes(effStatus(e)));
+  const sayaIkuti = list.filter(e => (e.terdaftar || e.request_status === 'pending') && ['published','berlangsung'].includes(effStatus(e)));
+  const selesai   = list.filter(e => effStatus(e)==='selesai' && e.terdaftar);
   const currentList = tab==='jelajahi' ? jelajahi : tab==='saya_ikuti' ? sayaIkuti : selesai;
 
   const tabStyle = active => active

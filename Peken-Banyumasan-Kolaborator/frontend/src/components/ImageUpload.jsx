@@ -1,7 +1,8 @@
 // ImageUpload.jsx — Peken Banyumasan Design System v2.0
-// Drag-and-drop image upload via FileReader
+// Drag-and-drop image upload → Supabase Storage (public URL), base64 fallback.
 import React, { useRef, useState } from 'react';
-import { Upload, Camera } from 'lucide-react';
+import { Upload, Camera, Loader2 } from 'lucide-react';
+import { uploadImage } from '../lib/uploadImage';
 
 export default function ImageUpload({
   value,
@@ -9,20 +10,26 @@ export default function ImageUpload({
   label    = 'Upload Foto',
   hint     = 'JPG, PNG, WebP · maks 5 MB',
   shape    = 'square',  // 'square' | 'circle' | 'wide'
+  folder   = 'upload',  // Storage subfolder (e.g. 'profil', 'karya', 'story')
   className = '',
 }) {
   const inputRef = useRef();
   const [dragging, setDragging] = useState(false);
   const [error,    setError]    = useState('');
+  const [uploading, setUploading] = useState(false);
 
-  const process = file => {
+  const process = async (file) => {
     if (!file) return;
     setError('');
-    if (!file.type.startsWith('image/')) { setError('File harus berupa gambar'); return; }
-    if (file.size > 5 * 1024 * 1024)     { setError('Ukuran file maks 5 MB'); return; }
-    const reader = new FileReader();
-    reader.onload = e => onChange(e.target.result);
-    reader.readAsDataURL(file);
+    try {
+      setUploading(true);
+      const url = await uploadImage(file, folder);
+      onChange(url);
+    } catch (err) {
+      setError(err?.message || 'Gagal mengunggah gambar');
+    } finally {
+      setUploading(false);
+    }
   };
 
   const onFile = e  => process(e.target.files[0]);
@@ -62,6 +69,11 @@ export default function ImageUpload({
         onDragLeave={() => setDragging(false)}
         onDrop={onDrop}
       >
+        {uploading && (
+          <div className="absolute inset-0 z-10 flex items-center justify-center" style={{ background: 'rgba(255,255,255,0.82)' }}>
+            <Loader2 size={20} className="animate-spin" style={{ color: '#7A8A52' }} />
+          </div>
+        )}
         {value ? (
           <>
             <img src={value} alt="preview" className="w-full h-full object-cover"/>

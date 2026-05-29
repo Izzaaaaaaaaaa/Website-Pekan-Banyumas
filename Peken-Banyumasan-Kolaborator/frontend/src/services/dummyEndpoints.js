@@ -54,18 +54,13 @@ export const authApi = {
     await delay();
     return { message: 'Password berhasil diubah (demo)' };
   },
-  requestOtp: async () => {
+  requestPasswordReset: async () => {
     await delay();
-    return { message: 'OTP dikirim melalui WhatsApp (demo)' };
+    return { message: 'Jika email terdaftar, tautan reset telah dikirim (demo).' };
   },
-  verifyOtp: async ({ otp }) => {
-    await delay(400);
-    if (String(otp) !== '1234') throw new Error('Kode OTP salah. Coba lagi.');
-    return { reset_token: 'dummy-reset-token' };
-  },
-  resetPassword: async () => {
+  completePasswordReset: async () => {
     await delay();
-    return { message: 'Password berhasil direset (demo)' };
+    return { message: 'Password berhasil diubah (demo).' };
   },
 };
 
@@ -118,11 +113,6 @@ export const storyApi = {
     const s = { id: `s-${Date.now()}`, like_count: 0, media_url: null, status: 'aktif', created_at: new Date().toISOString(), tags: [], ...data };
     _stories.unshift(s);
     return s;
-  },
-  update: async (id, data) => {
-    await delay();
-    _stories = _stories.map(s => s.id === id ? { ...s, ...data } : s);
-    return _stories.find(s => s.id === id);
   },
   delete: async (id) => {
     await delay();

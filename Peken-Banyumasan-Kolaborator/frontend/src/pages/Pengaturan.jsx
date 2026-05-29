@@ -1,5 +1,5 @@
 // Pengaturan.jsx — Peken Banyumasan Design System v2.0
-import React, { useState, useEffect } from 'react';
+import React, { useState } from 'react';
 import { Lock, Mail, Bell, Shield, Loader2, CheckCircle, Eye, EyeOff } from 'lucide-react';
 import { useToast } from '../components/Toast';
 import { authApi } from '../services/endpoints';
@@ -30,22 +30,19 @@ const labelStyle = {
 };
 
 // ── Section wrapper ───────────────────────────────────────────────────────────
-const Section = ({ icon, title, children }) => {
-  const IconComponent = icon;
-  return (
-    <div style={cardStyle} className="p-5">
-      <div className="flex items-center gap-2.5 mb-4 pb-3"
-        style={{borderBottom:`1px solid ${T.accentBg}`}}>
-        <div className="w-8 h-8 rounded-xl flex items-center justify-center"
-          style={{background:T.accentBg}}>
-          <IconComponent size={15} style={{color:T.sageDark}}/>
-        </div>
-        <h3 className="font-semibold text-sm" style={{color:T.text1}}>{title}</h3>
+const Section = ({ icon: Icon, title, children }) => (
+  <div style={cardStyle} className="p-5">
+    <div className="flex items-center gap-2.5 mb-4 pb-3"
+      style={{borderBottom:`1px solid ${T.accentBg}`}}>
+      <div className="w-8 h-8 rounded-xl flex items-center justify-center"
+        style={{background:T.accentBg}}>
+        <Icon size={15} style={{color:T.sageDark}}/>
       </div>
-      {children}
+      <h3 className="font-semibold text-sm" style={{color:T.text1}}>{title}</h3>
     </div>
-  );
-};
+    {children}
+  </div>
+);
 
 export default function Pengaturan() {
   const toast = useToast();
@@ -53,14 +50,7 @@ export default function Pengaturan() {
   const [pwForm,  setPwForm]  = useState({ lama:'', baru:'', konfirmasi:'' });
   const [showPw,  setShowPw]  = useState(false);
   const [savingPw,setSavingPw]= useState(false);
-  const [notifPref, setNotifPref] = useState(() => {
-    const saved = localStorage.getItem('kolaborator_notif_pref');
-    return saved ? JSON.parse(saved) : { event:true, system:true, digest:false };
-  });
-
-  useEffect(() => {
-    localStorage.setItem('kolaborator_notif_pref', JSON.stringify(notifPref));
-  }, [notifPref]);
+  const [notifPref, setNotifPref] = useState({ event:true, system:true, digest:false });
 
   const gantiPw = async () => {
     if (!pwForm.lama || !pwForm.baru) { toast.error('Lengkapi semua field'); return; }
@@ -76,9 +66,29 @@ export default function Pengaturan() {
     } finally { setSavingPw(false); }
   };
 
-  const handleChangePw = (field, val) => {
-    setPwForm(p => ({ ...p, [field]: val }));
-  };
+  const InputField = ({ label, field, type='text', placeholder }) => (
+    <div>
+      <label style={labelStyle}>{label}</label>
+      <div className="relative">
+        <input
+          type={showPw ? 'text' : type}
+          value={pwForm[field]}
+          onChange={e => setPwForm(p => ({...p, [field]:e.target.value}))}
+          placeholder={placeholder}
+          style={{...inputBase, paddingRight: type==='password' ? 44 : 14}}
+        />
+        {type === 'password' && (
+          <button
+            type="button"
+            onClick={() => setShowPw(!showPw)}
+            className="absolute right-3 top-1/2 -translate-y-1/2"
+            style={{color:T.textMuted}}>
+            {showPw ? <EyeOff size={15}/> : <Eye size={15}/>}
+          </button>
+        )}
+      </div>
+    </div>
+  );
 
   return (
     <div className="max-w-xl mx-auto space-y-4">
@@ -116,52 +126,9 @@ export default function Pengaturan() {
       {/* ── Ubah Password ── */}
       <Section icon={Lock} title="Ubah Password">
         <div className="space-y-3">
-          <div>
-            <label style={labelStyle}>Password Lama</label>
-            <div className="relative">
-              <input
-                type={showPw ? 'text' : 'password'}
-                value={pwForm.lama}
-                onChange={e => handleChangePw('lama', e.target.value)}
-                placeholder="Masukkan password lama"
-                style={{...inputBase, paddingRight: 44}}
-              />
-              <button
-                type="button"
-                onClick={() => setShowPw(!showPw)}
-                className="absolute right-3 top-1/2 -translate-y-1/2"
-                style={{color:T.textMuted}}>
-                {showPw ? <EyeOff size={15}/> : <Eye size={15}/>}
-              </button>
-            </div>
-          </div>
-
-          <div>
-            <label style={labelStyle}>Password Baru</label>
-            <div className="relative">
-              <input
-                type={showPw ? 'text' : 'password'}
-                value={pwForm.baru}
-                onChange={e => handleChangePw('baru', e.target.value)}
-                placeholder="Min. 8 karakter"
-                style={{...inputBase, paddingRight: 44}}
-              />
-            </div>
-          </div>
-
-          <div>
-            <label style={labelStyle}>Konfirmasi Password Baru</label>
-            <div className="relative">
-              <input
-                type={showPw ? 'text' : 'password'}
-                value={pwForm.konfirmasi}
-                onChange={e => handleChangePw('konfirmasi', e.target.value)}
-                placeholder="Ulangi password baru"
-                style={{...inputBase, paddingRight: 44}}
-              />
-            </div>
-          </div>
-
+          <InputField label="Password Lama" field="lama" type="password" placeholder="Masukkan password lama"/>
+          <InputField label="Password Baru" field="baru" type="password" placeholder="Min. 8 karakter"/>
+          <InputField label="Konfirmasi Password Baru" field="konfirmasi" type="password" placeholder="Ulangi password baru"/>
           <button onClick={gantiPw} disabled={savingPw}
             className="w-full text-white py-2.5 font-semibold transition flex items-center justify-center gap-2 text-sm mt-2"
             style={{background:T.sageDark, borderRadius:20}}>

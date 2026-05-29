@@ -9,7 +9,7 @@ import {
     Loader2, Globe, AlertCircle, Calendar, MapPin,
 } from 'lucide-react';
 import { authApi, eventApi } from '../../services/endpoints';
-import { setToken, setUser } from '../../lib/auth';
+import { setToken, setUser, clearAuth } from '../../lib/auth';
 import { extractError } from '../../lib/unwrap';
 import { STORAGE_KEYS } from '../../lib/storageKeys';
 import { writeRaw } from '../../lib/domainStorage';
@@ -80,15 +80,20 @@ export default function Login() {
         setLoading(true); setError('');
         try {
             const { token, user } = await authApi.login({ email, password });
+            if (user?.role && user.role !== 'kolaborator') {
+                clearAuth();
+                setError('Email atau password salah');
+                setLoading(false);
+                return;
+            }
+            // Pending/suspended/rejected accounts must NOT reach the dashboard.
+            // Sign out so no token lingers (which would spam 403s), then show
+            // the status page with the ACTUAL status.
             if (user?.status && user.status !== 'aktif') {
+                clearAuth();
                 writeRaw(STORAGE_KEYS.REGISTER_STATUS, user.status);
                 setLoading(false);
                 nav('/status');
-                return;
-            }
-            if (user?.role && user.role !== 'kolaborator') {
-                setError('Email atau password salah');
-                setLoading(false);
                 return;
             }
             setToken(token);
