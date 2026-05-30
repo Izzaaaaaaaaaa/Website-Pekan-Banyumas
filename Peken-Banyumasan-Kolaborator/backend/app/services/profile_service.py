@@ -15,6 +15,52 @@ _KOLABORATOR_SELECT = (
 )
 
 
+def _compute_total_event(client, user_id: str) -> int:
+    """Compute total approved/active event registrations for a kolaborator.
+
+    We count DISTINCT events where:
+      - kolaborator_requests.status == 'approved' (self-join approved), OR
+      - event_kolaborators.status_kehadiran != 'dibatalkan' (direct assignment / attendance table)
+
+    This avoids stale `kolaborators.total_event` values.
+    """
+    try:
+        req_res = (
+            client.table("kolaborator_requests")
+            .select("event_id")
+            .eq("kolaborator_id", user_id)
+            .eq("status", "approved")
+            .execute()
+        )
+        req_ids = {r.get("event_id") for r in (req_res.data or []) if r.get("event_id")}
+
+        reg_res = (
+            client.table("event_kolaborators")
+            .select("event_id")
+            .eq("kolaborator_id", user_id)
+            .neq("status_kehadiran", "dibatalkan")
+            .execute()
+        )
+        reg_ids = {r.get("event_id") for r in (reg_res.data or []) if r.get("event_id")}
+
+        ids = list(req_ids | reg_ids)
+        if not ids:
+            return 0
+
+        # Count only events that are visible in consumer apps (exclude draft).
+        ev_res = (
+            client.table("events")
+            .select("id")
+            .in_("id", ids)
+            .in_("status", ["published", "berlangsung", "selesai"])
+            .execute()
+        )
+        return len({e.get("id") for e in (ev_res.data or []) if e.get("id")})
+    except Exception:
+        # Fail soft: never break profile endpoint because of aggregate counts.
+        return 0
+
+
 def get_profile(user_payload: dict) -> dict:
     """GET /api/kolaborator/me — return own kolaborator record."""
     user_id = user_payload.get("user_id")
@@ -32,7 +78,9 @@ def get_profile(user_payload: dict) -> dict:
     if not result.data:
         return {}
 
-    return result.data[0]
+    data = result.data[0]
+    data["total_event"] = _compute_total_event(client, user_id)
+    return data
 
 
 def update_profile(user_payload: dict, payload: dict) -> dict:

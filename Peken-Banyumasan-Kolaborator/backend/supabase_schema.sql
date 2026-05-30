@@ -478,7 +478,8 @@ CREATE TABLE public.kolaborator_requests (
     status         TEXT        NOT NULL DEFAULT 'pending'
                                CHECK (status IN ('pending', 'approved', 'rejected')),
     created_at     TIMESTAMPTZ NOT NULL DEFAULT NOW(),
-    updated_at     TIMESTAMPTZ NOT NULL DEFAULT NOW()
+    updated_at     TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+    UNIQUE (event_id, kolaborator_id)
 );
 
 CREATE INDEX idx_kolreq_event       ON public.kolaborator_requests(event_id);
