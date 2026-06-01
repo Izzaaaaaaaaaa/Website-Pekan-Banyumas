@@ -1,0 +1,742 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Peken Banyumasan — Gate Dashboard UI Kit</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Montserrat:ital,wght@0,300;0,400;0,500;0,600;0,700;0,800;1,400&display=swap" rel="stylesheet">
+<script src="https://unpkg.com/react@18.3.1/umd/react.development.js" integrity="sha384-hD6/rw4ppMLGNu3tX5cjIb+uRZ7UkRJ6BPkLpg4hAu/6onKUg4lLsHAs9EBPT82L" crossorigin="anonymous"></script>
+<script src="https://unpkg.com/react-dom@18.3.1/umd/react-dom.development.js" integrity="sha384-u6aeetuaXnQ38mYT8rp6sbXaQe3NL9t+IBXmnYxwkUI2Hw4bsp2Wvmx4yRQF1uAm" crossorigin="anonymous"></script>
+<script src="https://unpkg.com/@babel/standalone@7.29.0/babel.min.js" integrity="sha384-m08KidiNqLdpJqLq95G/LEi8Qvjl/xUYll3QILypMoQ65QorJ9Lvtp2RXYGBFj1y" crossorigin="anonymous"></script>
+<style>
+* { box-sizing: border-box; margin: 0; padding: 0; }
+body { font-family: 'Montserrat', sans-serif; background: #f2f4e8; min-height: 100vh; }
+
+/* ── Tokens ── */
+:root {
+  --sage:        #C3CA96;
+  --sage-light:  #dde3c0;
+  --sage-pale:   #f2f4e8;
+  --sage-mid:    #a8b07a;
+  --sage-dark:   #7a8a52;
+  --sage-deeper: #4f5c30;
+  --ink:         #1B1B1B;
+  --surface:     #FFFFFF;
+  --border:      #e4e7d4;
+  --border-md:   #c8ccb0;
+  --text-1:      #1e2010;
+  --text-2:      #5a6040;
+  --text-3:      #8a9070;
+  --success:     #7A9B6A;
+  --success-bg:  #eef4eb;
+  --success-bd:  #b8d4b0;
+  --error:       #B87272;
+  --error-bg:    #f7eeee;
+  --error-bd:    #dbb8b8;
+  --warning:     #C4A24D;
+  --warning-bg:  #f7f2e4;
+  --warning-bd:  #dcc882;
+  --info:        #6B8FA3;
+  --info-bg:     #eaf0f4;
+  --exit:        #7A80B0;
+  --exit-bg:     #eeeef8;
+  --exit-bd:     #b8badc;
+}
+
+/* ── Lucide-like icon SVG replacements ── */
+svg { display: inline-block; vertical-align: middle; }
+</style>
+</head>
+<body>
+<div id="root"></div>
+
+<script type="text/babel">
+const { useState, useEffect } = React;
+
+/* ── Icons (inline SVG, Lucide style 1.5px stroke) ── */
+const Icon = ({ d, size = 16, color = "currentColor", style = {} }) => (
+  <svg width={size} height={size} viewBox="0 0 24 24" fill="none"
+    stroke={color} strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" style={style}>
+    {Array.isArray(d) ? d.map((p,i) => <path key={i} d={p}/>) : <path d={d}/>}
+  </svg>
+);
+const icons = {
+  pieChart:     ["M21.21 15.89A10 10 0 1 1 8 2.83","M22 12A10 10 0 0 0 12 2v10z"],
+  users:        ["M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2","M23 21v-2a4 4 0 0 0-3-3.87","M16 3.13a4 4 0 0 1 0 7.75","M9 7m-4 0a4 4 0 1 0 8 0a4 4 0 1 0-8 0"],
+  store:        ["M2 3h20","M5 3v18","M19 3v18","M5 12h14","M9 7h6","M9 17h6"],
+  fileText:     ["M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z","M14 2v6h6","M16 13H8","M16 17H8","M10 9H8"],
+  calendar:     ["M8 2v4","M16 2v4","M3 10h18","M3 6a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V6z"],
+  settings:     ["M12 15a3 3 0 1 0 0-6 3 3 0 0 0 0 6z","M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83-2.83l.06-.06A1.65 1.65 0 0 0 4.68 15a1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 2.83-2.83l.06.06A1.65 1.65 0 0 0 9 4.68a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 2.83l-.06.06A1.65 1.65 0 0 0 19.4 9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"],
+  logOut:       ["M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4","M16 17l5-5-5-5","M21 12H9"],
+  logIn:        ["M15 3h4a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2h-4","M10 17l5-5-5-5","M15 12H3"],
+  menu:         ["M3 12h18","M3 6h18","M3 18h18"],
+  x:            ["M18 6 6 18","M6 6l12 12"],
+  eye:          ["M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z","M12 12m-3 0a3 3 0 1 0 6 0a3 3 0 1 0-6 0"],
+  eyeOff:       ["M17.94 17.94A10.07 10.07 0 0 1 12 20c-7 0-11-8-11-8a18.45 18.45 0 0 1 5.06-5.94","M9.9 4.24A9.12 9.12 0 0 1 12 4c7 0 11 8 11 8a18.5 18.5 0 0 1-2.16 3.19","M1 1l22 22"],
+  mail:         ["M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z","M22 6l-10 7L2 6"],
+  lock:         ["M19 11H5a2 2 0 0 0-2 2v7a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7a2 2 0 0 0-2-2z","M7 11V7a5 5 0 0 1 10 0v4"],
+  arrowRight:   "M5 12h14M12 5l7 7-7 7",
+  shield:       "M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z",
+  help:         ["M12 22a10 10 0 1 0 0-20 10 10 0 0 0 0 20z","M9.09 9a3 3 0 0 1 5.83 1c0 2-3 3-3 3","M12 17h.01"],
+  scanLine:     ["M3 7V5a2 2 0 0 1 2-2h2","M17 3h2a2 2 0 0 1 2 2v2","M21 17v2a2 2 0 0 1-2 2h-2","M7 21H5a2 2 0 0 1-2-2v-2","M7 12h10"],
+  creditCard:   ["M1 4h22v16H1z","M1 9h22"],
+  user:         ["M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2","M12 11a4 4 0 1 0 0-8 4 4 0 0 0 0 8z"],
+  wifi:         ["M5 12.55a11 11 0 0 1 14.08 0","M1.42 9a16 16 0 0 1 21.16 0","M8.53 16.11a6 6 0 0 1 6.95 0","M12 20h.01"],
+  refreshCw:    ["M23 4v6h-6","M1 20v-6h6","M3.51 9a9 9 0 0 1 14.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0 0 20.49 15"],
+  alert:        ["M10.29 3.86 1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z","M12 9v4","M12 17h.01"],
+  check:        "M20 6 9 17l-5-5",
+  globe:        ["M12 2a10 10 0 1 0 0 20A10 10 0 0 0 12 2z","M2 12h20","M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z"],
+  monitor:      ["M2 3h20v14H2z","M8 21h8","M12 17v4"],
+  bookOpen:     ["M2 3h6a4 4 0 0 1 4 4v14a3 3 0 0 0-3-3H2z","M22 3h-6a4 4 0 0 0-4 4v14a3 3 0 0 1 3-3h7z"],
+  shieldCheck:  ["M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z","M9 12l2 2 4-4"],
+  arrowDown:    ["M12 5v14","M5 12l7 7 7-7"],
+  arrowUp:      ["M12 19V5","M5 12l7-7 7 7"],
+  calCheck:     ["M8 2v4","M16 2v4","M3 10h18","M3 6a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V6z","M9 14l2 2 4-4"],
+};
+
+/* ── Shared small components ── */
+const Badge = ({ variant = 'success', children }) => {
+  const variants = {
+    success: { bg: 'var(--success-bg)', color: 'var(--success)', border: 'var(--success-bd)' },
+    error:   { bg: 'var(--error-bg)',   color: 'var(--error)',   border: 'var(--error-bd)' },
+    warning: { bg: 'var(--warning-bg)', color: 'var(--warning)', border: 'var(--warning-bd)' },
+    info:    { bg: 'var(--info-bg)',     color: 'var(--info)',    border: '#b0c8d8' },
+    exit:    { bg: 'var(--exit-bg)',     color: 'var(--exit)',    border: 'var(--exit-bd)' },
+    sage:    { bg: '#eef0e0',            color: 'var(--sage-deeper)', border: '#c8d09a' },
+    pulse:   { bg: 'var(--success-bg)', color: 'var(--success)', border: 'var(--success-bd)' },
+  };
+  const v = variants[variant] || variants.success;
+  return (
+    <span style={{
+      display: 'inline-flex', alignItems: 'center', gap: 4,
+      padding: '2px 9px', borderRadius: 9999, fontSize: 10, fontWeight: 700,
+      background: v.bg, color: v.color, border: `1px solid ${v.border}`,
+      fontFamily: 'Montserrat, sans-serif',
+    }}>{children}</span>
+  );
+};
+
+const Card = ({ children, style = {} }) => (
+  <div style={{
+    background: 'var(--surface)', border: '1px solid var(--border)',
+    borderRadius: 16, boxShadow: '0 1px 3px rgba(30,32,16,.06)',
+    ...style
+  }}>{children}</div>
+);
+
+const Btn = ({ children, variant = 'primary', size = 'md', onClick, disabled, style = {} }) => {
+  const base = {
+    fontFamily: 'Montserrat, sans-serif', fontWeight: 600, cursor: 'pointer',
+    border: 'none', display: 'inline-flex', alignItems: 'center', gap: 6,
+    transition: 'background .15s, opacity .15s', borderRadius: 20,
+    padding: size === 'sm' ? '6px 14px' : '10px 22px',
+    fontSize: size === 'sm' ? 11 : 13,
+  };
+  const variants = {
+    primary: { background: 'var(--sage-dark)', color: '#fff' },
+    ghost:   { background: 'transparent', color: 'var(--sage-dark)', border: '1.5px solid #c8d09a' },
+    danger:  { background: 'var(--error)', color: '#fff' },
+    warning: { background: 'var(--warning)', color: '#fff' },
+  };
+  return (
+    <button style={{ ...base, ...variants[variant], opacity: disabled ? .6 : 1, ...style }}
+      onClick={onClick} disabled={disabled}>{children}</button>
+  );
+};
+
+/* ── NAV ITEMS ── */
+const NAV = [
+  { id: 'dashboard',  label: 'Dashboard',        iconKey: 'pieChart',  roles: ['admin','petugas'] },
+  { id: 'kolaborator',label: 'Kolaborator',       iconKey: 'users',     roles: ['admin'] },
+  { id: 'artisan',    label: 'Artisan',           iconKey: 'store',     roles: ['admin'] },
+  { id: 'reports',    label: 'Laporan',           iconKey: 'fileText',  roles: ['admin'] },
+  { id: 'events',     label: 'Kelola Event',      iconKey: 'calendar',  roles: ['admin'] },
+  { id: 'settings',   label: 'Pengaturan Akun',   iconKey: 'settings',  roles: ['admin','petugas'] },
+];
+const PUBLIC_LINKS = [
+  { label: 'Display Monitor', iconKey: 'monitor' },
+  { label: 'Company Profile', iconKey: 'bookOpen' },
+];
+
+/* ── SIDEBAR ── */
+const Sidebar = ({ page, setPage, role, onLogout }) => (
+  <aside style={{
+    width: 260, minWidth: 260, background: '#1B1B1B',
+    display: 'flex', flexDirection: 'column', height: '100vh',
+    position: 'sticky', top: 0,
+  }}>
+    {/* Logo */}
+    <div style={{ padding: '20px 18px 18px', borderBottom: '1px solid rgba(255,255,255,.07)', display: 'flex', alignItems: 'center', gap: 10 }}>
+      <img src="../../assets/logo-gate.png" alt="logo" style={{ width: 38, height: 38, borderRadius: 10, objectFit: 'cover' }} />
+      <div>
+        <div style={{ fontSize: 15, fontWeight: 600, color: '#fff', lineHeight: 1 }}>Peken</div>
+        <div style={{ fontSize: 10, color: '#6a7258', marginTop: 3, letterSpacing: '.06em', textTransform: 'uppercase' }}>Banyumasan</div>
+      </div>
+    </div>
+
+    {/* Nav */}
+    <nav style={{ flex: 1, padding: '12px 12px', overflowY: 'auto' }}>
+      <div style={{ fontSize: 10, fontWeight: 700, color: '#3a4030', textTransform: 'uppercase', letterSpacing: '.1em', padding: '10px 10px 4px' }}>Menu Utama</div>
+      {NAV.filter(n => n.roles.includes(role)).map(n => {
+        const active = page === n.id;
+        return (
+          <div key={n.id}
+            onClick={() => setPage(n.id)}
+            style={{
+              display: 'flex', alignItems: 'center', gap: 10, padding: '10px 14px',
+              borderRadius: 10, margin: '1px 0', cursor: 'pointer',
+              background: active ? 'rgba(195,202,150,.13)' : 'transparent',
+              color: active ? '#C3CA96' : '#8a9278',
+              fontSize: 13, fontWeight: active ? 600 : 500,
+              transition: 'background .15s, color .15s',
+            }}>
+            <Icon d={icons[n.iconKey]} size={16} color="currentColor" />
+            <span style={{ flex: 1 }}>{n.label}</span>
+          </div>
+        );
+      })}
+      {role === 'admin' && (
+        <>
+          <div style={{ fontSize: 10, fontWeight: 700, color: '#3a4030', textTransform: 'uppercase', letterSpacing: '.1em', padding: '14px 10px 4px' }}>Halaman Publik</div>
+          {PUBLIC_LINKS.map(l => (
+            <div key={l.label} style={{ display: 'flex', alignItems: 'center', gap: 10, padding: '10px 14px', borderRadius: 10, margin: '1px 0', cursor: 'pointer', color: '#6a7258', fontSize: 13, fontWeight: 500 }}>
+              <Icon d={icons[l.iconKey]} size={16} color="currentColor" />
+              <span>{l.label}</span>
+              <span style={{ fontSize: 10, opacity: .5, marginLeft: 'auto' }}>↗</span>
+            </div>
+          ))}
+        </>
+      )}
+    </nav>
+
+    {/* User + Logout */}
+    <div style={{ padding: '14px 18px', borderTop: '1px solid rgba(255,255,255,.06)' }}>
+      <div style={{ display: 'flex', alignItems: 'center', gap: 6, marginBottom: 4 }}>
+        <Icon d={icons.shieldCheck} size={12} color="#7a8a52" />
+        <span style={{ fontSize: 10, fontWeight: 700, color: '#7a8a52', textTransform: 'capitalize' }}>
+          {role === 'admin' ? 'Administrator' : 'Petugas'}
+        </span>
+      </div>
+      <div style={{ fontSize: 10, color: '#3a4030', marginBottom: 12 }}>admin@pekenbanyumas.com</div>
+      <div onClick={onLogout} style={{
+        display: 'flex', alignItems: 'center', gap: 10, padding: '10px 14px',
+        borderRadius: 10, color: 'var(--error)', cursor: 'pointer', fontSize: 13, fontWeight: 600,
+        background: 'rgba(184,114,114,.07)',
+      }}>
+        <Icon d={icons.logOut} size={16} color="currentColor" />
+        Logout
+      </div>
+    </div>
+  </aside>
+);
+
+/* ── PAGE HEADER ── */
+const PAGE_META = {
+  dashboard:   { title: 'Dashboard Real-time',       sub: 'Pantau pergerakan pengunjung event hari ini' },
+  kolaborator: { title: 'Kolaborator',                sub: 'Kelola dan verifikasi kolaborator kreatif' },
+  artisan:     { title: 'Artisan & Revenue Sharing',  sub: 'Kelola artisan, posisi, komisi, dan revenue' },
+  reports:     { title: 'Laporan Kunjungan',           sub: 'Rekapitulasi data pengunjung selama event' },
+  events:      { title: 'Kelola Event',                sub: 'Buat, aktifkan, dan nonaktifkan event' },
+  settings:    { title: 'Pengaturan Akun',             sub: 'Kelola nama dan password akun Anda' },
+};
+
+const Header = ({ page, onMenuToggle }) => {
+  const meta = PAGE_META[page] || PAGE_META.dashboard;
+  return (
+    <header style={{
+      background: '#fff', borderBottom: '1px solid var(--border)',
+      height: 72, display: 'flex', alignItems: 'center',
+      justifyContent: 'space-between', padding: '0 28px', flexShrink: 0,
+    }}>
+      <div>
+        <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
+          <div style={{ fontSize: 18, fontWeight: 700, color: 'var(--text-1)' }}>{meta.title}</div>
+          {page === 'dashboard' && (
+            <Badge variant="pulse">
+              <span style={{ width: 6, height: 6, borderRadius: '50%', background: 'var(--success)', display: 'inline-block', animation: 'pulse 1.5s infinite' }} />
+              Festival Budaya 2025
+            </Badge>
+          )}
+        </div>
+        <div style={{ fontSize: 11, color: 'var(--text-3)', marginTop: 3 }}>{meta.sub}</div>
+      </div>
+      <div style={{
+        display: 'flex', alignItems: 'center', gap: 10,
+        padding: '8px 12px', borderRadius: 14, border: '1px solid var(--border)', cursor: 'pointer',
+      }}>
+        <div style={{ width: 36, height: 36, borderRadius: '50%', background: '#eef0e0', color: 'var(--sage-deeper)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontWeight: 700, fontSize: 14 }}>A</div>
+        <div>
+          <div style={{ fontSize: 12, fontWeight: 600, color: 'var(--text-1)' }}>Admin Peken</div>
+          <div style={{ fontSize: 10, color: 'var(--text-3)' }}>admin</div>
+        </div>
+      </div>
+    </header>
+  );
+};
+
+/* ── DASHBOARD PAGE ── */
+const STATS = [
+  { key: 'inside',   label: 'Sedang di Dalam', value: 128, meta: 'Live',      iconKey: 'users',    color: 'success' },
+  { key: 'in',       label: 'Tap Masuk',        value: 342, meta: 'Hari ini',  iconKey: 'logIn',    color: 'success' },
+  { key: 'out',      label: 'Tap Keluar',        value: 214, meta: 'Hari ini',  iconKey: 'logOut',   color: 'error'   },
+  { key: 'total',    label: 'Total Kunjungan',   value: 342, meta: 'Event aktif', iconKey: 'calCheck', color: 'exit'  },
+];
+
+const ACTIVITIES = [
+  { id:1, time:'14:32:01', type:'nfc', name:'Sari Wulandari', uid:'A3F72B..', status:'masuk' },
+  { id:2, time:'14:30:55', type:'manual', name:'Pengunjung', uid:'Manual', status:'masuk' },
+  { id:3, time:'14:29:11', type:'nfc', name:'Doni Prasetyo',  uid:'9C14E7..', status:'keluar' },
+  { id:4, time:'14:27:48', type:'nfc', name:'Rina Maharani',  uid:'D02AB1..', status:'masuk' },
+  { id:5, time:'14:26:33', type:'manual', name:'Pengunjung', uid:'Manual', status:'keluar' },
+  { id:6, time:'14:25:10', type:'nfc', name:'Bambang Susilo', uid:'F88C3D..', status:'masuk' },
+  { id:7, time:'14:23:55', type:'nfc', name:'Ayu Lestari',    uid:'2B70A9..', status:'keluar' },
+  { id:8, time:'14:22:01', type:'nfc', name:'Hendra Wijaya',  uid:'E19D44..', status:'masuk' },
+];
+
+const EVENTS_DATA = [
+  { nama:'Festival Budaya Banyumasan 2025', tanggal:'2025-05-17', lokasi:'Alun-Alun Purwokerto', peserta:34, kapasitas:200, status:'aktif' },
+  { nama:'Workshop Batik & Tenun Nusantara', tanggal:'2025-04-26', lokasi:'Gedung Kebudayaan Cilacap', peserta:18, kapasitas:30, status:'aktif' },
+  { nama:'Pameran Kriya Ekraf Regional', tanggal:'2025-06-10', lokasi:'Mall Cilacap Raya', peserta:0, kapasitas:500, status:'draft' },
+];
+
+const colorMap = {
+  success: { bg: '#eef4eb', color: '#7A9B6A' },
+  error:   { bg: '#f7eeee', color: '#B87272' },
+  exit:    { bg: '#eeeef8', color: '#7A80B0' },
+};
+
+const StatCard = ({ label, value, meta, iconKey, color }) => {
+  const c = colorMap[color] || colorMap.success;
+  return (
+    <Card style={{ padding: 16 }}>
+      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: 12 }}>
+        <div>
+          <div style={{ fontSize: 12, fontWeight: 600, color: 'var(--text-2)' }}>{label}</div>
+          <div style={{ fontSize: 10, color: 'var(--text-3)', marginTop: 3 }}>{meta}</div>
+        </div>
+        <div style={{ width: 34, height: 34, borderRadius: 10, background: c.bg, color: c.color, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+          <Icon d={icons[iconKey]} size={15} color="currentColor" />
+        </div>
+      </div>
+      <div style={{ fontSize: 28, fontWeight: 700, color: 'var(--text-1)', lineHeight: 1 }}>{value}</div>
+    </Card>
+  );
+};
+
+const ScannerPanel = () => (
+  <Card style={{ padding: 14 }}>
+    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 10 }}>
+      <div style={{ fontSize: 13, fontWeight: 700, color: 'var(--text-1)' }}>Tap NFC Pengunjung</div>
+      <div style={{ width: 28, height: 28, borderRadius: 9, background: '#eef0e0', color: 'var(--sage-dark)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+        <Icon d={icons.scanLine} size={14} color="currentColor" />
+      </div>
+    </div>
+    <div style={{ background: '#1B1B1B', borderRadius: 12, padding: '12px 14px', minHeight: 88 }}>
+      <div style={{ fontSize: 9, textTransform: 'uppercase', letterSpacing: '.14em', color: '#4a5040', fontWeight: 700, marginBottom: 6 }}>Tap Terakhir</div>
+      <div style={{ fontSize: 14, fontWeight: 600, color: '#fff' }}>UID: A3F72BC1</div>
+      <div style={{ fontSize: 11, color: '#7A9B6A', marginTop: 3 }}>Tercatat masuk</div>
+      <Badge variant="success" style={{ marginTop: 8 }}>
+        <Icon d={icons.check} size={10} color="currentColor" /> MASUK
+      </Badge>
+    </div>
+  </Card>
+);
+
+const ManualPanel = () => (
+  <Card style={{ padding: 14 }}>
+    <div style={{ fontSize: 13, fontWeight: 700, color: 'var(--text-1)', marginBottom: 12 }}>Input Manual</div>
+    <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
+      <button style={{
+        background: 'var(--sage-dark)', color: '#fff', border: 'none',
+        borderRadius: 14, padding: '14px 12px', display: 'flex', flexDirection: 'column',
+        alignItems: 'center', gap: 4, cursor: 'pointer', boxShadow: '0 4px 12px rgba(122,138,82,.22)',
+        fontFamily: 'Montserrat, sans-serif',
+      }}>
+        <Icon d={icons.arrowDown} size={24} color="#fff" />
+        <span style={{ fontSize: 13, fontWeight: 700, letterSpacing: '.04em' }}>+ MASUK</span>
+        <span style={{ fontSize: 10, opacity: .75 }}>1 pengunjung</span>
+      </button>
+      <button style={{
+        background: 'var(--error)', color: '#fff', border: 'none',
+        borderRadius: 14, padding: '14px 12px', display: 'flex', flexDirection: 'column',
+        alignItems: 'center', gap: 4, cursor: 'pointer', boxShadow: '0 4px 12px rgba(184,114,114,.22)',
+        fontFamily: 'Montserrat, sans-serif',
+      }}>
+        <Icon d={icons.arrowUp} size={24} color="#fff" />
+        <span style={{ fontSize: 13, fontWeight: 700, letterSpacing: '.04em' }}>− KELUAR</span>
+        <span style={{ fontSize: 10, opacity: .75 }}>1 pengunjung</span>
+      </button>
+    </div>
+  </Card>
+);
+
+const ActivityTable = () => (
+  <Card style={{ display: 'flex', flexDirection: 'column', overflow: 'hidden', flex: 1 }}>
+    <div style={{ padding: '14px 20px', borderBottom: '1px solid var(--border)', background: '#fafafa', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+      <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
+        <span style={{ fontSize: 14, fontWeight: 700, color: 'var(--text-1)' }}>Aktivitas Tap & Input Terbaru</span>
+        <Badge variant="success">
+          <Icon d={icons.wifi} size={10} color="currentColor" style={{ animation: 'pulse 1.5s infinite' }} /> Realtime
+        </Badge>
+      </div>
+      <span style={{ fontSize: 11, color: 'var(--sage-dark)', fontWeight: 600, cursor: 'pointer', display: 'flex', alignItems: 'center', gap: 4 }}>
+        <Icon d={icons.refreshCw} size={12} color="currentColor" /> Refresh
+      </span>
+    </div>
+    <div style={{ overflowY: 'auto', flex: 1 }}>
+      <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: 12 }}>
+        <thead>
+          <tr style={{ background: '#fff' }}>
+            {['Waktu', 'Tipe', 'Identitas', 'Aktivitas'].map(h => (
+              <th key={h} style={{ padding: '10px 18px', textAlign: 'left', fontSize: 10, fontWeight: 700, color: 'var(--text-3)', textTransform: 'uppercase', letterSpacing: '.06em', borderBottom: '1px solid var(--border)' }}>{h}</th>
+            ))}
+          </tr>
+        </thead>
+        <tbody>
+          {ACTIVITIES.map(a => (
+            <tr key={a.id} style={{ borderBottom: '1px solid #f5f6ee' }}>
+              <td style={{ padding: '10px 18px', color: 'var(--text-2)', fontWeight: 600, whiteSpace: 'nowrap' }}>{a.time} WIB</td>
+              <td style={{ padding: '10px 18px' }}>
+                {a.type === 'nfc'
+                  ? <Badge variant="sage"><Icon d={icons.creditCard} size={9} color="currentColor" /> NFC</Badge>
+                  : <Badge variant="info"><Icon d={icons.user} size={9} color="currentColor" /> Manual</Badge>
+                }
+              </td>
+              <td style={{ padding: '10px 18px' }}>
+                <div style={{ fontWeight: 600, color: 'var(--text-1)' }}>{a.name}</div>
+                <div style={{ fontSize: 10, color: 'var(--text-3)', fontFamily: 'monospace', marginTop: 2 }}>UID: {a.uid}</div>
+              </td>
+              <td style={{ padding: '10px 18px', whiteSpace: 'nowrap' }}>
+                {a.status === 'masuk'
+                  ? <span style={{ color: 'var(--success)', fontWeight: 700, display: 'flex', alignItems: 'center', gap: 5 }}>
+                      <Icon d={icons.logIn} size={12} color="currentColor" /> Masuk
+                    </span>
+                  : <span style={{ color: 'var(--error)', fontWeight: 700, display: 'flex', alignItems: 'center', gap: 5 }}>
+                      <Icon d={icons.logOut} size={12} color="currentColor" /> Keluar
+                    </span>
+                }
+              </td>
+            </tr>
+          ))}
+        </tbody>
+      </table>
+    </div>
+    <div style={{ padding: '10px 18px', borderTop: '1px solid var(--border)', background: '#fafafa', textAlign: 'center' }}>
+      <span style={{ fontSize: 12, fontWeight: 600, color: 'var(--sage-dark)', cursor: 'pointer' }}>Lihat Semua Riwayat Kunjungan →</span>
+    </div>
+  </Card>
+);
+
+const DashboardPage = () => (
+  <div style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
+    {/* Stats */}
+    <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4,1fr)', gap: 12 }}>
+      {STATS.map(s => <StatCard key={s.key} {...s} />)}
+    </div>
+    {/* Upcoming events */}
+    <Card style={{ padding: 18 }}>
+      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 14 }}>
+        <div style={{ fontSize: 14, fontWeight: 700, color: 'var(--text-1)', display: 'flex', alignItems: 'center', gap: 7 }}>
+          <Icon d={icons.calCheck} size={15} color="var(--sage-dark)" /> Event Mendatang
+        </div>
+        <span style={{ fontSize: 11, color: 'var(--sage-dark)', fontWeight: 600, cursor: 'pointer' }}>Lihat Semua →</span>
+      </div>
+      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3,1fr)', gap: 10 }}>
+        {EVENTS_DATA.map(ev => (
+          <div key={ev.nama} style={{ background: 'var(--sage-pale)', border: '1px solid var(--border)', borderRadius: 12, padding: 14, cursor: 'pointer' }}>
+            <div style={{ fontSize: 12, fontWeight: 700, color: 'var(--text-1)', lineHeight: 1.4, marginBottom: 3 }}>{ev.nama}</div>
+            <div style={{ fontSize: 10, color: 'var(--text-3)', marginBottom: 8 }}>{ev.lokasi}</div>
+            <div style={{ display: 'flex', gap: 4, marginBottom: 8 }}>
+              {['H','J','M'].map((u,i) => (
+                <div key={u} style={{ background: 'var(--sage-dark)', color: '#fff', borderRadius: 6, padding: '3px 6px', textAlign: 'center', minWidth: 28 }}>
+                  <div style={{ fontSize: 11, fontWeight: 700, lineHeight: 1 }}>{ ['12','08','34'][i] }</div>
+                  <div style={{ fontSize: 8, opacity: .7, lineHeight: 1, marginTop: 1 }}>{u}</div>
+                </div>
+              ))}
+            </div>
+            <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: 10, color: 'var(--text-3)', marginBottom: 4 }}>
+              <span>{ev.peserta} peserta</span>
+              <span>{Math.round(ev.peserta/ev.kapasitas*100)}%</span>
+            </div>
+            <div style={{ height: 4, background: 'var(--border)', borderRadius: 9999, overflow: 'hidden' }}>
+              <div style={{ height: '100%', background: 'var(--sage-dark)', borderRadius: 9999, width: `${Math.min(100, ev.peserta/ev.kapasitas*100)}%` }} />
+            </div>
+          </div>
+        ))}
+      </div>
+    </Card>
+    {/* Scanner + Activity */}
+    <div style={{ display: 'grid', gridTemplateColumns: '220px 1fr', gap: 12, alignItems: 'start' }}>
+      <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
+        <ScannerPanel />
+        <ManualPanel />
+      </div>
+      <ActivityTable />
+    </div>
+  </div>
+);
+
+/* ── PLACEHOLDER PAGES ── */
+const PlaceholderPage = ({ page }) => (
+  <Card style={{ padding: 40, textAlign: 'center', color: 'var(--text-3)' }}>
+    <div style={{ fontSize: 32, marginBottom: 12 }}>🚧</div>
+    <div style={{ fontSize: 14, fontWeight: 600, color: 'var(--text-2)', marginBottom: 6 }}>
+      {PAGE_META[page]?.title}
+    </div>
+    <div style={{ fontSize: 12 }}>Halaman ini ada di UI kit — fokus token adalah dashboard.</div>
+  </Card>
+);
+
+/* ── LOGIN PAGE ── */
+const LoginPage = ({ onLogin }) => {
+  const [email, setEmail] = useState('');
+  const [pass, setPass] = useState('');
+  const [showPass, setShowPass] = useState(false);
+  const [loading, setLoading] = useState(false);
+  const [err, setErr] = useState('');
+
+  const handle = (e) => {
+    e.preventDefault();
+    setLoading(true); setErr('');
+    setTimeout(() => {
+      if (email && pass) { onLogin(); }
+      else { setErr('Email atau password salah. Silakan coba lagi.'); setLoading(false); }
+    }, 800);
+  };
+
+  return (
+    <div style={{ display: 'flex', minHeight: '100vh', background: '#f2f4e8', fontFamily: 'Montserrat, sans-serif' }}>
+      {/* Left branding panel */}
+      <div style={{
+        width: '48%', background: '#1B1B1B', display: 'flex', flexDirection: 'column',
+        justifyContent: 'space-between', padding: '48px 56px', position: 'relative', overflow: 'hidden',
+      }}>
+        {/* Subtle dot pattern */}
+        <div style={{
+          position: 'absolute', inset: 0, opacity: .07,
+          backgroundImage: 'radial-gradient(rgba(195,202,150,0.8) 1.5px, transparent 1.5px)',
+          backgroundSize: '28px 28px',
+        }} />
+        {/* Sage accent blobs */}
+        <div style={{ position: 'absolute', top: -80, right: -80, width: 300, height: 300, borderRadius: '50%', background: 'rgba(195,202,150,.08)', filter: 'blur(60px)' }} />
+        <div style={{ position: 'absolute', bottom: -60, left: -60, width: 280, height: 280, borderRadius: '50%', background: 'rgba(122,138,82,.1)', filter: 'blur(50px)' }} />
+
+        {/* Logo */}
+        <div style={{ position: 'relative', zIndex: 1, display: 'flex', alignItems: 'center', gap: 12 }}>
+          <img src="../../assets/logo-gate.png" alt="logo" style={{ width: 44, height: 44, borderRadius: 11, objectFit: 'cover', boxShadow: '0 4px 12px rgba(0,0,0,.4)' }} />
+          <div>
+            <div style={{ fontSize: 18, fontWeight: 700, color: '#fff', letterSpacing: '.02em' }}>Peken Banyumasan</div>
+            <div style={{ fontSize: 11, color: '#C3CA96', fontWeight: 500 }}>Sistem Manajemen Event</div>
+          </div>
+        </div>
+
+        <div style={{ position: 'relative', zIndex: 1 }}>
+          <div style={{ fontSize: 32, fontWeight: 700, color: '#fff', lineHeight: 1.3, marginBottom: 16, maxWidth: 380 }}>
+            Kelola pengunjung event dengan lebih cerdas.
+          </div>
+          <p style={{ fontSize: 14, color: '#8a9278', lineHeight: 1.7, maxWidth: 360 }}>
+            Pantau data real-time, kelola pengunjung dan optimalkan operasional event Peken Banyumasan dalam satu platform terintegrasi.
+          </p>
+        </div>
+
+        {/* Pixel skyline accent */}
+        <div style={{ position: 'relative', zIndex: 1 }}>
+          <div style={{ display: 'flex', gap: 4, marginBottom: 16 }}>
+            {[...Array(8)].map((_,i) => (
+              <div key={i} style={{ width: 16, height: [20,32,24,40,20,36,28,20][i], background: i % 2 === 0 ? 'rgba(195,202,150,.6)' : 'rgba(195,202,150,.25)', borderRadius: '3px 3px 0 0' }} />
+            ))}
+          </div>
+          <div style={{ fontSize: 11, color: '#3a4030' }}>© 2026 Panitia Peken Banyumasan. All rights reserved.</div>
+        </div>
+      </div>
+
+      {/* Right form */}
+      <div style={{ flex: 1, display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '48px 56px' }}>
+        <div style={{ width: '100%', maxWidth: 400 }}>
+          <div style={{ marginBottom: 36 }}>
+            <div style={{ fontSize: 26, fontWeight: 700, color: 'var(--text-1)', marginBottom: 6 }}>Selamat Datang</div>
+            <div style={{ fontSize: 13, color: 'var(--text-3)' }}>Silakan masuk ke akun admin atau petugas Anda.</div>
+          </div>
+
+          {err && (
+            <div style={{ marginBottom: 18, padding: '12px 16px', background: 'var(--error-bg)', border: '1px solid var(--error-bd)', borderRadius: 12, color: 'var(--error)', fontSize: 12 }}>
+              {err}
+            </div>
+          )}
+
+          <form onSubmit={handle} style={{ display: 'flex', flexDirection: 'column', gap: 18 }}>
+            {/* Email */}
+            <div>
+              <label style={{ fontSize: 12, fontWeight: 700, color: 'var(--text-2)', display: 'block', marginBottom: 7 }}>Email Address</label>
+              <div style={{ position: 'relative' }}>
+                <div style={{ position: 'absolute', left: 14, top: '50%', transform: 'translateY(-50%)', color: 'var(--text-3)' }}>
+                  <Icon d={icons.mail} size={15} color="currentColor" />
+                </div>
+                <input type="email" value={email} onChange={e => setEmail(e.target.value)}
+                  placeholder="admin@pekenbanyumas.com"
+                  style={{
+                    width: '100%', paddingLeft: 40, paddingRight: 14, paddingTop: 11, paddingBottom: 11,
+                    background: '#fff', border: '1px solid var(--border)', borderRadius: 12,
+                    fontFamily: 'Montserrat, sans-serif', fontSize: 13, color: 'var(--text-1)',
+                    outline: 'none', transition: 'border-color .15s',
+                  }}
+                  onFocus={e => e.target.style.borderColor = 'var(--sage-mid)'}
+                  onBlur={e => e.target.style.borderColor = 'var(--border)'}
+                />
+              </div>
+            </div>
+            {/* Password */}
+            <div>
+              <label style={{ fontSize: 12, fontWeight: 700, color: 'var(--text-2)', display: 'block', marginBottom: 7 }}>Password</label>
+              <div style={{ position: 'relative' }}>
+                <div style={{ position: 'absolute', left: 14, top: '50%', transform: 'translateY(-50%)', color: 'var(--text-3)' }}>
+                  <Icon d={icons.lock} size={15} color="currentColor" />
+                </div>
+                <input type={showPass ? 'text' : 'password'} value={pass} onChange={e => setPass(e.target.value)}
+                  placeholder="••••••••"
+                  style={{
+                    width: '100%', paddingLeft: 40, paddingRight: 40, paddingTop: 11, paddingBottom: 11,
+                    background: '#fff', border: '1px solid var(--border)', borderRadius: 12,
+                    fontFamily: 'Montserrat, sans-serif', fontSize: 13, color: 'var(--text-1)',
+                    outline: 'none',
+                  }}
+                  onFocus={e => e.target.style.borderColor = 'var(--sage-mid)'}
+                  onBlur={e => e.target.style.borderColor = 'var(--border)'}
+                />
+                <button type="button" onClick={() => setShowPass(v => !v)}
+                  style={{ position: 'absolute', right: 14, top: '50%', transform: 'translateY(-50%)', background: 'none', border: 'none', cursor: 'pointer', color: 'var(--text-3)', padding: 0 }}>
+                  <Icon d={showPass ? icons.eyeOff : icons.eye} size={15} color="currentColor" />
+                </button>
+              </div>
+            </div>
+
+            <button type="submit" disabled={loading} style={{
+              width: '100%', background: 'var(--sage-dark)', color: '#fff',
+              border: 'none', borderRadius: 14, padding: '13px 20px',
+              fontFamily: 'Montserrat, sans-serif', fontWeight: 700, fontSize: 13,
+              cursor: loading ? 'not-allowed' : 'pointer', opacity: loading ? .75 : 1,
+              display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 8,
+              boxShadow: '0 4px 14px rgba(122,138,82,.28)', transition: 'background .15s',
+            }}>
+              {loading ? 'Memproses…' : <><span>Masuk ke Dashboard</span><Icon d={icons.arrowRight} size={15} color="#fff" /></>}
+            </button>
+          </form>
+
+          <div style={{ marginTop: 28, paddingTop: 20, borderTop: '1px solid var(--border)', textAlign: 'center' }}>
+            <div style={{ fontSize: 11, color: 'var(--text-3)', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 6 }}>
+              <Icon d={icons.shield} size={13} color="var(--text-3)" />
+              Akses dibatasi hanya untuk Panitia dan Petugas Event.
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+};
+
+/* ── ADMIN LAYOUT ── */
+const AdminLayout = ({ page, setPage, onLogout }) => (
+  <div style={{ display: 'flex', minHeight: '100vh', background: 'var(--sage-pale)', fontFamily: 'Montserrat, sans-serif' }}>
+    <Sidebar page={page} setPage={setPage} role="admin" onLogout={onLogout} />
+    <div style={{ flex: 1, display: 'flex', flexDirection: 'column', overflow: 'hidden' }}>
+      <Header page={page} />
+      <div style={{ flex: 1, overflowY: 'auto', padding: 24 }}>
+        {page === 'dashboard' ? <DashboardPage /> : <PlaceholderPage page={page} />}
+      </div>
+    </div>
+  </div>
+);
+
+/* ── ROOT APP ── */
+const App = () => {
+  const stored = localStorage.getItem('peken_gate_page') || 'login';
+  const [screen, setScreen] = useState(stored);
+  const [dashPage, setDashPage] = useState('dashboard');
+
+  useEffect(() => {
+    localStorage.setItem('peken_gate_page', screen);
+  }, [screen]);
+
+  const handleLogin = () => setScreen('app');
+  const handleLogout = () => setScreen('login');
+  const handleSetPage = (p) => setDashPage(p);
+
+  if (screen === 'login') return <LoginPage onLogin={handleLogin} />;
+  return <AdminLayout page={dashPage} setPage={handleSetPage} onLogout={handleLogout} />;
+};
+
+const TWEAK_DEFAULTS = /*EDITMODE-BEGIN*/{
+  "sidebarDark": true,
+  "accentColor": "#7a8a52",
+  "bgColor": "#f2f4e8"
+}/*EDITMODE-END*/;
+
+// Tweaks panel
+const TweaksPanel = ({ visible, tweaks, setTweaks }) => {
+  if (!visible) return null;
+  return (
+    <div style={{
+      position: 'fixed', bottom: 24, right: 24, zIndex: 9999,
+      background: '#fff', border: '1px solid var(--border)', borderRadius: 16,
+      boxShadow: '0 8px 28px rgba(30,32,16,.14)', padding: 20, width: 240,
+      fontFamily: 'Montserrat, sans-serif',
+    }}>
+      <div style={{ fontSize: 11, fontWeight: 700, color: 'var(--text-1)', marginBottom: 14, textTransform: 'uppercase', letterSpacing: '.06em' }}>Tweaks</div>
+      <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
+        <div>
+          <label style={{ fontSize: 10, fontWeight: 700, color: 'var(--text-2)', display: 'block', marginBottom: 5 }}>Accent Color</label>
+          <input type="color" value={tweaks.accentColor}
+            onChange={e => { const v = e.target.value; setTweaks(t => ({...t, accentColor:v})); document.documentElement.style.setProperty('--sage-dark', v); window.parent.postMessage({type:'__edit_mode_set_keys', edits:{accentColor:v}}, '*'); }}
+            style={{ width: '100%', height: 32, border: '1px solid var(--border)', borderRadius: 8, cursor: 'pointer' }} />
+        </div>
+        <div>
+          <label style={{ fontSize: 10, fontWeight: 700, color: 'var(--text-2)', display: 'block', marginBottom: 5 }}>Page Background</label>
+          <input type="color" value={tweaks.bgColor}
+            onChange={e => { const v = e.target.value; setTweaks(t => ({...t, bgColor:v})); document.documentElement.style.setProperty('--sage-pale', v); window.parent.postMessage({type:'__edit_mode_set_keys', edits:{bgColor:v}}, '*'); }}
+            style={{ width: '100%', height: 32, border: '1px solid var(--border)', borderRadius: 8, cursor: 'pointer' }} />
+        </div>
+        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+          <label style={{ fontSize: 10, fontWeight: 700, color: 'var(--text-2)' }}>Dark Sidebar</label>
+          <input type="checkbox" checked={tweaks.sidebarDark}
+            onChange={e => setTweaks(t => ({...t, sidebarDark: e.target.checked}))} />
+        </div>
+      </div>
+    </div>
+  );
+};
+
+const Root = () => {
+  const [tweaksVisible, setTweaksVisible] = useState(false);
+  const [tweaks, setTweaks] = useState(TWEAK_DEFAULTS);
+
+  useEffect(() => {
+    // Apply saved tweaks
+    if (tweaks.accentColor) document.documentElement.style.setProperty('--sage-dark', tweaks.accentColor);
+    if (tweaks.bgColor) document.documentElement.style.setProperty('--sage-pale', tweaks.bgColor);
+  }, []);
+
+  useEffect(() => {
+    window.addEventListener('message', (e) => {
+      if (e.data?.type === '__activate_edit_mode') setTweaksVisible(true);
+      if (e.data?.type === '__deactivate_edit_mode') setTweaksVisible(false);
+    });
+    window.parent.postMessage({ type: '__edit_mode_available' }, '*');
+  }, []);
+
+  return (
+    <>
+      <style>{`
+        @keyframes pulse { 0%,100%{opacity:1} 50%{opacity:.4} }
+        button:hover { filter: brightness(.95); }
+      `}</style>
+      <App />
+      <TweaksPanel visible={tweaksVisible} tweaks={tweaks} setTweaks={setTweaks} />
+    </>
+  );
+};
+
+ReactDOM.createRoot(document.getElementById('root')).render(<Root />);
+</script>
+</body>
+</html>

@@ -129,14 +129,40 @@ export default function Register() {
   const nextStep = () => { if (validate()) setStep((p) => p + 1); };
   const prevStep = () => setStep((p) => p - 1);
 
-  const handleSubmit = () => {
+  const handleSubmit = async () => {
     setSubmitting(true);
+    try {
+      const kategoriValue = formData.kategori === "lainnya"
+        ? formData.kategoriCustom
+        : formData.kategori;
 
-    localStorage.setItem("status", "pending");
-
-    setTimeout(() => {
+      const res = await fetch("http://127.0.0.1:8000/api/auth/register", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          nama_usaha: formData.namaArtisan,
+          pemilik: formData.namaArtisan,
+          email: formData.email,
+          username: formData.username,
+          password: formData.password,
+          kategori_usaha: [kategoriValue],
+          deskripsi: formData.deskripsi || "",
+          no_hp: "",
+          kota: "",
+        }),
+      });
+      const data = await res.json();
+      if (!res.ok) {
+        setErrors({ submit: data.detail || "Pendaftaran gagal, coba lagi." });
+        setSubmitting(false);
+        return;
+      }
+      localStorage.setItem("status", "pending");
       navigate("/status");
-    }, 800);
+    } catch (err) {
+      setErrors({ submit: "Gagal terhubung ke server." });
+      setSubmitting(false);
+    }
   };
 
   /* kios filter */
@@ -437,6 +463,11 @@ export default function Register() {
             </>
           )}
 
+              {errors.submit && (
+                <div className="err-msg" style={{ marginBottom: 12 }}>
+                  <AlertCircle size={12} />{errors.submit}
+                </div>
+              )}
           {/* Navigation */}
           <div className="nav-row">
             {step > 1 && (

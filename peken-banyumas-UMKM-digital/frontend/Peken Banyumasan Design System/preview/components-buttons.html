@@ -1,0 +1,58 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="UTF-8">
+<link rel="stylesheet" href="../colors_and_type.css">
+<style>
+  body { background: #f2f4e8; padding: 20px; margin: 0; font-family: 'Montserrat', sans-serif; }
+  .row { display: flex; gap: 10px; align-items: center; flex-wrap: wrap; margin-bottom: 12px; }
+  .sect { font-size: 9px; font-weight: 700; color: #5a6040; text-transform: uppercase; letter-spacing: .06em; margin-bottom: 10px; margin-top: 14px; }
+  .sect:first-child { margin-top: 0; }
+  /* Buttons */
+  .btn { font-family: 'Montserrat', sans-serif; font-size: 13px; font-weight: 600; border: none; cursor: pointer; padding: 10px 20px; border-radius: 20px; display: inline-flex; align-items: center; gap: 6px; transition: background .18s; }
+  .btn-primary { background: #7a8a52; color: #fff; }
+  .btn-primary:hover { background: #4f5c30; }
+  .btn-ghost { background: transparent; color: #7a8a52; border: 1.5px solid #c8d09a; }
+  .btn-ghost:hover { background: #eef0e0; }
+  .btn-danger { background: #B87272; color: #fff; }
+  .btn-warning { background: #C4A24D; color: #fff; }
+  .btn-sm { font-size: 11px; padding: 6px 14px; }
+  /* Badges */
+  .badge { font-family: 'Montserrat', sans-serif; font-size: 10px; font-weight: 700; border-radius: 9999px; padding: 3px 10px; display: inline-flex; align-items: center; gap: 4px; }
+  .badge-success { background: #eef4eb; color: #7A9B6A; border: 1px solid #b8d4b0; }
+  .badge-error   { background: #f7eeee; color: #B87272; border: 1px solid #dbb8b8; }
+  .badge-warning { background: #f7f2e4; color: #C4A24D; border: 1px solid #dcc882; }
+  .badge-info    { background: #eaf0f4; color: #6B8FA3; border: 1px solid #b0c8d8; }
+  .badge-exit    { background: #eeeef8; color: #7A80B0; border: 1px solid #b8badc; }
+  .badge-accent  { background: #eef0e0; color: #4f5c30; border: 1px solid #c8d09a; }
+  /* Inputs */
+  .input { font-family: 'Montserrat', sans-serif; font-size: 13px; border: 1px solid #e4e7d4; border-radius: 12px; padding: 10px 14px; background: #fff; color: #1e2010; outline: none; width: 200px; transition: border-color .18s, box-shadow .18s; }
+  .input:focus { border-color: #a8b07a; box-shadow: 0 0 0 3px rgba(195,202,150,.2); }
+</style>
+</head>
+<body>
+<div class="sect">Buttons</div>
+<div class="row">
+  <button class="btn btn-primary">Masuk ke Dashboard</button>
+  <button class="btn btn-ghost">Batal</button>
+  <button class="btn btn-danger">Logout</button>
+  <button class="btn btn-warning">Peringatan</button>
+  <button class="btn btn-primary btn-sm">+ Masuk</button>
+  <button class="btn btn-ghost btn-sm">Lihat Semua →</button>
+</div>
+<div class="sect">Badges / Pills</div>
+<div class="row">
+  <span class="badge badge-success">✓ Masuk</span>
+  <span class="badge badge-error">✕ Keluar</span>
+  <span class="badge badge-warning">Pending</span>
+  <span class="badge badge-info">NFC</span>
+  <span class="badge badge-exit">Keluar</span>
+  <span class="badge badge-accent">Event Aktif</span>
+</div>
+<div class="sect">Form Input</div>
+<div class="row">
+  <input class="input" type="text" placeholder="Cari nama pengunjung…">
+  <input class="input" type="email" placeholder="admin@pekenbanyumas.com">
+</div>
+</body>
+</html>

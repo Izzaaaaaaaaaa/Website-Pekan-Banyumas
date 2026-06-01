@@ -90,6 +90,17 @@ export default function TambahBarangModal({
             />
           </div>
 
+          <div className="ms-fg">
+            <label>Stok Minimum (Alert)</label>
+            <input
+              name="stok_min"
+              type="number"
+              placeholder="5"
+              value={form.stok_min ?? 5}
+              onChange={handleChange}
+            />
+          </div>
+
           <div className="ms-fg full">
             <label>Keterangan</label>
             <textarea

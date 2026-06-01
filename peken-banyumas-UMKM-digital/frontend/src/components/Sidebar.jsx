@@ -11,21 +11,21 @@ export default function Sidebar({ open, setOpen }) {
   const location = useLocation();
   const [showLogout, setShowLogout] = useState(false);
 
-  const [profilePhoto,setProfilePhoto]
-  =
-  useState(
+  const nama  = localStorage.getItem("nama")  || "Artisan";
+  const email = localStorage.getItem("email") || "";
+  const initials = nama.split(" ").map(w => w[0]).join("").slice(0, 2).toUpperCase();
+
+  const [profilePhoto, setProfilePhoto] = useState(
     localStorage.getItem("profilePhoto")
   );
 
-  useEffect(()=>{const sync=()=>{
-    setProfilePhoto(localStorage.getItem("profilePhoto"));
-  };
-
-  window.addEventListener("storage", sync);
-
-  return()=>{
-    window.removeEventListener("storage", sync);
-  };},[]);
+  useEffect(() => {
+    const sync = () => {
+      setProfilePhoto(localStorage.getItem("profilePhoto"));
+    };
+    window.addEventListener("storage", sync);
+    return () => window.removeEventListener("storage", sync);
+  }, []);
 
   const menu = [
     { path: "/", label: "Dashboard", icon: <Home size={18} /> },
@@ -60,8 +60,8 @@ export default function Sidebar({ open, setOpen }) {
 
           <div className="sb-kios">
             <p className="lbl">KIOS ANDA</p>
-            <h3>Sate Blengong Bu Yati</h3>
-            <span>Stand A-12 · Zona Kuliner</span>
+            <h3>{nama}</h3>
+            <span>{email}</span>
           </div>
         </div>
 
@@ -128,11 +128,11 @@ export default function Sidebar({ open, setOpen }) {
           <div className="avatar">{profilePhoto ? (
             <img src={profilePhoto} alt="profile" 
             className="sb-avatar-img"
-            />):( "BY")}
+            />): initials}
           </div>
           <div className="sb-profile-info">
-            <strong>Bu Yati</strong>
-            <p>Pemilik · Stand A-12</p>
+            <strong>{nama}</strong>
+            <p>{email}</p>
           </div>
           <span className="sb-profile-arrow">›</span>
         </div>
@@ -143,7 +143,7 @@ export default function Sidebar({ open, setOpen }) {
       <ConfirmLogoutModal
         show={showLogout}
         onClose={() => setShowLogout(false)}
-        userName="Bu Yati"
+        userName={nama}
       />
     </>
   );

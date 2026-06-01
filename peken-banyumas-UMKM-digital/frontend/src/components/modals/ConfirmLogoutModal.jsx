@@ -7,11 +7,9 @@ export default function ConfirmLogoutModal({ show, onClose, userName }) {
   if (!show) return null;
 
   const handleLogout = () => {
-    onClose();
     localStorage.clear();
-    navigate("/login", {
-      replace: true
-    });
+    onClose();
+    navigate("/login", { replace: true });
   };
 
   const namaDepan = userName?.split(" ")[0] || "kamu";

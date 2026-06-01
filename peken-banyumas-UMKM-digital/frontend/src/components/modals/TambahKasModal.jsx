@@ -17,12 +17,33 @@ export default function TambahKasModal({ show, onClose, onSave, items }) {
   );
 
   useEffect(() => {
-    setQrisImage(localStorage.getItem("qrisImage") || null);
-    const handleQrisUpdate = () => {
-      setQrisImage(localStorage.getItem("qrisImage") || null);
+    // Load QRIS dari backend
+    const fetchQris = () => {
+      const token = localStorage.getItem("token");
+      if (token) {
+        fetch("http://127.0.0.1:8000/api/artisan/pengaturan/profil", {
+          headers: { Authorization: `Bearer ${token}` },
+        })
+          .then(r => r.json())
+          .then(data => {
+            if (data?.qris_url) {
+              setQrisImage(data.qris_url);
+              localStorage.setItem("qrisImage", data.qris_url);
+            } else {
+              setQrisImage(null);
+              localStorage.removeItem("qrisImage");
+            }
+          })
+          .catch(() => {
+            // fallback ke localStorage
+            setQrisImage(localStorage.getItem("qrisImage") || null);
+          });
+      }
     };
-    window.addEventListener("qrisUpdated", handleQrisUpdate);
-    return () => window.removeEventListener("qrisUpdated", handleQrisUpdate);
+
+    fetchQris();
+    window.addEventListener("qrisUpdated", fetchQris);
+    return () => window.removeEventListener("qrisUpdated", fetchQris);
   }, []);
 
   const [form, setForm] = useState({
@@ -126,12 +147,9 @@ export default function TambahKasModal({ show, onClose, onSave, items }) {
     }
 
     const d = new Date(form.tgl);
-    const tglFmt = d.toLocaleDateString("id-ID", {
-      day: "numeric", month: "short", year: "numeric"
-    });
+    const tglISO = form.tgl; // sudah dalam format YYYY-MM-DD dari input type="date"
 
     onSave({
-      id: Date.now(),
       jenis: form.jenis,
       kategori: form.jenis === "masuk" ? "Penjualan" : form.kategori,
       pelanggan: form.pelanggan,
@@ -139,8 +157,8 @@ export default function TambahKasModal({ show, onClose, onSave, items }) {
       qty: Number(form.qty),
       metode: form.metode,
       nominal: Number(form.nominal),
-      tgl: tglFmt,
-      buktiUrl: form.buktiUrl || null,
+      tgl: tglISO,
+      bukti_url: form.buktiUrl || null,
       ket: form.jenis === "masuk"
         ? `${form.namaBarang} x${form.qty} (${form.metode.toUpperCase()})`
         : form.ket,

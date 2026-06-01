@@ -1,20 +1,23 @@
 .counter {
-  font-size: 16px;
+  font-family: var(--font-body);
+  font-size: var(--fs-16);
+  font-weight: var(--fw-medium);
   padding: 5px 10px;
   border-radius: 5px;
-  color: var(--accent);
-  background: var(--accent-bg);
+  color: var(--peken-sage);
+  background: rgba(195, 202, 150, 0.1);
   border: 2px solid transparent;
-  transition: border-color 0.3s;
+  transition: border-color var(--dur-fast) var(--ease-out);
   margin-bottom: 24px;
+}
 
-  &:hover {
-    border-color: var(--accent-border);
-  }
-  &:focus-visible {
-    outline: 2px solid var(--accent);
-    outline-offset: 2px;
-  }
+.counter:hover {
+  border-color: rgba(195, 202, 150, 0.5);
+}
+
+.counter:focus-visible {
+  outline: 2px solid var(--peken-sage);
+  outline-offset: 2px;
 }
 
 .hero {
@@ -72,7 +75,7 @@
 
 #next-steps {
   display: flex;
-  border-top: 1px solid var(--border);
+  border-top: 1px solid var(--dash-border);
   text-align: left;
 
   & > div {
@@ -96,11 +99,11 @@
 }
 
 #docs {
-  border-right: 1px solid var(--border);
+  border-right: 1px solid var(--dash-border);
 
   @media (max-width: 1024px) {
     border-right: none;
-    border-bottom: 1px solid var(--border);
+    border-bottom: 1px solid var(--dash-border);
   }
 }
 
@@ -110,52 +113,39 @@
   display: flex;
   gap: 8px;
   margin: 32px 0 0;
+}
 
-  .logo {
-    height: 18px;
-  }
+#next-steps ul .logo {
+  height: 18px;
+}
 
-  a {
-    color: var(--text-h);
-    font-size: 16px;
-    border-radius: 6px;
-    background: var(--social-bg);
-    display: flex;
-    padding: 6px 12px;
-    align-items: center;
-    gap: 8px;
-    text-decoration: none;
-    transition: box-shadow 0.3s;
+#next-steps ul a {
+  color: var(--dash-text-primary);
+  font-family: var(--font-body);
+  font-size: var(--fs-14);
+  font-weight: var(--fw-medium);
+  border-radius: 6px;
+  background: rgba(244, 243, 236, 0.5);
+  display: flex;
+  padding: 6px 12px;
+  align-items: center;
+  gap: 8px;
+  text-decoration: none;
+  transition: box-shadow var(--dur-fast) var(--ease-out);
+}
 
-    &:hover {
-      box-shadow: var(--shadow);
-    }
-    .button-icon {
-      height: 18px;
-      width: 18px;
-    }
-  }
+#next-steps ul a:hover {
+  box-shadow: var(--shadow-md);
+}
 
-  @media (max-width: 1024px) {
-    margin-top: 20px;
-    flex-wrap: wrap;
-    justify-content: center;
-
-    li {
-      flex: 1 1 calc(50% - 8px);
-    }
-
-    a {
-      width: 100%;
-      justify-content: center;
-      box-sizing: border-box;
-    }
-  }
+#next-steps ul a .button-icon {
+  height: 18px;
+  width: 18px;
 }
 
 #spacer {
   height: 88px;
-  border-top: 1px solid var(--border);
+  border-top: 1px solid var(--dash-border);
   @media (max-width: 1024px) {
     height: 48px;
   }
@@ -175,10 +165,10 @@
 
   &::before {
     left: 0;
-    border-left-color: var(--border);
+    border-left-color: var(--dash-border);
   }
   &::after {
     right: 0;
-    border-right-color: var(--border);
+    border-right-color: var(--dash-border);
   }
 }

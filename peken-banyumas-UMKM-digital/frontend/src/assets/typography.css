@@ -1,0 +1,411 @@
+/* =============================================================
+   Peken Banyumasan — Typography Design System
+   Unified design tokens for all typography, aligned with
+   Peken Banyumasan Design System v2.0
+   ============================================================= */
+
+/* ── Webfonts ─────────────────────────────────────────────── */
+@import url('https://api.fontshare.com/v2/css?f[]=clash-display@400,500,600,700&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@1,400&display=swap');
+
+@font-face {
+  font-family: "Montserrat";
+  src: url("/Montserrat-VariableFont_wght.ttf") format("truetype-variations");
+  font-weight: 100 900;
+  font-style: normal;
+  font-display: swap;
+}
+
+@font-face {
+  font-family: "Montserrat";
+  src: url("/Montserrat-Italic-VariableFont_wght.ttf") format("truetype-variations");
+  font-weight: 100 900;
+  font-style: italic;
+  font-display: swap;
+}
+
+:root {
+  /* ══════════════════════════════════════════════════════════
+     TYPOGRAPHY TOKENS — Design System
+     ══════════════════════════════════════════════════════════ */
+
+  /* Font Families */
+  --font-display: "Clash Display", system-ui, sans-serif;
+  --font-body: "Montserrat", system-ui, sans-serif;
+  --font-italic: "Playfair Display", Georgia, serif;
+  --font-mono: ui-monospace, Consolas, monospace;
+
+  /* Font Scale (10px to 96px) */
+  --fs-10: 10px;
+  --fs-11: 11px;
+  --fs-12: 12px;
+  --fs-13: 13px;
+  --fs-14: 14px;
+  --fs-16: 16px;
+  --fs-18: 18px;
+  --fs-20: 20px;
+  --fs-24: 24px;
+  --fs-28: 28px;
+  --fs-32: 32px;
+  --fs-36: 36px;
+  --fs-56: 56px;
+  --fs-96: 96px;
+
+  /* Font Weights */
+  --fw-light: 300;
+  --fw-regular: 400;
+  --fw-medium: 500;
+  --fw-semibold: 600;
+  --fw-bold: 700;
+  --fw-extra-bold: 800;
+  --fw-black: 900;
+
+  /* Line Heights */
+  --lh-tight: 1;
+  --lh-snug: 1.3;
+  --lh-normal: 1.5;
+  --lh-relaxed: 1.7;
+  --lh-loose: 1.8;
+
+  /* Letter Spacing */
+  --ls-normal: 0;
+  --ls-label: 0.02em;
+  --ls-wide: 0.06em;
+  --ls-tight: -0.01em;
+  --ls-tighter: -0.02em;
+  --ls-tightest: -0.03em;
+
+  /* ══════════════════════════════════════════════════════════
+     SEMANTIC TYPOGRAPHY TOKENS — UMKM Dashboard
+     Used throughout the application for consistent styling
+     ══════════════════════════════════════════════════════════ */
+
+  /* Page Titles (H1) — Montserrat 700, 20px */
+  --type-page-title-family: var(--font-body);
+  --type-page-title-size: var(--fs-20);
+  --type-page-title-weight: var(--fw-bold);
+  --type-page-title-height: var(--lh-snug);
+  --type-page-title-spacing: var(--ls-normal);
+
+  /* Section Headings (H2/H3) — Montserrat 600, 16px */
+  --type-section-title-family: var(--font-body);
+  --type-section-title-size: var(--fs-16);
+  --type-section-title-weight: var(--fw-semibold);
+  --type-section-title-height: var(--lh-normal);
+  --type-section-title-spacing: var(--ls-normal);
+
+  /* Card Headings (H3/H4) — Montserrat 600, 14px */
+  --type-card-title-family: var(--font-body);
+  --type-card-title-size: var(--fs-14);
+  --type-card-title-weight: var(--fw-semibold);
+  --type-card-title-height: var(--lh-normal);
+  --type-card-title-spacing: var(--ls-normal);
+
+  /* Body Text — Montserrat 400, 14px */
+  --type-body-family: var(--font-body);
+  --type-body-size: var(--fs-14);
+  --type-body-weight: var(--fw-regular);
+  --type-body-height: var(--lh-normal);
+  --type-body-spacing: var(--ls-normal);
+
+  /* Body Small — Montserrat 400, 12px */
+  --type-body-sm-family: var(--font-body);
+  --type-body-sm-size: var(--fs-12);
+  --type-body-sm-weight: var(--fw-regular);
+  --type-body-sm-height: var(--lh-normal);
+  --type-body-sm-spacing: var(--ls-normal);
+
+  /* Form Labels — Montserrat 600, 12px, uppercase */
+  --type-label-family: var(--font-body);
+  --type-label-size: var(--fs-12);
+  --type-label-weight: var(--fw-semibold);
+  --type-label-height: var(--lh-tight);
+  --type-label-spacing: var(--ls-label);
+
+  /* Caption / Micro-text — Montserrat 500, 10px, uppercase */
+  --type-caption-family: var(--font-body);
+  --type-caption-size: var(--fs-10);
+  --type-caption-weight: var(--fw-medium);
+  --type-caption-height: var(--lh-tight);
+  --type-caption-spacing: var(--ls-wide);
+
+  /* Stat Numbers — Montserrat 700, 28px */
+  --type-stat-value-family: var(--font-body);
+  --type-stat-value-size: var(--fs-28);
+  --type-stat-value-weight: var(--fw-bold);
+  --type-stat-value-height: var(--lh-tight);
+  --type-stat-value-spacing: var(--ls-normal);
+
+  /* Display Text — Clash Display 400-600 */
+  --type-display-xl-family: var(--font-display);
+  --type-display-xl-size: var(--fs-32);
+  --type-display-xl-weight: var(--fw-regular);
+  --type-display-xl-height: var(--lh-normal);
+  --type-display-xl-spacing: var(--ls-normal);
+
+  --type-display-md-family: var(--font-display);
+  --type-display-md-size: var(--fs-20);
+  --type-display-md-weight: var(--fw-medium);
+  --type-display-md-height: var(--lh-snug);
+  --type-display-md-spacing: var(--ls-normal);
+
+  /* Italic Accent — Playfair Display */
+  --type-italic-family: var(--font-italic);
+  --type-italic-size: var(--fs-14);
+  --type-italic-weight: var(--fw-regular);
+  --type-italic-height: var(--lh-normal);
+  --type-italic-spacing: var(--ls-normal);
+  --type-italic-style: italic;
+
+  /* ══════════════════════════════════════════════════════════
+     COLOR TOKENS — Dashboard
+     ══════════════════════════════════════════════════════════ */
+
+  /* Sage Family (Brand Primary) */
+  --peken-sage: #C3CA96;
+  --peken-sage-light: #dde3c0;
+  --peken-sage-pale: #f0f2e4;
+  --peken-sage-mid: #a8b07a;
+  --peken-sage-dark: #7a8a52;
+  --peken-sage-deeper: #4f5c30;
+
+  /* Ink Family (Dark) */
+  --peken-ink: #0D0D0D;
+  --peken-charcoal: #1B1B1B;
+  --peken-carbon: #111111;
+  --peken-coal: #1A1B1A;
+
+  /* Neutrals */
+  --peken-white: #FFFFFF;
+  --peken-mist: #B2B2B2;
+  --peken-smoke: #5B5B5B;
+
+  /* Dashboard Surfaces */
+  --dash-bg: #f2f4e8;
+  --dash-surface: #FFFFFF;
+  --dash-surface-hover: #f7f8f2;
+  --dash-border: #e4e7d4;
+  --dash-border-strong: #c8ccb0;
+
+  /* Dashboard Text */
+  --dash-text-primary: #1e2010;
+  --dash-text-secondary: #5a6040;
+  --dash-text-muted: #8a9070;
+  --dash-text-inverse: #FFFFFF;
+
+  /* Status Colors */
+  --dash-success: #7A9B6A;
+  --dash-error: #B87272;
+  --dash-warning: #C4A24D;
+  --dash-info: #6B8FA3;
+  --dash-exit: #7A80B0;
+
+  /* ══════════════════════════════════════════════════════════
+     SHADOW & MOTION
+     ══════════════════════════════════════════════════════════ */
+  --shadow-sm: 0 1px 3px rgba(30, 32, 16, 0.06), 0 1px 2px rgba(30, 32, 16, 0.04);
+  --shadow-md: 0 4px 12px rgba(30, 32, 16, 0.08), 0 2px 4px rgba(30, 32, 16, 0.04);
+  --shadow-lg: 0 8px 24px rgba(30, 32, 16, 0.10), 0 4px 8px rgba(30, 32, 16, 0.06);
+
+  --ease-out: cubic-bezier(0.22, 0.61, 0.36, 1);
+  --dur-fast: 180ms;
+  --dur-base: 320ms;
+}
+
+/* ══════════════════════════════════════════════════════════
+   UTILITY CLASSES — Apply semantic tokens
+   ══════════════════════════════════════════════════════════ */
+
+/* Page Title */
+.text-page-title,
+.type-page-title {
+  font-family: var(--type-page-title-family);
+  font-size: var(--type-page-title-size);
+  font-weight: var(--type-page-title-weight);
+  line-height: var(--type-page-title-height);
+  letter-spacing: var(--type-page-title-spacing);
+  color: var(--dash-text-primary);
+}
+
+/* Section Title */
+.text-section-title,
+.type-section-title {
+  font-family: var(--type-section-title-family);
+  font-size: var(--type-section-title-size);
+  font-weight: var(--type-section-title-weight);
+  line-height: var(--type-section-title-height);
+  letter-spacing: var(--type-section-title-spacing);
+  color: var(--dash-text-primary);
+}
+
+/* Card Title */
+.text-card-title,
+.type-card-title {
+  font-family: var(--type-card-title-family);
+  font-size: var(--type-card-title-size);
+  font-weight: var(--type-card-title-weight);
+  line-height: var(--type-card-title-height);
+  letter-spacing: var(--type-card-title-spacing);
+  color: var(--dash-text-primary);
+}
+
+/* Body Text */
+.text-body,
+.type-body {
+  font-family: var(--type-body-family);
+  font-size: var(--type-body-size);
+  font-weight: var(--type-body-weight);
+  line-height: var(--type-body-height);
+  letter-spacing: var(--type-body-spacing);
+  color: var(--dash-text-primary);
+}
+
+/* Body Small */
+.text-body-sm,
+.type-body-sm {
+  font-family: var(--type-body-sm-family);
+  font-size: var(--type-body-sm-size);
+  font-weight: var(--type-body-sm-weight);
+  line-height: var(--type-body-sm-height);
+  letter-spacing: var(--type-body-sm-spacing);
+  color: var(--dash-text-primary);
+}
+
+/* Form Label */
+.text-label,
+.type-label,
+label,
+.field-label {
+  font-family: var(--type-label-family);
+  font-size: var(--type-label-size);
+  font-weight: var(--type-label-weight);
+  line-height: var(--type-label-height);
+  letter-spacing: var(--type-label-spacing);
+  color: var(--dash-text-secondary);
+  text-transform: uppercase;
+}
+
+/* Caption */
+.text-caption,
+.type-caption {
+  font-family: var(--type-caption-family);
+  font-size: var(--type-caption-size);
+  font-weight: var(--type-caption-weight);
+  line-height: var(--type-caption-height);
+  letter-spacing: var(--type-caption-spacing);
+  color: var(--dash-text-muted);
+  text-transform: uppercase;
+}
+
+/* Stat Value */
+.text-stat-value,
+.type-stat-value,
+.stat-val {
+  font-family: var(--type-stat-value-family);
+  font-size: var(--type-stat-value-size);
+  font-weight: var(--type-stat-value-weight);
+  line-height: var(--type-stat-value-height);
+  letter-spacing: var(--type-stat-value-spacing);
+  color: var(--dash-text-primary);
+}
+
+/* Display XL */
+.text-display-xl,
+.type-display-xl {
+  font-family: var(--type-display-xl-family);
+  font-size: var(--type-display-xl-size);
+  font-weight: var(--type-display-xl-weight);
+  line-height: var(--type-display-xl-height);
+  letter-spacing: var(--type-display-xl-spacing);
+}
+
+/* Display MD */
+.text-display-md,
+.type-display-md {
+  font-family: var(--type-display-md-family);
+  font-size: var(--type-display-md-size);
+  font-weight: var(--type-display-md-weight);
+  line-height: var(--type-display-md-height);
+  letter-spacing: var(--type-display-md-spacing);
+}
+
+/* Italic Accent */
+.text-italic,
+.type-italic {
+  font-family: var(--type-italic-family);
+  font-size: var(--type-italic-size);
+  font-weight: var(--type-italic-weight);
+  line-height: var(--type-italic-height);
+  letter-spacing: var(--type-italic-spacing);
+  font-style: var(--type-italic-style);
+}
+
+/* ──────────────────────────────────────────────────────────
+   Color Utility Classes
+   ────────────────────────────────────────────────────────── */
+
+.text-primary { color: var(--dash-text-primary); }
+.text-secondary { color: var(--dash-text-secondary); }
+.text-muted { color: var(--dash-text-muted); }
+.text-inverse { color: var(--dash-text-inverse); }
+.text-success { color: var(--dash-success); }
+.text-error { color: var(--dash-error); }
+.text-warning { color: var(--dash-warning); }
+.text-info { color: var(--dash-info); }
+.text-sage { color: var(--peken-sage); }
+
+/* Background Colors */
+.bg-primary { background-color: var(--dash-surface); }
+.bg-secondary { background-color: var(--dash-surface-hover); }
+.bg-page { background-color: var(--dash-bg); }
+.bg-success { background-color: #eef4eb; }
+.bg-error { background-color: #f7eeee; }
+.bg-warning { background-color: #f7f2e4; }
+.bg-info { background-color: #eaf0f4; }
+
+/* ──────────────────────────────────────────────────────────
+   Responsive Typography Adjustments
+   For smaller screens, reduce heading sizes
+   ────────────────────────────────────────────────────────── */
+
+@media (max-width: 1024px) {
+  :root {
+    --fs-32: 28px;
+    --fs-28: 24px;
+    --fs-24: 20px;
+    --fs-20: 18px;
+  }
+
+  .text-page-title,
+  .type-page-title {
+    font-size: var(--fs-18);
+  }
+
+  .text-stat-value,
+  .type-stat-value {
+    font-size: var(--fs-24);
+  }
+}
+
+@media (max-width: 640px) {
+  :root {
+    --fs-20: 16px;
+    --fs-18: 16px;
+    --fs-16: 14px;
+  }
+
+  .text-page-title,
+  .type-page-title {
+    font-size: var(--fs-16);
+  }
+
+  .text-section-title,
+  .type-section-title {
+    font-size: var(--fs-14);
+  }
+
+  .text-stat-value,
+  .type-stat-value {
+    font-size: var(--fs-20);
+  }
+}

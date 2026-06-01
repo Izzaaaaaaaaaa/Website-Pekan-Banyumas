@@ -60,19 +60,34 @@ export default function Login() {
     if (error) setError("");
   };
 
-  const handleLogin = (e) => {
+  const handleLogin = async (e) => {
     e.preventDefault();
     if (!form.email || !form.password) { setError("Semua field harus diisi!"); return; }
     setLoading(true);
-    setTimeout(() => {
-      if (form.email === "proyekabadi@gmail.com" && form.password === "123456") {
-        localStorage.setItem("isLogin", "true");
-        navigate("/");
-      } else {
-        setError("Email atau password salah!");
+    try {
+      const res = await fetch("http://127.0.0.1:8000/api/auth/login", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ email: form.email, password: form.password }),
+      });
+      const data = await res.json();
+      if (!res.ok) {
+        setError(data.detail || "Email atau password salah!");
         setLoading(false);
+        return;
       }
-    }, 800);
+      // simpan token dan info user
+      localStorage.setItem("isLogin", "true");
+      localStorage.setItem("token", data.access_token);
+      localStorage.setItem("user_id", data.user_id);
+      localStorage.setItem("nama", data.nama);
+      localStorage.setItem("email", data.email);
+      localStorage.setItem("role", data.role);
+      navigate("/");
+    } catch (err) {
+      setError("Gagal terhubung ke server. Coba lagi.");
+      setLoading(false);
+    }
   };
 
   return (

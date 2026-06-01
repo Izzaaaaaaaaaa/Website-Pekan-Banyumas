@@ -1,10 +1,13 @@
+/* Import design system typography */
+@import './typography.css';
+
 /* =========================
    RESET & BASE
 ========================= */
 body {
   margin: 0;
-  font-family: 'Montserrat', sans-serif;
-  background: #f8faf8;
+  font-family: var(--font-body);
+  background: var(--dash-bg);
 }
 
 /* =========================
@@ -13,7 +16,7 @@ body {
 .app-layout {
   display: flex;
   min-height: 100vh;
-  background: #f5f5ec;
+  background: var(--dash-bg);
 }
 
 /* MAIN CONTENT */
@@ -56,9 +59,9 @@ body {
     height: 72px;
     padding: 0 18px;
 
-    background: #f5f5ec;
+    background: var(--dash-bg);
 
-    border-bottom: 1px solid #e3e6d7;
+    border-bottom: 1px solid var(--dash-border);
 
     position: sticky;
     top: 0;
@@ -68,11 +71,11 @@ body {
   }
 
   .mobile-title {
-    font-size: 15px;
-    font-weight: 700;
-    color: #1f1f1f;
-    font-family: "Montserrat", sans-serif;
-    letter-spacing: -0.02em;
+    font-family: var(--font-body);
+    font-size: var(--fs-16);
+    font-weight: var(--fw-bold);
+    color: var(--dash-text-primary);
+    letter-spacing: var(--ls-tight);
   }
 
   .menu-toggle {
@@ -80,9 +83,9 @@ body {
     height: 42px;
 
     border-radius: 12px;
-    border: 1px solid #d8dcc7;
+    border: 1px solid var(--dash-border-strong);
 
-    background: #fcfcf7;
+    background: var(--dash-surface);
 
     display: flex;
     align-items: center;
@@ -90,11 +93,11 @@ body {
 
     cursor: pointer;
 
-    color: #5f6d3c;
+    color: var(--peken-sage-dark);
 
-    box-shadow: 0 2px 8px rgba(0,0,0,.05);
+    box-shadow: 0 2px 8px rgba(0, 0, 0, .05);
 
-    transition: all .2s ease;
+    transition: all .2s var(--ease-out);
 
     font-size: 20px;
 
@@ -102,7 +105,7 @@ body {
   }
 
   .menu-toggle:hover {
-    background: #eef0e0;
+    background: var(--dash-surface-hover);
   }
 
 }
@@ -127,10 +130,10 @@ body {
    CARD
 ========================= */
 .card {
-  background: white;
+  background: var(--dash-surface);
   border-radius: 16px;
   padding: 20px;
-  border: 1px solid #e5e5e5;
+  border: 1px solid var(--dash-border);
   margin-bottom: 16px;
 }
 
@@ -176,18 +179,16 @@ body {
   position: fixed;
   bottom: 22px;
   right: 22px;
-  background:#879657;
-  color:white;
-  padding:14px 18px;
-  border-radius:14px;
-  border:1px solid #98A86B;
-  font-family:"Montserrat";
-  font-size: 13px;
-  font-weight: 700;
-  box-shadow:
-  0 14px 30px
-  rgba(122,138,82,.18);
-  animation:toastIn .2s ease;
+  background: var(--peken-sage-dark);
+  color: white;
+  padding: 14px 18px;
+  border-radius: 14px;
+  border: 1px solid var(--peken-sage-light);
+  font-family: var(--font-body);
+  font-size: var(--fs-13);
+  font-weight: var(--fw-bold);
+  box-shadow: 0 14px 30px rgba(122, 138, 82, .18);
+  animation: toastIn var(--dur-fast) var(--ease-out);
   display: flex;
   align-items: center;
   gap: 8px;
@@ -196,16 +197,14 @@ body {
 
 @keyframes toastIn{
 
-from{
-opacity:0;
-transform:
-translateY(8px);
-}
+  from{
+    opacity: 0;
+    transform: translateY(8px);
+  }
 
-to{
-opacity:1;
-transform:
-translateY(0);
-}
+  to{
+    opacity: 1;
+    transform: translateY(0);
+  }
 
 }

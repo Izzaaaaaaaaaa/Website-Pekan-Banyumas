@@ -2,7 +2,7 @@ import { useState, useEffect } from "react";
 
 export default function EditBarangModal({ show, onClose, item, onSave }) {
   const [form, setForm] = useState({
-    nama: "", kategori: "", harga: "", stok: "", satuan: "",
+    nama: "", kategori: "", harga: "", stok: "", satuan: "", stok_min: "0",
   });
 
   useEffect(() => {
@@ -13,6 +13,7 @@ export default function EditBarangModal({ show, onClose, item, onSave }) {
         harga    : item.harga,
         stok     : item.stok,
         satuan   : item.satuan || "",
+        stok_min : item.stok_min ?? 0,
       });
     }
   }, [item]);
@@ -29,6 +30,7 @@ export default function EditBarangModal({ show, onClose, item, onSave }) {
       kategori: form.kategori || "Lainnya",
       stok: Number(form.stok),
       harga: Number(form.harga),
+      stok_min: Number(form.stok_min) || 0,
     });
     onClose();
   };
@@ -96,6 +98,18 @@ export default function EditBarangModal({ show, onClose, item, onSave }) {
               type="number"
               value={form.stok}
               onChange={handleChange}
+            />
+          </div>
+
+          <div className="ms-fg">
+            <label>Stok Minimum (Alert)</label>
+            <input
+              name="stok_min"
+              type="number"
+              min="0"
+              value={form.stok_min}
+              onChange={handleChange}
+              placeholder="0"
             />
           </div>
 

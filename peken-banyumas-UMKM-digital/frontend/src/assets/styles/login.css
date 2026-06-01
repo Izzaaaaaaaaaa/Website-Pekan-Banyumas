@@ -76,30 +76,30 @@
   justify-content: center;
   width: 52px;
   height: 52px;
-  background: #7a8a52;
+  background: var(--peken-sage-dark);
   border-radius: 14px;
   margin-bottom: 20px;
   box-shadow: 0 4px 14px rgba(122,138,82,.25);
-  color: #fff;
-  transition: transform 180ms cubic-bezier(0.22, 0.61, 0.36, 1);
+  color: var(--peken-white);
+  transition: transform var(--dur-fast) var(--ease-out);
 }
 .logo-mark:hover { transform: translateY(-2px) rotate(-4deg); }
 
 /* ── Headings ────────────────────────────────────────────── */
 .card-title {
-  font-family: "Montserrat", sans-serif;
-  font-size: 26px;
-  font-weight: 500;
-  color: #1e2010;
+  font-family: var(--font-body);
+  font-size: var(--fs-24);
+  font-weight: var(--fw-medium);
+  color: var(--dash-text-primary);
   margin: 0 0 6px;
-  letter-spacing: -.01em;
+  letter-spacing: var(--ls-tight);
 }
 .card-sub {
-  font-size: 13px;
-  color: #8a9070;
+  font-size: var(--fs-13);
+  color: var(--dash-text-muted);
   margin: 0 0 28px;
-  line-height: 1.5;
-  font-family: "Montserrat", system-ui, sans-serif;
+  line-height: var(--lh-normal);
+  font-family: var(--font-body);
 }
 
 /* ── Error banner ────────────────────────────────────────── */
@@ -112,10 +112,10 @@
   background: #f7eeee;
   border: 1px solid #dbb8b8;
   border-radius: 12px;
-  font-size: 12px;
-  color: #B87272;
-  font-family: "Montserrat", system-ui, sans-serif;
-  animation: shake .38s ease;
+  font-size: var(--fs-12);
+  color: var(--dash-error);
+  font-family: var(--font-body);
+  animation: shake .38s var(--ease-out);
 }
 
 @keyframes shake {
@@ -132,12 +132,12 @@
 .field-label {
   display: block;
   margin-bottom: 6px;
-  font-size: 11px;
-  font-weight: 600;
-  color: #5a6040;
+  font-size: var(--fs-11);
+  font-weight: var(--fw-semibold);
+  color: var(--dash-text-secondary);
   text-transform: uppercase;
-  letter-spacing: .06em;
-  font-family: "Montserrat", system-ui, sans-serif;
+  letter-spacing: var(--ls-wide);
+  font-family: var(--font-body);
 }
 
 .input-wrap { position: relative; }
@@ -147,31 +147,31 @@
   left: 14px;
   top: 50%;
   transform: translateY(-50%);
-  color: #8a9070;
+  color: var(--dash-text-muted);
   display: flex;
   align-items: center;
   pointer-events: none;
-  transition: color 180ms;
+  transition: color var(--dur-fast);
 }
-.input-wrap:focus-within .input-icon { color: #7a8a52; }
+.input-wrap:focus-within .input-icon { color: var(--peken-sage-dark); }
 
 .login-input {
   width: 100%;
   padding: 12px 14px 12px 42px;
-  border: 1px solid #e4e7d4;
+  border: 1px solid var(--dash-border);
   border-radius: 12px;
-  font-size: 13px;
-  font-family: "Montserrat", system-ui, sans-serif;
-  background: #fff;
-  color: #1e2010;
+  font-size: var(--fs-13);
+  font-family: var(--font-body);
+  background: var(--dash-surface);
+  color: var(--dash-text-primary);
   outline: none;
   transition:
-    border-color 180ms cubic-bezier(0.22, 0.61, 0.36, 1),
-    box-shadow   180ms cubic-bezier(0.22, 0.61, 0.36, 1);
+    border-color var(--dur-fast) var(--ease-out),
+    box-shadow   var(--dur-fast) var(--ease-out);
 }
-.login-input::placeholder { color: #8a9070; }
+.login-input::placeholder { color: var(--dash-text-muted); }
 .login-input:focus {
-  border-color: #7a8a52;
+  border-color: var(--peken-sage-dark);
   box-shadow: 0 0 0 3px rgba(122,138,82,.15);
 }
 .login-input.has-toggle { padding-right: 44px; }
@@ -185,13 +185,13 @@
   background: none;
   border: none;
   cursor: pointer;
-  color: #8a9070;
+  color: var(--dash-text-muted);
   display: flex;
   padding: 4px;
   border-radius: 6px;
-  transition: color 180ms;
+  transition: color var(--dur-fast);
 }
-.toggle-pw:hover { color: #5a6040; }
+.toggle-pw:hover { color: var(--dash-text-secondary); }
 
 /* Forgot password row */
 .forgot-row {
@@ -200,12 +200,12 @@
   margin: -6px 0 22px;
 }
 .forgot-link {
-  font-size: 12px;
-  color: #7a8a52;
-  font-weight: 500;
+  font-size: var(--fs-12);
+  color: var(--peken-sage-dark);
+  font-weight: var(--fw-medium);
   cursor: pointer;
-  font-family: "Montserrat", system-ui, sans-serif;
-  transition: opacity 180ms;
+  font-family: var(--font-body);
+  transition: opacity var(--dur-fast);
 }
 .forgot-link:hover { opacity: .7; }
 
@@ -217,22 +217,22 @@
   justify-content: center;
   gap: 8px;
   padding: 13px 28px;
-  background: #7A8A52 !important;
-  color: #fff;
+  background: var(--peken-sage-dark) !important;
+  color: var(--dash-text-inverse);
   border: none;
   border-radius: 20px;
-  font-size: 13px;
-  font-weight: 700;
-  font-family: "Montserrat", system-ui, sans-serif;
+  font-size: var(--fs-13);
+  font-weight: var(--fw-bold);
+  font-family: var(--font-body);
   cursor: pointer;
-  letter-spacing: .01em;
+  letter-spacing: var(--ls-normal);
   transition:
-    background  180ms cubic-bezier(0.22, 0.61, 0.36, 1),
-    box-shadow  180ms cubic-bezier(0.22, 0.61, 0.36, 1);
+    background  var(--dur-fast) var(--ease-out),
+    box-shadow  var(--dur-fast) var(--ease-out);
   box-shadow: 0 4px 14px rgba(122,138,82,.25);
 }
 .btn-submit:hover:not(:disabled) {
-  background: #4F5C30 !important;
+  background: var(--peken-sage-deeper) !important;
   box-shadow: 0 6px 20px rgba(122,138,82,.35);
 }
 .btn-submit:disabled { opacity: .65; cursor: not-allowed; box-shadow: none; }
@@ -243,34 +243,34 @@
   align-items: center;
   gap: 14px;
   margin: 22px 0;
-  color: #8a9070;
-  font-size: 12px;
-  font-weight: 500;
-  letter-spacing: .04em;
-  font-family: "Montserrat", system-ui, sans-serif;
+  color: var(--dash-text-muted);
+  font-size: var(--fs-12);
+  font-weight: var(--fw-medium);
+  letter-spacing: var(--ls-label);
+  font-family: var(--font-body);
 }
 .divider::before,
 .divider::after {
   content: "";
   flex: 1;
   height: 1px;
-  background: #e4e7d4;
+  background: var(--dash-border);
 }
 
 /* ── Register CTA ────────────────────────────────────────── */
 .register-row {
   text-align: center;
-  font-size: 13px;
-  color: #8a9070;
+  font-size: var(--fs-13);
+  color: var(--dash-text-muted);
   margin: 0;
-  font-family: "Montserrat", system-ui, sans-serif;
+  font-family: var(--font-body);
 }
 .register-link {
-  color: #7a8a52;
-  font-weight: 600;
+  color: var(--peken-sage-dark);
+  font-weight: var(--fw-semibold);
   cursor: pointer;
   text-decoration: none;
-  transition: opacity 180ms;
+  transition: opacity var(--dur-fast);
 }
 .register-link:hover { opacity: .7; text-decoration: underline; }
 
@@ -303,17 +303,17 @@
 .event-strip-logo { width: 100%; height: 100%; object-fit: contain; border-radius: 5px; }
 
 .event-name {
-  font-size: 13px;
-  font-weight: 700;
-  color: #1e2010;
+  font-size: var(--fs-13);
+  font-weight: var(--fw-bold);
+  color: var(--dash-text-primary);
   margin-bottom: 2px;
-  font-family: "Montserrat", system-ui, sans-serif;
+  font-family: var(--font-body);
 }
 .event-detail {
-  font-size: 11px;
-  color: #5a6040;
+  font-size: var(--fs-11);
+  color: var(--dash-text-secondary);
   line-height: 1.4;
-  font-family: "Montserrat", system-ui, sans-serif;
+  font-family: var(--font-body);
 }
 
 /* ── Spin animation ──────────────────────────────────────── */
@@ -323,5 +323,5 @@
 /* ── Responsive ──────────────────────────────────────────── */
 @media (max-width: 480px) {
   .login-right { padding: 28px 20px; }
-  .card-title  { font-size: 22px; }
+  .card-title  { font-size: var(--fs-20); }
 }
