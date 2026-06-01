@@ -3,6 +3,8 @@ import PillButton from '../shared/PillButton.jsx';
 import { Eyebrow, Wordmark } from '../shared/Typography.jsx';
 import SectionHeader from '../shared/SectionHeader.jsx';
 import WipeReveal from '../shared/WipeReveal.jsx';
+import useFetch from '../../hooks/useFetch.js';
+import { api } from '../../lib/api.js';
 
 // Peken Banyumasan — About screen · v1.2
 // Implements:
@@ -218,6 +220,41 @@ function Stat({ n, label }) {
 }
 
 export default function AboutScreen() {
+  const { data: about } = useFetch(() => api.getSection('about'), []);
+  const { data: tim }   = useFetch(() => api.getSection('tim'),   []);
+
+  // Fallback ke data statis kalau API belum ada isinya
+  const members  = tim?.members  || [];
+  const stats    = about?.stats  || [
+    { n: '86',   label: 'Edisi Peken diselenggarakan' },
+    { n: '240',  label: 'Seniman & kolektif tampil' },
+    { n: '1.2k', label: 'UMKM & tenant terlibat' },
+    { n: '38k',  label: 'Pengunjung setiap edisi' },
+  ];
+  const pillars  = about?.pillars || [
+    { n: '01', label: 'CULTURE',  body: 'Melestarikan kearifan lokal, seni pertunjukan tradisional, dan warisan budaya takbenda Banyumas sebagai fondasi gerakan.' },
+    { n: '02', label: 'CREATIVE', body: 'Memberikan ruang bagi seniman, perajin, dan kolektif muda untuk berkarya dan bertemu audiens yang sebenarnya.' },
+    { n: '03', label: 'CIRCULAR', body: 'Mendorong ekonomi berputar di dalam komunitas — dari tenant lokal, bahan lokal, hingga pengunjung lokal.' },
+  ];
+  const helix    = about?.helix   || [
+    { name: 'Government', body: 'Pemerintah Kabupaten Banyumas dan instansi terkait sebagai mitra kebijakan dan ruang publik.' },
+    { name: 'Academia',   body: 'Kampus dan lembaga riset sebagai sumber kajian, kurikulum, dan tenaga kurasi muda.' },
+    { name: 'Industry',   body: 'Pelaku usaha skala UMKM hingga korporasi sebagai mitra ekonomi dan ekosistem produk.' },
+    { name: 'Community',  body: 'Warga, kolektif seni, dan komunitas hobi sebagai inti gerakan dan audiens setia Peken.' },
+    { name: 'Media',      body: 'Jejaring media independen dan jurnalisme budaya sebagai penjaga narasi gerakan.' },
+    { name: 'Finance',    body: 'Mitra pembiayaan — bank, koperasi, hingga skema gotong royong — yang menjaga sirkulasi ekonomi tetap sehat.' },
+  ];
+
+  const heroTitle        = about?.hero_title        || 'Peken lahir dari keinginan untuk menghidupkan kembali denyut kota lama melalui seni, pasar, dan kebersamaan.';
+  const manifestoLeft    = about?.manifesto_left    || '';
+  const manifestoRight   = about?.manifesto_right   || '';
+  const intro            = about?.intro             || '';
+  const quote            = about?.quote             || '';
+  const visi             = about?.visi              || '';
+  const tujuan           = about?.tujuan            || '';
+  const sasaran          = about?.sasaran           || '';
+  const legalDukungan    = about?.legalitas_dukungan || '';
+  const legalHukum       = about?.legalitas_hukum   || '';
   const Hero = (
     <section
       style={{
@@ -263,17 +300,7 @@ export default function AboutScreen() {
             maxWidth: 960,
           }}
         >
-          Peken lahir dari keinginan untuk menghidupkan kembali{' '}
-          <em
-            style={{
-              fontStyle: 'italic',
-              fontFamily: 'var(--font-italic)',
-              color: 'var(--accent)',
-            }}
-          >
-            denyut kota lama
-          </em>{' '}
-          melalui seni, pasar, dan kebersamaan.
+          {heroTitle}
         </h1>
       </div>
     </section>
@@ -307,15 +334,9 @@ export default function AboutScreen() {
             color: 'var(--accent-ink)',
           }}
         >
-          Peken Banyumasan tumbuh dari percakapan kecil di sudut Kota Lama —
-          antara seniman pertunjukan, pelaku UMKM, dan warga sekitar yang
-          ingin menghidupkan kembali ruang publik sebagai tempat bertemu,
-          bukan sekadar berdagang.
-          <br />
-          <br />
-          Dari obrolan itu, lahir gerakan dwi-mingguan yang konsisten sejak
-          Februari 2022 — sebuah ritual kolektif yang mempertemukan tradisi,
-          kerajinan, dan kuliner Banyumasan dalam satu malam.
+          {(manifestoLeft || '').split('\n\n').map((p, i) => (
+            <span key={i}>{p}{i === 0 && <><br /><br /></>}</span>
+          ))}
         </p>
         <p
           style={{
@@ -326,14 +347,9 @@ export default function AboutScreen() {
             color: 'var(--accent-ink)',
           }}
         >
-          Kami percaya kebudayaan tidak perlu dipajang di balik kaca. Ia
-          hidup ketika dirayakan secara rutin, dalam skala kecil, oleh
-          orang-orang yang merasa memilikinya.
-          <br />
-          <br />
-          Setiap edisi Peken adalah usaha sederhana untuk menjaga warisan
-          tetap berdetak — sambil membuka ruang bagi karya baru tumbuh di
-          atasnya.
+          {(manifestoRight || '').split('\n\n').map((p, i) => (
+            <span key={i}>{p}{i === 0 && <><br /><br /></>}</span>
+          ))}
         </p>
       </div>
     </section>
@@ -385,20 +401,7 @@ export default function AboutScreen() {
             maxWidth: '62ch',
           }}
         >
-          Peken Banyumasan bukan event satu-malam — ia adalah{' '}
-          <em
-            style={{
-              fontFamily: 'var(--font-italic)',
-              fontStyle: 'italic',
-              color: 'var(--accent)',
-            }}
-          >
-            mirapat
-          </em>
-          , kata Banyumasan yang berarti perjumpaan rutin yang dijaga bersama.
-          Setiap edisi mempertemukan seniman pertunjukan tradisional, perajin
-          muda, pelaku UMKM, akademisi, hingga warga sekitar dalam satu ruang
-          yang sama.
+          {intro}
         </p>
         <blockquote
           style={{
@@ -414,8 +417,7 @@ export default function AboutScreen() {
             maxWidth: '44ch',
           }}
         >
-          "Bukan pasar yang menjadi tujuan, melainkan perjumpaan yang
-          menjadikan pasar itu bermakna."
+          "{quote}"
         </blockquote>
         <p
           style={{
@@ -442,21 +444,9 @@ export default function AboutScreen() {
             gap: 40,
           }}
         >
-          <Pillar
-            n="01"
-            label="CULTURE"
-            body="Melestarikan kearifan lokal, seni pertunjukan tradisional, dan warisan budaya takbenda Banyumas sebagai fondasi gerakan."
-          />
-          <Pillar
-            n="02"
-            label="CREATIVE"
-            body="Memberikan ruang bagi seniman, perajin, dan kolektif muda untuk berkarya dan bertemu audiens yang sebenarnya."
-          />
-          <Pillar
-            n="03"
-            label="CIRCULAR"
-            body="Mendorong ekonomi berputar di dalam komunitas — dari tenant lokal, bahan lokal, hingga pengunjung lokal."
-          />
+          {pillars.map((p) => (
+            <Pillar key={p.n} n={p.n} label={p.label} body={p.body} />
+          ))}
         </div>
       </section>
 
@@ -501,17 +491,7 @@ export default function AboutScreen() {
               maxWidth: '44ch',
             }}
           >
-            Menjadi ekosistem budaya dan ekonomi kreatif yang menjaga
-            kearifan lokal Banyumas tetap{' '}
-            <em
-              style={{
-                fontFamily: 'var(--font-italic)',
-                fontStyle: 'italic',
-              }}
-            >
-              berdetak
-            </em>{' '}
-            — relevan, hidup, dan berkelanjutan.
+            {visi}
           </p>
         </div>
         <div
@@ -546,10 +526,7 @@ export default function AboutScreen() {
                 maxWidth: '56ch',
               }}
             >
-              Menyediakan ruang publik dwi-mingguan yang mempertemukan
-              pelaku seni, UMKM, dan masyarakat — sehingga warisan budaya
-              Banyumasan dirawat melalui praktik bersama, bukan sekadar
-              dipamerkan.
+              {tujuan}
             </p>
           </div>
           <div>
@@ -575,10 +552,7 @@ export default function AboutScreen() {
                 maxWidth: '56ch',
               }}
             >
-              Seniman pertunjukan tradisional, perajin & UMKM Banyumas,
-              komunitas kreatif muda, akademisi, mitra pemerintah dan
-              swasta, serta pengunjung lokal-regional yang menjadi audiens
-              sekaligus pelaku.
+              {sasaran}
             </p>
           </div>
         </div>
@@ -612,27 +586,16 @@ export default function AboutScreen() {
             alignItems: 'flex-start',
           }}
         >
-          <PersonCard
-            photo="/assets/tokoh-portrait-1.png"
-            role="FOUNDER"
-            name="Gilang Ramadhan, S.Sn., M.Ds."
-            title="Founder & Program Director"
-            bio="Menggagas Peken pada Februari 2022 dan mengawal kurasi setiap edisi sejak. Latar belakang antropologi pertunjukan, dengan fokus pada kesenian Banyumasan kontemporer."
-          />
-          <PersonCard
-            photo="/assets/tokoh-portrait-2.png"
-            role="CURATOR"
-            name="Galih Putra Pamungkas, S.Sn., M.Sn."
-            title="Curator — Artisan & UMKM"
-            bio="Mengkurasi tenant artisan dan UMKM yang masuk ke setiap edisi Peken. Sebelumnya menjalankan kolektif batik di Sokaraja; membangun program pendampingan tenant dari hulu ke hilir."
-          />
-          <PersonCard
-            photo="/assets/tokoh-portrait-3.png"
-            role="STRATEGIC PARTNER"
-            name="Jakarta Tisam S.STP, M.Si"
-            title="Strategic Partner & Community Lead"
-            bio="Menjaga jaringan kolaborator, sponsor, dan mitra institusi — kampus, pemerintah daerah, swasta. Memegang rasio kolaborasi yang sehat antar enam helix."
-          />
+          {members.map((m) => (
+            <PersonCard
+              key={m.name}
+              photo={m.photo}
+              role={m.role}
+              name={m.name}
+              title={m.title}
+              bio={m.bio}
+            />
+          ))}
         </div>
       </section>
 
@@ -670,30 +633,9 @@ export default function AboutScreen() {
             columnGap: 0,
           }}
         >
-          <HelixCard
-            name="Government"
-            body="Pemerintah Kabupaten Banyumas dan instansi terkait sebagai mitra kebijakan dan ruang publik."
-          />
-          <HelixCard
-            name="Academia"
-            body="Kampus dan lembaga riset sebagai sumber kajian, kurikulum, dan tenaga kurasi muda."
-          />
-          <HelixCard
-            name="Industry"
-            body="Pelaku usaha skala UMKM hingga korporasi sebagai mitra ekonomi dan ekosistem produk."
-          />
-          <HelixCard
-            name="Community"
-            body="Warga, kolektif seni, dan komunitas hobi sebagai inti gerakan dan audiens setia Peken."
-          />
-          <HelixCard
-            name="Media"
-            body="Jejaring media independen dan jurnalisme budaya sebagai penjaga narasi gerakan."
-          />
-          <HelixCard
-            name="Finance"
-            body="Mitra pembiayaan — bank, koperasi, hingga skema gotong royong — yang menjaga sirkulasi ekonomi tetap sehat."
-          />
+          {helix.map((h) => (
+            <HelixCard key={h.name} name={h.name} body={h.body} />
+          ))}
         </div>
       </section>
 
@@ -739,18 +681,7 @@ export default function AboutScreen() {
                 margin: 0,
               }}
             >
-              Peken Banyumasan didukung oleh jaringan mitra lintas sektor:
-              Pemerintah Kabupaten Banyumas dan Dinas Kebudayaan sebagai
-              mitra kebijakan; Universitas Jenderal Soedirman sebagai mitra
-              riset dan pendampingan kurasi; Bank BPD Jawa Tengah sebagai
-              mitra pembiayaan UMKM; Komunitas Kota Lama Banyumas sebagai
-              mitra penyelenggara di lokasi.
-              <br />
-              <br />
-              Dukungan ini terdokumentasi dalam Memorandum of Understanding
-              yang diperbarui setiap dua tahun, dan operasional tahunan
-              dilaporkan secara terbuka kepada para mitra sebagai bagian
-              dari prinsip akuntabilitas gerakan.
+              {legalDukungan}
             </p>
           </div>
 
@@ -792,17 +723,7 @@ export default function AboutScreen() {
                 margin: 0,
               }}
             >
-              Peken Banyumasan beroperasi di bawah payung Yayasan Peken
-              Banyumasan, dengan landasan hukum nasional pada UU No. 5/2017
-              tentang Pemajuan Kebudayaan dan UU No. 24/2019 tentang Ekonomi
-              Kreatif, serta payung daerah pada Peraturan Daerah Kabupaten
-              Banyumas No. 6/2020 tentang Pemajuan Kebudayaan Daerah.
-              <br />
-              <br />
-              Yayasan terdaftar resmi dengan NPWP 00.000.000.0-000.000 dan
-              NIB 0000000000000 (akan diperbarui pada handoff data legal
-              sebenarnya), tunduk pada laporan keuangan dan tata kelola
-              yayasan sebagaimana diatur dalam UU Yayasan.
+              {legalHukum}
             </p>
           </div>
         </div>
@@ -825,10 +746,9 @@ export default function AboutScreen() {
             gap: 40,
           }}
         >
-          <Stat n="86" label="Edisi Peken diselenggarakan" />
-          <Stat n="240" label="Seniman & kolektif tampil" />
-          <Stat n="1.2k" label="UMKM & tenant terlibat" />
-          <Stat n="38k" label="Pengunjung setiap edisi" />
+          {stats.map((s) => (
+            <Stat key={s.label} n={s.n} label={s.label} />
+          ))}
         </div>
       </section>
     </main>

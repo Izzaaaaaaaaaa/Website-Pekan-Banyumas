@@ -5,14 +5,22 @@ import { Eyebrow } from '../shared/Typography.jsx';
 /**
  * Login role-select modal. Implements Raib §4.10. Centered modal (not
  * dropdown) with two equal role cards. Backdrop, blur, ESC-to-close,
- * focus trap all live in the shared <Modal>. Each CTA does router.push
- * to the route owned by Raib's backend team — stubbed here as console.
+ * focus trap all live in the shared <Modal>. Each CTA redirects to the
+ * login page owned by each role's app.
+ *
+ * URL dikonfigurasi via .env:
+ *   VITE_KOLABORATOR_URL  → app kolaborator (default: http://localhost:5175)
+ *   VITE_ARTISAN_URL      → app artisan/UMKM (default: http://localhost:5174)
  */
 export default function LoginModal({ open, onClose }) {
+  const ROLE_URLS = {
+    kolaborator: import.meta.env.VITE_KOLABORATOR_URL || 'http://localhost:5175',
+    artisan:     import.meta.env.VITE_ARTISAN_URL     || 'http://localhost:5174',
+  };
+
   const goRole = (role) => () => {
-    // In production: router.push(`/login/${role}`)
-    console.info(`[LoginModal] navigate → /login/${role}`);
     onClose();
+    window.open(`${ROLE_URLS[role]}/login`, '_blank', 'noopener,noreferrer');
   };
 
   return (
