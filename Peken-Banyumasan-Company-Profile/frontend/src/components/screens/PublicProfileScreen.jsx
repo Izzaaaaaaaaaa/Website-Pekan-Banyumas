@@ -10,11 +10,12 @@
 
 import { useState } from 'react';
 import { MapPin, CheckCircle, Calendar, Share2 } from 'lucide-react';
-import { getProfileByOwner } from '../../data/profiles.js';
 import { Eyebrow } from '../shared/Typography.jsx';
 import PillButton from '../shared/PillButton.jsx';
 import PhotoTile from '../shared/PhotoTile.jsx';
 import Modal from '../shared/Modal.jsx';
+import useFetch from '../../hooks/useFetch.js';
+import { api } from '../../lib/api.js';
 
 // ─── Helpers ─────────────────────────────────────────────────────
 const fmtDate = (d) => {
@@ -146,7 +147,10 @@ function EmptyState({ label }) {
 
 // ─── MAIN ─────────────────────────────────────────────────────────
 export default function PublicProfileScreen({ ownerName, onBack }) {
-    const profile = getProfileByOwner(ownerName);
+    const { data: profile, loading, error } = useFetch(
+        () => api.getProfile(ownerName),
+        [ownerName]
+    );
     const [lightbox, setLightbox] = useState(null);
     const [tab, setTab] = useState('karya');
 
@@ -156,7 +160,13 @@ export default function PublicProfileScreen({ ownerName, onBack }) {
         else navigator.clipboard?.writeText(url).then(() => alert('Link profil disalin!'));
     };
 
-    if (!profile) return (
+    if (loading) return (
+        <main style={{ background: 'var(--bg-page)', color: '#fff', minHeight: '60vh', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+            <div style={{ fontFamily: 'var(--font-body)', fontSize: 13, color: 'var(--fg-secondary)' }}>Memuat profil…</div>
+        </main>
+    );
+
+    if (error || !profile) return (
         <main style={{ background: 'var(--bg-page)', color: '#fff', minHeight: '60vh', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
             <div style={{ textAlign: 'center' }}>
                 <Eyebrow style={{ color: 'var(--accent)', marginBottom: 24 }}>404 · PROFIL TIDAK DITEMUKAN</Eyebrow>
@@ -165,13 +175,24 @@ export default function PublicProfileScreen({ ownerName, onBack }) {
         </main>
     );
 
-    const featuredKarya = profile.karya.find(k => k.featured);
+    // Normalise API shape — API pakai gambar_url, frontend pakai img
+    const karya  = (profile.karya  || []).map(k => ({ ...k, img: k.gambar_url }));
+    const story  = (profile.story  || []);
+    const events = (profile.events || []);
+
+    const featuredKarya = karya.find(k => k.featured);
     const coverImg = featuredKarya?.img || null;
 
+    const stats = profile.stats || {
+        karya: karya.length,
+        story: story.length,
+        event: events.length,
+    };
+
     const TABS = [
-        { id: 'karya', label: `Karya (${profile.karya.length})` },
-        { id: 'story', label: `Story (${profile.story.length})` },
-        { id: 'event', label: `Event (${(profile.events || []).length})` },
+        { id: 'karya', label: `Karya (${karya.length})` },
+        { id: 'story', label: `Story (${story.length})` },
+        { id: 'event', label: `Event (${events.length})` },
     ];
 
     return (
@@ -250,7 +271,7 @@ export default function PublicProfileScreen({ ownerName, onBack }) {
                         {profile.bio}
                     </p>
                     <div style={{ display: 'flex', gap: 32 }}>
-                        {[['Karya', profile.stats.karya], ['Story', profile.stats.story], ['Event', profile.stats.event]].map(([l, n]) => (
+                        {[['Karya', stats.karya], ['Story', stats.story], ['Event', stats.event]].map(([l, n]) => (
                             <div key={l} style={{ textAlign: 'center' }}>
                                 <div style={{ fontFamily: 'Inter', fontWeight: 300, fontSize: 40, lineHeight: 1, color: 'var(--accent-ink)' }}>{n}</div>
                                 <div style={{ fontFamily: 'var(--font-body)', fontSize: 10, color: 'var(--peken-smoke)', textTransform: 'uppercase', letterSpacing: '.06em', marginTop: 4 }}>{l}</div>
@@ -282,24 +303,24 @@ export default function PublicProfileScreen({ ownerName, onBack }) {
             {/* ── CONTENT ── */}
             <div style={{ maxWidth: 1060, margin: '0 auto', padding: '52px 120px 96px' }}>
                 {tab === 'karya' && (
-                    profile.karya.length === 0
+                    karya.length === 0
                         ? <EmptyState label="Belum ada karya yang dipublikasikan." />
                         : <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: 20 }}>
-                            {profile.karya.map(k => <KaryaTile key={k.id} item={k} onClick={setLightbox} />)}
+                            {karya.map(k => <KaryaTile key={k.id} item={k} onClick={setLightbox} />)}
                         </div>
                 )}
                 {tab === 'story' && (
-                    profile.story.length === 0
+                    story.length === 0
                         ? <EmptyState label="Belum ada story yang ditulis." />
                         : <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '28px 52px', maxWidth: 800 }}>
-                            {profile.story.map(s => <StoryCard key={s.id} story={s} />)}
+                            {story.map(s => <StoryCard key={s.id} story={s} />)}
                         </div>
                 )}
                 {tab === 'event' && (
-                    !(profile.events?.length)
+                    !events.length
                         ? <EmptyState label="Belum ada event yang diikuti." />
                         : <div style={{ display: 'grid', gap: 28, maxWidth: 720 }}>
-                            {profile.events.map(ev => <EventCard key={ev.id} ev={ev} />)}
+                            {events.map(ev => <EventCard key={ev.id} ev={ev} />)}
                         </div>
                 )}
             </div>
@@ -312,8 +333,7 @@ export default function PublicProfileScreen({ ownerName, onBack }) {
                     </div>
                     <div style={{ fontFamily: 'var(--font-body)', fontSize: 10, color: 'var(--fg-muted)' }}>
                         {profile.nama} · {profile.role}
-                    </div>
-                </div>
+                    </div>                </div>
             </div>
         </main>
     );

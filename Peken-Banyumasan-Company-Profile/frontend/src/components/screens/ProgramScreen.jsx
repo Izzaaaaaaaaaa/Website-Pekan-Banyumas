@@ -1,12 +1,21 @@
 import PillButton from '../shared/PillButton.jsx';
 import { Eyebrow } from '../shared/Typography.jsx';
 import PhotoTile from '../shared/PhotoTile.jsx';
-import { PROGRAMS } from '../../data/programs.js';
+import useFetch from '../../hooks/useFetch.js';
+import { api } from '../../lib/api.js';
 
 // Peken Banyumasan — Program screen · v1.2
 // §3 — Program rows use mode="hover" (full pixel-step colourise).
 
 export default function ProgramScreen() {
+  const { data, loading } = useFetch(() => api.getPrograms(), []);
+  const programs = (data || []).map((p, i) => ({
+    ...p,
+    n:    String(i + 1).padStart(2, '0'),
+    img:  p.icon_url || `/assets/program-${p.slug}.jpg`,
+    body: p.deskripsi,
+  }));
+
   return (
     <main style={{ background: 'var(--bg-page)', color: '#fff' }}>
       <section style={{ padding: '100px 120px 60px' }}>
@@ -29,9 +38,15 @@ export default function ProgramScreen() {
       </section>
 
       <section style={{ padding: '40px 120px 100px' }}>
-        {PROGRAMS.map((p, i) => (
-          <ProgramRow key={p.n} program={p} flip={i % 2 === 1} />
-        ))}
+        {loading ? (
+          <div style={{ color: 'var(--fg-secondary)', fontFamily: 'var(--font-body)', fontSize: 13, textAlign: 'center', padding: '80px 0' }}>
+            Memuat program…
+          </div>
+        ) : (
+          programs.map((p, i) => (
+            <ProgramRow key={p.id || p.n} program={p} flip={i % 2 === 1} />
+          ))
+        )}
       </section>
     </main>
   );

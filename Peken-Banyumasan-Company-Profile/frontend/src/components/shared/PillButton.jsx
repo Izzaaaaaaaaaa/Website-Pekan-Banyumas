@@ -11,6 +11,9 @@ export default function PillButton({
   inverse,
   type = 'button',
   ariaLabel,
+  href,
+  target,
+  rel,
 }) {
   const [hover, setHover] = useState(false);
   const bg = inverse ? 'var(--accent-ink)' : 'var(--accent)';
@@ -18,35 +21,36 @@ export default function PillButton({
   const dongBg = inverse ? 'var(--accent)' : 'var(--accent-ink)';
   const dongDot = inverse ? 'var(--accent-ink)' : 'var(--accent)';
 
-  return (
-    <button
-      type={type}
-      onClick={onClick}
-      aria-label={ariaLabel}
-      onMouseEnter={() => setHover(true)}
-      onMouseLeave={() => setHover(false)}
-      onFocus={() => setHover(true)}
-      onBlur={() => setHover(false)}
-      style={{
-        display: 'inline-flex',
-        alignItems: 'center',
-        justifyContent: 'space-between',
-        gap: 16,
-        height: 29,
-        padding: '0 0 0 16px',
-        background: bg,
-        color: fg,
-        border: 0,
-        cursor: 'pointer',
-        fontFamily: 'var(--font-display)',
-        fontWeight: 500,
-        fontSize: 12,
-        textTransform: 'uppercase',
-        letterSpacing: '.04em',
-        outlineOffset: 2,
-        ...(style || {}),
-      }}
-    >
+  const sharedStyle = {
+    display: 'inline-flex',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    gap: 16,
+    height: 29,
+    padding: '0 0 0 16px',
+    background: bg,
+    color: fg,
+    border: 0,
+    cursor: 'pointer',
+    fontFamily: 'var(--font-display)',
+    fontWeight: 500,
+    fontSize: 12,
+    textTransform: 'uppercase',
+    letterSpacing: '.04em',
+    textDecoration: 'none',
+    outlineOffset: 2,
+    ...(style || {}),
+  };
+
+  const sharedEvents = {
+    onMouseEnter: () => setHover(true),
+    onMouseLeave: () => setHover(false),
+    onFocus:      () => setHover(true),
+    onBlur:       () => setHover(false),
+  };
+
+  const inner = (
+    <>
       <span>{children}</span>
       <span
         aria-hidden="true"
@@ -69,6 +73,33 @@ export default function PillButton({
           }}
         />
       </span>
+    </>
+  );
+
+  if (href) {
+    return (
+      <a
+        href={href}
+        target={target}
+        rel={rel}
+        aria-label={ariaLabel}
+        style={sharedStyle}
+        {...sharedEvents}
+      >
+        {inner}
+      </a>
+    );
+  }
+
+  return (
+    <button
+      type={type}
+      onClick={onClick}
+      aria-label={ariaLabel}
+      style={sharedStyle}
+      {...sharedEvents}
+    >
+      {inner}
     </button>
   );
 }

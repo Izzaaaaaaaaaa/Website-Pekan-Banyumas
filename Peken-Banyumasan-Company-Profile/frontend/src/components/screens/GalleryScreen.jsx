@@ -2,24 +2,21 @@ import PillButton from '../shared/PillButton.jsx';
 import { Eyebrow } from '../shared/Typography.jsx';
 import PhotoTile from '../shared/PhotoTile.jsx';
 import WipeReveal from '../shared/WipeReveal.jsx';
+import useFetch from '../../hooks/useFetch.js';
+import { api } from '../../lib/api.js';
 
 // Peken Banyumasan — Gallery screen · v1.2
 // §3 — Gallery tiles → mode="static" (no hover at all)
 // §4 — Documentation block transitions in via WipeReveal
-//      instead of a hard gradient bridge.
 
-const GALLERY_IMAGES = [
-  'gallery-1',
-  'gallery-2',
-  'gallery-3',
-  'gallery-4',
-  'gallery-5',
-  'gallery-6',
-  'gallery-perform-1',
-  'gallery-perform-2',
-  'banner-home-1',
-  'banner-home-2',
-];
+const FALLBACK_IMAGES = [
+  'gallery-1','gallery-2','gallery-3','gallery-4','gallery-5',
+  'gallery-6','gallery-perform-1','gallery-perform-2','banner-home-1','banner-home-2',
+].map((n, i) => ({
+  src: `/assets/${n}.jpg`,
+  label: `Edisi #${String(i + 1).padStart(2, '0')}`,
+  tahun: `202${(i % 4) + 2}`,
+}));
 
 /* ------------------------------------------------------------------
    GalleryScreen — masonry on dark; documentation block reveals
@@ -27,10 +24,9 @@ const GALLERY_IMAGES = [
    §3: tiles are mode="static" — NO hover effect on Gallery photos.
    ------------------------------------------------------------------ */
 export default function GalleryScreen() {
-  /* The "before" half — the gallery body flows naturally now. No
-     height cap, no overflow hidden — so the masonry can be as tall
-     as it needs to be, and user scrolls through ALL of it before
-     hitting the gradient bridge to the documentation block. */
+  const { data } = useFetch(() => api.getSection('gallery'), []);
+  const images = data?.images || FALLBACK_IMAGES;
+  const doubled = [...images, ...images];
   const Body = (
     <div style={{ background: 'var(--bg-elevated)', color: '#fff' }}>
       <section style={{ padding: '100px 120px 40px' }}>
@@ -52,11 +48,11 @@ export default function GalleryScreen() {
       </section>
       <section style={{ padding: '40px 60px 80px' }}>
         <div style={{ columnCount: 3, columnGap: 24 }}>
-          {GALLERY_IMAGES.concat(GALLERY_IMAGES).map((n, i) => (
+          {doubled.map((item, i) => (
             <div key={i} style={{ breakInside: 'avoid', marginBottom: 24 }}>
               <PhotoTile
-                src={`/assets/${n}.jpg`}
-                alt={`Edisi #${String(i + 1).padStart(2, '0')}`}
+                src={item.src}
+                alt={item.label}
                 aspect="auto"
                 mode="static"
                 style={{ aspectRatio: 'auto', paddingBottom: '62%' }}
@@ -73,8 +69,8 @@ export default function GalleryScreen() {
                   justifyContent: 'space-between',
                 }}
               >
-                <span>Edisi #{String(i + 1).padStart(2, '0')}</span>
-                <span>202{(i % 4) + 2}</span>
+                <span>{item.label}</span>
+                <span>{item.tahun}</span>
               </div>
             </div>
           ))}

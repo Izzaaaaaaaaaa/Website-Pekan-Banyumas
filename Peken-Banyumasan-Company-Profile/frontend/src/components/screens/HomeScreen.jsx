@@ -6,7 +6,8 @@ import PixelFlicker from '../shared/PixelFlicker.jsx';
 import SectionHeader from '../shared/SectionHeader.jsx';
 import PhotoTile from '../shared/PhotoTile.jsx';
 import { LocationMarker } from '../shared/Atoms.jsx';
-import { HOME_PROGRAMS } from '../../data/programs.js';
+import useFetch from '../../hooks/useFetch.js';
+import { api } from '../../lib/api.js';
 
 // Peken Banyumasan — Home screen · v1.2
 // Implements:
@@ -119,6 +120,13 @@ function HeroCarousel({ slides, children }) {
 }
 
 export default function HomeScreen({ onNavigate }) {
+  const { data } = useFetch(() => api.getPrograms(), []);
+  const homePrograms = (data || []).slice(0, 6).map((p, i) => ({
+    ...p,
+    n:    String(i + 1).padStart(2, '0'),
+    img:  p.icon_url || `/assets/program-${p.slug}.jpg`,
+    body: p.deskripsi,
+  }));
   return (
     <main style={{ background: 'var(--bg-page)' }}>
       {/* HERO — carousel + Wordmark + headline + CTAs. */}
@@ -398,7 +406,7 @@ export default function HomeScreen({ onNavigate }) {
             gap: 0,
           }}
         >
-          {HOME_PROGRAMS.map((p, i) => (
+          {homePrograms.map((p, i) => (
             <PhotoTile
               key={p.n}
               src={p.img}
@@ -523,7 +531,13 @@ export default function HomeScreen({ onNavigate }) {
                   Kabupaten Banyumas, Jawa Tengah 53192
                 </div>
                 <div style={{ marginTop: 16 }}>
-                  <PillButton>Rute Peken Banyumasan</PillButton>
+                  <PillButton
+                    href="https://maps.app.goo.gl/gKciZDAnY7Z9ezAN7"
+                    target="_blank"
+                    rel="noopener noreferrer"
+                  >
+                    Rute Peken Banyumasan
+                  </PillButton>
                 </div>
               </div>
               <div>
@@ -561,18 +575,30 @@ export default function HomeScreen({ onNavigate }) {
                   Operasional · 04:40 – 18:30 WIB
                 </div>
                 <div style={{ marginTop: 16 }}>
-                  <PillButton>Trayek Trans Banyumas</PillButton>
+                  <PillButton
+                    href="https://maps.app.goo.gl/jdg7ymWLtuEpqAuLA"
+                    target="_blank"
+                    rel="noopener noreferrer"
+                  >
+                    Trayek Trans Banyumas
+                  </PillButton>
                 </div>
               </div>
             </div>
           </div>
 
-          <div
+          <a
+            href="https://maps.app.goo.gl/jdg7ymWLtuEpqAuLA"
+            target="_blank"
+            rel="noopener noreferrer"
+            aria-label="Buka peta kawasan Kota Lama Banyumas di Google Maps"
             style={{
               position: 'relative',
               aspectRatio: '16/11',
               background: 'var(--bg-deep)',
               overflow: 'hidden',
+              display: 'block',
+              cursor: 'pointer',
             }}
           >
             <img
@@ -598,7 +624,7 @@ export default function HomeScreen({ onNavigate }) {
                 targetId="lokasi"
               />
             </div>
-          </div>
+          </a>
         </div>
       </section>
     </main>
