@@ -9,7 +9,8 @@ import { api } from '../../lib/api.js';
 // Added: onViewProfile prop passed to Lightbox so clicking a creator
 // name navigates to their public profile page.
 
-export default function WorksScreen({ onNavigate }) {
+export default function WorksScreen({ onNavigate, mode = 'KARYA' }) {
+  const isPublication = mode === 'PUBLICATION';
   const [lightbox, setLightbox] = useState(null);
   const { data, loading } = useFetch(() => api.getKarya(), []);
   const works = data || [];
@@ -31,14 +32,20 @@ export default function WorksScreen({ onNavigate }) {
     <main style={{ background: 'var(--bg-page)', color: '#fff' }}>
       <section style={{ padding: '100px 120px 40px' }}>
         <Eyebrow style={{ color: 'var(--accent)' }}>
-          KARYA · KATALOG KOLABORATOR & ARTISAN
+          {isPublication
+            ? 'PUBLICATION · KATALOG KOLABORATOR & ARTISAN'
+            : 'KARYA · KATALOG KOLABORATOR & ARTISAN'}
         </Eyebrow>
         <div style={{ display: 'grid', gridTemplateColumns: '1.5fr 1fr', gap: 40, alignItems: 'flex-end', marginTop: 24 }}>
           <h1 style={{ fontFamily: 'var(--font-display)', fontWeight: 400, fontSize: 56, lineHeight: 1.15, margin: 0, maxWidth: 900 }}>
-            Karya kolaborator dan artisan yang pernah berproses di Peken.
+            {isPublication
+              ? 'Karya kolaborator dan artisan yang pernah berproses di Peken.'
+              : 'Karya kolaborator dan artisan yang pernah berproses di Peken.'}
           </h1>
           <p style={{ fontFamily: 'var(--font-body)', fontSize: 13, lineHeight: 1.9, color: 'var(--fg-secondary)', margin: 0 }}>
-            Klik pada karya untuk melihat detail — foto besar, deskripsi karya, dan tautan ke profil kreatornya.
+            {isPublication
+              ? 'Publikasi karya — foto besar, deskripsi karya, dan tautan ke profil kreatornya.'
+              : 'Klik pada karya untuk melihat detail — foto besar, deskripsi karya, dan tautan ke profil kreatornya.'}
           </p>
         </div>
       </section>
@@ -85,6 +92,7 @@ export default function WorksScreen({ onNavigate }) {
         work={lightbox}
         onClose={() => setLightbox(null)}
         onViewProfile={handleViewProfile}
+        label={isPublication ? 'PUBLICATION' : 'KARYA'}
       />
     </main>
   );

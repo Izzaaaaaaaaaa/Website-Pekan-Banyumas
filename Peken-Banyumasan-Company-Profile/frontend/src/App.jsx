@@ -15,7 +15,7 @@ const SCREENS = {
   PROGRAM:     ProgramScreen,
   KARYA:       WorksScreen,
   GALLERY:     GalleryScreen,
-  PUBLICATION: GalleryScreen,
+  PUBLICATION: WorksScreen,
 };
 
 /** Konversi nama ke slug: "Aji Pradana" → "aji-pradana" */
@@ -75,7 +75,7 @@ export default function App() {
   return (
     <div>
       <PekenNav current={page} onNavigate={handleNavigate} onLogin={() => setLoginOpen(true)} />
-      <Screen onNavigate={handleNavigate} />
+      <Screen onNavigate={handleNavigate} mode={page} />
       <PekenFooter onNavigate={handleNavigate} />
       <LoginModal open={loginOpen} onClose={() => setLoginOpen(false)} />
     </div>

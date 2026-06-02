@@ -10,7 +10,7 @@ import { Eyebrow } from './Typography.jsx';
  *   onClose       — close the lightbox
  *   onViewProfile — (ownerName: string) => void — navigate to profile
  */
-export default function Lightbox({ work, onClose, onViewProfile }) {
+export default function Lightbox({ work, onClose, onViewProfile, label = 'KARYA' }) {
   const handleProfile = () => {
     if (!work || !onViewProfile) return;
     onClose();
@@ -26,7 +26,7 @@ export default function Lightbox({ work, onClose, onViewProfile }) {
             {/* Top row */}
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', gap: 12 }}>
               <Eyebrow style={{ color: 'var(--accent)' }}>
-                KARYA · {work.role.toUpperCase()} · {work.year}
+                {label} · {work.role.toUpperCase()} · {work.year}
               </Eyebrow>
               <button onClick={onClose} aria-label="Tutup lightbox" style={{ background: 'transparent', border: 0, color: '#fff', fontSize: 20, lineHeight: 1, cursor: 'pointer', fontFamily: 'var(--font-display)', padding: 4 }}>✕</button>
             </div>
