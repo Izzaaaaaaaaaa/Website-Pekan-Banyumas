@@ -2,7 +2,7 @@ from fastapi import APIRouter, Depends, HTTPException, Query
 from typing import Optional
 
 from app.api.deps import get_current_user, get_admin_only
-from app.services import event_service
+from app.services import event_service, zone_service
 from app.schemas.event_schema import EventCreate, EventUpdate, Event
 from app.utils.response import success_response, error_response
 from fastapi.encoders import jsonable_encoder
@@ -106,6 +106,18 @@ def delete_event(
         return success_response(None, message="Event berhasil dihapus")
     except HTTPException as e:
         raise
+    except Exception as e:
+        raise HTTPException(500, detail=error_response(str(e), 500))
+
+
+# ── Event ↔ Zones ─────────────────────────────────
+
+@router.get("/{id}/zones", response_model=dict)
+def get_event_zones(id: str, user=Depends(get_current_user)):
+    """Get zones for event with occupancy info."""
+    try:
+        zones = zone_service.get_event_zones(id)
+        return success_response(zones)
     except Exception as e:
         raise HTTPException(500, detail=error_response(str(e), 500))
 
@@ -242,6 +254,31 @@ def remove_artisan(
         raise HTTPException(500, detail=error_response(str(e), 500))
 
 
+@router.post("/{id}/artisan/{aid}/stand", response_model=dict)
+def assign_artisan_stand(
+    id: str,
+    aid: str,
+    data: dict,
+    user=Depends(get_admin_only)
+):
+    """Assign artisan to a stand (admin only)."""
+    try:
+        stand_id = data.get("stand_id")
+        if not stand_id:
+            raise HTTPException(422, detail=error_response(
+                "stand_id wajib diisi",
+                422,
+                {"stand_id": ["stand_id wajib diisi"]}
+            ))
+
+        result = zone_service.assign_artisan_stand(id, aid, stand_id)
+        return success_response(result, message="Stand berhasil diassign")
+    except HTTPException as e:
+        raise
+    except Exception as e:
+        raise HTTPException(500, detail=error_response(str(e), 500))
+
+
 # ── Artisan request approval ──────────────────────
 
 @router.get("/{id}/artisan-requests", response_model=dict)
@@ -278,6 +315,31 @@ def respond_artisan_request(
 
         result = event_service.respond_artisan_request(id, rid, action)
         return success_response(result, message=f"Permintaan artisan berhasil {action}d")
+    except HTTPException as e:
+        raise
+    except Exception as e:
+        raise HTTPException(500, detail=error_response(str(e), 500))
+
+
+@router.patch("/{id}/artisan-requests/{rid}/change", response_model=dict)
+def respond_position_change(
+    id: str,
+    rid: str,
+    data: dict,
+    user=Depends(get_admin_only)
+):
+    """Respond to artisan position change request (admin only)."""
+    try:
+        action = data.get("action")
+        if action not in ["approve", "reject"]:
+            raise HTTPException(422, detail=error_response(
+                "action harus 'approve' atau 'reject'",
+                422,
+                {"action": ["action harus 'approve' atau 'reject'"]}
+            ))
+
+        result = event_service.respond_position_change(id, rid, action)
+        return success_response(result, message=f"Perubahan posisi berhasil {action}d")
     except HTTPException as e:
         raise
     except Exception as e:

@@ -1,11 +1,11 @@
-from app.db.supabase import supabase
+from app.db.supabase import supabase_admin
 from fastapi import HTTPException
 
 
 def list_notifikasi(user_id: str = None):
     """List notifications for user."""
     try:
-        query = supabase.table("notifikasi").select("*")
+        query = supabase_admin.table("notifikasi").select("*")
 
         if user_id:
             query = query.eq("user_id", user_id)
@@ -20,7 +20,7 @@ def list_notifikasi(user_id: str = None):
 def mark_notifikasi_read(notifikasi_id: str):
     """Mark notification as read."""
     try:
-        res = supabase.table("notifikasi").update({"baca": True}).eq("id", notifikasi_id).execute()
+        res = supabase_admin.table("notifikasi").update({"baca": True}).eq("id", notifikasi_id).execute()
         if not res.data:
             raise HTTPException(404, "Notifikasi tidak ditemukan")
         return res.data[0]
@@ -34,7 +34,7 @@ def mark_notifikasi_read(notifikasi_id: str):
 def mark_all_notifikasi_read(user_id: str):
     """Mark all notifications as read for user."""
     try:
-        res = supabase.table("notifikasi") \
+        res = supabase_admin.table("notifikasi") \
             .update({"baca": True}) \
             .eq("user_id", user_id) \
             .execute()

@@ -103,3 +103,92 @@ def get_artisan_qris(artisan_id: str):
         raise
     except Exception as e:
         raise HTTPException(500, f"Error fetching QRIS: {str(e)}")
+
+
+def get_artisan_kas(artisan_id: str, from_date: str = None, to_date: str = None):
+    """Get artisan cashflow."""
+    try:
+        query = supabase_admin.table("kas").select("*").eq("artisan_id", artisan_id)
+        if from_date:
+            query = query.gte("created_at", f"{from_date}T00:00:00")
+        if to_date:
+            query = query.lt("created_at", f"{to_date}T23:59:59")
+            
+        res = query.order("created_at", desc=True).execute()
+        return res.data or []
+    except Exception as e:
+        raise HTTPException(500, f"Error fetching artisan kas: {str(e)}")
+
+
+def get_artisan_riwayat(artisan_id: str, from_date: str = None, to_date: str = None):
+    """Get artisan transaction history."""
+    try:
+        query = supabase_admin.table("riwayat").select("*").eq("artisan_id", artisan_id)
+        if from_date:
+            query = query.gte("created_at", f"{from_date}T00:00:00")
+        if to_date:
+            query = query.lt("created_at", f"{to_date}T23:59:59")
+            
+        res = query.order("created_at", desc=True).execute()
+        return res.data or []
+    except Exception as e:
+        raise HTTPException(500, f"Error fetching artisan riwayat: {str(e)}")
+
+
+def get_artisan_promo(artisan_id: str):
+    """Get artisan promos."""
+    try:
+        res = supabase_admin.table("promo").select("*").eq("artisan_id", artisan_id).execute()
+        return res.data or []
+    except Exception as e:
+        raise HTTPException(500, f"Error fetching artisan promo: {str(e)}")
+
+
+def get_artisan_stok(artisan_id: str):
+    """Get artisan inventory."""
+    try:
+        res = supabase_admin.table("stok").select("*").eq("artisan_id", artisan_id).execute()
+        return res.data or []
+    except Exception as e:
+        raise HTTPException(500, f"Error fetching artisan stok: {str(e)}")
+
+def get_artisan_requests(artisan_id: str):
+    """Get pending artisan requests across all events."""
+    try:
+        # Check if artisan_requests table exists
+        try:
+            res = supabase_admin.table("artisan_requests") \
+                .select("*, events(nama, tanggal, jam_mulai, jam_selesai)") \
+                .eq("artisan_id", artisan_id) \
+                .neq("status_request", "rejected") \
+                .execute()
+                
+            reqs = []
+            for row in (res.data or []):
+                e_info = row.pop("events", None) or {}
+                row["event_nama"] = e_info.get("nama", "—")
+                row["tanggal"] = e_info.get("tanggal")
+                row["jam_mulai"] = e_info.get("jam_mulai")
+                row["jam_selesai"] = e_info.get("jam_selesai")
+                reqs.append(row)
+            return reqs
+        except Exception:
+            # Fallback to event_artisans table with status_kehadiran == 'pending'
+            res = supabase_admin.table("event_artisans") \
+                .select("*, events(nama, tanggal, jam_mulai, jam_selesai)") \
+                .eq("artisan_id", artisan_id) \
+                .eq("assigned_by", "self") \
+                .execute()
+                
+            reqs = []
+            for row in (res.data or []):
+                if row.get("status_kehadiran") == "pending":
+                    e_info = row.pop("events", None) or {}
+                    row["event_nama"] = e_info.get("nama", "—")
+                    row["tanggal"] = e_info.get("tanggal")
+                    row["jam_mulai"] = e_info.get("jam_mulai")
+                    row["jam_selesai"] = e_info.get("jam_selesai")
+                    reqs.append(row)
+            return reqs
+    except Exception as e:
+        raise HTTPException(500, f"Error fetching artisan requests: {str(e)}")

@@ -1,7 +1,7 @@
 openapi: 3.1.0
 info:
   title: Peken Banyumasan — Gate (Admin & Petugas) API
-  version: 2.3.1
+  version: 2.4.1
   description: |
     API consumed by the Gate admin/petugas panel
     (`Peken-Banyumasan-Gate-Masuk-Keluar/frontend/`).
@@ -87,11 +87,11 @@ servers:
   - url: http://localhost:8001
     description: Local backend (Gate backend)
   - url: https://{space}.hf.space
-    description: HuggingFace Space (production)
+    description: Production backend (REFERENCE template — HuggingFace Space example; client team may host on Render/Railway/Koyeb/Fly/etc.)
     variables:
       space:
         default: your-username-peken-gate-api
-        description: HuggingFace Space name
+        description: HuggingFace Space name (or replace `{space}.hf.space` with your team's actual backend host)
 
 security:
   - bearerAuth: []
@@ -368,7 +368,16 @@ paths:
                           rows:
                             type: array
                             items:
-                              $ref: '#/components/schemas/Visitor'
+                              $ref: '#/components/schemas/VisitorReportRow'
+                          ringkasan:
+                            type: object
+                            properties:
+                              total_kunjungan:
+                                type: integer
+                              total_nfc:
+                                type: integer
+                              total_manual:
+                                type: integer
                           total_masuk:
                             type: integer
                           total_keluar:
@@ -953,13 +962,18 @@ paths:
                 stand_id:
                   type: string
                   nullable: true
+                  description: Concrete zone stand (validated against the event's zones)
+                posisi_event:
+                  type: string
+                  nullable: true
+                  description: Free-text position label (e.g. "Zona A - Stand 5"); falls back to stand_id when omitted
                 status_request:
                   type: string
                   enum: [approved]
                   default: approved
             example:
               artisan_id: art-0001
-              stand_id: A-3
+              posisi_event: Zona A - Stand 5
               status_request: approved
       responses:
         '200':
@@ -1369,7 +1383,7 @@ paths:
         - $ref: '#/components/parameters/IdPath'
       responses:
         '200':
-          description: Events list (EventKolaborator junction rows)
+          description: Events list (event rows the kolaborator has joined)
           content:
             application/json:
               schema:
@@ -1380,7 +1394,7 @@ paths:
                       data:
                         type: array
                         items:
-                          $ref: '#/components/schemas/EventKolaborator'
+                          $ref: '#/components/schemas/KolaboratorEventEntry'
         '401':
           $ref: '#/components/responses/Unauthorized'
         '403':
@@ -1965,7 +1979,7 @@ paths:
         - $ref: '#/components/parameters/IdPath'
       responses:
         '200':
-          description: Events (EventArtisan junction rows)
+          description: Events list (event rows the artisan has joined)
           content:
             application/json:
               schema:
@@ -1976,7 +1990,7 @@ paths:
                       data:
                         type: array
                         items:
-                          $ref: '#/components/schemas/EventArtisan'
+                          $ref: '#/components/schemas/ArtisanEventEntry'
         '401':
           $ref: '#/components/responses/Unauthorized'
         '403':
@@ -2687,6 +2701,50 @@ components:
           enum: [di_dalam, keluar]
           example: di_dalam
 
+    VisitorReportRow:
+      type: object
+      description: |
+        One visitor row in GET /api/reports. tipe_pengunjung, nama_kolaborator
+        and durasi_menit are computed at read time (NFC ⇔ uid present; duration
+        = keluar − masuk) — not stored columns.
+      required: [id, nama, tipe_pengunjung, waktu_masuk, status]
+      properties:
+        id:
+          type: string
+          example: vis-0001
+        nama:
+          type: string
+          example: Dewi Lestari
+        nama_kolaborator:
+          type: string
+          nullable: true
+          description: Name shown for NFC visitors; null for manual entries
+          example: Dewi Lestari
+        tipe_pengunjung:
+          type: string
+          enum: [nfc, manual]
+          example: nfc
+        waktu_masuk:
+          type: string
+          format: date-time
+          description: UTC ISO 8601
+          example: '2026-04-28T02:30:00.000Z'
+        waktu_keluar:
+          type: string
+          format: date-time
+          nullable: true
+          description: UTC ISO 8601 (null if still inside)
+          example: null
+        durasi_menit:
+          type: integer
+          nullable: true
+          description: Minutes between masuk and keluar; null while still inside
+          example: 300
+        status:
+          type: string
+          enum: [di_dalam, keluar]
+          example: di_dalam
+
     ArtisanReportRow:
       type: object
       required: [id, nama_usaha, kategori, omset, komisi_persen, transaksi]
@@ -2801,7 +2859,16 @@ components:
         status:
           type: string
           enum: [draft, published, berlangsung, selesai]
+          description: Raw admin intent (draft|published). Drives the publish/hide toggle.
           example: published
+        status_efektif:
+          type: string
+          enum: [draft, published, berlangsung, selesai]
+          description: >
+            Derived display status: published=akan datang, berlangsung while inside
+            the schedule window, selesai after it ends. Computed from tanggal/jam vs
+            now (WIB). Use THIS for badges & cross-app consistency.
+          example: berlangsung
         kapasitas:
           type: integer
           nullable: true
@@ -2893,24 +2960,23 @@ components:
     EventKolaborator:
       type: object
       description: |
-        Approved kolaborator participation row.
-        Fields nama and subsektor are JOINed from kolaborators table
-        (NOT stored in event_kolaborators junction table).
-      required: [id, nama, subsektor, peran, status_kehadiran, assigned_by]
+        Event-side view: one kolaborator participating in a given event
+        (GET /api/events/{id}/kolaborator). nama + subsektor are JOINed from the
+        kolaborators table (NOT stored in the event_kolaborators junction).
+      required: [id, event_id, kolaborator_id, nama, subsektor, peran, status_kehadiran, assigned_by]
       properties:
         id:
           type: string
           example: evkol-0001
         event_id:
           type: string
-          description: Present when listing by kolaborator
           example: evt-0001
         kolaborator_id:
           type: string
-          description: Present when listing by event
           example: kol-0001
         nama:
           type: string
+          description: Kolaborator name (JOINed from kolaborators)
           example: Sari Wulandari
         subsektor:
           type: array
@@ -2930,19 +2996,72 @@ components:
           type: string
           enum: [admin, self]
           example: admin
+
+    KolaboratorEventEntry:
+      type: object
+      description: |
+        Kolaborator-side view: one event a kolaborator has joined
+        (GET /api/kolaborator/{id}/events). nama + date/time/location/status are
+        JOINed from the events table; peran/status_kehadiran/assigned_by come
+        from the event_kolaborators junction. id is the junction-row id.
+      required: [id, event_id, kolaborator_id, nama, tanggal, tanggal_selesai, jam_mulai, jam_selesai, lokasi, status, peran, status_kehadiran, assigned_by, created_at]
+      properties:
+        id:
+          type: string
+          description: Junction-row id (event_kolaborators.id)
+          example: evkol-0001
+        event_id:
+          type: string
+          example: evt-0001
+        kolaborator_id:
+          type: string
+          example: kol-0001
+        nama:
+          type: string
+          description: Event name (JOINed from events)
+          example: Peken Banyumas #7
         tanggal:
           type: string
           format: date
-          description: Present when listing by kolaborator
+          description: Event start date (WIB local YYYY-MM-DD)
           example: '2026-05-10'
+        tanggal_selesai:
+          type: string
+          format: date
+          description: Event end date (WIB local YYYY-MM-DD)
+          example: '2026-05-12'
         jam_mulai:
           type: string
-          description: Present when listing by kolaborator
-          example: '09:00'
+          description: WIB 24-hour HH:MM:SS (time serialized with seconds)
+          example: '09:00:00'
         jam_selesai:
           type: string
-          description: Present when listing by kolaborator
-          example: '21:00'
+          description: WIB 24-hour HH:MM:SS (time serialized with seconds)
+          example: '21:00:00'
+        lokasi:
+          type: string
+          description: Event venue/location name
+          example: Alun-alun Purwokerto
+        status:
+          type: string
+          enum: [draft, published, berlangsung, selesai]
+          example: published
+        peran:
+          type: string
+          enum: [performer, panitia, peserta]
+          example: performer
+        status_kehadiran:
+          type: string
+          enum: [terdaftar, hadir, tidak_hadir, dibatalkan]
+          example: terdaftar
+        assigned_by:
+          type: string
+          enum: [admin, self]
+          example: admin
+        created_at:
+          type: string
+          format: date-time
+          example: '2026-05-01T08:00:00Z'
 
     EventArtisan:
       type: object
@@ -2988,6 +3107,79 @@ components:
           type: string
           enum: [admin, self]
           example: admin
+
+    ArtisanEventEntry:
+      type: object
+      description: |
+        Artisan-side view: one event an artisan has joined
+        (GET /api/artisan/{id}/events). nama + date/time/location/status are
+        JOINed from the events table; stand_id/posisi_event/status_request/
+        assigned_by come from the event_artisans junction. id is the
+        junction-row id.
+      required: [id, event_id, artisan_id, nama, tanggal, tanggal_selesai, jam_mulai, jam_selesai, lokasi, status, status_request, assigned_by, created_at]
+      properties:
+        id:
+          type: string
+          description: Junction-row id (event_artisans.id)
+          example: evart-0001
+        event_id:
+          type: string
+          example: evt-0001
+        artisan_id:
+          type: string
+          example: art-0001
+        nama:
+          type: string
+          description: Event name (JOINed from events)
+          example: Peken Banyumas #7
+        tanggal:
+          type: string
+          format: date
+          description: Event start date (WIB local YYYY-MM-DD)
+          example: '2026-05-10'
+        tanggal_selesai:
+          type: string
+          format: date
+          description: Event end date (WIB local YYYY-MM-DD)
+          example: '2026-05-12'
+        jam_mulai:
+          type: string
+          description: WIB 24-hour HH:MM:SS (time serialized with seconds)
+          example: '09:00:00'
+        jam_selesai:
+          type: string
+          description: WIB 24-hour HH:MM:SS (time serialized with seconds)
+          example: '21:00:00'
+        lokasi:
+          type: string
+          description: Event venue/location name
+          example: Alun-alun Purwokerto
+        status:
+          type: string
+          enum: [draft, published, berlangsung, selesai]
+          example: published
+        stand_id:
+          type: string
+          nullable: true
+          description: Assigned stand (e.g. 'A-3')
+          example: A-3
+        posisi_event:
+          type: string
+          nullable: true
+          description: Position/role within the event
+          example: Stand A-3
+        status_request:
+          type: string
+          enum: [pending, pending_change, approved, rejected]
+          example: approved
+        assigned_by:
+          type: string
+          enum: [admin, self]
+          example: admin
+        created_at:
+          type: string
+          format: date-time
+          example: '2026-05-01T08:00:00Z'
 
     ArtisanRequest:
       type: object

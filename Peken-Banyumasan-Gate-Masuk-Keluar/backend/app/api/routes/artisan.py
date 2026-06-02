@@ -90,3 +90,64 @@ def get_qris(id: str, user=Depends(get_current_user)):
         raise
     except Exception as e:
         raise HTTPException(500, detail=error_response(str(e), 500))
+
+
+@router.get("/{id}/kas", response_model=dict)
+def get_kas(
+    id: str, 
+    from_date: Optional[str] = Query(None, alias="from"),
+    to_date: Optional[str] = Query(None, alias="to"),
+    user=Depends(get_admin_only)
+):
+    """Get artisan cashflow."""
+    try:
+        kas = artisan_service.get_artisan_kas(id, from_date, to_date)
+        return success_response(kas)
+    except Exception as e:
+        raise HTTPException(500, detail=error_response(str(e), 500))
+
+
+@router.get("/{id}/riwayat", response_model=dict)
+def get_riwayat(
+    id: str, 
+    from_date: Optional[str] = Query(None, alias="from"),
+    to_date: Optional[str] = Query(None, alias="to"),
+    user=Depends(get_admin_only)
+):
+    """Get artisan transaction history."""
+    try:
+        riwayat = artisan_service.get_artisan_riwayat(id, from_date, to_date)
+        return success_response(riwayat)
+    except Exception as e:
+        raise HTTPException(500, detail=error_response(str(e), 500))
+
+
+@router.get("/{id}/promo", response_model=dict)
+def get_promo(id: str, user=Depends(get_admin_only)):
+    """Get artisan promos."""
+    try:
+        promo = artisan_service.get_artisan_promo(id)
+        return success_response(promo)
+    except Exception as e:
+        raise HTTPException(500, detail=error_response(str(e), 500))
+
+
+@router.get("/{id}/stok", response_model=dict)
+def get_stok(id: str, user=Depends(get_admin_only)):
+    """Get artisan inventory."""
+    try:
+        stok = artisan_service.get_artisan_stok(id)
+        return success_response(stok)
+    except Exception as e:
+        raise HTTPException(500, detail=error_response(str(e), 500))
+
+@router.get("/{id}/requests", response_model=dict)
+def get_artisan_requests(id: str, user=Depends(get_current_user)):
+    """Get artisan's pending event requests."""
+    try:
+        requests = artisan_service.get_artisan_requests(id)
+        return success_response(requests)
+    except HTTPException as e:
+        raise
+    except Exception as e:
+        raise HTTPException(500, detail=error_response(str(e), 500))

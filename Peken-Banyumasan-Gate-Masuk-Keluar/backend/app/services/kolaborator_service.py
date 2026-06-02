@@ -58,6 +58,18 @@ def update_kolaborator_status(kolaborator_id: str, status: str):
     return update_kolaborator(kolaborator_id, {"status": status})
 
 
+def delete_kolaborator(kolaborator_id: str):
+    """Delete kolaborator."""
+    try:
+        # Delete from Supabase auth (will cascade to profile if configured)
+        supabase_admin.auth.admin.delete_user(kolaborator_id)
+        # Also try to delete the record in case auth didn't cascade or user is missing from auth
+        supabase_admin.table("kolaborators").delete().eq("id", kolaborator_id).execute()
+        return {"message": "Kolaborator berhasil dihapus"}
+    except Exception as e:
+        raise HTTPException(500, f"Error deleting kolaborator: {str(e)}")
+
+
 def get_kolaborator_events(kolaborator_id: str):
     """Get events this kolaborator is assigned to."""
     try:
@@ -128,3 +140,43 @@ def delete_kolaborator_portofolio(kolaborator_id: str, portofolio_id: str):
         return {"message": "Karya berhasil dihapus"}
     except Exception as e:
         raise HTTPException(500, f"Error deleting portofolio: {str(e)}")
+
+def get_kolaborator_requests(kolaborator_id: str):
+    """Get pending kolaborator requests across all events."""
+    try:
+        # Try new table first
+        try:
+            res = supabase_admin.table("kolaborator_requests") \
+                .select("*, events(nama, tanggal, jam_mulai, jam_selesai)") \
+                .eq("kolaborator_id", kolaborator_id) \
+                .execute()
+                
+            reqs = []
+            for row in (res.data or []):
+                e_info = row.pop("events", None) or {}
+                row["event_nama"] = e_info.get("nama", "—")
+                row["tanggal"] = e_info.get("tanggal")
+                row["jam_mulai"] = e_info.get("jam_mulai")
+                row["jam_selesai"] = e_info.get("jam_selesai")
+                reqs.append(row)
+            return reqs
+        except Exception:
+            # Fallback to event_kolaborators table with status_kehadiran == 'pending'
+            res = supabase_admin.table("event_kolaborators") \
+                .select("*, events(nama, tanggal, jam_mulai, jam_selesai)") \
+                .eq("kolaborator_id", kolaborator_id) \
+                .eq("assigned_by", "self") \
+                .execute()
+                
+            reqs = []
+            for row in (res.data or []):
+                if row.get("status_kehadiran") == "pending":
+                    e_info = row.pop("events", None) or {}
+                    row["event_nama"] = e_info.get("nama", "—")
+                    row["tanggal"] = e_info.get("tanggal")
+                    row["jam_mulai"] = e_info.get("jam_mulai")
+                    row["jam_selesai"] = e_info.get("jam_selesai")
+                    reqs.append(row)
+            return reqs
+    except Exception as e:
+        raise HTTPException(500, f"Error fetching kolaborator requests: {str(e)}")

@@ -26,38 +26,38 @@ import {
 // ── Default global layout ─────────────────────────────────────────────────────
 export const DEFAULT_GLOBAL_ZONES = [
   {
-    zona:'A', label:'Zona A – Kriya & Fashion', warna:'#8B5E3C',
+    zona: 'A', label: 'Zona A – Kriya & Fashion', warna: '#8B5E3C',
     stands: Array.from({ length: 8 }, (_, i) => ({ id: `A-${i + 1}` })),
   },
   {
-    zona:'B', label:'Zona B – Kuliner', warna:'#D97706',
+    zona: 'B', label: 'Zona B – Kuliner', warna: '#D97706',
     stands: Array.from({ length: 10 }, (_, i) => ({ id: `B-${i + 1}` })),
   },
   {
-    zona:'C', label:'Zona C – Seni & Pertunjukan', warna:'#7C3AED',
+    zona: 'C', label: 'Zona C – Seni & Pertunjukan', warna: '#7C3AED',
     stands: Array.from({ length: 4 }, (_, i) => ({ id: `C-${i + 1}` })),
   },
   {
-    zona:'P', label:'Zona P – Panggung', warna:'#1D4ED8',
+    zona: 'P', label: 'Zona P – Panggung', warna: '#1D4ED8',
     stands: Array.from({ length: 2 }, (_, i) => ({ id: `P-${i + 1}` })),
   },
 ];
 
 export const ZONE_TEMPLATES = {
   festival: [
-    { zona:'A', label:'Zona A – Kriya & Fashion',    warna:'#8B5E3C', kapasitas: 8  },
-    { zona:'B', label:'Zona B – Kuliner',             warna:'#D97706', kapasitas: 10 },
-    { zona:'C', label:'Zona C – Seni & Pertunjukan',  warna:'#7C3AED', kapasitas: 4  },
-    { zona:'P', label:'Zona P – Panggung',            warna:'#1D4ED8', kapasitas: 2  },
+    { zona: 'A', label: 'Zona A – Kriya & Fashion', warna: '#8B5E3C', kapasitas: 8 },
+    { zona: 'B', label: 'Zona B – Kuliner', warna: '#D97706', kapasitas: 10 },
+    { zona: 'C', label: 'Zona C – Seni & Pertunjukan', warna: '#7C3AED', kapasitas: 4 },
+    { zona: 'P', label: 'Zona P – Panggung', warna: '#1D4ED8', kapasitas: 2 },
   ],
   workshop: [
-    { zona:'R', label:'Zona R – Ruang Utama',  warna:'#065F46', kapasitas: 6 },
-    { zona:'L', label:'Zona L – Lab Praktek',  warna:'#9D174D', kapasitas: 8 },
+    { zona: 'R', label: 'Zona R – Ruang Utama', warna: '#065F46', kapasitas: 6 },
+    { zona: 'L', label: 'Zona L – Lab Praktek', warna: '#9D174D', kapasitas: 8 },
   ],
   bazaar: [
-    { zona:'A', label:'Zona A – Depan',    warna:'#8B5E3C', kapasitas: 10 },
-    { zona:'B', label:'Zona B – Tengah',   warna:'#D97706', kapasitas: 12 },
-    { zona:'C', label:'Zona C – Belakang', warna:'#374151', kapasitas: 8  },
+    { zona: 'A', label: 'Zona A – Depan', warna: '#8B5E3C', kapasitas: 10 },
+    { zona: 'B', label: 'Zona B – Tengah', warna: '#D97706', kapasitas: 12 },
+    { zona: 'C', label: 'Zona C – Belakang', warna: '#374151', kapasitas: 8 },
   ],
 };
 
@@ -73,8 +73,8 @@ function readWithLegacyFallback(canonicalKey, legacyKey) {
     if (raw) return raw;
     const legacy = localStorage.getItem(legacyKey);
     if (legacy) {
-      try { localStorage.setItem(canonicalKey, legacy); } catch {}
-      try { localStorage.removeItem(legacyKey); } catch {}
+      try { localStorage.setItem(canonicalKey, legacy); } catch { }
+      try { localStorage.removeItem(legacyKey); } catch { }
       return legacy;
     }
     return null;
@@ -96,7 +96,7 @@ export function getGlobalZones() {
       LEGACY_STORAGE_KEYS.ZONES_DEFAULT_OVERRIDE
     );
     if (override) return JSON.parse(override);
-  } catch {}
+  } catch { }
   return DEFAULT_GLOBAL_ZONES;
 }
 
@@ -134,12 +134,12 @@ export function saveGlobalZones(zones) {
     }));
     localStorage.setItem(STORAGE_KEYS.ZONES_GLOBAL, JSON.stringify(clean));
     window.dispatchEvent(new CustomEvent(STORAGE_EVENTS.ZONES_UPDATE));
-  } catch {}
+  } catch { }
 }
 
 export function addZone(zonaCode, label, warna, kapasitas) {
   const zones = getGlobalZones();
-  const code  = zonaCode.toUpperCase().trim();
+  const code = zonaCode.toUpperCase().trim();
   if (zones.find(z => z.zona === code)) throw new Error(`Zona ${code} sudah ada`);
   const n = Math.max(1, Math.min(50, kapasitas));
   const newZone = {
@@ -206,7 +206,7 @@ function getOccupied(eventId) {
 function saveOccupied(eventId, occupiedSet) {
   try {
     localStorage.setItem(occupiedKey(eventId), JSON.stringify([...occupiedSet]));
-  } catch {}
+  } catch { }
 }
 
 // ── Per-event pending (soft-reserve) state ────────────────────────────────────
@@ -223,7 +223,7 @@ function getPending(eventId) {
 function savePending(eventId, pendingSet) {
   try {
     localStorage.setItem(pendingKey(eventId), JSON.stringify([...pendingSet]));
-  } catch {}
+  } catch { }
 }
 
 /**
@@ -246,15 +246,15 @@ export function syncPendingFromRequests(eventId, requests) {
  * global layout + per-event occupied state merged
  */
 export function getEventZones(eventId) {
-  const layout   = getGlobalZones();
+  const layout = getGlobalZones();
   const occupied = getOccupied(eventId);
-  const pending  = getPending(eventId);
+  const pending = getPending(eventId);
   return layout.map(z => ({
     ...z,
     stands: z.stands.map(s => ({
       ...s,
       occupied: occupied.has(s.id),
-      pending:  !occupied.has(s.id) && pending.has(s.id),
+      pending: !occupied.has(s.id) && pending.has(s.id),
     })),
   }));
 }
@@ -265,7 +265,7 @@ export function getEventZones(eventId) {
  */
 export function syncOccupiedFromArtisans(eventId, artisans) {
   const occupiedIds = new Set(
-    artisans.map(t => t.posisi_event).filter(Boolean)
+    artisans.map(t => t.stand_id || t.posisi_event).filter(Boolean)
   );
   saveOccupied(eventId, occupiedIds);
   // Remove confirmed stands from pending to avoid double-marking
@@ -277,7 +277,7 @@ export function syncOccupiedFromArtisans(eventId, artisans) {
 
 /** Stats helper */
 export function getZoneStats(zones) {
-  const total    = zones.reduce((n, z) => n + z.stands.length, 0);
+  const total = zones.reduce((n, z) => n + z.stands.length, 0);
   const occupied = zones.reduce((n, z) => n + z.stands.filter(s => s.occupied).length, 0);
   return { total, occupied, available: total - occupied };
 }
@@ -295,9 +295,20 @@ export async function getGlobalZonesAsync(listGlobalFn) {
         window.dispatchEvent(new CustomEvent(STORAGE_EVENTS.ZONES_UPDATE));
         return data;
       }
-    } catch (_) {}
+    } catch (_) { }
   }
   return getGlobalZones();
+}
+
+/**
+ * Cleanup specific event's data from localStorage.
+ */
+export function clearEventZonesCache(eventId) {
+  try {
+    localStorage.removeItem(occupiedKey(eventId));
+    localStorage.removeItem(legacyOccupiedKey(eventId));
+    localStorage.removeItem(pendingKey(eventId));
+  } catch { }
 }
 
 // ── Backward compat alias ─────────────────────────────────────────────────────

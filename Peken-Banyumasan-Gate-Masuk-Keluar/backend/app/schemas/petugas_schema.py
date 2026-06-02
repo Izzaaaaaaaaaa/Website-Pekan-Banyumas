@@ -16,6 +16,7 @@ class Petugas(BaseModel):
 class PetugasCreate(BaseModel):
     email: EmailStr
     nama: str
+    password: str
     jabatan: Optional[str] = None
 
 

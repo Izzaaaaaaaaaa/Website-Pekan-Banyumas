@@ -1,7 +1,7 @@
 -- =============================================================================
 -- Peken Banyumasan — Unified Supabase Postgres Schema
--- Version : 2.2.2
--- Date    : 2026-05-03
+-- Version : 2.4.0
+-- Date    : 2026-05-29
 -- Source  : This file is the SINGLE source of truth for the DB contract.
 --           All 4 OpenAPI YAMLs were read-audited before this rewrite.
 --           Apply via: Supabase SQL Editor → paste and run as one migration.
@@ -9,6 +9,23 @@
 -- OpenAPI specs (openapi-*.yaml) and this schema must be kept in sync.
 -- When changing one, bump version and update the other to match.
 -- DO NOT write to this file via ALTER — rewrite in full when changes needed.
+--
+-- SUPABASE STORAGE (managed outside this file, in storage schema):
+--   Active bucket: `peken-uploads` (public read, authenticated write).
+--     Provisioned 2026-05-25. Used by every image upload across all 4 apps
+--     via `frontend/src/lib/uploadImage.js` (`supabase.storage.from(...)`).
+--     Folder prefixes by domain: cp/, event/, profil/, qris/, bukti/, story/,
+--     portofolio/, karya/.
+--   See db/SCHEMA_MAP.md Storage section for bucket definition + RLS.
+--
+-- LEGACY TABLES (kept for backward compat — NO LONGER USED by frontends):
+--   `otp_codes`, `password_reset_tokens` — pre-Supabase-Auth tokens. Since
+--     PR #49 (2026-05-28) the forgot-password flow uses Supabase Auth native
+--     (`supabase.auth.resetPasswordForEmail` → email link → `updateUser`).
+--     The artisan/colab OpenAPI specs still document `/api/auth/otp/*` and
+--     `/api/auth/password/reset` as stubs; the frontends no longer call them.
+--     SAFE TO DROP these two tables after 90-day retention period
+--     (2026-08-28+) if no rollback needed.
 -- =============================================================================
 
 -- ╔═══════════════════════════════════════════════════════════════════════════╗
@@ -183,18 +200,22 @@ RETURNS BOOLEAN LANGUAGE sql STABLE AS $$
     SELECT public.jwt_role() IN ('admin', 'petugas');
 $$;
 
--- Slug generator: lowercase-hyphen, strips diacritics + special chars
+-- Slug generator: lowercase-hyphen, strips diacritics + special chars.
+-- Order matters: lower() FIRST, then translate diacritics, then collapse any
+-- run of non-alphanumerics to a single hyphen, then trim edge hyphens.
+-- (Earlier version stripped chars while still mixed-case, so the [a-z]-only
+-- class deleted every UPPERCASE letter — "Kolab Test" became "olab-est".)
+-- Mirrors peken_common/lib/slugify.py exactly.
 CREATE OR REPLACE FUNCTION public.slugify(v_text TEXT)
 RETURNS TEXT LANGUAGE plpgsql AS $$
 BEGIN
-    RETURN lower(
+    RETURN trim(BOTH '-' FROM
         regexp_replace(
-            regexp_replace(
-                translate(trim(v_text),
-                    'àáâãäåæçèéêëìíîïðñòóôõöøùúûüýþÿ',
-                    'aaaaaaaceeeeiiiidnoooooouuuuyby'),
-                '[^a-z0-9\s-]', '', 'g'),
-            '\s+', '-', 'g')
+            translate(
+                lower(trim(v_text)),
+                'àáâãäåæçèéêëìíîïðñòóôõöøùúûüýþÿ',
+                'aaaaaaaceeeeiiiidnoooooouuuuyby'),
+            '[^a-z0-9]+', '-', 'g')
     );
 END;
 $$;
@@ -1140,10 +1161,11 @@ CREATE INDEX idx_notifikasi_detail_gin ON public.notifikasi USING GIN (detail js
 -- D12c: company profile section content lookup
 CREATE INDEX idx_cps_content_gin ON public.company_profile_sections USING GIN (content jsonb_path_ops);
 
--- D31: prevent double-tap-in for the same NFC UID
-CREATE UNIQUE INDEX uniq_visitors_active_uid
-    ON public.visitors (uid)
-    WHERE (uid IS NOT NULL AND status = 'di_dalam');
+-- D31: NFC uid lookup. Visitors are an APPEND-ONLY event log — every masuk is
+-- a `di_dalam` row and every keluar a separate `keluar` row — so a uid legitimately
+-- has many `di_dalam` rows over time. (The former partial UNIQUE on
+-- (uid) WHERE status='di_dalam' was dropped; it's incompatible with re-entry.)
+CREATE INDEX idx_visitors_uid ON public.visitors (uid) WHERE uid IS NOT NULL;
 
 -- D34b: OTP lookup by phone + purpose + expiry
 CREATE INDEX idx_otp_phone_purpose ON public.otp_codes (phone, purpose, expires_at);
@@ -1520,10 +1542,11 @@ WHERE schemaname='public' AND policyname LIKE 'petugas%'
 ORDER BY tablename,policyname;
 -- EXPECT: 11 rows
 
--- Q10: uniq_visitors_active_uid partial UNIQUE exists
+-- Q10: visitors uid index exists (append-only log — NOT a partial UNIQUE;
+-- the old uniq_visitors_active_uid was dropped to allow NFC re-entry).
 SELECT indexname,indexdef FROM pg_indexes
-WHERE schemaname='public' AND indexname='uniq_visitors_active_uid';
--- EXPECT: 1 row with WHERE clause
+WHERE schemaname='public' AND indexname='idx_visitors_uid';
+-- EXPECT: 1 row, plain (non-unique) index on (uid) WHERE uid IS NOT NULL
 
 -- Q11: programs.icon_url exists; users_profile has jabatan/extra/updated_at
 SELECT column_name,is_nullable FROM information_schema.columns
@@ -1570,5 +1593,5 @@ WHERE c.is_nullable='YES' ORDER BY rf.tbl,rf.col;
 */
 
 -- =============================================================================
--- END OF SCHEMA v2.1
+-- END OF SCHEMA v2.4.0
 -- =============================================================================

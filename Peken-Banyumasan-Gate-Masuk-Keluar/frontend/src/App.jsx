@@ -64,7 +64,7 @@ const AppShell = () => {
         });
 
         // Reset the handler on unmount (mostly relevant for HMR / testing).
-        return () => setUnauthorizedHandler(() => {});
+        return () => setUnauthorizedHandler(() => { });
     }, [navigate, toast]);
 
     return (

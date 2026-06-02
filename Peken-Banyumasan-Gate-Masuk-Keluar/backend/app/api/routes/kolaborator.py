@@ -69,6 +69,18 @@ def update_status(
         raise HTTPException(500, detail=error_response(str(e), 500))
 
 
+@router.delete("/{id}", response_model=dict)
+def delete_kolaborator(id: str, user=Depends(get_admin_only)):
+    """Delete a kolaborator (admin only)."""
+    try:
+        kolaborator_service.delete_kolaborator(id)
+        return success_response(None, message="Kolaborator berhasil dihapus")
+    except HTTPException as e:
+        raise
+    except Exception as e:
+        raise HTTPException(500, detail=error_response(str(e), 500))
+
+
 @router.get("/{id}/events", response_model=dict)
 def get_events(id: str, user=Depends(get_current_user)):
     """Get events kolaborator is assigned to."""
@@ -127,6 +139,17 @@ def delete_portofolio(
     try:
         kolaborator_service.delete_kolaborator_portofolio(id, pid)
         return success_response(None, message="Karya berhasil dihapus")
+    except HTTPException as e:
+        raise
+    except Exception as e:
+        raise HTTPException(500, detail=error_response(str(e), 500))
+
+@router.get("/{id}/requests", response_model=dict)
+def get_kolaborator_requests(id: str, user=Depends(get_current_user)):
+    """Get kolaborator's pending event requests."""
+    try:
+        requests = kolaborator_service.get_kolaborator_requests(id)
+        return success_response(requests)
     except HTTPException as e:
         raise
     except Exception as e:

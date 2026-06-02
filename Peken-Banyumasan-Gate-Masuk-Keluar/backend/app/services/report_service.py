@@ -1,4 +1,4 @@
-from app.db.supabase import supabase
+from app.db.supabase import supabase_admin
 from fastapi import HTTPException
 import csv
 import io
@@ -7,7 +7,7 @@ import io
 def get_visitor_report(event_id: str = None, tanggal: str = None):
     """Get visitor report for an event/date."""
     try:
-        query = supabase.table("visitors").select("*").order("waktu_masuk", desc=True)
+        query = supabase_admin.table("visitors").select("*").order("waktu_masuk", desc=True)
 
         if event_id:
             query = query.eq("event_id", event_id)
@@ -26,7 +26,7 @@ def get_visitor_report(event_id: str = None, tanggal: str = None):
         # Get event name if event_id provided
         event_name = ""
         if event_id:
-            event_res = supabase.table("events").select("nama").eq("id", event_id).single().execute()
+            event_res = supabase_admin.table("events").select("nama").eq("id", event_id).single().execute()
             event_name = event_res.data.get("nama", "") if event_res.data else ""
 
         return {
@@ -46,12 +46,12 @@ def get_artisan_report(event_id: str = None):
     """Get artisan revenue report."""
     try:
         # Query artisans with financial summary
-        artisans_query = supabase.table("artisans").select("*")
+        artisans_query = supabase_admin.table("artisans").select("*")
         if event_id:
             # Only get artisans assigned to this event
             artisans_query = artisans_query.in_(
                 "id",
-                supabase.table("event_artisans")
+                supabase_admin.table("event_artisans")
                     .select("artisan_id")
                     .eq("event_id", event_id)
                     .eq("status_request", "approved")
@@ -63,24 +63,42 @@ def get_artisan_report(event_id: str = None):
 
         report_rows = []
         for artisan in artisans:
+            artisan_id = artisan["id"]
+            
             # Get last stand assignment
-            stand_res = supabase.table("event_artisans") \
+            stand_res = supabase_admin.table("event_artisans") \
                 .select("stand_id") \
-                .eq("artisan_id", artisan["id"]) \
+                .eq("artisan_id", artisan_id) \
                 .order("created_at", desc=True) \
                 .limit(1) \
                 .execute()
 
             stand_terakhir = stand_res.data[0].get("stand_id") if stand_res.data else None
 
+            # Count transactions from kas
+            kas_res = supabase_admin.table("kas") \
+                .select("id") \
+                .eq("artisan_id", artisan_id) \
+                .eq("tipe", "pemasukan") \
+                .execute()
+            transaksi_count = len(kas_res.data or [])
+            
+            # Count events
+            events_res = supabase_admin.table("event_artisans") \
+                .select("id") \
+                .eq("artisan_id", artisan_id) \
+                .eq("status_request", "approved") \
+                .execute()
+            event_count = len(events_res.data or [])
+
             row = {
-                "id": artisan.get("id"),
+                "id": artisan_id,
                 "nama_usaha": artisan.get("nama_usaha"),
                 "kategori": ", ".join(artisan.get("kategori_usaha", [])),
                 "omset": artisan.get("total_penjualan", 0),
                 "komisi_persen": artisan.get("komisi_persen", 0),
-                "transaksi": 0,  # Count from kas table if needed
-                "event_count": 0,  # Count assigned events
+                "transaksi": transaksi_count,
+                "event_count": event_count,
                 "stand_terakhir": stand_terakhir
             }
             report_rows.append(row)
@@ -94,7 +112,7 @@ def get_artisan_report(event_id: str = None):
 def get_accumulation_report(event_id: str = None):
     """Get event accumulation report."""
     try:
-        events_query = supabase.table("events").select("*")
+        events_query = supabase_admin.table("events").select("*")
         if event_id:
             events_query = events_query.eq("id", event_id)
 
@@ -104,14 +122,14 @@ def get_accumulation_report(event_id: str = None):
         report_rows = []
         for event in events:
             # Count visitors
-            visitors_res = supabase.table("visitors") \
+            visitors_res = supabase_admin.table("visitors") \
                 .select("id") \
                 .eq("event_id", event["id"]) \
                 .execute()
             pengunjung = len(visitors_res.data or [])
 
             # Count approved artisans
-            artisans_res = supabase.table("event_artisans") \
+            artisans_res = supabase_admin.table("event_artisans") \
                 .select("artisan_id") \
                 .eq("event_id", event["id"]) \
                 .eq("status_request", "approved") \
@@ -119,7 +137,7 @@ def get_accumulation_report(event_id: str = None):
             artisan_count = len(set(a.get("artisan_id") for a in (artisans_res.data or [])))
 
             # Count kolaborators
-            kolabs_res = supabase.table("event_kolaborators") \
+            kolabs_res = supabase_admin.table("event_kolaborators") \
                 .select("kolaborator_id") \
                 .eq("event_id", event["id"]) \
                 .neq("status_kehadiran", "dibatalkan") \

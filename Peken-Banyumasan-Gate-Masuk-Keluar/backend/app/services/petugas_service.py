@@ -1,17 +1,33 @@
-from app.db.supabase import supabase
+import os
+import random
+import string
+from app.db.supabase import supabase_admin
 from fastapi import HTTPException
 
 
 def list_petugas(status: str = None):
     """List all petugas accounts."""
     try:
-        query = supabase.table("users_profile").select("*").eq("role", "petugas")
+        query = supabase_admin.table("users_profile").select("*").eq("role", "petugas")
 
         if status:
             query = query.eq("status", status)
 
         res = query.order("created_at", desc=True).execute()
-        return res.data or []
+        petugas_list = res.data or []
+        
+        if petugas_list:
+            try:
+                auth_users_res = supabase_admin.auth.admin.list_users()
+                auth_users = auth_users_res if isinstance(auth_users_res, list) else getattr(auth_users_res, 'users', [])
+                last_sign_in_map = {str(u.id): getattr(u, 'last_sign_in_at', None) for u in auth_users}
+                
+                for p in petugas_list:
+                    p["last_sign_in_at"] = str(last_sign_in_map.get(str(p.get("id")))) if last_sign_in_map.get(str(p.get("id"))) else None
+            except Exception:
+                pass
+
+        return petugas_list
 
     except Exception as e:
         raise HTTPException(500, f"Error listing petugas: {str(e)}")
@@ -20,10 +36,19 @@ def list_petugas(status: str = None):
 def get_petugas(user_id: str):
     """Get petugas details."""
     try:
-        res = supabase.table("users_profile").select("*").eq("id", user_id).eq("role", "petugas").single().execute()
+        res = supabase_admin.table("users_profile").select("*").eq("id", user_id).eq("role", "petugas").single().execute()
         if not res.data:
             raise HTTPException(404, "Petugas tidak ditemukan")
-        return res.data
+            
+        petugas = res.data
+        try:
+            auth_user = supabase_admin.auth.admin.get_user_by_id(user_id)
+            user_obj = getattr(auth_user, 'user', auth_user)
+            petugas["last_sign_in_at"] = str(getattr(user_obj, 'last_sign_in_at', None)) if getattr(user_obj, 'last_sign_in_at', None) else None
+        except Exception:
+            petugas["last_sign_in_at"] = None
+            
+        return petugas
 
     except HTTPException:
         raise
@@ -31,28 +56,46 @@ def get_petugas(user_id: str):
         raise HTTPException(500, f"Error fetching petugas: {str(e)}")
 
 
-def create_petugas(email: str, nama: str, jabatan: str = None):
-    """Create a new petugas account."""
+def create_petugas(email: str, nama: str, password: str, jabatan: str = None):
+    """Create a new petugas account (Auth + Profile)."""
     try:
         # Check if email already exists
-        existing = supabase.table("users_profile").select("*").eq("email", email).execute()
+        existing = supabase_admin.table("users_profile").select("*").eq("email", email).execute()
         if existing.data:
             raise HTTPException(409, "Email sudah terdaftar")
 
-        # Create in auth first (would be done by admin via Supabase console)
-        # Here we just create the profile record
-        res = supabase.table("users_profile").insert({
+        # Create user in Supabase Auth via Admin SDK
+        auth_res = supabase_admin.auth.admin.create_user({
             "email": email,
-            "nama": nama,
-            "role": "petugas",
-            "jabatan": jabatan,
-            "status": "pending"
-        }).execute()
+            "password": password,
+            "email_confirm": True,
+            "user_metadata": {
+                "nama": nama,
+                "role": "petugas"
+            }
+        })
+        
+        user = auth_res.user
 
-        if not res.data:
-            raise HTTPException(500, "Gagal membuat akun petugas")
+        # Create profile record
+        try:
+            res = supabase_admin.table("users_profile").insert({
+                "id": user.id,
+                "email": email,
+                "nama": nama,
+                "role": "petugas",
+                "jabatan": jabatan,
+                "status": "aktif"
+            }).execute()
 
-        return res.data[0]
+            if not res.data:
+                raise Exception("Gagal insert profile")
+            
+            return res.data[0]
+        except Exception as e:
+            # Rollback auth creation if profile fails
+            supabase_admin.auth.admin.delete_user(user.id)
+            raise HTTPException(500, f"Gagal membuat akun petugas: {str(e)}")
 
     except HTTPException:
         raise
@@ -61,13 +104,23 @@ def create_petugas(email: str, nama: str, jabatan: str = None):
 
 
 def update_petugas(user_id: str, data: dict):
-    """Update petugas."""
+    """Update petugas profile and Auth email if changed."""
     try:
         update_data = {k: v for k, v in data.items() if v is not None}
         if not update_data:
             return get_petugas(user_id)
+            
+        # If email is updated, update Supabase Auth first
+        if "email" in update_data:
+            try:
+                supabase_admin.auth.admin.update_user_by_id(
+                    user_id,
+                    {"email": update_data["email"], "email_confirm": True}
+                )
+            except Exception as e:
+                raise HTTPException(400, f"Gagal update email Auth: {str(e)}")
 
-        res = supabase.table("users_profile").update(update_data).eq("id", user_id).execute()
+        res = supabase_admin.table("users_profile").update(update_data).eq("id", user_id).execute()
         if not res.data:
             raise HTTPException(404, "Petugas tidak ditemukan")
         return res.data[0]
@@ -79,15 +132,48 @@ def update_petugas(user_id: str, data: dict):
 
 
 def update_petugas_status(user_id: str, status: str):
-    """Update petugas status."""
-    return update_petugas(user_id, {"status": status})
+    """Update petugas status (Profile + Auth ban)."""
+    try:
+        # Update Auth (disable = ban)
+        if status == "disabled":
+            ban_date = "2099-12-31T23:59:59Z"
+            supabase_admin.auth.admin.update_user_by_id(user_id, {"ban_duration": "876000h"}) # approx 100 years
+        else:
+            supabase_admin.auth.admin.update_user_by_id(user_id, {"ban_duration": "none"})
+            
+        return update_petugas(user_id, {"status": status})
+    except Exception as e:
+        raise HTTPException(500, f"Error updating petugas status: {str(e)}")
 
 
 def reset_petugas_password(user_id: str, mode: str):
-    """Reset petugas password (triggers Supabase auth flow)."""
+    """Reset petugas password via email or temp password."""
     try:
-        # In real implementation, this would trigger Supabase password reset email
-        return {"message": "Email reset password telah dikirim"}
+        # Get user email
+        user_res = supabase_admin.table("users_profile").select("email").eq("id", user_id).single().execute()
+        if not user_res.data:
+            raise HTTPException(404, "Petugas tidak ditemukan")
+            
+        email = user_res.data["email"]
 
+        if mode == "email_link":
+            # Send reset email
+            supabase_admin.auth.reset_password_for_email(email)
+            return {"message": "Link reset password telah dikirim ke email petugas."}
+            
+        elif mode == "temp_password":
+            # Generate secure random password
+            chars = string.ascii_letters + string.digits + "!@#$%^&*"
+            temp_password = "".join(random.choice(chars) for _ in range(10))
+            
+            # Update password directly
+            supabase_admin.auth.admin.update_user_by_id(user_id, {"password": temp_password})
+            
+            return {"temp_password": temp_password}
+        else:
+            raise HTTPException(400, "Mode tidak valid")
+
+    except HTTPException:
+        raise
     except Exception as e:
         raise HTTPException(500, f"Error resetting password: {str(e)}")

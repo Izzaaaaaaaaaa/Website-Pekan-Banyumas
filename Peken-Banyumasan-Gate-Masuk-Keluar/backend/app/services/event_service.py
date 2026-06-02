@@ -64,10 +64,21 @@ def delete_event(event_id: str):
 # Event ↔ Kolaborator relations
 
 def get_event_kolaborators(event_id: str):
-    """Get kolaborators assigned to event."""
+    """Get kolaborators assigned to event with enriched names."""
     try:
-        res = supabase_admin.table("event_kolaborators").select("*").eq("event_id", event_id).execute()
-        return res.data or []
+        res = supabase_admin.table("event_kolaborators") \
+            .select("*, kolaborators(nama, subsektor)") \
+            .eq("event_id", event_id) \
+            .execute()
+            
+        kolabs = []
+        for row in (res.data or []):
+            k_info = row.pop("kolaborators", None) or {}
+            row["nama"] = k_info.get("nama", "—")
+            row["subsektor"] = k_info.get("subsektor", [])
+            kolabs.append(row)
+            
+        return kolabs
     except Exception as e:
         raise HTTPException(500, f"Error fetching event kolaborators: {str(e)}")
 
@@ -116,10 +127,21 @@ def remove_kolaborator(event_id: str, kolab_id: str):
 # Event ↔ Artisan relations
 
 def get_event_artisans(event_id: str):
-    """Get artisans assigned to event."""
+    """Get artisans assigned to event with enriched names."""
     try:
-        res = supabase_admin.table("event_artisans").select("*").eq("event_id", event_id).execute()
-        return res.data or []
+        res = supabase_admin.table("event_artisans") \
+            .select("*, artisans(nama_usaha, kategori_usaha)") \
+            .eq("event_id", event_id) \
+            .execute()
+            
+        artisans = []
+        for row in (res.data or []):
+            a_info = row.pop("artisans", None) or {}
+            row["nama_usaha"] = a_info.get("nama_usaha", "—")
+            row["kategori_usaha"] = a_info.get("kategori_usaha", [])
+            artisans.append(row)
+            
+        return artisans
     except Exception as e:
         raise HTTPException(500, f"Error fetching event artisans: {str(e)}")
 
@@ -183,10 +205,22 @@ def remove_artisan(event_id: str, artisan_id: str):
 # Artisan request handling
 
 def get_artisan_requests(event_id: str):
-    """Get pending artisan self-join requests."""
+    """Get pending artisan self-join requests with enriched names."""
     try:
-        res = supabase_admin.table("artisan_requests").select("*").eq("event_id", event_id).neq("status_request", "rejected").execute()
-        return res.data or []
+        res = supabase_admin.table("artisan_requests") \
+            .select("*, artisans(nama_usaha, kategori_usaha)") \
+            .eq("event_id", event_id) \
+            .neq("status_request", "rejected") \
+            .execute()
+            
+        reqs = []
+        for row in (res.data or []):
+            a_info = row.pop("artisans", None) or {}
+            row["nama_usaha"] = a_info.get("nama_usaha", "—")
+            row["kategori_usaha"] = a_info.get("kategori_usaha", [])
+            reqs.append(row)
+            
+        return reqs
     except Exception as e:
         raise HTTPException(500, f"Error fetching artisan requests: {str(e)}")
 
@@ -229,14 +263,90 @@ def respond_artisan_request(event_id: str, request_id: str, action: str):
         raise HTTPException(500, f"Error responding to request: {str(e)}")
 
 
+def respond_position_change(event_id: str, request_id: str, action: str):
+    """Respond to artisan position change request."""
+    try:
+        req_res = supabase_admin.table("artisan_requests").select("*").eq("id", request_id).single().execute()
+        if not req_res.data:
+            raise HTTPException(404, "Request tidak ditemukan")
+
+        req = req_res.data
+        
+        if action == "approve":
+            new_stand = req.get("change_request")
+            if new_stand:
+                # Check conflict
+                existing = supabase_admin.table("event_artisans") \
+                    .select("id") \
+                    .eq("event_id", event_id) \
+                    .eq("stand_id", new_stand) \
+                    .execute()
+                
+                if existing.data:
+                    raise HTTPException(400, f"Posisi {new_stand} sudah ditempati.")
+                
+                # Apply change to actual assignment
+                supabase_admin.table("event_artisans") \
+                    .update({"stand_id": new_stand}) \
+                    .eq("event_id", event_id) \
+                    .eq("artisan_id", req.get("artisan_id")) \
+                    .execute()
+            
+            # Request handled - delete it
+            supabase_admin.table("artisan_requests").delete().eq("id", request_id).execute()
+            return {"message": "Position change approved"}
+        else:
+            # Reject change: reset change_request to null but keep approved status
+            supabase_admin.table("artisan_requests").update({
+                "change_request": None,
+                "status_request": "approved"
+            }).eq("id", request_id).execute()
+            return {"message": "Position change rejected"}
+
+    except HTTPException:
+        raise
+    except Exception as e:
+        raise HTTPException(500, f"Error responding to position change: {str(e)}")
+
+
 # Kolaborator request handling
 
 def get_kolaborator_requests(event_id: str):
-    """Get pending kolaborator self-join requests."""
+    """Get pending kolaborator self-join requests.
+    Attempts to use kolaborator_requests table if it exists, otherwise falls back.
+    """
     try:
-        res = supabase_admin.table("event_kolaborators").select("*").eq("event_id", event_id).eq("assigned_by", "self").execute()
-        # Filter to "pending" status
-        return [k for k in (res.data or []) if k.get("status_kehadiran") == "terdaftar"]
+        # Check if kolaborator_requests table exists by trying to query it
+        try:
+            res = supabase_admin.table("kolaborator_requests") \
+                .select("*, kolaborators(nama, subsektor)") \
+                .eq("event_id", event_id) \
+                .execute()
+                
+            reqs = []
+            for row in (res.data or []):
+                k_info = row.pop("kolaborators", None) or {}
+                row["nama"] = k_info.get("nama", "—")
+                row["subsektor"] = k_info.get("subsektor", [])
+                reqs.append(row)
+            return reqs
+        except Exception:
+            # Fallback for when DB doesn't have the table (backward compatibility)
+            res = supabase_admin.table("event_kolaborators") \
+                .select("*, kolaborators(nama, subsektor)") \
+                .eq("event_id", event_id) \
+                .eq("assigned_by", "self") \
+                .execute()
+                
+            reqs = []
+            for row in (res.data or []):
+                if row.get("status_kehadiran") == "pending":
+                    k_info = row.pop("kolaborators", None) or {}
+                    row["nama"] = k_info.get("nama", "—")
+                    row["subsektor"] = k_info.get("subsektor", [])
+                    reqs.append(row)
+            return reqs
+            
     except Exception as e:
         raise HTTPException(500, f"Error fetching kolaborator requests: {str(e)}")
 
@@ -244,6 +354,27 @@ def get_kolaborator_requests(event_id: str):
 def respond_kolaborator_request(event_id: str, request_id: str, action: str):
     """Approve or reject kolaborator request."""
     try:
+        # Check if we're using the new table by trying to read the request
+        try:
+            req_res = supabase_admin.table("kolaborator_requests").select("*").eq("id", request_id).single().execute()
+            if req_res.data:
+                req = req_res.data
+                if action == "approve":
+                    insert_data = {
+                        "event_id": event_id,
+                        "kolaborator_id": req.get("kolaborator_id"),
+                        "peran": req.get("peran", "peserta"),
+                        "status_kehadiran": "terdaftar",
+                        "assigned_by": "self"
+                    }
+                    supabase_admin.table("event_kolaborators").insert(insert_data).execute()
+                    
+                supabase_admin.table("kolaborator_requests").delete().eq("id", request_id).execute()
+                return {"message": f"Request {action}d"}
+        except Exception:
+            pass # Fallback below
+            
+        # Fallback to old behavior
         if action == "approve":
             supabase_admin.table("event_kolaborators").update({"status_kehadiran": "terdaftar"}).eq("id", request_id).execute()
             return {"message": "Request approved"}

@@ -1,8 +1,9 @@
 # Peken Banyumasan — Database Schema Map
 
-**Version:** 2.3.1  
-**Date:** 2026-05-18  
+**Version:** 2.4.0  
+**Date:** 2026-05-29  
 **Source of truth:** `db/schema.sql` (the AI attachment — the ONLY file to modify or upload to AI sessions)  
+**Companion handoff document:** `HANDOFF.md` (project-wide architecture, ops, AI consumption guide)  
 **OpenAPI YAMLs** (synced with schema — bump version in both when changes needed):
 
 | YAML | Paths | Role |
@@ -448,7 +449,7 @@ GROUP BY e.id;
 ### 3.13 `kas`
 
 **OpenAPI schema:** `Kas` (artisan yaml 1600–1657; gate yaml 2959–3011 admin read-only)  
-**Key YAML refs:** `Kas.qty: type:number` (NUMERIC, not INT) (D4), `Kas.metode enum: [tunai,transfer,qris]` (D5)
+**Key YAML refs:** `Kas.qty: type:number` (NUMERIC, not INT) (D4), `Kas.metode enum: [tunai,qris]` — `transfer` removed in v2.2.2 (D5)
 
 | Column | Type | Constraint | Notes |
 |--------|------|-----------|-------|
@@ -617,7 +618,9 @@ GROUP BY e.id;
 
 ### 3.19 `otp_codes`
 
-**YAML refs:** artisan/colab yaml `/api/auth/otp/request`, `/api/auth/otp/verify`  
+**STATUS (v2.4.1, 2026-05-29):** LEGACY — no longer used by any frontend. Since PR #49 (2026-05-28), the forgot-password flow uses Supabase Auth native (`supabase.auth.resetPasswordForEmail` → email link → `updateUser`). Artisan/colab OpenAPI yamls still document `/api/auth/otp/*` as stubs for cross-consistency check 15, but the realEndpoints.js no longer calls them. Safe to DROP this table after 90-day retention period (2026-08-28+) if no rollback needed.
+
+**YAML refs:** artisan/colab yaml `/api/auth/otp/request`, `/api/auth/otp/verify` (legacy stubs — endpoints exist on backend, but FE does not call them)  
 **Note:** `purpose='register'` added for registration OTP flow (D34).
 
 | Column | Type | Constraint | Notes |
@@ -638,7 +641,9 @@ GROUP BY e.id;
 
 ### 3.20 `password_reset_tokens`
 
-**YAML refs:** artisan/colab yaml `/api/auth/password/reset`
+**STATUS (v2.4.1, 2026-05-29):** LEGACY — no longer used by any frontend. Since PR #49 (2026-05-28), all password resets flow through Supabase Auth (`auth.users.recovery_token` + Supabase-issued JWT recovery session). Safe to DROP after 90-day retention (2026-08-28+).
+
+**YAML refs:** artisan/colab yaml `/api/auth/password/reset` (legacy stub — endpoint exists on backend, but FE does not call it)
 
 | Column | Type | Constraint | Notes |
 |--------|------|-----------|-------|
@@ -655,7 +660,58 @@ GROUP BY e.id;
 
 ---
 
+## Supabase Storage
+
+Storage lives **outside** `schema.sql` (in Supabase-managed `storage` schema). Configured via Supabase Dashboard or Storage REST API; persisted via Supabase, not in this repo's SQL files.
+
+### Buckets
+
+| Bucket | Status | Public | Max size | MIME types | Created |
+|---|---|---|---|---|---|
+| `peken-uploads` | **ACTIVE** (all uploads) | Yes (read) | 5 MB | `image/png`, `image/jpeg`, `image/jpg`, `image/webp`, `image/gif` | 2026-05-25 |
+| ~~`qris`~~ | DELETED 2026-05-29 | - | - | - | - |
+
+### `peken-uploads` folder convention
+
+All client uploads via `frontend/src/lib/uploadImage.js` (`uploadImage(file, folder)` helper in Gate, UMKM, Kolaborator):
+
+| Folder | Used by | Domain |
+|---|---|---|
+| `cp/` | Gate `CompanyProfile.jsx` ImageInput | CP marketing assets (hero, manifesto, gallery, etc.) |
+| `event/` | Gate `EventModal` ImageUpload | Event banner + gallery |
+| `profil/` | UMKM `ProfileForm` ImgField | Artisan foto + cover |
+| `qris/` | UMKM `QrisUploadSection` | Artisan QRIS payment image |
+| `bukti/` | UMKM `TambahKas` / `EditKas` | Kas transaction proof |
+| `story/` | Kolaborator `Story.jsx` (via shared `ImageUpload`) | Story media |
+| `portofolio/` | Kolaborator `Portofolio.jsx` (via shared `ImageUpload`) | Karya gallery |
+| (kolab profile) | Kolaborator `Profil.jsx` (via shared `ImageUpload` with folder='profil') | Kolab foto + cover |
+
+### Storage RLS (configured via Supabase Dashboard policies on `storage.objects`)
+
+| Policy | Operation | Rule |
+|---|---|---|
+| `peken_uploads_public_read` | SELECT | `bucket_id = 'peken-uploads'` (anyone can read URLs) |
+| `peken_uploads_authenticated_write` | INSERT | `bucket_id = 'peken-uploads' AND auth.role() = 'authenticated'` (any logged-in user) |
+| `peken_uploads_owner_update` | UPDATE | `bucket_id = 'peken-uploads' AND owner = auth.uid()` |
+| `peken_uploads_owner_delete` | DELETE | `bucket_id = 'peken-uploads' AND owner = auth.uid()` |
+| Admin override | ALL | service_role bypasses RLS entirely |
+
+### Fallback: base64 data URLs
+
+`uploadImage.js` falls back to base64 `data:image/...;base64,<...>` when Supabase Storage upload fails (offline, RLS reject, network error). The DB stores whichever URL the FE returns — both work for `<img src="">`. Production should always be Storage URL; data URL fallback is for resilience only.
+
+---
+
 ## Delta Summary (36 changes from schema v1.0 to v2.0)
+
+> **How to extend this section** (living-doc workflow):
+> 1. Any change to `db/schema.sql` or an `openapi-*.yaml` MUST add a `### vX.Y.Z — YYYY-MM-DD (short title)` block at the bottom of this section.
+> 2. Bump versions per HANDOFF.md "Maintaining These Docs" section:
+>    - DB schema change → bump `db/schema.sql` header version + add SCHEMA_MAP delta here.
+>    - OA change → bump ALL 4 OA `info.version` to match (verifier check 9 enforces) + add SCHEMA_MAP delta here.
+>    - Doc-only update (this file + HANDOFF) → optional delta if cross-cutting.
+> 3. After editing, run `bash db/verify_cross_consistency.sh` — must return 16/16 PASS.
+> 4. Delta entries below are append-only history. Never rewrite past entries; add new ones below.
 
 | # | Table | Change |
 |---|-------|--------|
@@ -809,3 +865,41 @@ The CP public marketing site now sources its editable content (`home`, `about`, 
 **Orphaned (still live, no longer called by the CP frontend):** `/api/public/programs`, `/api/public/programs/{slug}`, `/api/public/karya`. The `programs` table is no longer read by the CP public site. Kept for backward compatibility; `programsApi`/`karyaApi` remain exported in CP `endpoints.js`.
 
 **Verification after this delta:** `bash db/verify_cross_consistency.sh` → 16/16 PASS. `bash db/audit_admin_only_leaks.sh` → NO LEAKS.
+
+### v2.4.0 — 2026-05-22 (Client revision sweep — event response shapes + apply-state + reports)
+
+**DB unchanged. FE + BE changed (Gate + Kolaborator + Artisan + CP). OpenAPI: gate.yaml + colab.yaml have content changes; companyprof + artisan are version-only. New CI workflow.**
+
+The smoking-gun client bugs were entity-side event endpoints echoing the *entity's* name with no event date (so the admin UI showed identical names + "Invalid Date"), an assign body that 422'd on a free-text position, a visitor report bound to a non-existent `detail` key, and kolaborator event cards that couldn't show a "pending" apply-state.
+
+| Item | Type | Detail |
+|------|------|--------|
+| F-1 | BE (gate) + OA | GATE-3: `GET /api/kolaborator/{id}/events` now returns new `KolaboratorEventEntry` — event `nama`/`tanggal`/`tanggal_selesai`/`jam_*`/`lokasi`/`status` JOINed from `events`, plus the junction's `peran`/`status_kehadiran`/`assigned_by` + `created_at`. `id` is the junction-row id. `EventKolaborator` stays the *event-side* participant shape (`GET /api/events/{id}/kolaborator`). |
+| F-2 | BE (gate) + OA | GATE-4: `GET /api/artisan/{id}/events` now returns new `ArtisanEventEntry` (mirror of F-1 + `stand_id`/`posisi_event`/`status_request`). `AssignArtisanBody` gains optional `posisi_event` (free-text position); assign was 422 because the FE sent it under `extra="forbid"`. |
+| F-3 | BE (gate) + OA | GATE-6: `GET /api/reports` `rows` are now `VisitorReportRow` — `tipe_pengunjung`/`nama_kolaborator`/`durasi_menit` computed at read time (NFC ⇔ `uid`; duration = keluar−masuk) — plus a `ringkasan` { total_kunjungan, total_nfc, total_manual } block. FE now reads `rows` (it read a missing `detail` key → empty table). |
+| F-4 | BE (kolaborator) + OA | KOL-2: `GET /api/events` `Event` gains `terdaftar` (approved row in `event_kolaborators`) + `request_status` (`pending`/`approved`/null) for the logged-in kolaborator. New read-only `EventKolaborator` model in the colab backend; service enriches via two id-set lookups. Rejected requests are hard-deleted → re-apply stays allowed. |
+| F-5 | Version bump (all 4 specs) | `info.version` `2.3.1` → `2.4.0` for the cross-consistency verifier (check 9). gate.yaml (F-1/F-2/F-3) + colab.yaml (F-4) have endpoint/schema changes; companyprof + artisan are version-only. |
+| F-6 | CI | New `.github/workflows/keep-warm.yml` pings the 4 HF Space `/health` endpoints every ~10 min (GLOB-3). No schema impact. |
+
+**Invariants preserved:** event-side junction shapes (`EventArtisan`/`EventKolaborator`) unchanged; `events.status` enum still `(draft|published|berlangsung|selesai)`; non-admin event lists already hide `draft` (GLOB-1 — no change needed). CP "KARYA → PUBLICATION" is a UI label only — no DB or `/api/public/karya` rename.
+
+**Verification after this delta:** `bash db/verify_cross_consistency.sh` → 16/16 PASS. `bash db/audit_admin_only_leaks.sh` → NO LEAKS.
+
+### v2.4.1 — 2026-05-29 (Storage bucket documentation + legacy table flags + handoff)
+
+**DB unchanged. OpenAPI unchanged (still v2.4.0). Documentation only — new Storage section + LEGACY flags on `otp_codes`/`password_reset_tokens` + new `HANDOFF.md` master document.**
+
+This delta captures changes that landed across PR #47–#51 but were never reflected in the schema map. Triggered by the client revision sweep + project handoff to client team.
+
+| Item | Type | Detail |
+|------|------|--------|
+| H-1 | Doc (SCHEMA_MAP) | Added new top-level **Storage** section documenting `peken-uploads` bucket (active), folder convention (cp/event/profil/qris/bukti/story/portofolio/), Storage RLS policies on `storage.objects`, base64 fallback. `qris` bucket deleted 2026-05-29 (replaced by `peken-uploads/qris/` folder). |
+| H-2 | Doc (SCHEMA_MAP) | Marked `otp_codes` and `password_reset_tokens` as LEGACY in sections 3.19 + 3.20. Since PR #49 (2026-05-28) the forgot-password flow uses Supabase Auth native (`auth.users.recovery_token` + Supabase-issued JWT recovery session). Safe to DROP both tables after 90-day retention (2026-08-28+). Artisan/colab OA still document `/api/auth/otp/*` + `/api/auth/password/reset` as stubs; FE no longer calls them. |
+| H-3 | Doc (schema.sql) | Header version bumped 2.2.2 → 2.4.0, date 2026-05-03 → 2026-05-29. Added STORAGE + LEGACY commentary block. Footer end-marker corrected from "v2.1" → "v2.4.0". |
+| H-4 | Doc (SCHEMA_MAP) | Section 3.13 (kas) — YAML refs note updated: `Kas.metode enum: [tunai,transfer,qris]` → `[tunai,qris]` (transfer was removed in v2.2.2; stale ref note). |
+| H-5 | BE fix (4 health.py) | All 4 `routers/health.py` `version` string bumped `2.3.0` → `2.4.0` to match OA + SCHEMA_MAP. Visible only via `GET /health` — no functional impact. |
+| H-6 | New file | `HANDOFF.md` at repo root — single-source AI-consumable handoff documentation. Covers architecture, deployment, schema summary, per-app guide, auth/storage/recovery design, ops runbook, future upgrade paths (Resend+domain, Meta WhatsApp Cloud API, multi-channel recovery), credential rotation schedule, dev setup. Designed to be attached to AI prompts by the client's team. |
+
+**Invariants preserved:** schema unchanged; all 4 OA still at v2.4.0; cross-consistency 16/16 still PASS (no check involves `otp_codes`/`password_reset_tokens` row counts or Storage); admin-only-leak audit still PASS.
+
+**Verification after this delta:** `bash db/verify_cross_consistency.sh` → 16/16 PASS. Builds 4/4 PASS. Live HF backends 4/4 HTTP 200 with new version string `2.4.0` in `/health` response.

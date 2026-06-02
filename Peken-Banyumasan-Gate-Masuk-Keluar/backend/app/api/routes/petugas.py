@@ -41,7 +41,12 @@ def create_petugas(
 ):
     """Create petugas account (admin only)."""
     try:
-        petugas = petugas_service.create_petugas(data.email, data.nama, data.jabatan)
+        petugas = petugas_service.create_petugas(
+            email=data.email,
+            nama=data.nama,
+            password=data.password,
+            jabatan=data.jabatan
+        )
         return success_response(petugas, message="Akun petugas berhasil dibuat")
     except HTTPException as e:
         raise
@@ -92,7 +97,7 @@ def reset_password(
     try:
         mode = data.get("mode", "send_reset_email")
         result = petugas_service.reset_petugas_password(id, mode)
-        return success_response(None, message=result.get("message"))
+        return success_response(result, message=result.get("message", "Password berhasil direset"))
     except HTTPException as e:
         raise
     except Exception as e:

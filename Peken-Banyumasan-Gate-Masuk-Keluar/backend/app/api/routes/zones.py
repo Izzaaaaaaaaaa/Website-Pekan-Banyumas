@@ -29,13 +29,3 @@ def save_global_zones(
         return success_response(None, message=result.get("message"))
     except Exception as e:
         raise HTTPException(500, detail=error_response(str(e), 500))
-
-
-@router.get("/events/{id}", response_model=dict)
-def get_event_zones(id: str, user=Depends(get_current_user)):
-    """Get zones for event with occupancy info."""
-    try:
-        zones = zone_service.get_event_zones(id)
-        return success_response(zones)
-    except Exception as e:
-        raise HTTPException(500, detail=error_response(str(e), 500))
