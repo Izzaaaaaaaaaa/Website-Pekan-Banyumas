@@ -24,6 +24,7 @@ dist-ssr
 *.sw?
 
 .env
+.env.production
 .DS_Store
 venv/
 env/

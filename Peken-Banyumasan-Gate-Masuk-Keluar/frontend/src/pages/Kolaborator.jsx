@@ -664,11 +664,11 @@ export default function Kolaborator() {
   };
 
   const deleteKolaborator = async (id) => {
-    if (!confirm('Yakin ingin menghapus kolaborator ini selamanya?')) return;
+    if (!confirm('Hapus akun ini secara permanen? Data akan diarsipkan dan tidak bisa dipulihkan.')) return;
     setProcessing(id);
     try {
-      await kolaboratorApi.delete(id);
-      toast.success('Kolaborator berhasil dihapus.');
+      await kolaboratorApi.status(id, 'deleted');
+      toast.error('Akun dihapus (diarsipkan)');
       await load();
     } catch (err) {
       toast.error(extractError(err, 'Gagal menghapus akun'));

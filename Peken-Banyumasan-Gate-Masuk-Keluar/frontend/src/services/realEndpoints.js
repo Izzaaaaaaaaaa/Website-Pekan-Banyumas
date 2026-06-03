@@ -236,7 +236,6 @@ export const kolaboratorApi = {
   detail:     async (id)          => extractData(await apiClient.get(`/api/kolaborator/${id}`)),
   update:     async (id, data)    => extractData(await apiClient.patch(`/api/kolaborator/${id}`, data)),
   status:     async (id, status)  => extractData(await apiClient.patch(`/api/kolaborator/${id}/status`, { status })),
-  delete:     async (id)          => extractData(await apiClient.delete(`/api/kolaborator/${id}`)),
   events:      async (id)              => extractData(await apiClient.get(`/api/kolaborator/${id}/events`)),
   requests:    async (id)              => extractData(await apiClient.get(`/api/kolaborator/${id}/requests`)),
   portofolio:  async (id)              => extractData(await apiClient.get(`/api/kolaborator/${id}/portofolio`)),
