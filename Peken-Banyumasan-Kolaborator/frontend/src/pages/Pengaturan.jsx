@@ -1,5 +1,5 @@
 // Pengaturan.jsx — Peken Banyumasan Design System v2.0
-import React, { useState } from 'react';
+import React, { useState, useCallback } from 'react';
 import { Lock, Mail, Bell, Shield, Loader2, CheckCircle, Eye, EyeOff } from 'lucide-react';
 import { useToast } from '../components/Toast';
 import { authApi } from '../services/endpoints';
@@ -44,13 +44,52 @@ const Section = ({ icon: Icon, title, children }) => (
   </div>
 );
 
+// ── BUG-1 FIX: InputField dipindah ke LUAR komponen Pengaturan ────────────────
+// Sebelumnya didefinisikan di dalam → re-render parent = komponen baru → focus hilang
+const InputField = ({ label, field, type='text', placeholder, value, showPw, onShowPw, onChange }) => (
+  <div>
+    <label style={labelStyle}>{label}</label>
+    <div className="relative">
+      <input
+        type={type === 'password' ? (showPw ? 'text' : 'password') : type}
+        value={value}
+        onChange={e => onChange(field, e.target.value)}
+        placeholder={placeholder}
+        style={{...inputBase, paddingRight: type==='password' ? 44 : 14}}
+      />
+      {type === 'password' && (
+        <button
+          type="button"
+          onClick={onShowPw}
+          className="absolute right-3 top-1/2 -translate-y-1/2"
+          style={{color:T.textMuted}}>
+          {showPw ? <EyeOff size={15}/> : <Eye size={15}/>}
+        </button>
+      )}
+    </div>
+  </div>
+);
+
+// ── BUG-2 FIX: Baca & tulis notifPref dari localStorage ──────────────────────
+const NOTIF_PREF_KEY = 'peken_notif_pref';
+
+function loadNotifPref() {
+  try {
+    const saved = localStorage.getItem(NOTIF_PREF_KEY);
+    if (saved) return { ...{ event:true, system:true, digest:false }, ...JSON.parse(saved) };
+  } catch (_) { /* ignore */ }
+  return { event:true, system:true, digest:false };
+}
+
 export default function Pengaturan() {
   const toast = useToast();
   const user  = getUser() || {};
   const [pwForm,  setPwForm]  = useState({ lama:'', baru:'', konfirmasi:'' });
   const [showPw,  setShowPw]  = useState(false);
   const [savingPw,setSavingPw]= useState(false);
-  const [notifPref, setNotifPref] = useState({ event:true, system:true, digest:false });
+
+  // BUG-2 FIX: initialise dari localStorage agar persist lintas tab
+  const [notifPref, setNotifPref] = useState(loadNotifPref);
 
   const gantiPw = async () => {
     if (!pwForm.lama || !pwForm.baru) { toast.error('Lengkapi semua field'); return; }
@@ -66,29 +105,22 @@ export default function Pengaturan() {
     } finally { setSavingPw(false); }
   };
 
-  const InputField = ({ label, field, type='text', placeholder }) => (
-    <div>
-      <label style={labelStyle}>{label}</label>
-      <div className="relative">
-        <input
-          type={showPw ? 'text' : type}
-          value={pwForm[field]}
-          onChange={e => setPwForm(p => ({...p, [field]:e.target.value}))}
-          placeholder={placeholder}
-          style={{...inputBase, paddingRight: type==='password' ? 44 : 14}}
-        />
-        {type === 'password' && (
-          <button
-            type="button"
-            onClick={() => setShowPw(!showPw)}
-            className="absolute right-3 top-1/2 -translate-y-1/2"
-            style={{color:T.textMuted}}>
-            {showPw ? <EyeOff size={15}/> : <Eye size={15}/>}
-          </button>
-        )}
-      </div>
-    </div>
-  );
+  // BUG-1 FIX: handler stabil dengan useCallback, tidak recreate tiap render
+  const handlePwChange = useCallback((field, value) => {
+    setPwForm(p => ({ ...p, [field]: value }));
+  }, []);
+
+  const toggleShowPw = useCallback(() => setShowPw(v => !v), []);
+
+  // BUG-2 FIX: toggle juga simpan ke localStorage
+  const toggleNotif = useCallback((key) => {
+    setNotifPref(prev => {
+      const next = { ...prev, [key]: !prev[key] };
+      try { localStorage.setItem(NOTIF_PREF_KEY, JSON.stringify(next)); } catch (_) {}
+      return next;
+    });
+    toast.info('Preferensi disimpan');
+  }, [toast]);
 
   return (
     <div className="max-w-xl mx-auto space-y-4">
@@ -126,9 +158,24 @@ export default function Pengaturan() {
       {/* ── Ubah Password ── */}
       <Section icon={Lock} title="Ubah Password">
         <div className="space-y-3">
-          <InputField label="Password Lama" field="lama" type="password" placeholder="Masukkan password lama"/>
-          <InputField label="Password Baru" field="baru" type="password" placeholder="Min. 8 karakter"/>
-          <InputField label="Konfirmasi Password Baru" field="konfirmasi" type="password" placeholder="Ulangi password baru"/>
+          <InputField
+            label="Password Lama" field="lama" type="password"
+            placeholder="Masukkan password lama"
+            value={pwForm.lama} showPw={showPw}
+            onShowPw={toggleShowPw} onChange={handlePwChange}
+          />
+          <InputField
+            label="Password Baru" field="baru" type="password"
+            placeholder="Min. 8 karakter"
+            value={pwForm.baru} showPw={showPw}
+            onShowPw={toggleShowPw} onChange={handlePwChange}
+          />
+          <InputField
+            label="Konfirmasi Password Baru" field="konfirmasi" type="password"
+            placeholder="Ulangi password baru"
+            value={pwForm.konfirmasi} showPw={showPw}
+            onShowPw={toggleShowPw} onChange={handlePwChange}
+          />
           <button onClick={gantiPw} disabled={savingPw}
             className="w-full text-white py-2.5 font-semibold transition flex items-center justify-center gap-2 text-sm mt-2"
             style={{background:T.sageDark, borderRadius:20}}>
@@ -144,26 +191,36 @@ export default function Pengaturan() {
       <Section icon={Bell} title="Preferensi Notifikasi">
         <div className="space-y-4">
           {[
-            ['event',  'Notifikasi Event',   'Pengingat event yang kamu daftarkan'],
-            ['system', 'Notifikasi Sistem',  'Update status akun dan konten'],
-            ['digest', 'Ringkasan Mingguan', 'Email ringkasan aktivitas setiap minggu'],
-          ].map(([key, label, desc]) => (
-            <div key={key} className="flex items-center justify-between">
+            ['event',  'Notifikasi Event',   'Pengingat event yang kamu daftarkan',       false],
+            ['system', 'Notifikasi Sistem',  'Update status akun dan konten',              false],
+            ['digest', 'Ringkasan Mingguan', 'Email ringkasan aktivitas setiap minggu',    true],
+          ].map(([key, label, desc, comingSoon]) => (
+            <div key={key} className="flex items-center justify-between"
+              style={comingSoon ? { opacity: 0.5 } : {}}>
               <div>
-                <p className="text-sm font-medium" style={{color:T.text1}}>{label}</p>
+                <div className="flex items-center gap-2">
+                  <p className="text-sm font-medium" style={{color:T.text1}}>{label}</p>
+                  {comingSoon && (
+                    <span className="text-[10px] font-bold px-1.5 py-0.5 rounded-full"
+                      style={{background:T.accentBg, color:T.sageDark, border:`1px solid ${T.accentBorder}`}}>
+                      Segera Hadir
+                    </span>
+                  )}
+                </div>
                 <p className="text-xs mt-0.5" style={{color:T.textMuted}}>{desc}</p>
               </div>
               <div
-                onClick={() => { setNotifPref(p => ({...p,[key]:!p[key]})); toast.info('Preferensi disimpan'); }}
-                className="relative cursor-pointer shrink-0"
+                onClick={() => !comingSoon && toggleNotif(key)}
+                className="relative shrink-0"
                 style={{
                   width:40, height:22, borderRadius:11,
-                  background: notifPref[key] ? T.sageDark : T.border,
+                  background: notifPref[key] && !comingSoon ? T.sageDark : T.border,
                   transition:'background .18s',
+                  cursor: comingSoon ? 'not-allowed' : 'pointer',
                 }}>
                 <div style={{
                   position:'absolute', top:3,
-                  left: notifPref[key] ? 21 : 3,
+                  left: notifPref[key] && !comingSoon ? 21 : 3,
                   width:16, height:16, borderRadius:'50%',
                   background:T.surface, boxShadow:'0 1px 2px rgba(30,32,16,.20)',
                   transition:'left .18s',
