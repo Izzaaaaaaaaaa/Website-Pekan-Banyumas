@@ -2,7 +2,7 @@
 import React, { useState, useEffect, memo } from 'react';
 import {
   Search, UserCog, CheckCircle, XCircle, Edit3, Save, Loader2,
-  Plus, X, Mail, Calendar, Key, AlertCircle,
+  Plus, X, Mail, Calendar, Key, AlertCircle, Trash2,
 } from 'lucide-react';
 import { useToast } from '../components/Toast';
 import { petugasApi } from '../services/endpoints';
@@ -182,7 +182,7 @@ function ResetPasswordModal({ petugas, onClose, onReset }) {
 }
 
 // ── PetugasRow ────────────────────────────────────────────────────────────────
-const PetugasRow = memo(({ p, onEdit, onToggleStatus, onResetPw, isProcessing }) => {
+const PetugasRow = memo(({ p, onEdit, onToggleStatus, onResetPw, onDelete, isProcessing }) => {
   const st = STATUS_MAP[p.status] || STATUS_MAP.aktif;
   return (
     <tr className="border-b border-gray-50 hover:bg-[#f7f8f2]/60 transition group">
@@ -227,10 +227,16 @@ const PetugasRow = memo(({ p, onEdit, onToggleStatus, onResetPw, isProcessing })
                 className="p-1.5 rounded-lg text-[#8a9070] hover:text-[#B87272] hover:bg-[#f7eeee] transition" title="Disable Akun">
                 <XCircle size={14} />
               </button>
-            : <button onClick={() => onToggleStatus(p, 'aktif')} disabled={isProcessing === p.id}
-                className="p-1.5 rounded-lg text-[#8a9070] hover:text-[#7a8a52] hover:bg-[#eef0e0] transition" title="Aktifkan Akun">
-                <CheckCircle size={14} />
-              </button>
+            : <>
+                <button onClick={() => onToggleStatus(p, 'aktif')} disabled={isProcessing === p.id}
+                  className="p-1.5 rounded-lg text-[#8a9070] hover:text-[#7a8a52] hover:bg-[#eef0e0] transition" title="Aktifkan Akun">
+                  <CheckCircle size={14} />
+                </button>
+                <button onClick={() => onDelete(p.id)} disabled={isProcessing === p.id}
+                  className="p-1.5 rounded-lg text-[#8a9070] hover:text-[#B87272] hover:bg-[#f7eeee] transition" title="Hapus Akun">
+                  <Trash2 size={14} />
+                </button>
+              </>
           }
         </div>
       </td>
@@ -411,6 +417,20 @@ export default function PetugasPage() {
     }
   };
 
+  const handleDelete = async (id) => {
+    if (!confirm('Hapus akun petugas ini secara permanen? Tindakan ini tidak dapat dibatalkan.')) return;
+    setProcessing(id);
+    try {
+      await petugasApi.delete(id);
+      toast.success('Akun petugas berhasil dihapus');
+      await load();
+    } catch (err) {
+      toast.error(extractError(err, 'Gagal menghapus akun'));
+    } finally {
+      setProcessing(null);
+    }
+  };
+
   const filtered = petugas.filter(p =>
     !dSearch
     || p.nama.toLowerCase().includes(dSearch.toLowerCase())
@@ -485,6 +505,7 @@ export default function PetugasPage() {
                   onEdit={setEditItem}
                   onToggleStatus={handleToggleStatus}
                   onResetPw={setResetTarget}
+                  onDelete={handleDelete}
                   isProcessing={processing}
                 />
               ))}

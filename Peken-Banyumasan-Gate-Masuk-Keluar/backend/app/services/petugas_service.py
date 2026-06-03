@@ -135,15 +135,32 @@ def update_petugas_status(user_id: str, status: str):
     """Update petugas status (Profile + Auth ban)."""
     try:
         # Update Auth (disable = ban)
-        if status == "disabled":
-            ban_date = "2099-12-31T23:59:59Z"
-            supabase_admin.auth.admin.update_user_by_id(user_id, {"ban_duration": "876000h"}) # approx 100 years
-        else:
-            supabase_admin.auth.admin.update_user_by_id(user_id, {"ban_duration": "none"})
+        try:
+            if status == "disabled":
+                ban_date = "2099-12-31T23:59:59Z"
+                supabase_admin.auth.admin.update_user_by_id(user_id, {"ban_duration": "876000h"}) # approx 100 years
+            else:
+                supabase_admin.auth.admin.update_user_by_id(user_id, {"ban_duration": "none"})
+        except Exception as auth_e:
+            print(f"Warning: Failed to update auth status for {user_id}: {auth_e}")
             
         return update_petugas(user_id, {"status": status})
     except Exception as e:
         raise HTTPException(500, f"Error updating petugas status: {str(e)}")
+
+
+def delete_petugas(user_id: str):
+    """Delete petugas."""
+    try:
+        try:
+            supabase_admin.auth.admin.delete_user(user_id)
+        except Exception as auth_e:
+            print(f"Warning: Failed to delete auth user {user_id}: {auth_e}")
+            
+        supabase_admin.table("users_profile").delete().eq("id", user_id).execute()
+        return {"message": "Petugas berhasil dihapus"}
+    except Exception as e:
+        raise HTTPException(500, f"Error deleting petugas: {str(e)}")
 
 
 def reset_petugas_password(user_id: str, mode: str):
@@ -158,7 +175,10 @@ def reset_petugas_password(user_id: str, mode: str):
 
         if mode == "email_link":
             # Send reset email
-            supabase_admin.auth.reset_password_for_email(email)
+            supabase_admin.auth.reset_password_for_email(
+                email, 
+                {"redirect_to": "http://localhost:5174/pengaturan-akun"}
+            )
             return {"message": "Link reset password telah dikirim ke email petugas."}
             
         elif mode == "temp_password":

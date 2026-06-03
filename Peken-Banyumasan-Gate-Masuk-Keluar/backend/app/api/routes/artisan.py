@@ -70,6 +70,18 @@ def update_status(
         raise HTTPException(500, detail=error_response(str(e), 500))
 
 
+@router.delete("/{id}", response_model=dict)
+def delete_artisan(id: str, user=Depends(get_admin_only)):
+    """Delete artisan (admin only)."""
+    try:
+        result = artisan_service.delete_artisan(id)
+        return success_response(result)
+    except HTTPException as e:
+        raise
+    except Exception as e:
+        raise HTTPException(500, detail=error_response(str(e), 500))
+
+
 @router.get("/{id}/events", response_model=dict)
 def get_events(id: str, user=Depends(get_current_user)):
     """Get events artisan is assigned to."""

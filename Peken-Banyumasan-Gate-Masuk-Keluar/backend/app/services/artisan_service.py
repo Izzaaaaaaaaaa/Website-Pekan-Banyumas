@@ -60,6 +60,20 @@ def update_artisan_status(artisan_id: str, status: str):
     return update_artisan(artisan_id, {"status": status})
 
 
+def delete_artisan(artisan_id: str):
+    """Delete artisan."""
+    try:
+        try:
+            supabase_admin.auth.admin.delete_user(artisan_id)
+        except Exception as auth_err:
+            print(f"Warning: Failed to delete auth user {artisan_id}: {auth_err}")
+            
+        supabase_admin.table("artisans").delete().eq("id", artisan_id).execute()
+        return {"message": "Artisan berhasil dihapus"}
+    except Exception as e:
+        raise HTTPException(500, f"Error deleting artisan: {str(e)}")
+
+
 def get_artisan_events(artisan_id: str):
     """Get events this artisan is assigned to."""
     try:

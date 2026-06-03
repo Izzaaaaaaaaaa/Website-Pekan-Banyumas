@@ -46,7 +46,7 @@ import {
 // code must go through this module's functions rather than touching auth
 // state in localStorage directly.
 const TOKEN_KEY = 'token';
-const USER_KEY  = 'user';
+const USER_KEY = 'user';
 
 // ── Supabase session sync ──────────────────────────────────────────────────
 // When autoRefreshToken fires (TOKEN_REFRESHED), mirrors the new access_token
@@ -190,7 +190,7 @@ export function clearAuth() {
   }
   // Fire-and-forget: revoke refresh token on Supabase side.
   if (supabase && import.meta.env.VITE_DUMMY_MODE !== 'true') {
-    supabase.auth.signOut().catch(() => {});
+    supabase.auth.signOut().catch(() => { });
   }
 }
 

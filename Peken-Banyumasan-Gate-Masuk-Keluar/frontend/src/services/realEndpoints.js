@@ -236,6 +236,7 @@ export const kolaboratorApi = {
   detail:     async (id)          => extractData(await apiClient.get(`/api/kolaborator/${id}`)),
   update:     async (id, data)    => extractData(await apiClient.patch(`/api/kolaborator/${id}`, data)),
   status:     async (id, status)  => extractData(await apiClient.patch(`/api/kolaborator/${id}/status`, { status })),
+  delete:     async (id)          => extractData(await apiClient.delete(`/api/kolaborator/${id}`)),
   events:      async (id)              => extractData(await apiClient.get(`/api/kolaborator/${id}/events`)),
   requests:    async (id)              => extractData(await apiClient.get(`/api/kolaborator/${id}/requests`)),
   portofolio:  async (id)              => extractData(await apiClient.get(`/api/kolaborator/${id}/portofolio`)),
@@ -250,6 +251,7 @@ export const artisanApi = {
   detail:  async (id)          => extractData(await apiClient.get(`/api/artisan/${id}`)),
   update:  async (id, data)    => extractData(await apiClient.patch(`/api/artisan/${id}`, data)),
   status:  async (id, status)  => extractData(await apiClient.patch(`/api/artisan/${id}/status`, { status })),
+  delete:  async (id)          => extractData(await apiClient.delete(`/api/artisan/${id}`)),
   events:  async (id)          => extractData(await apiClient.get(`/api/artisan/${id}/events`)),
   requests: async (id)         => extractData(await apiClient.get(`/api/artisan/${id}/requests`)),
   // Admin finance view (read-only aggregates per artisan)
@@ -300,6 +302,7 @@ export const petugasApi = {
   create:        async (data)        => extractData(await apiClient.post('/api/petugas', data)),
   update:        async (id, data)    => extractData(await apiClient.patch(`/api/petugas/${id}`, data)),
   status:        async (id, status)  => extractData(await apiClient.patch(`/api/petugas/${id}/status`, { status })),
+  delete:        async (id)          => extractData(await apiClient.delete(`/api/petugas/${id}`)),
   resetPassword: async (id, mode)    => extractData(await apiClient.post(`/api/petugas/${id}/reset-password`, { mode })),
 };
 

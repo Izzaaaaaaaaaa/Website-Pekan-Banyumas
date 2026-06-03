@@ -62,7 +62,10 @@ def delete_kolaborator(kolaborator_id: str):
     """Delete kolaborator."""
     try:
         # Delete from Supabase auth (will cascade to profile if configured)
-        supabase_admin.auth.admin.delete_user(kolaborator_id)
+        try:
+            supabase_admin.auth.admin.delete_user(kolaborator_id)
+        except Exception as auth_err:
+            print(f"Warning: Failed to delete auth user {kolaborator_id}: {auth_err}")
         # Also try to delete the record in case auth didn't cascade or user is missing from auth
         supabase_admin.table("kolaborators").delete().eq("id", kolaborator_id).execute()
         return {"message": "Kolaborator berhasil dihapus"}

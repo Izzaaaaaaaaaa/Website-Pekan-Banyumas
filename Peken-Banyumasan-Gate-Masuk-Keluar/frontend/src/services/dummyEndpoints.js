@@ -296,6 +296,11 @@ export const kolaboratorApi = {
     _kolaborators = _kolaborators.map(k => k.id === id ? { ...k, status } : k);
     return { id, status };
   },
+  delete: async (id) => {
+    await delay();
+    _kolaborators = _kolaborators.filter(k => k.id !== id);
+    return { message: 'OK' };
+  },
   events:     async (id) => { await delay(); return [...(_kolabEvents[id]    || [])]; },
   requests:   async ()   => { await delay(); return []; },
   portofolio: async (id) => { await delay(); return [...(_kolabPorto[id]     || [])]; },
@@ -327,6 +332,11 @@ export const artisanApi = {
     await delay();
     _artisans = _artisans.map(a => a.id === id ? { ...a, status } : a);
     return { id, status };
+  },
+  delete: async (id) => {
+    await delay();
+    _artisans = _artisans.filter(a => a.id !== id);
+    return { message: 'OK' };
   },
   events:  async (id)          => { await delay(); return [...(_artisanEvents[id] || [])]; },
   requests: async ()           => { await delay(); return []; },
@@ -444,6 +454,11 @@ export const petugasApi = {
     await delay();
     _petugas = _petugas.map(p => p.id === id ? { ...p, status } : p);
     return { id, status };
+  },
+  delete: async (id) => {
+    await delay();
+    _petugas = _petugas.filter(p => p.id !== id);
+    return { message: 'OK' };
   },
   resetPassword: async (id, mode) => {
     await delay();

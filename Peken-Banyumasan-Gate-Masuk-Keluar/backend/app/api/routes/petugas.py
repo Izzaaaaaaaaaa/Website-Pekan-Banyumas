@@ -87,6 +87,18 @@ def update_status(
         raise HTTPException(500, detail=error_response(str(e), 500))
 
 
+@router.delete("/{id}", response_model=dict)
+def delete_petugas(id: str, user=Depends(get_admin_only)):
+    """Delete petugas (admin only)."""
+    try:
+        result = petugas_service.delete_petugas(id)
+        return success_response(result)
+    except HTTPException as e:
+        raise
+    except Exception as e:
+        raise HTTPException(500, detail=error_response(str(e), 500))
+
+
 @router.post("/{id}/reset-password", response_model=dict)
 def reset_password(
     id: str,

@@ -658,8 +658,8 @@ export default function ArtisanPage() {
     if (!confirm('Hapus akun artisan ini secara permanen? Tindakan ini tidak dapat dibatalkan.')) return;
     setProcessing(id);
     try {
-      await artisanApi.status(id, 'deleted');
-      toast.error('Akun artisan dihapus');
+      await artisanApi.delete(id);
+      toast.error('Akun artisan berhasil dihapus');
       await load();
       if (tab === 'suspended' && suspended.length === 1) setTab('aktif');
     } catch (err) {
