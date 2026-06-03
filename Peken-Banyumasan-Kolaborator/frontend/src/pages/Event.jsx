@@ -130,11 +130,6 @@ function EventDetailModal({ event, onClose, onDaftar, loadingId }) {
               style={{background: T.warningBg, border: `1px solid ${T.warningBorder}`, color: T.warning}}>
               <Clock size={14}/> Menunggu Persetujuan
             </span>
-          ) : event.pending_request ? (
-            <span className="w-full flex items-center justify-center gap-2 px-4 py-2.5 text-sm font-semibold rounded-xl"
-              style={{background: T.infoBg, border: `1px solid ${T.infoBorder}`, color: T.info}}>
-              Menunggu Konfirmasi Admin
-            </span>
           ) : event.status !== 'selesai' ? (
             <button onClick={() => onDaftar(event)} disabled={loadingId===event.id}
               className="w-full text-white py-2.5 text-sm font-semibold transition disabled:opacity-70 flex items-center justify-center gap-2"
@@ -295,11 +290,6 @@ const EventCard = ({ event, onDaftar, loadingId, onClick, showPeran }) => {
               <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-semibold"
                 style={{background: T.warningBg, border: `1px solid ${T.warningBorder}`, color: T.warning}}>
                 <Clock size={11}/> Menunggu Persetujuan
-              </span>
-            ) : event.pending_request ? (
-              <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-semibold"
-                style={{background: T.infoBg, border: `1px solid ${T.infoBorder}`, color: T.info}}>
-                Menunggu Konfirmasi
               </span>
             ) : event.status !== 'selesai' ? (
               <button onClick={() => onDaftar(event)} disabled={isLoading}

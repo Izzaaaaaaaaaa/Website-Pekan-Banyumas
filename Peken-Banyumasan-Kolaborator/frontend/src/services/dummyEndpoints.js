@@ -68,14 +68,11 @@ export const authApi = {
 export const profilApi = {
   get: async () => {
     await delay();
-    const u = getUser() || { ...currentUser, role: 'kolaborator' };
-    // Keep dummy mode consistent with Dashboard: count only approved/registered events.
-    return { ...u, total_event: _events.filter(e => e.terdaftar).length };
+    return getUser() || { ...currentUser, role: 'kolaborator' };
   },
   update: async (data) => {
     await delay();
     const merged = { ...(getUser() || currentUser), ...data };
-    merged.total_event = _events.filter(e => e.terdaftar).length;
     setUser(merged);
     return merged;
   },

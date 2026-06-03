@@ -165,8 +165,7 @@ export default function Dashboard() {
           eventApi.list(),
         ]);
         setStories((storyList || []).slice(0, 4));
-        // Keep full list (includes 'selesai') so total counts are accurate.
-        setEvents(eventList || []);
+        setEvents((eventList || []).filter(e => ['published','berlangsung'].includes(e.status)));
       } catch (err) {
         toast.error(extractError(err, 'Gagal memuat dashboard'));
       }
@@ -188,10 +187,8 @@ export default function Dashboard() {
     }
   };
 
-  const activeEvents  = events.filter(e => ['published','berlangsung'].includes(e.status));
-  const myEvents      = activeEvents.filter(e => e.terdaftar);
-  const exploreEvents = activeEvents.filter(e => !e.terdaftar).slice(0, 2);
-  const totalJoined   = events.filter(e => e.terdaftar).length;
+  const myEvents      = events.filter(e => e.terdaftar);
+  const exploreEvents = events.filter(e => !e.terdaftar).slice(0, 2);
   const initial       = (user.nama||'U').charAt(0).toUpperCase();
 
   return (
@@ -254,7 +251,7 @@ export default function Dashboard() {
             {[
               [user.total_karya ?? 0,'Karya'],
               [user.total_story ?? 0,'Story'],
-              [totalJoined, 'Event'],
+              [user.total_event ?? 0, 'Event'],
             ].map(([v,l]) => (
               <div key={l} className="rounded-xl px-2 py-3 text-center"
                 style={{background:'rgba(255,255,255,0.05)'}}>
