@@ -1,45 +1,13 @@
-"""
-Auth routes — Kolaborator registration and profile update.
-
-Login/logout/me/changePassword handled Supabase-direct on the frontend.
-Only 3 BE-intermediary endpoints here:
-  - POST /api/auth/register     (atomically creates auth user + kolaborators row)
-  - PUT  /api/auth/profile      (custom fields only — subsektor, kota, bio, etc.)
-  - OTP/password-reset stubs    (not yet implemented)
-"""
-
 from fastapi import APIRouter, Depends
-from fastapi.responses import JSONResponse
 
 from app.api.deps import get_current_user
+from app.api.utils import _envelope, _error_envelope
 from app.schemas.auth_schema import RegisterKolaboratorRequest, UpdateProfileRequest
 from app.services.auth_service import register_kolaborator, update_auth_profile
 
 router = APIRouter(prefix="/auth", tags=["Auth"])
 
 
-def _envelope(data, message: str | None = None, status_code: int = 200):
-    """Wrap response in canonical { status, message, data } envelope."""
-    return JSONResponse(
-        status_code=status_code,
-        content={
-            "status": "success",
-            "message": message,
-            "data": data,
-        },
-    )
-
-
-def _error_envelope(message: str, status_code: int = 400, errors: dict | None = None):
-    """Wrap error in canonical { status, message, data, errors } envelope."""
-    content = {
-        "status": "error",
-        "message": message,
-        "data": None,
-    }
-    if errors:
-        content["errors"] = errors
-    return JSONResponse(status_code=status_code, content=content)
 
 
 @router.post("/register")

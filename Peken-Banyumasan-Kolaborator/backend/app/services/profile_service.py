@@ -1,14 +1,13 @@
-"""
-Profile service — Kolaborator self-profile read/update.
-
-Reads from `kolaborators` table. Admin-only fields (no_hp, internal_notes)
-are stripped from all responses per OpenAPI spec + SCHEMA_MAP R9 rule.
-"""
-
 from app.db.supabase import supabase, supabase_admin
 
 # Columns safe to return to the kolaborator portal.
 # no_hp and internal_notes are intentionally excluded (admin-only).
+#
+# PENTING: `status` sengaja diikutkan di sini.
+# Ini adalah solusi alternatif BUG-1 (sisi Gate BE): FE dapat membaca
+# status aktual dari tabel (bukan dari JWT yang mungkin basi) melalui
+# endpoint GET /api/kolaborator/me, sehingga UI bisa tetap akurat
+# walau JWT belum di-refresh setelah aktivasi admin.
 _KOLABORATOR_SELECT = (
     "id, slug, email, nama, kota, bio, foto_url, cover_url, "
     "subsektor, status, tanggal_daftar, total_karya, total_story, total_event"

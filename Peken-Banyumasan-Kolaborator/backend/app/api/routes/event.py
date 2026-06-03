@@ -1,35 +1,13 @@
-"""
-Event routes — Kolaborator event consumer slice.
-
-Matches OpenAPI paths:
-  GET  /api/events
-  GET  /api/events/my-requests
-  GET  /api/events/{id}
-  POST /api/events/{id}/kolaborator-requests
-"""
-
 from fastapi import APIRouter, Depends
-from fastapi.responses import JSONResponse
 from pydantic import BaseModel
 
 from app.api.deps import get_current_user
+from app.api.utils import _envelope, _error_envelope
 from app.services.event_service import get_event_detail, get_events, get_my_requests, request_event_join
 
 router = APIRouter(prefix="/events", tags=["Events"])
 
 
-def _envelope(data, message: str | None = None, status_code: int = 200):
-    return JSONResponse(
-        status_code=status_code,
-        content={"status": "success", "message": message, "data": data},
-    )
-
-
-def _error_envelope(message: str, status_code: int = 400):
-    return JSONResponse(
-        status_code=status_code,
-        content={"status": "error", "message": message, "data": None},
-    )
 
 
 @router.get("")

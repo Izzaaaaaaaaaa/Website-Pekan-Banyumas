@@ -1,38 +1,15 @@
-"""
-Kolaborator self-profile, portfolio, and story routes.
-
-Matches OpenAPI paths:
-  GET/PATCH  /api/kolaborator/me
-  GET/POST   /api/kolaborator/me/portofolio
-  PATCH/DEL  /api/kolaborator/me/portofolio/{id}
-  GET/POST   /api/kolaborator/me/story
-  DEL        /api/kolaborator/me/story/{id}
-"""
-
 from fastapi import APIRouter, Depends
-from fastapi.responses import JSONResponse
 from pydantic import BaseModel, EmailStr
 
 from app.api.deps import get_current_user
-from app.services.profile_service import get_profile, update_profile
+from app.api.utils import _envelope, _error_envelope
 from app.services.portfolio_service import create_portfolio, delete_portfolio, get_portfolio, update_portfolio
-from app.services.story_service import create_story, delete_story, get_stories
+from app.services.profile_service import get_profile, update_profile
+from app.services.story_service import create_story, delete_story, get_stories, update_story
 
 router = APIRouter(prefix="/kolaborator", tags=["Kolaborator"])
 
 
-def _envelope(data, message: str | None = None, status_code: int = 200):
-    return JSONResponse(
-        status_code=status_code,
-        content={"status": "success", "message": message, "data": data},
-    )
-
-
-def _error_envelope(message: str, status_code: int = 400):
-    return JSONResponse(
-        status_code=status_code,
-        content={"status": "error", "message": message, "data": None},
-    )
 
 
 class PatchKolaboratorBody(BaseModel):
@@ -147,7 +124,6 @@ def create_story_route(payload: CreateStoryBody, user: dict = Depends(get_curren
 
 @router.patch("/me/story/{story_id}")
 def update_story_route(story_id: str, payload: PatchStoryBody, user: dict = Depends(get_current_user)):
-    from app.services.story_service import update_story
     data = update_story(user, story_id, payload.model_dump(exclude_unset=True))
     if not data:
         return _error_envelope("Story tidak ditemukan", 404)

@@ -1,10 +1,15 @@
-from fastapi import FastAPI, APIRouter
+
+from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 
-from app.api.routes import auth, dashboard, event, kolaborator, notifikasi, pengaturan, portofolio, profile, story, test
+from app.api.routes import auth, dashboard, event, kolaborator, notifikasi, pengaturan, test
+from fastapi import APIRouter
 
-
-app = FastAPI(title="Peken Banyumasan Kolaborator API")
+app = FastAPI(
+    title="Peken Banyumasan Kolaborator API",
+    description="Backend API untuk portal Kolaborator Peken Banyumasan.",
+    version="1.0.0",
+)
 
 # CORS — izinkan request dari frontend
 app.add_middleware(
@@ -19,12 +24,9 @@ api = APIRouter(prefix="/api")
 api.include_router(auth.router)
 api.include_router(dashboard.router)
 api.include_router(event.router)
-api.include_router(profile.router)
-api.include_router(story.router)
-api.include_router(portofolio.router)
+api.include_router(kolaborator.router)
 api.include_router(notifikasi.router)
 api.include_router(pengaturan.router)
-api.include_router(kolaborator.router)
 
 app.include_router(test.router)
 app.include_router(api)
