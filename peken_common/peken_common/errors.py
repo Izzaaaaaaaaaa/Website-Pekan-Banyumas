@@ -74,7 +74,7 @@ class ConflictError(AppError):
 
 
 class ValidationFailedError(AppError):
-    status_code = status.HTTP_422_UNPROCESSABLE_CONTENT
+    status_code = status.HTTP_422_UNPROCESSABLE_ENTITY
     message_id = ErrorMessages.VALIDATION_FAILED
 
 
