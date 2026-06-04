@@ -9,7 +9,7 @@ import {
 } from 'lucide-react';
 import { clearAuth, getUser } from '../lib/auth';
 import { STORAGE_EVENTS } from '../lib/storageKeys';
-import { getNotifs } from '../lib/notifications';
+import { notifikasiApi } from '../services/endpoints';
 import logo from '../assets/logo.png';
 
 const navItems = [
@@ -62,16 +62,44 @@ const T = {
 export default function Layout() {
     const loc  = useLocation();
     const nav  = useNavigate();
-    const user = getUser() || {};
+    // BUG-4 FIX: pakai state agar re-render saat foto_url berubah
+    const [user, setUser] = useState(() => getUser() || {});
     const [open, setOpen]         = useState(false);
     const [notifCount, setNotifCount] = useState(0);
 
+    // Sync user (termasuk foto_url) saat Profil.jsx memanggil setAuthUser()
     useEffect(() => {
-        const refresh = () =>
-            setNotifCount(getNotifs('kolaborator').filter(n => !n.read).length);
-        refresh();
-        window.addEventListener(STORAGE_EVENTS.NOTIF_UPDATE, refresh);
-        return () => window.removeEventListener(STORAGE_EVENTS.NOTIF_UPDATE, refresh);
+        const onUserUpdate = (e) => {
+            const updated = e.detail || getUser() || {};
+            setUser(updated);
+        };
+        window.addEventListener(STORAGE_EVENTS.USER_UPDATE, onUserUpdate);
+        return () => window.removeEventListener(STORAGE_EVENTS.USER_UPDATE, onUserUpdate);
+    }, []);
+
+    useEffect(() => {
+    // Polling badge count dari API setiap 30 detik
+    const fetchUnread = async () => {
+        try {
+            const list = await notifikasiApi.list();
+            const count = (list || []).filter(n => !n.read).length;
+            setNotifCount(count);
+        } catch {
+            // Fail soft — tidak crash jika backend tidak tersedia
+        }
+    };
+
+    fetchUnread(); // fetch langsung saat mount
+    const interval = setInterval(fetchUnread, 30_000); // polling tiap 30 detik
+
+    // Dengarkan event dari Notifikasi.jsx ketika user klik "tandai semua dibaca"
+    const onNotifUpdate = () => fetchUnread();
+    window.addEventListener(STORAGE_EVENTS.NOTIF_UPDATE, onNotifUpdate);
+
+    return () => {
+        clearInterval(interval);
+        window.removeEventListener(STORAGE_EVENTS.NOTIF_UPDATE, onNotifUpdate);
+    };
     }, []);
 
     const logout  = () => { clearAuth(); nav('/login'); };

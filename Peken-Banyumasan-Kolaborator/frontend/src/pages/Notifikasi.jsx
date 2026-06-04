@@ -4,8 +4,10 @@ import { Bell, CheckCheck, Calendar, Info, Users, Trash2 } from 'lucide-react';
 import { notifikasiApi } from '../services/endpoints';
 import { extractError } from '../lib/unwrap';
 import { useToast } from '../components/Toast';
+import { STORAGE_EVENTS } from '../lib/storageKeys';
 import { T } from '../lib/tokens';
 
+// Peta tipe notifikasi → ikon & warna
 const TYPE_META = {
   kolaborator_approved: { icon:Users,    style:{ background:T.successBg, color:T.success,  border:`1px solid ${T.successBorder}` } },
   event_assigned:       { icon:Calendar, style:{ background:T.accentBg,  color:T.sageDark, border:`1px solid ${T.accentBorder}` } },
@@ -14,6 +16,27 @@ const TYPE_META = {
   event:                { icon:Calendar, style:{ background:T.accentBg,  color:T.sageDark, border:`1px solid ${T.accentBorder}` } },
   system:               { icon:Info,     style:{ background:T.accentBg,  color:T.text2,    border:`1px solid ${T.border}` } },
 };
+
+// Pemetaan tipe notifikasi ke kategori preferensi
+// Digunakan untuk filter berdasarkan toggle di Pengaturan
+const TYPE_TO_PREF = {
+  kolaborator_approved: 'system',
+  story_deleted:        'system',
+  event_assigned:       'event',
+  event_status_change:  'event',
+  event:                'event',
+  system:               'system',
+};
+
+const NOTIF_PREF_KEY = 'peken_notif_pref';
+
+function loadNotifPref() {
+  try {
+    const saved = localStorage.getItem(NOTIF_PREF_KEY);
+    if (saved) return { ...{ event:true, system:true, digest:false }, ...JSON.parse(saved) };
+  } catch (_) {}
+  return { event:true, system:true, digest:false };
+}
 
 const fmtTime = iso => {
   if (!iso) return '';
@@ -29,6 +52,7 @@ export default function Notifikasi() {
   const toast = useToast();
   const [list,   setList]   = useState([]);
   const [filter, setFilter] = useState('semua');
+  const notifPref = loadNotifPref();
 
   const refresh = async () => {
     try {
@@ -46,17 +70,29 @@ export default function Notifikasi() {
     try {
       await notifikasiApi.baca(id);
       setList(l => l.map(n => n.id === id ? { ...n, read: true } : n));
+      // Update badge di sidebar
+      window.dispatchEvent(new CustomEvent(STORAGE_EVENTS.NOTIF_UPDATE));
     } catch {}
   };
+
   const bacaSemua = async () => {
     try {
       await notifikasiApi.bacaSemua();
       setList(l => l.map(n => ({ ...n, read: true })));
+      // Update badge di sidebar
+      window.dispatchEvent(new CustomEvent(STORAGE_EVENTS.NOTIF_UPDATE));
     } catch {}
   };
-  const unread = list.filter(n => !n.read).length;
 
-  const filtered = list.filter(n => {
+  // Terapkan filter preferensi: sembunyikan tipe yang dinonaktifkan user
+  const prefFiltered = list.filter(n => {
+    const pref = TYPE_TO_PREF[n.type] || 'system';
+    return notifPref[pref] !== false;
+  });
+
+  const unread = prefFiltered.filter(n => !n.read).length;
+
+  const filtered = prefFiltered.filter(n => {
     if (filter === 'belum') return !n.read;
     if (filter === 'sudah') return n.read;
     return true;
@@ -86,6 +122,17 @@ export default function Notifikasi() {
           </button>
         )}
       </div>
+
+      {/* Info preferensi jika ada yang dinonaktifkan */}
+      {(!notifPref.event || !notifPref.system) && (
+        <div className="mb-3 px-3 py-2 rounded-xl text-xs"
+          style={{background:T.accentBg, border:`1px solid ${T.accentBorder}`, color:T.sageDark}}>
+          Beberapa notifikasi disembunyikan sesuai preferensi. Atur di{' '}
+          <a href="/dashboard/pengaturan" style={{fontWeight:600, textDecoration:'underline'}}>
+            Pengaturan
+          </a>.
+        </div>
+      )}
 
       {/* Filter chips */}
       <div className="flex gap-2 mb-4">

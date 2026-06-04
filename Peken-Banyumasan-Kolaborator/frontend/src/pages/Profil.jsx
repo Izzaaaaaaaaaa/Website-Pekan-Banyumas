@@ -6,6 +6,7 @@ import { getUser, setUser as setAuthUser } from '../lib/auth';
 import { extractError } from '../lib/unwrap';
 import { useToast } from '../components/Toast';
 import { SUBSEKTOR } from '../constants/subsektor';
+import { KOTA_LIST } from '../constants/kotaList';
 import ImageUpload from '../components/ImageUpload';
 import { T } from '../lib/tokens';
 import { profileUrl } from '../lib/slug';
@@ -51,6 +52,8 @@ export default function Profil() {
   }));
 
   const save = async () => {
+    if (!form.nama?.trim()) { toast.error('Nama tidak boleh kosong'); return; }
+    if (!form.kota) { toast.error('Pilih kota terlebih dahulu'); return; }
     setSaving(true);
     try {
       const updated = await profilApi.update(form);
@@ -160,12 +163,17 @@ export default function Profil() {
             />
           </div>
           <div>
-            <label style={labelStyle}>Kota</label>
-            <input
+            <label style={labelStyle}>Kota / Kabupaten</label>
+            <select
               value={form.kota}
-              onChange={e => setForm(p => ({...p, kota:e.target.value}))}
-              style={inputStyle}
-            />
+              onChange={e => setForm(p => ({...p, kota: e.target.value}))}
+              style={{...inputStyle, cursor:'pointer'}}
+            >
+              <option value="">-- Pilih kota --</option>
+              {KOTA_LIST.map(k => (
+                <option key={k} value={k}>{k}</option>
+              ))}
+            </select>
           </div>
           <div>
             <label style={labelStyle}>Bio</label>
