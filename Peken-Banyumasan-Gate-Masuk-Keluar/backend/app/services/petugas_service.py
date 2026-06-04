@@ -65,22 +65,53 @@ def create_petugas(email: str, nama: str, password: str, jabatan: str = None):
             raise HTTPException(409, "Email sudah terdaftar")
 
         # Create user in Supabase Auth via Admin SDK
-        auth_res = supabase_admin.auth.admin.create_user({
-            "email": email,
-            "password": password,
-            "email_confirm": True,
-            "user_metadata": {
-                "nama": nama,
-                "role": "petugas"
-            }
-        })
-        
-        user = auth_res.user
+        try:
+            auth_res = supabase_admin.auth.admin.create_user({
+                "email": email,
+                "password": password,
+                "email_confirm": True,
+                "user_metadata": {
+                    "nama": nama,
+                    "role": "petugas"
+                }
+            })
+            user_id = auth_res.user.id
+            is_new_auth = True
+        except Exception as auth_e:
+            auth_err_str = str(auth_e).lower()
+            if "already been registered" in auth_err_str or "already exists" in auth_err_str:
+                # Ghost user exists in auth but not in profile. Let's find them and adopt them.
+                users_res = supabase_admin.auth.admin.list_users()
+                auth_users = users_res if isinstance(users_res, list) else getattr(users_res, 'users', [])
+                ghost_user = next((u for u in auth_users if getattr(u, 'email', '') == email), None)
+                
+                if not ghost_user:
+                    raise HTTPException(409, "Email sudah terdaftar di sistem Auth. Silakan gunakan email lain.")
+                
+                user_id = ghost_user.id
+                is_new_auth = False
+                
+                # Update password and metadata for the ghost user
+                try:
+                    supabase_admin.auth.admin.update_user_by_id(
+                        user_id,
+                        {
+                            "password": password,
+                            "user_metadata": {
+                                "nama": nama,
+                                "role": "petugas"
+                            }
+                        }
+                    )
+                except Exception as update_err:
+                    raise HTTPException(500, f"Gagal update ghost user: {str(update_err)}")
+            else:
+                raise
 
         # Create profile record
         try:
             res = supabase_admin.table("users_profile").insert({
-                "id": user.id,
+                "id": user_id,
                 "email": email,
                 "nama": nama,
                 "role": "petugas",
@@ -93,8 +124,12 @@ def create_petugas(email: str, nama: str, password: str, jabatan: str = None):
             
             return res.data[0]
         except Exception as e:
-            # Rollback auth creation if profile fails
-            supabase_admin.auth.admin.delete_user(user.id)
+            # Rollback auth creation if profile fails AND it was a new auth user
+            if is_new_auth:
+                try:
+                    supabase_admin.auth.admin.delete_user(user_id)
+                except Exception:
+                    pass
             raise HTTPException(500, f"Gagal membuat akun petugas: {str(e)}")
 
     except HTTPException:
@@ -177,7 +212,7 @@ def reset_petugas_password(user_id: str, mode: str):
             # Send reset email
             supabase_admin.auth.reset_password_for_email(
                 email, 
-                {"redirect_to": "http://localhost:5174/pengaturan-akun"}
+                {"redirect_to": "http://localhost:5174/reset-password"}
             )
             return {"message": "Link reset password telah dikirim ke email petugas."}
             

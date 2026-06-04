@@ -53,6 +53,10 @@ export const authApi = {
     await delay();
     return { message: 'Password berhasil diubah (demo)' };
   },
+  setNewPassword: async () => {
+    await delay();
+    return { message: 'Password berhasil diperbarui (demo)' };
+  },
 };
 
 // ── dashboardApi ─────────────────────────────────────────────────────────────

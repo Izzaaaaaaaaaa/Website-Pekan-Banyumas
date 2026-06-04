@@ -39,6 +39,8 @@ const AdminRoute = ({ children }) => {
 const PublicOnlyRoute = ({ children }) =>
     isAuthenticated() ? <Navigate to="/" replace /> : children;
 
+import ResetPassword from './pages/ResetPassword';
+
 // ── AppShell — lives INSIDE <Router> so it can use useNavigate to register
 // the apiClient's 401 handler. Keeping the handler router-aware (vs. a
 // hard-coded window.location.href) means switching routers later is a
@@ -71,6 +73,8 @@ const AppShell = () => {
         <Routes>
             <Route path="/profile" element={<Profile />} />
             <Route path="/monitor" element={<Monitor />} />
+
+            <Route path="/reset-password" element={<ResetPassword />} />
 
             <Route path="/login" element={
                 <PublicOnlyRoute><Login /></PublicOnlyRoute>

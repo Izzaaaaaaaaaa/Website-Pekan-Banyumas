@@ -49,14 +49,17 @@ def get_artisan_report(event_id: str = None):
         artisans_query = supabase_admin.table("artisans").select("*")
         if event_id:
             # Only get artisans assigned to this event
-            artisans_query = artisans_query.in_(
-                "id",
-                supabase_admin.table("event_artisans")
-                    .select("artisan_id")
-                    .eq("event_id", event_id)
-                    .eq("status_request", "approved")
-                    .execute().data or []
-            )
+            ea_data = supabase_admin.table("event_artisans") \
+                .select("artisan_id") \
+                .eq("event_id", event_id) \
+                .eq("status_request", "approved") \
+                .execute().data or []
+                
+            artisan_ids = [ea["artisan_id"] for ea in ea_data if ea.get("artisan_id")]
+            if not artisan_ids:
+                return []
+                
+            artisans_query = artisans_query.in_("id", artisan_ids)
 
         res = artisans_query.execute()
         artisans = res.data if res.data else []
@@ -79,7 +82,7 @@ def get_artisan_report(event_id: str = None):
             kas_res = supabase_admin.table("kas") \
                 .select("id") \
                 .eq("artisan_id", artisan_id) \
-                .eq("tipe", "pemasukan") \
+                .eq("jenis", "masuk") \
                 .execute()
             transaksi_count = len(kas_res.data or [])
             
@@ -94,7 +97,7 @@ def get_artisan_report(event_id: str = None):
             row = {
                 "id": artisan_id,
                 "nama_usaha": artisan.get("nama_usaha"),
-                "kategori": ", ".join(artisan.get("kategori_usaha", [])),
+                "kategori": ", ".join(artisan.get("kategori_usaha") or []),
                 "omset": artisan.get("total_penjualan", 0),
                 "komisi_persen": artisan.get("komisi_persen", 0),
                 "transaksi": transaksi_count,

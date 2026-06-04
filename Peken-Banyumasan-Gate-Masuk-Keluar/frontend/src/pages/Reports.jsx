@@ -9,6 +9,8 @@ import {
 import { eventApi, reportsApi } from '../services/endpoints';
 import { extractError } from '../lib/unwrap';
 import { useToast } from '../components/Toast';
+import ExcelJS from 'exceljs';
+import { saveAs } from 'file-saver';
 
 const ITEMS_PER_PAGE = 15;
 
@@ -126,25 +128,53 @@ const Reports = () => {
         setIsExporting(true);
         try {
             const formatParam = exportFormat.toLowerCase() === 'excel' ? 'excel' : 'pdf';
-            const exportParams = { format: formatParam };
-            if (selectedEventId) exportParams.event_id = selectedEventId;
-            if (selectedDate)    exportParams.tanggal  = selectedDate;
-
-            // reportsApi.export preserves responseType:'blob' via the apiClient
-            // and extractData passes Blob payloads through untouched.
-            const blob = await reportsApi.export(exportParams);
-
-            const ext = formatParam === 'excel' ? 'xlsx' : 'pdf';
             const safeName = (reportData?.nama || 'laporan').replace(/[^a-zA-Z0-9]/g, '_').slice(0, 30);
-            const suffix   = selectedDate || safeName;
-            const url  = window.URL.createObjectURL(blob);
-            const link = document.createElement('a');
-            link.href = url;
-            link.setAttribute('download', `laporan_kunjungan_${suffix}.${ext}`);
-            document.body.appendChild(link);
-            link.click();
-            link.remove();
-            window.URL.revokeObjectURL(url);
+            const suffix = selectedDate || safeName;
+            const title = `Laporan Kunjungan - ${reportData?.nama || 'Semua Event'}`;
+            const filename = `laporan_kunjungan_${suffix}`;
+            
+            const headers = ['Identitas', 'Tipe', 'Waktu Masuk', 'Waktu Keluar', 'Durasi', 'Status'];
+            const rows = filteredReports.map(r => {
+                const isKolaborator = !!r.uid;
+                
+                let identitas = 'Pengunjung Manual';
+                if (isKolaborator) {
+                    const nama = r.nama || '-';
+                    const idShort = r.uid ? r.uid.substring(0, 8) : '-';
+                    identitas = `${nama} (UID: ${idShort})`;
+                }
+
+                const tipe = isKolaborator ? 'NFC' : 'Manual';
+                const fmtD = (d) => d ? new Date(d).toLocaleString('id-ID') : '-';
+                
+                let durasi = '-';
+                if (r.waktu_masuk && r.waktu_keluar) {
+                    const diffMs = new Date(r.waktu_keluar) - new Date(r.waktu_masuk);
+                    const mins = Math.max(0, Math.round(diffMs / 60000));
+                    durasi = `${mins} mnt`;
+                } else if (r.status === 'di_dalam') {
+                    durasi = 'Masih di dalam';
+                }
+                
+                return [
+                    identitas,
+                    tipe,
+                    fmtD(r.waktu_masuk),
+                    fmtD(r.waktu_keluar),
+                    durasi,
+                    r.status === 'di_dalam' ? 'Di Dalam' : 'Keluar'
+                ];
+            });
+
+            if (formatParam === 'excel') {
+                await exportExcel(filename, headers, rows, title);
+            } else {
+                const summaryRows = [
+                    ['TOTAL', '', '', '', '', `${filteredReports.length} Pengunjung`]
+                ];
+                exportPDF(title, headers, rows, summaryRows);
+            }
+            
             setIsModalOpen(false);
         } catch (error) {
             toast.error(extractError(error, `Gagal mengunduh file ${exportFormat}. Silakan coba lagi.`));
@@ -356,10 +386,15 @@ const Reports = () => {
                             </tr>
                         ) : (
                             pagedReports.map((row) => {
-                                const isKolaborator = row.tipe_pengunjung === 'nfc';
+                                const isKolaborator = !!row.uid;
 
                                 const waktuMasuk = row.waktu_masuk ? new Date(row.waktu_masuk) : null;
                                 const waktuKeluar = row.waktu_keluar ? new Date(row.waktu_keluar) : null;
+                                
+                                let durasiMenit = row.durasi_menit;
+                                if (durasiMenit == null && waktuMasuk && waktuKeluar) {
+                                    durasiMenit = Math.max(0, Math.round((waktuKeluar - waktuMasuk) / 60000));
+                                }
 
                                 const fmtDate = (d) => d
                                     ? d.toLocaleDateString('id-ID', { day: '2-digit', month: 'short', year: 'numeric' })
@@ -394,9 +429,9 @@ const Reports = () => {
                                         <td className="px-6 py-4">
                                             {isKolaborator ? (
                                                 <>
-                                                    <div className="font-semibold text-[#1e2010]">{row.nama_kolaborator || '-'}</div>
+                                                    <div className="font-semibold text-[#1e2010]">{row.nama || '-'}</div>
                                                     <div className="text-xs text-[#8a9070] font-mono">
-                                                        #{row.id?.substring(0, 8)}
+                                                        UID: {row.uid?.substring(0, 8)}
                                                     </div>
                                                 </>
                                             ) : (
@@ -404,47 +439,28 @@ const Reports = () => {
                                             )}
                                         </td>
 
-                                        {/* Waktu Keluar
-                                            NFC → akurat (tap NFC)
-                                            Manual → FIFO, tidak merepresentasikan individu
-                                                         tampilkan dash + tooltip penjelasan */}
+                                        {/* Waktu Keluar */}
                                         <td className="px-6 py-4">
-                                            {isKolaborator ? (
-                                                waktuKeluar ? (
-                                                    <>
-                                                        <div className="font-medium text-[#5a6040]">{fmtDate(waktuKeluar)}</div>
-                                                        <div className="text-xs text-[#8a9070]">{fmtJam(waktuKeluar)} WIB</div>
-                                                    </>
-                                                ) : (
-                                                    <span className="text-xs text-[#8a9070]">—</span>
-                                                )
+                                            {waktuKeluar ? (
+                                                <>
+                                                    <div className="font-medium text-[#5a6040]">{fmtDate(waktuKeluar)}</div>
+                                                    <div className="text-xs text-[#8a9070]">{fmtJam(waktuKeluar)} WIB</div>
+                                                </>
                                             ) : (
-                                                <span
-                                                    className="inline-flex items-center gap-1 text-xs text-[#8a9070] cursor-default"
-                                                    title="Pengunjung biasa tidak dilacak per individu. Waktu keluar tidak dapat dipasangkan secara akurat."
-                                                >
-                                                    — <Info size={12} className="opacity-60" />
-                                                </span>
+                                                <span className="text-xs text-[#8a9070]">—</span>
                                             )}
                                         </td>
 
-                                        {/* Durasi
-                                            NFC → akurat
-                                            Non-kolaborator → tidak bermakna (FIFO pairing) */}
+                                        {/* Durasi */}
                                         <td className="px-6 py-4">
-                                            {isKolaborator && row.durasi_menit != null ? (
+                                            {durasiMenit != null ? (
                                                 <span className="text-sm text-[#5a6040] font-medium">
-                                                    {row.durasi_menit} mnt
+                                                    {durasiMenit} mnt
                                                 </span>
-                                            ) : isKolaborator && row.status === 'di_dalam' ? (
+                                            ) : row.status === 'di_dalam' ? (
                                                 <span className="text-xs text-[#8a9070]">Masih di dalam</span>
                                             ) : (
-                                                <span
-                                                    className="inline-flex items-center gap-1 text-xs text-[#8a9070] cursor-default"
-                                                    title="Durasi tidak dihitung untuk pengunjung biasa."
-                                                >
-                                                    — <Info size={12} className="opacity-60" />
-                                                </span>
+                                                <span className="text-xs text-[#8a9070]">—</span>
                                             )}
                                         </td>
 
@@ -593,16 +609,92 @@ const Reports = () => {
     );
 };
 // ── Shared client-side export helpers ────────────────────────────────────────
-// Excel: tab-separated, opens natively in Excel/LibreOffice
-function exportExcel(filename, headers, rows) {
-  const lines = [headers.join('\t'), ...rows.map(r => r.map(v => String(v ?? '')).join('\t'))];
-  const blob  = new Blob(['\uFEFF' + lines.join('\n')], { type: 'application/vnd.ms-excel;charset=utf-8' });
-  const url   = URL.createObjectURL(blob);
-  const a     = document.createElement('a');
-  a.href      = url;
-  a.download  = filename.replace(/\.(csv|xls|xlsx)$/, '') + '.xls';
-  a.click();
-  URL.revokeObjectURL(url);
+// Excel: Generated using exceljs for professional look
+async function exportExcel(filename, headers, rows, title = '') {
+  const workbook = new ExcelJS.Workbook();
+  const sheet = workbook.addWorksheet('Laporan');
+
+  let startRow = 1;
+
+  if (title) {
+    sheet.mergeCells('A1', String.fromCharCode(64 + headers.length) + '1');
+    const titleCell = sheet.getCell('A1');
+    titleCell.value = title;
+    titleCell.font = { name: 'Arial', size: 16, bold: true, color: { argb: 'FF1A3A2A' } };
+    titleCell.alignment = { vertical: 'middle', horizontal: 'center' };
+    sheet.getRow(1).height = 30;
+    startRow = 3;
+  }
+
+  // Add Headers
+  const headerRow = sheet.getRow(startRow);
+  headerRow.values = headers;
+  headerRow.eachCell((cell) => {
+    cell.fill = {
+      type: 'pattern',
+      pattern: 'solid',
+      fgColor: { argb: 'FF2F6F4E' }
+    };
+    cell.font = {
+      name: 'Arial',
+      color: { argb: 'FFFFFFFF' },
+      bold: true
+    };
+    cell.alignment = { vertical: 'middle', horizontal: 'center' };
+    cell.border = {
+      top: { style: 'thin' },
+      left: { style: 'thin' },
+      bottom: { style: 'thin' },
+      right: { style: 'thin' }
+    };
+  });
+  headerRow.height = 25;
+
+  // Add Data Rows
+  rows.forEach((rowData, index) => {
+    const dataRow = sheet.getRow(startRow + 1 + index);
+    dataRow.values = rowData;
+    dataRow.eachCell((cell) => {
+      cell.font = { name: 'Arial' };
+      cell.alignment = { vertical: 'middle', horizontal: 'left', wrapText: true };
+      cell.border = {
+        top: { style: 'thin', color: { argb: 'FFD1D5DB' } },
+        left: { style: 'thin', color: { argb: 'FFD1D5DB' } },
+        bottom: { style: 'thin', color: { argb: 'FFD1D5DB' } },
+        right: { style: 'thin', color: { argb: 'FFD1D5DB' } }
+      };
+    });
+    // Add slight background for alternating rows (optional)
+    if (index % 2 === 1) {
+      dataRow.eachCell((cell) => {
+        cell.fill = {
+          type: 'pattern',
+          pattern: 'solid',
+          fgColor: { argb: 'FFF9FAFB' }
+        };
+      });
+    }
+  });
+
+  // Adjust column widths based on content
+  sheet.columns.forEach((column, i) => {
+    let maxLength = 0;
+    column.eachCell({ includeEmpty: true }, (cell, rowNumber) => {
+      if (rowNumber >= startRow) { // Only check headers and data
+        const columnLength = cell.value ? cell.value.toString().length : 10;
+        if (columnLength > maxLength) {
+          maxLength = columnLength;
+        }
+      }
+    });
+    column.width = Math.min(Math.max(maxLength + 2, 12), 40);
+  });
+
+  // Export
+  const buffer = await workbook.xlsx.writeBuffer();
+  const blob = new Blob([buffer], { type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet' });
+  const finalFilename = filename.replace(/\.(csv|xls|xlsx)$/, '') + '.xlsx';
+  saveAs(blob, finalFilename);
 }
 
 // PDF: print-friendly HTML opened in new window
@@ -638,6 +730,10 @@ function exportPDF(title, headers, rows, summaryRows) {
 // ── Shared Export Modal — reused by all 3 report tabs ─────────────────────────
 function ExportModal({ open, onClose, subtitle, details, onExcel, onPdf }) {
   if (!open) return null;
+  const formatDetail = details.find(d => d[0] === 'Format');
+  const isExcel = formatDetail && formatDetail[1].includes('Excel');
+  const isPdf = formatDetail && formatDetail[1].includes('PDF');
+
   return (
     <div className="fixed inset-0 bg-slate-900/40 backdrop-blur-sm z-50 flex items-center justify-center p-4">
       <div className="bg-white rounded-[16px] shadow-2xl w-full max-w-md overflow-hidden">
@@ -656,7 +752,7 @@ function ExportModal({ open, onClose, subtitle, details, onExcel, onPdf }) {
           </button>
         </div>
         <div className="p-6">
-          <p className="text-[#5a6040] text-sm mb-4">Pilih format yang akan diunduh:</p>
+          <p className="text-[#5a6040] text-sm mb-4">Pastikan rincian berikut sudah benar:</p>
           <div className="bg-[#f7f8f2] rounded-[12px] p-4 border border-[#e4e7d4] mb-5 space-y-2 text-sm">
             {details.map(([label, val]) => (
               <div key={label} className="flex justify-between gap-4">
@@ -666,14 +762,18 @@ function ExportModal({ open, onClose, subtitle, details, onExcel, onPdf }) {
             ))}
           </div>
           <div className="flex gap-3">
-            <button onClick={() => { onExcel(); onClose(); }}
-              className="flex-1 flex items-center justify-center gap-2 bg-[#eef0e0] text-[#7a8a52] hover:bg-[#eef4eb] border border-[#c8d09a] px-4 py-2.5 rounded-[12px] font-semibold text-sm transition">
-              <FileSpreadsheet size={16}/> Export Excel
-            </button>
-            <button onClick={() => { onPdf(); onClose(); }}
-              className="flex-1 flex items-center justify-center gap-2 bg-[#f7eeee] text-[#a05f5f] hover:bg-[#f7eeee] border border-[#dbb8b8] px-4 py-2.5 rounded-[12px] font-semibold text-sm transition">
-              <FileText size={16}/> Export PDF
-            </button>
+            {(!formatDetail || isExcel) && (
+              <button onClick={() => { onExcel(); onClose(); }}
+                className="flex-1 flex items-center justify-center gap-2 bg-[#eef0e0] text-[#7a8a52] hover:bg-[#eef4eb] border border-[#c8d09a] px-4 py-2.5 rounded-[12px] font-semibold text-sm transition">
+                <FileSpreadsheet size={16}/> Lanjutkan Export Excel
+              </button>
+            )}
+            {(!formatDetail || isPdf) && (
+              <button onClick={() => { onPdf(); onClose(); }}
+                className="flex-1 flex items-center justify-center gap-2 bg-[#f7eeee] text-[#a05f5f] hover:bg-[#f7eeee] border border-[#dbb8b8] px-4 py-2.5 rounded-[12px] font-semibold text-sm transition">
+                <FileText size={16}/> Lanjutkan Export PDF
+              </button>
+            )}
           </div>
         </div>
         <div className="px-6 py-3 bg-[#f7f8f2] border-t border-[#e4e7d4] flex justify-end">
@@ -707,6 +807,7 @@ function ArtisanReport({ events = [] }) {
   const [sortBy,     setSortBy]     = React.useState('omset');
   const [search,     setSearch]     = React.useState('');
   const [showExport, setShowExport] = React.useState(false);
+  const [exportFormat, setExportFormat] = React.useState('');
   const [rawData,    setRawData]    = React.useState(IS_DUMMY ? DEMO_ARTISAN_REPORT : []);
   const [loading,    setLoading]    = React.useState(false);
   const [errorMsg,   setErrorMsg]   = React.useState(null);
@@ -792,11 +893,11 @@ function ArtisanReport({ events = [] }) {
             <option value="event">Paling Sering Ikut</option>
             <option value="nama">Nama A–Z</option>
           </select>
-          <button onClick={() => setShowExport(true)}
+          <button onClick={() => { setExportFormat('Excel'); setShowExport(true); }}
             className="flex items-center gap-1.5 px-3 py-2 bg-[#eef0e0] text-[#7a8a52] hover:bg-[#eef4eb] border border-[#c8d09a] rounded-[12px] text-xs font-semibold transition whitespace-nowrap">
             <FileSpreadsheet size={13} /> Export Excel
           </button>
-          <button onClick={() => exportPDF('Laporan Artisan – Peken Banyumasan', HDRS, makeRows(), makeTot())}
+          <button onClick={() => { setExportFormat('PDF'); setShowExport(true); }}
             className="flex items-center gap-1.5 px-3 py-2 bg-[#f7eeee] text-[#a05f5f] hover:bg-[#f7eeee] border border-[#dbb8b8] rounded-[12px] text-xs font-semibold transition whitespace-nowrap">
             <FileText size={13} /> Export PDF
           </button>
@@ -878,8 +979,9 @@ function ArtisanReport({ events = [] }) {
           ['Filter Nama',     search || '—'],
           ['Total Omset',     `Rp ${totalOmset.toLocaleString('id-ID')}`],
           ['Total Transaksi', `${totalTrx} trx`],
+          ['Format',          exportFormat + ' Document'],
         ]}
-        onExcel={() => exportExcel('laporan_artisan', HDRS, makeRows())}
+        onExcel={() => exportExcel('laporan_artisan', HDRS, makeRows(), 'Laporan Pendapatan Artisan')}
         onPdf={()   => exportPDF('Laporan Artisan – Peken Banyumasan', HDRS, makeRows(), makeTot())}
       />
     </div>
@@ -897,6 +999,7 @@ function AccumulationReport({ events = [] }) {
   const toast = useToast();
   const [selEvent,   setSelEvent]   = React.useState('');
   const [showExport, setShowExport] = React.useState(false);
+  const [exportFormat, setExportFormat] = React.useState('');
   const [data,       setData]       = React.useState(IS_DUMMY ? DEMO_ACCUM : []);
   const [loading,    setLoading]    = React.useState(false);
   const [errorMsg,   setErrorMsg]   = React.useState(null);
@@ -973,11 +1076,11 @@ function AccumulationReport({ events = [] }) {
             </span>
           </div>
           <div className="flex gap-2">
-            <button onClick={() => setShowExport(true)}
+            <button onClick={() => { setExportFormat('Excel'); setShowExport(true); }}
               className="flex items-center gap-1.5 px-3 py-2 bg-[#eef0e0] text-[#7a8a52] hover:bg-[#eef4eb] border border-[#c8d09a] rounded-[12px] text-xs font-semibold transition whitespace-nowrap">
               <FileSpreadsheet size={13}/> Export Excel
             </button>
-            <button onClick={() => exportPDF('Akumulasi Event – Peken Banyumasan', HDRS, ROWS, TOT)}
+            <button onClick={() => { setExportFormat('PDF'); setShowExport(true); }}
               className="flex items-center gap-1.5 px-3 py-2 bg-[#f7eeee] text-[#a05f5f] hover:bg-[#f7eeee] border border-[#dbb8b8] rounded-[12px] text-xs font-semibold transition whitespace-nowrap">
               <FileText size={13}/> Export PDF
             </button>
@@ -1040,8 +1143,9 @@ function AccumulationReport({ events = [] }) {
           ['Total Pengunjung', totP.toLocaleString('id-ID')],
           ['Total Omset Artisan', fmtRp(totO)],
           ['Total Komisi', fmtRp(totK)],
+          ['Format', exportFormat + ' Document'],
         ]}
-        onExcel={() => exportExcel('akumulasi_event', HDRS, ROWS)}
+        onExcel={() => exportExcel('akumulasi_event', HDRS, ROWS, 'Laporan Akumulasi Event')}
         onPdf={()   => exportPDF('Akumulasi Event – Peken Banyumasan', HDRS, ROWS, TOT)}
       />
     </div>

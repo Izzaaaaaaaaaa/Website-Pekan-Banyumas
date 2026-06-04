@@ -133,6 +133,17 @@ export const authApi = {
     if (updateErr) throw new Error(updateErr.message);
     return { message: 'Password berhasil diubah' };
   },
+
+  /**
+   * Set password baru SETELAH user klik link dari email (flow reset password).
+   * Supabase otomatis meloginkan user dari link, jadi kita hanya perlu updateUser tanpa password lama.
+   */
+  setNewPassword: async ({ password_baru }) => {
+    if (!supabase) throw new Error('Supabase belum dikonfigurasi.');
+    const { error: updateErr } = await supabase.auth.updateUser({ password: password_baru });
+    if (updateErr) throw new Error(updateErr.message);
+    return { message: 'Password berhasil diperbarui' };
+  },
 };
 
 // ── dashboardApi ────────────────────────────────────────────────────────────
