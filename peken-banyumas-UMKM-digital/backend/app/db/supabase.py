@@ -2,6 +2,7 @@ import os
 from pathlib import Path
 from dotenv import load_dotenv
 from supabase import create_client, Client
+from postgrest.exceptions import APIError
 
 # ── Load .env dari root folder backend ───────────────────────────────────────
 _env_path = Path(__file__).resolve().parents[2] / ".env"
@@ -38,13 +39,23 @@ def db_select(table: str, filters: dict = None, single: bool = False):
                 query = query.eq(col, val)
 
         if single:
-            response = query.maybe_single().execute()
+            try:
+                response = query.maybe_single().execute()
+            except APIError as api_err:
+                # postgrest-py melempar APIError code '204' saat tidak ada baris
+                if str(api_err.code) == "204":
+                    return None
+                raise
             if response is None:
                 return None
             return response.data
         else:
             response = query.execute()
             return response.data
+    except APIError as api_err:
+        if str(api_err.code) == "204":
+            return None
+        raise
     except Exception as e:
         # reconnect dan retry sekali jika koneksi terputus
         if "disconnected" in str(e).lower() or "RemoteProtocol" in str(type(e).__name__):
@@ -54,7 +65,12 @@ def db_select(table: str, filters: dict = None, single: bool = False):
                 for col, val in filters.items():
                     query = query.eq(col, val)
             if single:
-                response = query.maybe_single().execute()
+                try:
+                    response = query.maybe_single().execute()
+                except APIError as api_err:
+                    if str(api_err.code) == "204":
+                        return None
+                    raise
                 return response.data if response else None
             else:
                 response = query.execute()

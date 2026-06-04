@@ -4,7 +4,7 @@ import bcrypt
 from datetime import datetime, timedelta
 from jose import jwt
 
-from app.db.supabase import db_select, db_insert, db_update
+from app.db.supabase import db_select, db_insert, db_update, db_delete
 from app.schemas.auth import LoginSchema, RegisterSchema, ChangePasswordSchema
 
 
@@ -72,6 +72,27 @@ def login(body: LoginSchema) -> dict:
 
 
 # ── REGISTER ──────────────────────────────────────────────────────────────────
+def _generate_slug(nama_usaha: str, user_id: str) -> str:
+    """
+    Generate slug unik dari nama_usaha.
+    Contoh: 'Batik Nusantara Bu Siti' → 'batik-nusantara-bu-siti'
+    Kalau masih bentrok, tambahkan suffix dari user_id.
+    """
+    import re
+    base = nama_usaha.lower().strip()
+    base = re.sub(r"[^a-z0-9\s-]", "", base)   # hapus karakter non-alphanumeric
+    base = re.sub(r"\s+", "-", base)            # spasi → tanda hubung
+    base = re.sub(r"-+", "-", base).strip("-")  # bersihkan dobel tanda hubung
+    if not base:
+        base = "artisan"
+    # cek keunikan, tambah suffix kalau sudah ada
+    slug = base
+    existing = db_select("artisans", filters={"slug": slug}, single=True)
+    if existing:
+        slug = f"{base}-{user_id[:8]}"
+    return slug
+
+
 def register(body: RegisterSchema) -> dict:
     """
     Insert ke tabel artisans + users_profile.
@@ -85,6 +106,15 @@ def register(body: RegisterSchema) -> dict:
     # cek username
     if db_select("artisans", filters={"username": body.username}, single=True):
         raise ValueError("Username sudah dipakai")
+
+    import re
+    username = body.username.strip().lower()
+    if len(username) < 4:
+        raise ValueError("Username minimal 4 karakter")
+    if len(username) > 30:
+        raise ValueError("Username maksimal 30 karakter")
+    if not re.match(r'^[a-z0-9_]+$', username):
+        raise ValueError("Username hanya boleh huruf kecil, angka, dan underscore (_)")
 
     if len(body.password) < 6:
         raise ValueError("Password minimal 6 karakter")
@@ -100,11 +130,11 @@ def register(body: RegisterSchema) -> dict:
     db_insert("users_profile", profile_data)
 
     # insert ke artisans
-    # slug di-auto-generate oleh trigger trg_artisans_slug dari nama_usaha
+    # generate slug di backend (tidak bergantung trigger DB)
     artisan_data = {
         "id": user_id,
         "email": body.email,
-        "username": body.username.lower(),
+        "username": username,
         "nama_usaha": body.nama_usaha,
         "pemilik": body.pemilik,
         "no_hp": body.no_hp or "",
@@ -113,8 +143,23 @@ def register(body: RegisterSchema) -> dict:
         "kategori_usaha": body.kategori_usaha,
         "password_hash": hash_password(body.password),
         "status": "pending",
+        "slug": _generate_slug(body.nama_usaha, user_id),
     }
-    db_insert("artisans", artisan_data)
+    try:
+        db_insert("artisans", artisan_data)
+    except Exception as e:
+        # rollback: hapus users_profile yang sudah diinsert
+        try:
+            db_delete("users_profile", {"id": user_id})
+        except Exception:
+            pass
+        # tangkap constraint violation dari DB dengan pesan yang ramah
+        err_str = str(e)
+        if "username_check" in err_str:
+            raise ValueError("Username tidak memenuhi syarat database (min 4 karakter, hanya huruf/angka/underscore)")
+        if "23505" in err_str or "unique" in err_str.lower():
+            raise ValueError("Email atau username sudah terdaftar")
+        raise ValueError("Pendaftaran gagal, coba lagi")
 
     return {"message": "Pendaftaran berhasil, menunggu persetujuan admin"}
 
@@ -164,7 +209,11 @@ def reset_password(phone: str, code: str, new_password: str) -> dict:
             raise ValueError("Kode OTP sudah kadaluarsa")
 
     artisan = db_select("artisans", filters={"no_hp": phone}, single=True)
+    print(f"[RESET] cari artisan by no_hp='{phone}' (len={len(phone)}) → {'ditemukan' if artisan else 'TIDAK ditemukan'}")
     if not artisan:
+        # debug: ambil semua artisan dan print no_hp mereka
+        semua = db_select("artisans") or []
+        print(f"[RESET] semua no_hp di DB: {[(a.get('email'), repr(a.get('no_hp'))) for a in semua]}")
         raise ValueError("Nomor HP tidak terdaftar")
 
     if len(new_password) < 6:

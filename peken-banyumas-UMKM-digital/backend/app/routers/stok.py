@@ -8,7 +8,7 @@ from typing import List
 router = APIRouter(prefix="/stok", tags=["Manajemen Stok"])
 
 
-@router.get("/", response_model=List[StokItem])
+@router.get("", response_model=List[StokItem])
 def get_stok(user=Depends(get_current_user)):
     return stok_service.get_all_stok(user["sub"])
 
@@ -18,7 +18,7 @@ def get_stok_kritis(user=Depends(get_current_user)):
     return stok_service.get_stok_kritis(user["sub"])
 
 
-@router.post("/", response_model=StokItem, status_code=status.HTTP_201_CREATED)
+@router.post("", response_model=StokItem, status_code=status.HTTP_201_CREATED)
 def tambah_stok(body: TambahStokSchema, user=Depends(get_current_user)):
     try:
         return stok_service.tambah_stok(user["sub"], body)

@@ -45,7 +45,40 @@ def tambah_kas(artisan_id: str, body: TambahKasSchema) -> dict:
     }
     result = db_insert("kas", data)
 
-    # jika masuk → notifikasi transaksi baru
+    # jika masuk & ada barang → kurangi stok otomatis
+    if body.jenis == "masuk" and body.qty:
+        try:
+            stok_item = None
+            # prioritas: cari by barang_id (lebih akurat)
+            if body.barang_id:
+                stok_item = db_select("stok", filters={"id": body.barang_id, "artisan_id": artisan_id}, single=True)
+                print(f"[KAS] lookup by barang_id={body.barang_id} → {'ditemukan' if stok_item else 'TIDAK ditemukan'}")
+            # fallback: cari by nama jika barang_id tidak ada
+            if not stok_item and body.barang:
+                stok_item = db_select("stok", filters={"artisan_id": artisan_id, "nama": body.barang}, single=True)
+                print(f"[KAS] lookup by nama='{body.barang}' → {'ditemukan' if stok_item else 'TIDAK ditemukan'}")
+
+            if stok_item:
+                stok_lama = int(stok_item.get("stok", 0))
+                stok_baru = max(0, stok_lama - int(body.qty))
+                print(f"[KAS] kurangi stok '{stok_item['nama']}': {stok_lama} - {int(body.qty)} = {stok_baru}")
+                db_update("stok", {"id": stok_item["id"]}, {"stok": stok_baru})
+                # notifikasi stok kritis jika perlu
+                stok_min = stok_item.get("stok_min", 0)
+                if stok_baru <= stok_min:
+                    from app.notif_helper import notif_stok_kritis
+                    notif_stok_kritis(
+                        artisan_id,
+                        stok_item["nama"],
+                        stok_baru,
+                        stok_min,
+                        stok_item.get("kategori", ""),
+                    )
+        except Exception as e:
+            print(f"[KAS ERROR] pengurangan stok gagal: {e}")
+            pass  # pengurangan stok gagal tidak boleh crash endpoint kas
+
+    # notifikasi transaksi baru
     if body.jenis == "masuk" and body.barang:
         try:
             from app.notif_helper import notif_transaksi_baru

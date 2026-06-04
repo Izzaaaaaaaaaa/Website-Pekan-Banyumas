@@ -8,7 +8,7 @@ from typing import List
 router = APIRouter(prefix="/event", tags=["Event"])
 
 
-@router.get("/", response_model=List[EventItem])
+@router.get("", response_model=List[EventItem])
 def get_events():
     """Daftar event published/berlangsung/selesai — publik, tidak perlu login."""
     return event_service.get_all_events()

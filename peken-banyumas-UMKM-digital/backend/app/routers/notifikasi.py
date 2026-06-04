@@ -8,7 +8,7 @@ from typing import List
 router = APIRouter(prefix="/notifikasi", tags=["Notifikasi"])
 
 
-@router.get("/", response_model=List[NotifikasiItem])
+@router.get("", response_model=List[NotifikasiItem])
 def get_notifikasi(user=Depends(get_current_user)):
     return notifikasi_service.get_notifikasi(user["sub"])
 

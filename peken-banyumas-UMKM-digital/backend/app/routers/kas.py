@@ -8,7 +8,7 @@ from typing import List, Optional
 router = APIRouter(prefix="/kas", tags=["Buku Kas"])
 
 
-@router.get("/", response_model=List[KasItem])
+@router.get("", response_model=List[KasItem])
 def get_kas(
     jenis: Optional[str] = Query(None, description="masuk | keluar"),
     user=Depends(get_current_user),
@@ -21,7 +21,7 @@ def get_summary(user=Depends(get_current_user)):
     return kas_service.get_summary(user["sub"])
 
 
-@router.post("/", response_model=KasItem, status_code=status.HTTP_201_CREATED)
+@router.post("", response_model=KasItem, status_code=status.HTTP_201_CREATED)
 def tambah_kas(body: TambahKasSchema, user=Depends(get_current_user)):
     try:
         return kas_service.tambah_kas(user["sub"], body)

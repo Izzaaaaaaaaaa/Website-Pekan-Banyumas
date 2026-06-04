@@ -17,6 +17,7 @@ class TambahKasSchema(BaseModel):
     kategori: str = ""
     pelanggan: Optional[str] = None
     barang: Optional[str] = None
+    barang_id: Optional[str] = None     # id stok — untuk pengurangan stok otomatis
     qty: float = 1                      # NUMERIC(10,2)
     metode: str = "tunai"               # tunai | qris
     ket: str = ""
