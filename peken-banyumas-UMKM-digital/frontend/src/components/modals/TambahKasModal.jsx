@@ -21,7 +21,7 @@ export default function TambahKasModal({ show, onClose, onSave, items, namaUsaha
     const fetchQris = () => {
       const token = localStorage.getItem("token");
       if (token) {
-        fetch("http://127.0.0.1:8000/api/artisan/pengaturan/profil", {
+        fetch(`${import.meta.env.VITE_API_URL || "http://127.0.0.1:8004"}/api/artisan/pengaturan/profil`, {
           headers: { Authorization: `Bearer ${token}` },
         })
           .then(r => r.json())

@@ -2,7 +2,8 @@ import { useState, useEffect } from "react";
 import QrisUploadSection from "../../components/pengaturan/QrisUploadSection";
 import "../../assets/styles/settings.css";
 
-const API = "http://127.0.0.1:8000/api/artisan/pengaturan/profil";
+const BASE = import.meta.env.VITE_API_URL || "http://127.0.0.1:8004";
+const API = `${BASE}/api/artisan/pengaturan/profil`;
 
 function authHeaders() {
   return {

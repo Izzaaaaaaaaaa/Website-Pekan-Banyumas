@@ -1,10 +1,16 @@
 /* =========================
+   SIDEBAR — sidebar.css
+   Menggunakan token dari Design System (colors_and_type.css)
+   Sidebar tetap gelap (charcoal) sesuai brand identity
+========================= */
+
+/* =========================
    SIDEBAR BASE
 ========================= */
 .sb {
   width: 260px;
   height: 100vh;
-  background: linear-gradient(to bottom, #181818, #1f1f1f);
+  background: linear-gradient(to bottom, var(--peken-ink), var(--peken-charcoal));
   box-shadow: 4px 0 20px rgba(0, 0, 0, 0.06);
 
   position: fixed;
@@ -14,9 +20,11 @@
   display: flex;
   flex-direction: column;
 
-  padding: 20px 16px;
+  padding: var(--sp-5) var(--sp-4);
   box-sizing: border-box;
   z-index: 200;
+
+  font-family: var(--font-body);
 }
 
 /* =========================
@@ -34,7 +42,7 @@
 ========================= */
 .sb-top {
   flex-shrink: 0;
-  padding-top: 8px;
+  padding-top: var(--sp-2);
 }
 
 /* BRAND HEADER */
@@ -42,16 +50,16 @@
   display: flex;
   align-items: center;
   justify-content: center;
-  gap: 12px;
+  gap: var(--sp-3);
   padding: 18px 22px;
   border-bottom: 1px solid rgba(255,255,255,.06);
-  margin-bottom: 20px;
+  margin-bottom: var(--sp-5);
 }
 
 .sb-header-logo {
   width: 40px;
   height: 40px;
-  border-radius: 10px;
+  border-radius: var(--r-md);
   overflow: hidden;
   flex-shrink: 0;
   border: 1px solid rgba(255,255,255,.08);
@@ -71,29 +79,29 @@
 }
 
 .sb-header-title {
-  font-size: 16px;
+  font-size: var(--fs-16);
   font-weight: 800;
-  color: #ffffff;
+  color: var(--peken-white);
   letter-spacing: -0.3px;
-  line-height: 1.2;
+  line-height: var(--lh-snug);
   white-space: nowrap;
   text-shadow: 0 0 18px rgba(195,202,150,.08);
 }
 
 .sb-header-title em {
-  color: #7A8A52;
+  color: var(--peken-sage-dark);
   font-style: italic;
   font-weight: 600;
 }
 
 .sb-header-sub {
-  font-size: 10px;
+  font-size: var(--fs-10);
   font-weight: 700;
-  color: #C3CA96;
-  letter-spacing: 0.08em;
+  color: var(--peken-sage);
+  letter-spacing: var(--ls-wide);
   background: rgba(195,202,150,.12);
   padding: 3px 10px;
-  border-radius: 999px;
+  border-radius: var(--r-full);
   width: fit-content;
 }
 
@@ -101,22 +109,23 @@
 .sb-kios {
   background: rgba(195,202,150,.06);
   border: 1px solid rgba(195,202,150,.12);
-  border-radius: 14px;
-  padding: 14px 16px; 
-  margin-bottom: 4px;
+  border-radius: var(--r-md);
+  padding: 14px 16px;
+  margin-bottom: var(--sp-1);
 }
 
 .sb-kios h3 {
-  margin: 4px 0 6px;
-  font-size: 14px;
+  margin: var(--sp-1) 0 6px;
+  font-size: var(--fs-14);
   font-weight: 700;
-  color: #f5f5f5;
-  line-height: 1.3;
+  color: var(--dash-sidebar-fg);
+  line-height: var(--lh-snug);
+  font-family: var(--font-body);
 }
 
 .sb-kios span {
-  font-size: 11px;
-  color: #a1a1aa;;
+  font-size: var(--fs-11);
+  color: var(--peken-mist);
 }
 
 /* =========================
@@ -137,41 +146,41 @@
   overflow-y: auto;
   padding-right: 2px;
 
-  /* hide scrollbar tapi tetap scrollable */
   scrollbar-width: thin;
-  scrollbar-color: #c8e0d0 transparent;
+  scrollbar-color: var(--dash-sidebar-active-fg) transparent;
 }
 
 .sb-scroll::-webkit-scrollbar {
   width: 4px;
 }
+
 .sb-scroll::-webkit-scrollbar-thumb {
-  background: #c8e0d0;
-  border-radius: 4px;
+  background: var(--dash-sidebar-active-fg);
+  border-radius: var(--sp-1);
 }
 
 /* =========================
    LABEL SECTION
 ========================= */
 .lbl {
-  font-size: 10px;
+  font-size: var(--fs-10);
   font-weight: 700;
-  letter-spacing: 1.2px;
-  color: #5f654e;
+  letter-spacing: var(--ls-wide);
+  color: var(--peken-sage-deeper);
   margin-bottom: 6px;
   margin-top: 0;
-  padding-left: 4px;
+  padding-left: var(--sp-1);
 }
 
 /* =========================
    NAV SECTIONS
 ========================= */
 .sb-nav {
-  margin-bottom: 8px;
+  margin-bottom: var(--sp-2);
 }
 
 .sb-akun {
-  margin-top: 4px;
+  margin-top: var(--sp-1);
 }
 
 /* =========================
@@ -180,25 +189,26 @@
 .si {
   display: flex;
   align-items: center;
-  gap: 10px;
+  gap: var(--sp-2);
   padding: 10px 12px;
-  border-radius: 12px;
+  border-radius: var(--r-md);
   cursor: pointer;
   position: relative;
-  font-size: 13.5px;
-  color: #d4d4d8;
+  font-size: var(--fs-13);
+  color: var(--dash-sidebar-fg);
   font-weight: 500;
-  transition: background 0.15s;
+  font-family: var(--font-body);
+  transition: background var(--dur-fast) var(--ease-out);
 }
 
 .si:hover {
-  background: rgba(195,202,150,.08);
+  background: var(--dash-sidebar-active);
 }
 
 /* ACTIVE STATE */
 .si.active {
-  background: rgba(195,202,150,.12);
-  color: #f8f8f8;
+  background: var(--dash-sidebar-active);
+  color: var(--peken-white);
   font-weight: 700;
 }
 
@@ -210,8 +220,8 @@
   transform: translateY(-50%);
   width: 3px;
   height: 60%;
-  background: #C3CA96;
-  border-radius: 0 4px 4px 0;
+  background: var(--dash-sidebar-active-fg);
+  border-radius: 0 var(--r-sm) var(--r-sm) 0;
 }
 
 /* ICON */
@@ -219,12 +229,12 @@
   display: flex;
   align-items: center;
   justify-content: center;
-  color: #8f9683;
+  color: var(--peken-sage-deeper);
   flex-shrink: 0;
 }
 
 .si.active .icon {
-  color: #d6ddb1;
+  color: var(--peken-sage-light);
 }
 
 /* LABEL TEXT */
@@ -236,11 +246,11 @@
 /* BADGE */
 .badge {
   margin-left: auto;
-  background: #fcd34d;
-  color: #78350f;
+  background: var(--dash-warning);
+  color: var(--peken-white);
   padding: 2px 8px;
-  border-radius: 999px;
-  font-size: 11px;
+  border-radius: var(--r-full);
+  font-size: var(--fs-11);
   font-weight: 700;
 }
 
@@ -252,18 +262,19 @@
 
   display: flex;
   align-items: center;
-  gap: 10px;
-   background: rgba(255,255,255,.03);
-  border-radius: 14px;
+  gap: var(--sp-2);
+  background: rgba(255,255,255,.03);
+  border-radius: var(--r-md);
   padding: 11px 12px;
   border: 1px solid rgba(255,255,255,.08);
   cursor: pointer;
-  transition: background 0.15s, box-shadow 0.15s;
+  transition: background var(--dur-fast) var(--ease-out),
+              box-shadow var(--dur-fast) var(--ease-out);
 }
 
 .sb-profile:hover {
-  background: #f0f8f3;
-  box-shadow: 0 2px 8px rgba(47, 111, 78, 0.08);
+  background: var(--dash-surface-hover);
+  box-shadow: var(--shadow-sm);
 }
 
 /* AVATAR */
@@ -271,24 +282,24 @@
   width: 38px;
   height: 38px;
   border-radius: 50%;
-  background: linear-gradient(135deg, #7A8A52, #1a3a2a);
-  color: white;
+  background: linear-gradient(135deg, var(--peken-sage-dark), var(--peken-sage-deeper));
+  color: var(--peken-white);
   flex-shrink: 0;
 
   display: flex;
   align-items: center;
   justify-content: center;
   font-weight: 800;
-  font-size: 13px;
+  font-size: var(--fs-13);
   letter-spacing: 0.5px;
 }
 
-.sb-avatar-img{
-  width:100%;
-  height:100%;
-  object-fit:cover;
-  border-radius:50%;
-  display:block;
+.sb-avatar-img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  border-radius: 50%;
+  display: block;
 }
 
 .sb-profile-info {
@@ -297,9 +308,9 @@
 }
 
 .sb-profile-info strong {
-  font-size: 13.5px;
+  font-size: var(--fs-13);
   font-weight: 700;
-  color: #f5f5f5;
+  color: var(--dash-sidebar-fg);
   display: block;
   white-space: nowrap;
   overflow: hidden;
@@ -307,8 +318,8 @@
 }
 
 .sb-profile-info p {
-  font-size: 11px;
-  color: #9ca3af;
+  font-size: var(--fs-11);
+  color: var(--peken-mist);
   margin: 2px 0 0;
   white-space: nowrap;
   overflow: hidden;
@@ -317,7 +328,7 @@
 
 .sb-profile-arrow {
   font-size: 18px;
-  color: #9ca3af;
+  color: var(--peken-mist);
   line-height: 1;
   flex-shrink: 0;
 }
@@ -326,26 +337,21 @@
    RESPONSIVE MOBILE
 ========================= */
 @media (max-width: 768px) {
-
   .sb {
     position: fixed;
     top: 0;
     left: 0;
-
     width: 280px;
     max-width: 84vw;
     height: 100vh;
-
     transform: translateX(-100%);
-    transition: transform .3s ease;
-
+    transition: transform var(--dur-base) var(--ease-out);
     z-index: 200;
   }
 
   .sb.open {
     transform: translateX(0);
   }
-
 }
 
 /* =========================
@@ -359,17 +365,17 @@
   justify-content: center;
   align-items: center;
   z-index: 9999;
-  padding: 16px;
+  padding: var(--sp-4);
 }
 
 .pf-modal-logout {
-  background: #fff;
-  border-radius: 20px;
+  background: var(--dash-surface);
+  border-radius: var(--r-xl);
   padding: 36px 32px;
   width: 100%;
   max-width: 360px;
   text-align: center;
-  box-shadow: 0 20px 60px rgba(0, 0, 0, 0.15);
+  box-shadow: var(--shadow-lg);
   animation: pf-pop 0.2s cubic-bezier(0.34, 1.56, 0.64, 1);
 }
 
@@ -380,53 +386,55 @@
 
 .pf-logout-icon {
   font-size: 48px;
-  margin-bottom: 12px;
+  margin-bottom: var(--sp-3);
 }
 
 .pf-logout-title {
-  font-size: 18px;
+  font-size: var(--fs-18);
   font-weight: 800;
-  color: #1a3a2a;
-  margin-bottom: 8px;
+  color: var(--dash-text-primary);
+  margin-bottom: var(--sp-2);
 }
 
 .pf-logout-desc {
-  font-size: 13px;
-  color: #888;
-  margin-bottom: 24px;
-  line-height: 1.6;
+  font-size: var(--fs-13);
+  color: var(--dash-text-muted);
+  margin-bottom: var(--sp-6);
+  line-height: var(--lh-relaxed);
 }
 
 .pf-logout-actions {
   display: flex;
-  gap: 10px;
+  gap: var(--sp-2);
   justify-content: center;
 }
 
 .pf-btn-kembali {
-  background: #fff;
-  border: 1px solid #dde8e2;
-  border-radius: 12px;
+  background: var(--dash-surface);
+  border: 1px solid var(--dash-border);
+  border-radius: var(--r-md);
   padding: 10px 24px;
-  font-size: 14px;
+  font-size: var(--fs-14);
   font-weight: 600;
-  color: #444;
+  color: var(--dash-text-secondary);
   cursor: pointer;
-  transition: background 0.15s;
+  font-family: var(--font-body);
+  transition: background var(--dur-fast) var(--ease-out);
 }
 
-.pf-btn-kembali:hover { background: #f5f5f5; }
+.pf-btn-kembali:hover { background: var(--dash-surface-hover); }
 
 .pf-btn-confirm-logout {
-  background: #ffe8e5;
-  border: 1px solid #fbd0cc;
-  border-radius: 12px;
+  background: var(--dash-error-bg);
+  border: 1px solid var(--dash-error-border);
+  border-radius: var(--r-md);
   padding: 10px 24px;
-  font-size: 14px;
+  font-size: var(--fs-14);
   font-weight: 700;
-  color: #c0392b;
+  color: var(--dash-error);
   cursor: pointer;
-  transition: background 0.15s;
+  font-family: var(--font-body);
+  transition: background var(--dur-fast) var(--ease-out);
 }
 
-.pf-btn-confirm-logout:hover { background: #fdd5d1; }
+.pf-btn-confirm-logout:hover { background: var(--dash-error-border); }

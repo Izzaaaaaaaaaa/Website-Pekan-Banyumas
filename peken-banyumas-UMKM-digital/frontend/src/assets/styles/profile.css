@@ -1,5 +1,6 @@
 /* ============================================================
    profile.css  —  Profile & Logout modal styles
+   Menggunakan token dari Design System (colors_and_type.css)
    Semua class diawali  pf-
    ============================================================ */
 
@@ -8,134 +9,125 @@
   padding: 0 16px 40px;
   max-width: 760px;
   margin: 0 auto;
+  font-family: var(--font-body);
 }
 
 /* ── Header ──────────────────────────────────────────────── */
 .pf-eyebrow {
   display: flex;
   align-items: center;
-  gap: 8px;
-
-  font-size: 12px;
+  gap: var(--sp-2);
+  font-size: var(--fs-12);
   font-weight: 600;
-  color: #e5a82e;
-  letter-spacing: 0.05em;
+  color: var(--dash-warning);
+  letter-spacing: var(--ls-wide);
   text-transform: uppercase;
-  margin-bottom: 4px;
+  margin-bottom: var(--sp-1);
 }
 
 .pf-title {
-  font-size: 28px;
+  font-size: var(--fs-24);
   font-weight: 800;
-  color: #1a3a2a;
-  line-height: 1.1;
-  margin-bottom: 20px;
+  color: var(--dash-text-primary);
+  line-height: var(--lh-tight);
+  margin-bottom: var(--sp-5);
+  font-family: var(--font-body);
 }
 
 .pf-title em {
   font-style: italic;
-  color: #2f6f4e;
+  color: var(--dash-accent-dark);
 }
 
 /* ── Profile card ────────────────────────────────────────── */
 .pf-card {
-  display:flex;
-  flex-direction:column;
-  align-items:center;
-  text-align:center;
-  background:#FCFCF8;
-  border:1.5px solid #E7E8DE;
-  border-radius:30px;
-  padding:42px 28px 30px;
-  margin-bottom:18px;
-  box-shadow: 0 4px 16px rgba(0,0,0,.02);
-  transition:.18s;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  text-align: center;
+  background: var(--dash-surface);
+  border: 1.5px solid var(--dash-border);
+  border-radius: var(--r-xl);
+  padding: 42px 28px 30px;
+  margin-bottom: 18px;
+  box-shadow: var(--shadow-sm);
+  transition: border-color var(--dur-fast) var(--ease-out);
 }
 
-.pf-card:hover{
-  border-color:#D9DDCC;
+.pf-card:hover {
+  border-color: var(--dash-border-strong);
 }
 
 /* ── Avatar wrapper & upload overlay ────────────────────── */
-
 .pf-avatar {
-  width:96px;
-  height:96px;
-  border-radius:50%;
-  background:
-  linear-gradient(
-  135deg,
-  #748953,
-  #8E9E68
-  );
-  color:white;
-  font-size:30px;
-  font-weight:800;
-  box-shadow:
-  0 10px 26px
-  rgba(122,138,82,.18);
-  border:4px solid #FCFCF8;
-  outline:
-  2px solid #DCE3CB;
-  transition:.18s;
-  overflow:hidden;
-  display:flex;
-  align-items:center;
-  justify-content:center;
-  position:relative;
-  flex-shrink:0;
+  width: 96px;
+  height: 96px;
+  border-radius: 50%;
+  background: linear-gradient(135deg, var(--peken-sage-dark), var(--peken-sage-mid));
+  color: var(--peken-white);
+  font-size: 30px;
+  font-weight: 800;
+  box-shadow: var(--shadow-accent);
+  border: 4px solid var(--dash-surface);
+  outline: 2px solid var(--dash-border);
+  transition: all var(--dur-fast) var(--ease-out);
+  overflow: hidden;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  position: relative;
+  flex-shrink: 0;
 }
 
-.pf-avatar-img{
-  width:100%;
-  height:100%;
-  object-fit:cover;
-  object-position:center;
-  display:block;
-  border-radius:50%;
+.pf-avatar-img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  object-position: center;
+  display: block;
+  border-radius: 50%;
 }
-
 
 .pf-avatar-wrap {
   position: relative;
-  width: 96px;   /* ← dari 76px */
-  height: 96px;  /* ← dari 76px */
+  width: 96px;
+  height: 96px;
   margin: 0 auto 12px;
   cursor: pointer;
   border-radius: 50%;
 }
 
 .pf-avatar-wrap .pf-avatar {
-  margin: 0; /* override margin auto sebelumnya */
-  transition: filter 0.2s;
+  margin: 0;
+  transition: filter var(--dur-fast) var(--ease-out);
 }
 
 .pf-avatar-wrap:hover .pf-avatar {
-  transform:translateY(-2px);
-  box-shadow:0 16px 34px rgba(122,138,82,.22);
-  filter:none;
+  transform: translateY(-2px);
+  box-shadow: var(--shadow-lg);
+  filter: none;
 }
 
-.pf-avatar-wrap:hover .pf-avatar-img{
-  transform:scale(1.04);
-  transition:.25s;
+.pf-avatar-wrap:hover .pf-avatar-img {
+  transform: scale(1.04);
+  transition: transform var(--dur-base) var(--ease-out);
 }
 
-.pf-remove-photo{
-  display:block;
-  margin:
-  10px auto 0;
-  color:#C16D65;
-  font-size:13px;
-  font-weight:700;
-  background:none;
-  border:none;
-  cursor:pointer;
-  transition:.15s;
+.pf-remove-photo {
+  display: block;
+  margin: 10px auto 0;
+  color: var(--dash-error);
+  font-size: var(--fs-13);
+  font-weight: 700;
+  background: none;
+  border: none;
+  cursor: pointer;
+  font-family: var(--font-body);
+  transition: opacity var(--dur-fast) var(--ease-out);
 }
 
-.pf-remove-photo:hover{
-  color:#AE5D55;
+.pf-remove-photo:hover {
+  opacity: 0.75;
 }
 
 .pf-avatar-overlay {
@@ -145,9 +137,8 @@
   display: flex;
   align-items: center;
   justify-content: center;
-
   opacity: 0;
-  transition: opacity 0.2s;
+  transition: opacity var(--dur-fast) var(--ease-out);
   pointer-events: none;
 }
 
@@ -160,154 +151,138 @@
   filter: drop-shadow(0 1px 3px rgba(0,0,0,0.4));
 }
 
-/* ── Remove photo button ─────────────────────────────────── */
-.pf-remove-photo {
-  display: inline-block;
-  margin-bottom: 10px;
-  background: none;
-  border: none;
-  font-size: 12px;
-  color: #ef4444;
-  cursor: pointer;
-  font-weight: 600;
-  padding: 2px 8px;
-  border-radius: 6px;
-  transition: background 0.15s;
-}
-
-.pf-remove-photo:hover {
-  background: #fff5f5;
-}
-
 .pf-name {
-  font-size:21px;
-  font-weight:800;
-  color:#223125;
+  font-size: 21px;
+  font-weight: 800;
+  color: var(--dash-text-primary);
   margin-bottom: 6px;
-  width:100%;
-  text-align:center;
+  width: 100%;
+  text-align: center;
+  font-family: var(--font-body);
 }
 
 .pf-role {
-  font-size:14px;
-  color:#8E9484;
-  margin-bottom:28px;
-  width:100%;
-  text-align:center;
+  font-size: var(--fs-14);
+  color: var(--dash-text-muted);
+  margin-bottom: 28px;
+  width: 100%;
+  text-align: center;
 }
 
 /* Stats row */
 .pf-stats {
-  width:100%;
-  display:flex;
-  justify-content:space-evenly;
-  align-items:center;
-  border-top:1px solid #ECEDE5;
-  padding-top:30px;
-  margin-top:14px;
+  width: 100%;
+  display: flex;
+  justify-content: space-evenly;
+  align-items: center;
+  border-top: 1px solid var(--dash-border);
+  padding-top: 30px;
+  margin-top: 14px;
 }
 
 .pf-stat {
-  flex:1;
-  display:flex;
-  flex-direction:column;
-  align-items:center;
-  justify-content:center;
-  min-width:220px;
-  padding:0 20px;
-  gap:8px;
-  text-align:center;
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  min-width: 220px;
+  padding: 0 20px;
+  gap: var(--sp-2);
+  text-align: center;
 }
 
 .pf-stat-num {
-  font-size:24px;
-  font-weight:800;
-  color:#6F8347;
+  font-size: var(--fs-24);
+  font-weight: 800;
+  color: var(--dash-accent-dark);
 }
 
 .pf-stat-label {
-  display:flex;
-  align-items:center;
-  justify-content:center;
-  gap:8px;
-  font-size:14px;
-  line-height:1;
-  color:#94998B;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: var(--sp-2);
+  font-size: var(--fs-14);
+  line-height: 1;
+  color: var(--dash-text-muted);
 }
 
 .pf-stat-divider {
-  width:1px;
-  height:48px;
-  background:#ECEDE5;
-  flex-shrink:0;
+  width: 1px;
+  height: 48px;
+  background: var(--dash-border);
+  flex-shrink: 0;
 }
 
 /* ── Info kios card ──────────────────────────────────────── */
 .pf-info-card {
-  background:#FCFCF8;
-  border:1.5px solid #E7E8DE;
-  border-radius:30px;
-  padding:26px;
-  margin-bottom: 16px;
-  box-shadow: 0 4px 16px rgba(0,0,0,.02);
+  background: var(--dash-surface);
+  border: 1.5px solid var(--dash-border);
+  border-radius: var(--r-xl);
+  padding: 26px;
+  margin-bottom: var(--sp-4);
+  box-shadow: var(--shadow-sm);
 }
 
 .pf-info-title {
-  font-size: 16px;
+  font-size: var(--fs-16);
   font-weight: 800;
-  color: #1a3a2a;
-  margin-bottom: 16px;
+  color: var(--dash-text-primary);
+  margin-bottom: var(--sp-4);
+  font-family: var(--font-body);
 }
 
 .pf-info-grid {
   display: grid;
   grid-template-columns: 1fr 1fr;
-  gap: 12px;
+  gap: var(--sp-3);
 }
 
 .pf-info-item {
-  background:#F6F8F3;
-  border:1px solid #ECEFE4;
-  border-radius:18px;
-  padding:18px;
+  background: var(--dash-surface-hover);
+  border: 1px solid var(--dash-border);
+  border-radius: var(--r-lg);
+  padding: 18px;
   display: flex;
   flex-direction: column;
   gap: 5px;
-  transition:.18s;
+  transition: all var(--dur-fast) var(--ease-out);
 }
 
-.pf-info-item:hover{
-  background:#FBFBF8;
-  border-color:#D8DDCA;
+.pf-info-item:hover {
+  background: var(--dash-surface);
+  border-color: var(--dash-border-strong);
   transform: translateY(-1px);
 }
 
 .pf-info-label {
-  font-size:11px;
-  font-weight:700;
-  color:#A1A691;
-  letter-spacing:.08em;
+  font-size: var(--fs-11);
+  font-weight: 700;
+  color: var(--dash-text-muted);
+  letter-spacing: var(--ls-label);
+  text-transform: uppercase;
 }
 
 .pf-info-value {
   display: flex;
   align-items: center;
-  gap: 8px;
-  color:#263126;
-  font-size:14px;
-  font-weight:700;
+  gap: var(--sp-2);
+  color: var(--dash-text-primary);
+  font-size: var(--fs-14);
+  font-weight: 700;
 }
 
 .pf-status-pill {
   display: flex;
   align-items: center;
-  gap: 8px;
-  background:#EEF4E7;
-  color:#68814B;
-  font-size: 13px;
-  border-radius:999px;
-  padding:8px 14px;
-  font-weight:700;
+  gap: var(--sp-2);
+  background: var(--dash-success-bg);
+  color: var(--dash-success);
+  font-size: var(--fs-13);
+  border-radius: var(--r-full);
+  padding: 8px 14px;
+  font-weight: 700;
   width: fit-content;
 }
 
@@ -315,76 +290,78 @@
 .pf-actions {
   display: grid;
   grid-template-columns: 1fr 1fr;
-  gap: 12px;
+  gap: var(--sp-3);
 }
 
 .pf-btn-settings {
   display: flex;
   align-items: center;
   justify-content: center;
-  gap: 8px;
-  background:#FCFCF8;
-  border:1.5px solid #DCE1CF;
-  border-radius: 18px;
+  gap: var(--sp-2);
+  background: var(--dash-surface);
+  border: 1.5px solid var(--dash-border);
+  border-radius: var(--r-lg);
   padding: 14px;
-  font-size: 14px;
+  font-size: var(--fs-14);
   font-weight: 700;
-  color:#243126;
+  font-family: var(--font-body);
+  color: var(--dash-text-primary);
   cursor: pointer;
-  height:56px;
-  transition:.18s;
+  height: 56px;
+  transition: all var(--dur-fast) var(--ease-out);
 }
 
 .pf-btn-settings:hover {
-  background:#F3F5EE;
-  border-color:#C9D0B8;
-  transform:translateY(-1px);
+  background: var(--dash-surface-hover);
+  border-color: var(--dash-border-strong);
+  transform: translateY(-1px);
 }
 
 .pf-btn-logout {
   display: flex;
   align-items: center;
   justify-content: center;
-  gap: 8px;
-  background:#FFF8F7;
-  border:1.5px solid #F0D8D4;
-  border-radius: 18px;
+  gap: var(--sp-2);
+  background: var(--dash-error-bg);
+  border: 1.5px solid var(--dash-error-border);
+  border-radius: var(--r-lg);
   padding: 14px;
-  font-size: 14px;
+  font-size: var(--fs-14);
   font-weight: 700;
-  color:#C16D65;
+  font-family: var(--font-body);
+  color: var(--dash-error);
   cursor: pointer;
-  height:56px;
-  transition: 18s;
+  height: 56px;
+  transition: all var(--dur-fast) var(--ease-out);
 }
 
 .pf-btn-logout:hover {
-  background:#FDEEEE;
-  border-color:#E6BBB4;
-  transform:translateY(-1px);
+  background: var(--dash-error-border);
+  border-color: var(--dash-error);
+  transform: translateY(-1px);
 }
 
 /* ── Overlay & Modal logout ──────────────────────────────── */
 .pf-overlay {
   position: fixed;
   inset: 0;
-  background: rgba(0,0,0,0.4);
+  background: rgba(0, 0, 0, 0.4);
   display: flex;
   justify-content: center;
   align-items: center;
   z-index: 9999;
-  padding: 16px;
+  padding: var(--sp-4);
 }
 
 .pf-modal-logout {
-  background: #fff;
-  border-radius: 20px;
+  background: var(--dash-surface);
+  border-radius: var(--r-xl);
   padding: 36px 32px;
   width: 100%;
   max-width: 360px;
   text-align: center;
-  box-shadow: 0 20px 60px rgba(0,0,0,0.15);
-  animation: pf-pop 0.2s cubic-bezier(0.34,1.56,0.64,1);
+  box-shadow: var(--shadow-lg);
+  animation: pf-pop 0.2s cubic-bezier(0.34, 1.56, 0.64, 1);
 }
 
 @keyframes pf-pop {
@@ -392,55 +369,42 @@
   to   { opacity: 1; transform: scale(1); }
 }
 
-.pf-logout-icon {
-  font-size: 48px;
-  margin-bottom: 12px;
-}
-
-.pf-logout-title {
-  font-size: 18px;
-  font-weight: 800;
-  color: #1a3a2a;
-  margin-bottom: 8px;
-}
-
-.pf-logout-desc {
-  font-size: 13px;
-  color: #888;
-  margin-bottom: 24px;
-  line-height: 1.6;
-}
+.pf-logout-icon  { font-size: 48px; margin-bottom: var(--sp-3); }
+.pf-logout-title { font-size: var(--fs-18); font-weight: 800; color: var(--dash-text-primary); margin-bottom: var(--sp-2); }
+.pf-logout-desc  { font-size: var(--fs-13); color: var(--dash-text-muted); margin-bottom: var(--sp-6); line-height: var(--lh-relaxed); }
 
 .pf-logout-actions {
   display: flex;
-  gap: 10px;
+  gap: var(--sp-2);
   justify-content: center;
 }
 
 .pf-btn-kembali {
-  background: #fff;
-  border: 1px solid #dde8e2;
-  border-radius: 12px;
+  background: var(--dash-surface);
+  border: 1px solid var(--dash-border);
+  border-radius: var(--r-md);
   padding: 10px 24px;
-  font-size: 14px;
+  font-size: var(--fs-14);
   font-weight: 600;
-  color: #444;
+  font-family: var(--font-body);
+  color: var(--dash-text-secondary);
   cursor: pointer;
-  transition: background 0.15s;
+  transition: background var(--dur-fast) var(--ease-out);
 }
 
-.pf-btn-kembali:hover { background: #f5f5f5; }
+.pf-btn-kembali:hover { background: var(--dash-surface-hover); }
 
 .pf-btn-confirm-logout {
-  background: #ffe8e5;
-  border: 1px solid #fbd0cc;
-  border-radius: 12px;
+  background: var(--dash-error-bg);
+  border: 1px solid var(--dash-error-border);
+  border-radius: var(--r-md);
   padding: 10px 24px;
-  font-size: 14px;
+  font-size: var(--fs-14);
   font-weight: 700;
-  color: #c0392b;
+  font-family: var(--font-body);
+  color: var(--dash-error);
   cursor: pointer;
-  transition: background 0.15s;
+  transition: background var(--dur-fast) var(--ease-out);
 }
 
-.pf-btn-confirm-logout:hover { background: #fdd5d1; }
+.pf-btn-confirm-logout:hover { background: var(--dash-error-border); }

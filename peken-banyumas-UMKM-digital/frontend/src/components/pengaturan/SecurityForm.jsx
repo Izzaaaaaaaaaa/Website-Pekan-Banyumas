@@ -2,7 +2,8 @@ import { useState } from "react";
 import "../../assets/styles/settings.css";
 import { Eye, EyeOff } from "lucide-react";
 
-const API = "http://127.0.0.1:8000/api/artisan/pengaturan/password";
+const BASE = import.meta.env.VITE_API_URL || "http://127.0.0.1:8004";
+const API = `${BASE}/api/artisan/pengaturan/password`;
 
 function authHeaders() {
   return {

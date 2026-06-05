@@ -1,7 +1,8 @@
 /* ══════════════════════════════════════════════════════════════
    LOGIN — Peken Banyumasan Design System
-   Left panel  → charcoal dark, inline styles di JSX
-   Right panel → sage/krem artisan, CSS classes di sini
+   Menggunakan token dari Design System (colors_and_type.css)
+   Left panel  → charcoal dark (cp-root style)
+   Right panel → sage/krem artisan
    ══════════════════════════════════════════════════════════════ */
 
 /* ── LEFT panel shell — ukuran & posisi saja ─────────────── */
@@ -9,14 +10,16 @@
   display: none;
   width: 50%;
   min-width: 460px;
-  background: #1B1B1B;
+  background: var(--cp-bg-elevated);
   flex-direction: column;
   justify-content: space-between;
   padding: 40px 52px;
   position: relative;
   overflow: hidden;
   flex-shrink: 0;
+  font-family: var(--font-body);
 }
+
 @media (min-width: 900px) {
   .login-left-panel { display: flex; }
 }
@@ -29,14 +32,15 @@
   justify-content: center;
   padding: 40px 32px;
   overflow-y: auto;
-  background: #f2f4e8;
+  background: var(--dash-bg);
   position: relative;
 }
 
 /* Subtle sage glow on right bg */
 .login-right::before {
   content: "";
-  position: absolute; inset: 0;
+  position: absolute;
+  inset: 0;
   background-image:
     radial-gradient(circle at 90% 10%, rgba(195,202,150,.06) 0%, transparent 40%),
     radial-gradient(circle at 10% 90%, rgba(195,202,150,.04) 0%, transparent 40%);
@@ -48,7 +52,8 @@
   position: relative;
   width: 100%;
   max-width: 400px;
-  animation: fadeInUp 320ms cubic-bezier(0.22, 0.61, 0.36, 1) both;
+  animation: fadeInUp var(--dur-base) var(--ease-out) both;
+  font-family: var(--font-body);
 }
 
 @keyframes fadeInUp {
@@ -60,14 +65,15 @@
 .card-logos {
   display: flex;
   align-items: center;
-  gap: 12px;
-  margin-bottom: 32px;
+  gap: var(--sp-3);
+  margin-bottom: var(--sp-7);
 }
+
 @media (min-width: 900px) { .card-logos { display: none; } }
 
-.card-logo          { height: 40px; width: auto; object-fit: contain; border-radius: 6px; }
-.card-logo.peken    { height: 36px; }
-.card-logo-sep      { width: 1px; height: 28px; background: #e4e7d4; flex-shrink: 0; }
+.card-logo         { height: 40px; width: auto; object-fit: contain; border-radius: 6px; }
+.card-logo.peken   { height: 36px; }
+.card-logo-sep     { width: 1px; height: 28px; background: var(--dash-border); flex-shrink: 0; }
 
 /* ── Brand icon mark ─────────────────────────────────────── */
 .logo-mark {
@@ -76,45 +82,47 @@
   justify-content: center;
   width: 52px;
   height: 52px;
-  background: #7a8a52;
-  border-radius: 14px;
-  margin-bottom: 20px;
-  box-shadow: 0 4px 14px rgba(122,138,82,.25);
-  color: #fff;
-  transition: transform 180ms cubic-bezier(0.22, 0.61, 0.36, 1);
+  background: var(--peken-sage-dark);
+  border-radius: var(--r-md);
+  margin-bottom: var(--sp-5);
+  box-shadow: var(--shadow-accent);
+  color: var(--peken-white);
+  transition: transform var(--dur-fast) var(--ease-out);
 }
+
 .logo-mark:hover { transform: translateY(-2px) rotate(-4deg); }
 
 /* ── Headings ────────────────────────────────────────────── */
 .card-title {
-  font-family: "Montserrat", sans-serif;
-  font-size: 26px;
+  font-family: var(--font-body);
+  font-size: var(--fs-24);
   font-weight: 500;
-  color: #1e2010;
+  color: var(--dash-text-primary);
   margin: 0 0 6px;
   letter-spacing: -.01em;
 }
+
 .card-sub {
-  font-size: 13px;
-  color: #8a9070;
+  font-size: var(--fs-13);
+  color: var(--dash-text-secondary);
   margin: 0 0 28px;
-  line-height: 1.5;
-  font-family: "Montserrat", system-ui, sans-serif;
+  line-height: var(--lh-normal);
+  font-family: var(--font-body);
 }
 
 /* ── Error banner ────────────────────────────────────────── */
 .error-box {
   display: flex;
   align-items: flex-start;
-  gap: 8px;
-  margin-bottom: 20px;
+  gap: var(--sp-2);
+  margin-bottom: var(--sp-5);
   padding: 12px 16px;
-  background: #f7eeee;
-  border: 1px solid #dbb8b8;
-  border-radius: 12px;
-  font-size: 12px;
-  color: #B87272;
-  font-family: "Montserrat", system-ui, sans-serif;
+  background: var(--dash-error-bg);
+  border: 1px solid var(--dash-error-border);
+  border-radius: var(--r-md);
+  font-size: var(--fs-12);
+  color: var(--dash-error);
+  font-family: var(--font-body);
   animation: shake .38s ease;
 }
 
@@ -132,12 +140,12 @@
 .field-label {
   display: block;
   margin-bottom: 6px;
-  font-size: 11px;
+  font-size: var(--fs-11);
   font-weight: 600;
-  color: #5a6040;
+  color: var(--dash-text-secondary);
   text-transform: uppercase;
-  letter-spacing: .06em;
-  font-family: "Montserrat", system-ui, sans-serif;
+  letter-spacing: var(--ls-wide);
+  font-family: var(--font-body);
 }
 
 .input-wrap { position: relative; }
@@ -147,33 +155,36 @@
   left: 14px;
   top: 50%;
   transform: translateY(-50%);
-  color: #8a9070;
+  color: var(--dash-text-muted);
   display: flex;
   align-items: center;
   pointer-events: none;
-  transition: color 180ms;
+  transition: color var(--dur-fast) var(--ease-out);
 }
-.input-wrap:focus-within .input-icon { color: #7a8a52; }
+
+.input-wrap:focus-within .input-icon { color: var(--dash-accent-dark); }
 
 .login-input {
   width: 100%;
   padding: 12px 14px 12px 42px;
-  border: 1px solid #e4e7d4;
-  border-radius: 12px;
-  font-size: 13px;
-  font-family: "Montserrat", system-ui, sans-serif;
-  background: #fff;
-  color: #1e2010;
+  border: 1px solid var(--dash-border);
+  border-radius: var(--r-md);
+  font-size: var(--fs-13);
+  font-family: var(--font-body);
+  background: var(--dash-surface);
+  color: var(--dash-text-primary);
   outline: none;
-  transition:
-    border-color 180ms cubic-bezier(0.22, 0.61, 0.36, 1),
-    box-shadow   180ms cubic-bezier(0.22, 0.61, 0.36, 1);
+  transition: border-color var(--dur-fast) var(--ease-out),
+              box-shadow var(--dur-fast) var(--ease-out);
 }
-.login-input::placeholder { color: #8a9070; }
+
+.login-input::placeholder { color: var(--dash-text-muted); }
+
 .login-input:focus {
-  border-color: #7a8a52;
+  border-color: var(--dash-accent-dark);
   box-shadow: 0 0 0 3px rgba(122,138,82,.15);
 }
+
 .login-input.has-toggle { padding-right: 44px; }
 
 /* Password toggle */
@@ -185,13 +196,14 @@
   background: none;
   border: none;
   cursor: pointer;
-  color: #8a9070;
+  color: var(--dash-text-muted);
   display: flex;
   padding: 4px;
   border-radius: 6px;
-  transition: color 180ms;
+  transition: color var(--dur-fast) var(--ease-out);
 }
-.toggle-pw:hover { color: #5a6040; }
+
+.toggle-pw:hover { color: var(--dash-text-secondary); }
 
 /* Forgot password row */
 .forgot-row {
@@ -199,14 +211,16 @@
   justify-content: flex-end;
   margin: -6px 0 22px;
 }
+
 .forgot-link {
-  font-size: 12px;
-  color: #7a8a52;
+  font-size: var(--fs-12);
+  color: var(--dash-accent-dark);
   font-weight: 500;
   cursor: pointer;
-  font-family: "Montserrat", system-ui, sans-serif;
-  transition: opacity 180ms;
+  font-family: var(--font-body);
+  transition: opacity var(--dur-fast) var(--ease-out);
 }
+
 .forgot-link:hover { opacity: .7; }
 
 /* ── Submit button ───────────────────────────────────────── */
@@ -215,26 +229,27 @@
   display: flex;
   align-items: center;
   justify-content: center;
-  gap: 8px;
+  gap: var(--sp-2);
   padding: 13px 28px;
-  background: #7A8A52 !important;
-  color: #fff;
+  background: var(--peken-sage-dark) !important;
+  color: var(--peken-white);
   border: none;
-  border-radius: 20px;
-  font-size: 13px;
+  border-radius: var(--r-xl);
+  font-size: var(--fs-13);
   font-weight: 700;
-  font-family: "Montserrat", system-ui, sans-serif;
+  font-family: var(--font-body);
   cursor: pointer;
-  letter-spacing: .01em;
-  transition:
-    background  180ms cubic-bezier(0.22, 0.61, 0.36, 1),
-    box-shadow  180ms cubic-bezier(0.22, 0.61, 0.36, 1);
-  box-shadow: 0 4px 14px rgba(122,138,82,.25);
+  letter-spacing: var(--ls-label);
+  transition: background var(--dur-fast) var(--ease-out),
+              box-shadow var(--dur-fast) var(--ease-out);
+  box-shadow: var(--shadow-accent);
 }
+
 .btn-submit:hover:not(:disabled) {
-  background: #4F5C30 !important;
-  box-shadow: 0 6px 20px rgba(122,138,82,.35);
+  background: var(--peken-sage-deeper) !important;
+  box-shadow: var(--shadow-lg);
 }
+
 .btn-submit:disabled { opacity: .65; cursor: not-allowed; box-shadow: none; }
 
 /* ── Divider ─────────────────────────────────────────────── */
@@ -243,35 +258,38 @@
   align-items: center;
   gap: 14px;
   margin: 22px 0;
-  color: #8a9070;
-  font-size: 12px;
+  color: var(--dash-text-muted);
+  font-size: var(--fs-12);
   font-weight: 500;
-  letter-spacing: .04em;
-  font-family: "Montserrat", system-ui, sans-serif;
+  letter-spacing: var(--ls-label);
+  font-family: var(--font-body);
 }
+
 .divider::before,
 .divider::after {
   content: "";
   flex: 1;
   height: 1px;
-  background: #e4e7d4;
+  background: var(--dash-border);
 }
 
 /* ── Register CTA ────────────────────────────────────────── */
 .register-row {
   text-align: center;
-  font-size: 13px;
-  color: #8a9070;
+  font-size: var(--fs-13);
+  color: var(--dash-text-muted);
   margin: 0;
-  font-family: "Montserrat", system-ui, sans-serif;
+  font-family: var(--font-body);
 }
+
 .register-link {
-  color: #7a8a52;
+  color: var(--dash-accent-dark);
   font-weight: 600;
   cursor: pointer;
   text-decoration: none;
-  transition: opacity 180ms;
+  transition: opacity var(--dur-fast) var(--ease-out);
 }
+
 .register-link:hover { opacity: .7; text-decoration: underline; }
 
 /* ── Event info strip ────────────────────────────────────── */
@@ -279,49 +297,53 @@
   display: flex;
   align-items: center;
   gap: 14px;
-  margin-top: 24px;
+  margin-top: var(--sp-6);
   padding: 12px 14px;
-  background: #eef0e0;
-  border: 1px solid #c8d09a;
-  border-radius: 14px;
-  transition: box-shadow 180ms;
+  background: var(--dash-accent-bg);
+  border: 1px solid var(--dash-accent-border);
+  border-radius: var(--r-md);
+  transition: box-shadow var(--dur-fast) var(--ease-out);
 }
-.event-strip:hover { box-shadow: 0 4px 12px rgba(30,32,16,.08); }
+
+.event-strip:hover { box-shadow: var(--shadow-md); }
 
 .event-strip-left {
   width: 36px;
   height: 36px;
-  background: #fff;
-  border-radius: 8px;
+  background: var(--dash-surface);
+  border-radius: var(--r-sm);
   display: flex;
   align-items: center;
   justify-content: center;
   flex-shrink: 0;
-  box-shadow: 0 1px 3px rgba(30,32,16,.06);
+  box-shadow: var(--shadow-sm);
   padding: 3px;
 }
+
 .event-strip-logo { width: 100%; height: 100%; object-fit: contain; border-radius: 5px; }
 
 .event-name {
-  font-size: 13px;
+  font-size: var(--fs-13);
   font-weight: 700;
-  color: #1e2010;
+  color: var(--dash-text-primary);
   margin-bottom: 2px;
-  font-family: "Montserrat", system-ui, sans-serif;
+  font-family: var(--font-body);
 }
+
 .event-detail {
-  font-size: 11px;
-  color: #5a6040;
-  line-height: 1.4;
-  font-family: "Montserrat", system-ui, sans-serif;
+  font-size: var(--fs-11);
+  color: var(--dash-text-secondary);
+  line-height: var(--lh-snug);
+  font-family: var(--font-body);
 }
 
 /* ── Spin animation ──────────────────────────────────────── */
 .spin { animation: spin 0.7s linear infinite; }
+
 @keyframes spin { to { transform: rotate(360deg); } }
 
 /* ── Responsive ──────────────────────────────────────────── */
 @media (max-width: 480px) {
   .login-right { padding: 28px 20px; }
-  .card-title  { font-size: 22px; }
+  .card-title  { font-size: var(--fs-20); }
 }

@@ -4,9 +4,10 @@ import { useNavigate } from "react-router-dom";
 import ConfirmLogoutModal from "../components/modals/ConfirmLogoutModal";
 import "../assets/styles/profile.css";
 
-const API_PROFIL = "http://127.0.0.1:8000/api/artisan/pengaturan/profil";
-const API_STOK   = "http://127.0.0.1:8000/api/artisan/stok";
-const API_KAS    = "http://127.0.0.1:8000/api/artisan/kas";
+const BASE       = import.meta.env.VITE_API_URL || "http://127.0.0.1:8004";
+const API_PROFIL = `${BASE}/api/artisan/pengaturan/profil`;
+const API_STOK   = `${BASE}/api/artisan/stok`;
+const API_KAS    = `${BASE}/api/artisan/kas`;
 
 function authHeaders() {
   return { Authorization: `Bearer ${localStorage.getItem("token")}` };

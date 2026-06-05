@@ -3,8 +3,9 @@ import { QrCode, Upload, Trash2, CheckCircle2, ImagePlus } from "lucide-react";
 
 const SUPABASE_URL    = import.meta.env.VITE_SUPABASE_URL;
 const SUPABASE_ANON   = import.meta.env.VITE_SUPABASE_ANON_KEY;
-const API_QRIS        = "http://127.0.0.1:8000/api/artisan/pengaturan/qris";
-const API_PROFIL      = "http://127.0.0.1:8000/api/artisan/pengaturan/profil";
+const BASE            = import.meta.env.VITE_API_URL || "http://127.0.0.1:8004";
+const API_QRIS        = `${BASE}/api/artisan/pengaturan/qris`;
+const API_PROFIL      = `${BASE}/api/artisan/pengaturan/profil`;
 
 function authHeaders() {
   return { Authorization: `Bearer ${localStorage.getItem("token")}` };

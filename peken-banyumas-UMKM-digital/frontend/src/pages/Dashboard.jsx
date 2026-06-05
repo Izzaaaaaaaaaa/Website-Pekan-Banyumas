@@ -7,9 +7,10 @@ import {
 } from "lucide-react";
 import "../assets/styles/dashboard.css";
 
-const API_STOK   = "http://127.0.0.1:8000/api/artisan/stok";
-const API_KAS    = "http://127.0.0.1:8000/api/artisan/kas";
-const API_NOTIF  = "http://127.0.0.1:8000/api/notifikasi";
+const BASE       = import.meta.env.VITE_API_URL || "http://127.0.0.1:8004";
+const API_STOK   = `${BASE}/api/artisan/stok`;
+const API_KAS    = `${BASE}/api/artisan/kas`;
+const API_NOTIF  = `${BASE}/api/notifikasi`;
 
 function authHeaders() {
   return { Authorization: `Bearer ${localStorage.getItem("token")}` };

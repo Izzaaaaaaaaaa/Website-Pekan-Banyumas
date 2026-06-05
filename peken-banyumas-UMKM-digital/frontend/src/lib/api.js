@@ -4,7 +4,7 @@
  * Response selalu dalam envelope { status, message, data }.
  */
 
-const BASE = import.meta.env.VITE_API_URL || "http://localhost:8000";
+const BASE = import.meta.env.VITE_API_URL || "http://localhost:8004";
 
 function getToken() {
   return localStorage.getItem("token");

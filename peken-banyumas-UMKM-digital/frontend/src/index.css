@@ -1,51 +1,24 @@
-@font-face {
-  font-family: "Montserrat";
-  src: url("/Montserrat-VariableFont_wght.ttf") format("truetype-variations");
-  font-weight: 100 900;
-  font-style: normal;
-  font-display: swap;
-}
-@font-face {
-  font-family: "Montserrat";
-  src: url("/Montserrat-Italic-VariableFont_wght.ttf") format("truetype-variations");
-  font-weight: 100 900;
-  font-style: italic;
-  font-display: swap;
-}
+/* =============================================================
+   Global base — Peken Banyumasan Dashboard
+   Menggunakan token dari /colors_and_type.css (Design System)
+   ============================================================= */
 
-:root {
-  --text: #6b6375;
-  --text-h: #08060d;
-  --bg: #fff;
-  --border: #e5e4e7;
-  --code-bg: #f4f3ec;
-  --accent: #aa3bff;
-  --accent-bg: rgba(170, 59, 255, 0.1);
-  --accent-border: rgba(170, 59, 255, 0.5);
-  --social-bg: rgba(244, 243, 236, 0.5);
-  --shadow:
-    rgba(0, 0, 0, 0.1) 0 10px 15px -3px, rgba(0, 0, 0, 0.05) 0 4px 6px -2px;
+/* Font sudah dimuat oleh Design System via index.html */
 
-  --sans: "Montserrat", sans-serif;
-  --heading: "Montserrat", sans-serif;
-  --mono: ui-monospace, Consolas, monospace;
-
-  font: 18px/145% var(--sans);
-  letter-spacing: 0.18px;
-  color: var(--text);
-  background: var(--bg);
-  font-synthesis: none;
-  text-rendering: optimizeLegibility;
-  -webkit-font-smoothing: antialiased;
-  -moz-osx-font-smoothing: grayscale;
-
-  @media (max-width: 1024px) {
-    font-size: 16px;
-  }
+/* ── Base reset ── */
+*, *::before, *::after {
+  box-sizing: border-box;
 }
 
 body {
   margin: 0;
+  font-family: var(--font-body);   /* "Montserrat" — dari Design System */
+  font-size: var(--fs-14);
+  line-height: var(--lh-normal);
+  color: var(--dash-text-primary);
+  background: var(--dash-bg);
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
 }
 
 #root {
@@ -57,46 +30,205 @@ body {
   box-sizing: border-box;
 }
 
-h1,
-h2 {
-  font-family: var(--heading);
-  font-weight: 500;
-  color: var(--text-h);
+/* ── Headings ── */
+h1, h2, h3, h4, h5, h6 {
+  font-family: var(--font-body);
+  color: var(--dash-text-primary);
+  margin: 0;
 }
 
-h1 {
-  font-size: 56px;
-  letter-spacing: -1.68px;
-  margin: 32px 0;
-  @media (max-width: 1024px) {
-    font-size: 36px;
-    margin: 20px 0;
-  }
-}
-h2 {
-  font-size: 24px;
-  line-height: 118%;
-  letter-spacing: -0.24px;
-  margin: 0 0 8px;
-  @media (max-width: 1024px) {
-    font-size: 20px;
-  }
-}
 p {
   margin: 0;
 }
 
-code,
-.counter {
-  font-family: var(--mono);
-  display: inline-flex;
-  border-radius: 4px;
-  color: var(--text-h);
+/* =========================
+   LAYOUT UTAMA
+========================= */
+.app-layout {
+  display: flex;
+  min-height: 100vh;
+  background: var(--dash-bg);
 }
 
-code {
-  font-size: 15px;
-  line-height: 135%;
-  padding: 4px 8px;
-  background: var(--code-bg);
+/* MAIN CONTENT */
+.main {
+  flex: 1;
+  min-height: 100vh;
+  margin-left: 260px;
+  width: calc(100% - 260px);
+  padding: var(--sp-8) 40px;
+  box-sizing: border-box;
+  overflow-x: hidden;
+}
+
+/* =========================
+   RESPONSIVE
+========================= */
+@media (max-width: 768px) {
+  .main {
+    margin-left: 0;
+    width: 100%;
+    padding: var(--sp-4);
+  }
+}
+
+/* =========================
+   MOBILE HEADER
+========================= */
+.mobile-header {
+  display: none;
+  margin: 0;
+}
+
+@media (max-width: 768px) {
+  .mobile-header {
+    display: flex;
+    align-items: center;
+    gap: var(--sp-3);
+
+    height: 72px;
+    padding: 0 18px;
+
+    background: var(--dash-bg);
+    border-bottom: 1px solid var(--dash-border);
+
+    position: sticky;
+    top: 0;
+    z-index: 100;
+
+    margin: calc(-1 * var(--sp-4)) calc(-1 * var(--sp-4)) 18px calc(-1 * var(--sp-4));
+  }
+
+  .mobile-title {
+    font-size: var(--fs-14);
+    font-weight: 700;
+    color: var(--dash-text-primary);
+    font-family: var(--font-body);
+    letter-spacing: var(--ls-normal);
+  }
+
+  .menu-toggle {
+    width: 42px;
+    height: 42px;
+
+    border-radius: var(--r-md);
+    border: 1px solid var(--dash-border-strong);
+
+    background: var(--dash-surface);
+
+    display: flex;
+    align-items: center;
+    justify-content: center;
+
+    cursor: pointer;
+
+    color: var(--dash-accent-dark);
+
+    box-shadow: var(--shadow-sm);
+
+    transition: background var(--dur-fast) var(--ease-out);
+
+    font-size: 20px;
+
+    flex-shrink: 0;
+  }
+
+  .menu-toggle:hover {
+    background: var(--dash-accent-bg);
+  }
+}
+
+/* =========================
+   TOPBAR
+========================= */
+.topbar {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: var(--sp-6);
+}
+
+.topbar-right {
+  display: flex;
+  gap: var(--sp-2);
+  align-items: center;
+}
+
+/* =========================
+   CARD
+========================= */
+.card {
+  background: var(--dash-surface);
+  border-radius: var(--r-lg);
+  padding: var(--sp-5);
+  border: 1px solid var(--dash-border);
+  margin-bottom: var(--sp-4);
+  box-shadow: var(--shadow-sm);
+}
+
+/* =========================
+   MODAL
+========================= */
+.overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background: rgba(0, 0, 0, 0.3);
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  z-index: 9999;
+}
+
+.modal {
+  background: var(--dash-surface);
+  border-radius: var(--r-lg);
+  padding: var(--sp-5);
+  width: 400px;
+  box-shadow: var(--shadow-lg);
+}
+
+.modal-hd {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: var(--sp-4);
+}
+
+.modal-body input,
+.modal-body select {
+  width: 100%;
+  padding: 10px;
+  margin-bottom: 10px;
+  font-family: var(--font-body);
+}
+
+/* ══════════════════════════════════════════════
+   TOAST
+══════════════════════════════════════════════ */
+.bk-toast {
+  position: fixed;
+  bottom: 22px;
+  right: 22px;
+  background: var(--dash-accent-dark);
+  color: var(--peken-white);
+  padding: 14px 18px;
+  border-radius: var(--r-md);
+  border: 1px solid var(--dash-accent-border);
+  font-family: var(--font-body);
+  font-size: var(--fs-13);
+  font-weight: 700;
+  box-shadow: var(--shadow-accent);
+  animation: toastIn .2s ease;
+  display: flex;
+  align-items: center;
+  gap: var(--sp-2);
+  z-index: 10000;
+}
+
+@keyframes toastIn {
+  from { opacity: 0; transform: translateY(8px); }
+  to   { opacity: 1; transform: translateY(0); }
 }

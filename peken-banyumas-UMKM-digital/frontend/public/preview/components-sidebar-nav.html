@@ -1,0 +1,60 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="UTF-8">
+<link rel="stylesheet" href="../colors_and_type.css">
+<style>
+  body { background: #f2f4e8; padding: 20px; margin: 0; font-family: 'Montserrat', sans-serif; display: flex; gap: 16px; }
+  /* Sidebar */
+  .sidebar { width: 260px; background: #1B1B1B; border-radius: 16px; padding: 20px; display: flex; flex-direction: column; gap: 4px; }
+  .sidebar-logo { display: flex; align-items: center; gap: 10px; padding: 10px 10px 18px; border-bottom: 1px solid rgba(255,255,255,.08); margin-bottom: 10px; }
+  .sidebar-logo img { width: 36px; height: 36px; border-radius: 9px; object-fit: cover; }
+  .sidebar-logo-text { font-size: 15px; font-weight: 700; color: #fff; }
+  .sidebar-logo-sub { font-size: 10px; color: #8a9070; letter-spacing: .06em; text-transform: uppercase; }
+  .nav-label { font-size: 10px; font-weight: 700; color: #4a5040; text-transform: uppercase; letter-spacing: .1em; padding: 10px 12px 4px; }
+  .nav-item { display: flex; align-items: center; gap: 10px; padding: 10px 14px; border-radius: 10px; font-size: 13px; font-weight: 500; color: #b0b8a0; cursor: pointer; transition: background .15s; }
+  .nav-item.active { background: rgba(195,202,150,.13); color: #C3CA96; }
+  .nav-item:not(.active):hover { background: rgba(255,255,255,.04); color: #d0d4b8; }
+  .nav-dot { width: 18px; height: 18px; border-radius: 5px; background: rgba(195,202,150,.15); display: flex; align-items: center; justify-content: center; font-size: 11px; }
+  .nav-dot.active-dot { background: rgba(195,202,150,.22); color: #C3CA96; }
+  /* Header */
+  .header { background: #fff; border: 1px solid #e4e7d4; border-radius: 16px; padding: 14px 24px; display: flex; justify-content: space-between; align-items: center; width: 400px; }
+  .hdr-title { font-size: 15px; font-weight: 700; color: #1e2010; }
+  .hdr-sub { font-size: 11px; color: #8a9070; margin-top: 2px; }
+  .hdr-badge { background: #eef4eb; border: 1px solid #b8d4b0; color: #7A9B6A; font-size: 10px; font-weight: 700; border-radius: 9999px; padding: 3px 10px; display: inline-flex; align-items: center; gap: 4px; }
+  .hdr-pulse { width: 6px; height: 6px; border-radius: 50%; background: #7A9B6A; animation: pulse 1.5s infinite; }
+  .avatar { width: 36px; height: 36px; border-radius: 50%; background: #eef0e0; color: #4f5c30; font-weight: 700; font-size: 14px; display: flex; align-items: center; justify-content: center; }
+  @keyframes pulse { 0%,100%{opacity:1} 50%{opacity:.4} }
+</style>
+</head>
+<body>
+  <div class="sidebar">
+    <div class="sidebar-logo">
+      <img src="../assets/logo-gate.png" alt="logo">
+      <div><div class="sidebar-logo-text">Peken</div><div class="sidebar-logo-sub">Banyumasan</div></div>
+    </div>
+    <div class="nav-label">Menu Utama</div>
+    <div class="nav-item active"><span class="nav-dot active-dot">◈</span>Dashboard</div>
+    <div class="nav-item"><span class="nav-dot">◈</span>Kolaborator</div>
+    <div class="nav-item"><span class="nav-dot">◈</span>Artisan</div>
+    <div class="nav-item"><span class="nav-dot">◈</span>Laporan</div>
+    <div class="nav-item"><span class="nav-dot">◈</span>Kelola Event</div>
+    <div class="nav-item"><span class="nav-dot">◈</span>Pengaturan Akun</div>
+    <div class="nav-label" style="margin-top:8px">Halaman Publik</div>
+    <div class="nav-item"><span class="nav-dot">◈</span>Display Monitor ↗</div>
+    <div class="nav-item"><span class="nav-dot">◈</span>Company Profile ↗</div>
+  </div>
+  <div style="display:flex;flex-direction:column;gap:12px">
+    <div class="header">
+      <div>
+        <div style="display:flex;align-items:center;gap:8px">
+          <div class="hdr-title">Dashboard Real-time</div>
+          <div class="hdr-badge"><span class="hdr-pulse"></span>Festival Budaya 2025</div>
+        </div>
+        <div class="hdr-sub">Pantau pergerakan pengunjung event hari ini</div>
+      </div>
+      <div class="avatar">A</div>
+    </div>
+  </div>
+</body>
+</html>

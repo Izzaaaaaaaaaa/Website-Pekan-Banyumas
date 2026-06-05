@@ -2,10 +2,11 @@ import { useState, useEffect, useCallback } from 'react';
 import "../assets/styles/event.css";
 import { Store, Calendar, MapPin, Users, Clock, RefreshCcw, Lock, Inbox } from "lucide-react";
 
-const API_EVENTS  = "http://127.0.0.1:8000/api/event";
-const API_DAFTAR  = "http://127.0.0.1:8000/api/event/daftar";
-const API_SAYA    = "http://127.0.0.1:8000/api/event/saya";
-const API_UBAH    = "http://127.0.0.1:8000/api/event/ubah-stand";
+const BASE        = import.meta.env.VITE_API_URL || "http://127.0.0.1:8004";
+const API_EVENTS  = `${BASE}/api/event`;
+const API_DAFTAR  = `${BASE}/api/event/daftar`;
+const API_SAYA    = `${BASE}/api/event/saya`;
+const API_UBAH    = `${BASE}/api/event/ubah-stand`;
 
 function authHeaders() {
   return {
