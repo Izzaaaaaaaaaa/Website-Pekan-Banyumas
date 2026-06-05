@@ -2,6 +2,30 @@
    riwayat.css  —  Riwayat Transaksi page styles
    ============================================================ */
 
+   :root{
+
+--rw-bg:#FCFCF8;
+
+--rw-soft:#F7F8F2;
+
+--rw-soft2:#F3F4ED;
+
+--rw-line:#E7E8DE;
+
+--rw-title:#23271F;
+
+--rw-text:#707767;
+
+--rw-main:#7A8D52;
+
+--rw-main-dark:#667644;
+
+--rw-main-soft:#EEF3E7;
+
+--rw-warning:#C49A4B;
+
+}
+
 /* ── Page ────────────────────────────────────────────────── */
 .rw-page {
   padding: 0 0 40px;
@@ -17,44 +41,13 @@
   flex-wrap: wrap;
 }
 
-.rw-eyebrow {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-
-  font-size: 12px;
-  font-weight: 600;
-  color: #e5a82e;
-  letter-spacing: 0.05em;
-  text-transform: uppercase;
-  margin-bottom: 4px;
-}
-
-.rw-eyebrow svg,
 .rw-search-icon svg,
 .rw-info-icon svg,
 .rw-btn-export svg,
 .rw-btn-detail svg,
 .rw-status svg {
   vertical-align: middle;
-}
-
-.rw-title {
-  font-size: 28px;
-  font-weight: 800;
-  color: #1a3a2a;
-  line-height: 1.1;
-}
-
-.rw-title em {
-  font-style: italic;
-  color: #2f6f4e;
-}
-
-.rw-subtitle {
-  font-size: 13px;
-  color: #888;
-  margin-top: 4px;
+  color: var(--rw-main);
 }
 
 /* ── Topbar actions (search + export) ────────────────────── */
@@ -84,76 +77,161 @@
   border-radius: 10px;
   font-size: 14px;
   font-weight: 600;
-  color: #2f6f4e;
+  color: var(--rw-main);
   cursor: pointer;
   transition: background 0.15s, border-color 0.15s;
   white-space: nowrap;
 }
 
 .rw-btn-export:hover {
-  background: #f0f9f4;
-  border-color: #b7d7c4;
+  background: var(--rw-bg);
+  border-color: var(--rw-text);
+}
+
+/* Search box (menggantikan .ms-search yang lama) */
+.rw-search-box {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  background: #fff;
+  border: 1px solid #dde8e2;
+  border-radius: 10px;
+  padding: 9px 14px;
+  min-width: 240px;
+}
+ 
+.rw-search-box input {
+  border: none;
+  outline: none;
+  font-size: 14px;
+  color: #333;
+  background: transparent;
+  width: 100%;
+}
+ 
+.rw-search-box input::placeholder {
+  color: #aaa;
+}
+ 
+.rw-search-icon {
+  color: #9cb4a8;
+  flex-shrink: 0;
 }
 
 /* ── Info banner ─────────────────────────────────────────── */
-.rw-info-banner {
+.rw-info-banner{
   display: flex;
-  justify-content: space-between;
   align-items: center;
-  background: #eef7f1;
-  border: 1px solid #b7d7c4;
-  border-radius: 14px;
-  padding: 14px 18px;
-  margin-bottom: 20px;
-  flex-wrap: wrap;
-  gap: 12px;
+  justify-content: space-between;
+  background: #F7F8F1;
+  border: 1.5px solid #D4D9BF;
+  border-radius: 30px;
+  padding: 20px 26px;
+  margin-bottom: 22px;
+  transition: .2s ease;
+}
+
+.rw-info-banner:hover{
+  background: #FAFBF6;
 }
 
 .rw-info-left {
   display: flex;
   align-items: center;
-  gap: 12px;
+  gap: 18px;
 }
 
-.rw-info-icon {
-  font-size: 22px;
-}
-
-.rw-info-left strong {
-  font-size: 14px;
-  color: #1a3a2a;
-}
-
-.rw-info-sub {
-  font-size: 12px;
-  color: #666;
-  margin-top: 2px;
-}
-
-.rw-badges {
+.rw-avatar{
+  width: 56px;
+  height: 56px;
+  color: #FCFCF8;
+  background:
+    linear-gradient(
+      135deg,
+      #819058 0%,
+      #73824B 100%
+    );
+  border-radius: 18px;
   display: flex;
-  gap: 8px;
+  align-items: center;
+  justify-content: center;
+  box-shadow:
+  0 10px 20px
+  rgba(122,138,82,.16);
+  flex-shrink: 0;
+}
+
+.rw-info-name{
+  font-size: 18px;
+  font-weight: 700;
+  color: #1C2417;
+  line-height: 1.25;
+  letter-spacing: -.02em;
+}
+
+.rw-info-sub{
+  margin-top: 4px;
+  font-size: 13px;
+  font-weight: 500;
+  color: #8A907F;
+}
+
+.rw-banner-right{
+  display: flex;
+  align-items: center;
+  gap: 10px;
   flex-wrap: wrap;
 }
 
-.rw-badge-green {
-  background: #d4edda;
-  color: #2f6f4e;
-  font-size: 12px;
-  font-weight: 600;
-  padding: 5px 12px;
+.rw-badge-active{
+  display: inline-flex;
+  align-items: right;
+  gap: 6px;
+  padding: 8px 16px;
   border-radius: 999px;
-  white-space: nowrap;
+  background: #F0F4EA;
+  border: 1px solid #D2DAC4;
+  color: #68814B;
+  font-size: 13px;
+  font-weight: 700;
 }
 
-.rw-badge-orange {
-  background: #ffedd5;
-  color: #c05621;
-  font-size: 12px;
-  font-weight: 600;
-  padding: 5px 12px;
+.rw-badge-warn{
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 8px 16px;
   border-radius: 999px;
-  white-space: nowrap;
+  background: #FBF6E7;
+  border: 1px solid #E9DBAA;
+  color: #A67A1A;
+  font-size: 13px;
+  font-weight: 700;
+  position: absolute;
+}
+
+.kios-badge-warn svg{
+  width:14px;
+  height:14px;
+}
+
+.rw-badge-warn:hover{
+  background:#F8EBCF;
+}
+
+@media (max-width:820px){
+
+.rw-info-left{
+
+flex-direction:column;
+
+align-items:flex-start;
+}
+
+.rw-banner-right{
+
+margin-left:0;
+}
 }
 
 /* ── Table card ──────────────────────────────────────────── */
@@ -324,9 +402,9 @@
   letter-spacing: 0.3px;
 }
 .rw-metode-tunai {
-  background: #f0fdf4;
-  color: #16a34a;
-  border: 1px solid #bbf7d0;
+  background: #F7F8F2;
+  color: #93A468;;
+  border: 1px solid #DCE3CB;
 }
 .rw-metode-qris {
   background: #eff6ff;

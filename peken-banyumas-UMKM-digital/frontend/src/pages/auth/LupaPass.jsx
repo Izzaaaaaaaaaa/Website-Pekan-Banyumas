@@ -6,13 +6,12 @@ import {
   Loader2, RefreshCw, ShieldCheck,
 } from "lucide-react";
 import logobanyumas from "../../assets/images/logo-banyumas.png";
-import logo         from "../../assets/images/logo.jpeg";
+import logo         from "../../assets/images/logo.png";
 import "../../assets/styles/lupapass.css";
 
 /* ─── CONFIG ─── */
 const ADMIN_PHONE = "6282192058122"; // nomor WA admin
 const OTP_LENGTH  = 4;
-const DUMMY_OTP   = "1234"; // untuk simulasi — di produksi admin kirim manual
 
 /* ─── STEPS ─── */
 const STEPS = [
@@ -27,9 +26,11 @@ export default function ForgotPassword() {
 
   const [step, setStep]       = useState(1);
   const [phone, setPhone]     = useState("");
+  const [phoneClean, setPhoneClean] = useState(""); // nomor bersih, konsisten di semua step
   const [phoneError, setPhoneError] = useState("");
 
-  // OTP state — array of single chars
+  const [otpGenerated, setOtpGenerated] = useState(false);
+  const [otpGenError, setOtpGenError]   = useState("");
   const [otp, setOtp]         = useState(Array(OTP_LENGTH).fill(""));
   const [otpError, setOtpError] = useState("");
   const [otpVerifying, setOtpVerifying] = useState(false);
@@ -58,13 +59,22 @@ export default function ForgotPassword() {
     if (!clean) { setPhoneError("Nomor HP wajib diisi"); return; }
     if (clean.length < 9 || clean.length > 15) { setPhoneError("Nomor HP tidak valid"); return; }
     setPhoneError("");
+    setPhoneClean(clean); // simpan versi bersih sekali, pakai konsisten
     setStep(2);
   };
 
   /* ── STEP 2: open WA ── */
-  const handleOpenWA = () => {
-    const clean = phone.replace(/\D/g, "");
-    const msg   = `Halo Admin Peken Banyumas,\n\nSaya ingin mereset password akun artisan saya.\n\n📱 *No. HP Terdaftar:* ${phone}\n\nMohon kirimkan kode OTP untuk reset password. Terima kasih!`;
+  const handleOpenWA = async () => {
+    // Generate OTP ke DB dulu
+    try {
+      await fetch("http://127.0.0.1:8000/api/auth/otp/request", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ phone: phoneClean, purpose: "password_reset" }),
+      });
+    } catch { /* ignore — WA tetap dibuka */ }
+
+    const msg = `Halo Admin Peken Banyumas,\n\nSaya ingin mereset password akun artisan saya.\n\n📱 *No. HP Terdaftar:* ${phone}\n\nMohon kirimkan kode OTP untuk reset password. Terima kasih!`;
     window.open(`https://wa.me/${ADMIN_PHONE}?text=${encodeURIComponent(msg)}`, "_blank");
     setResendCooldown(60);
   };
@@ -98,37 +108,59 @@ export default function ForgotPassword() {
     e.preventDefault();
   };
 
-  const handleVerifyOtp = () => {
+  const handleVerifyOtp = async () => {
     const entered = otp.join("");
     if (entered.length < OTP_LENGTH) { setOtpError("Masukkan kode OTP lengkap"); return; }
     setOtpVerifying(true);
-    setTimeout(() => {
-      if (entered === DUMMY_OTP) {
-        setOtpError("");
-        setOtpVerifying(false);
-        setStep(4);
-      } else {
-        setOtpError("Kode OTP salah. Coba lagi.");
+    try {
+      const res = await fetch("http://127.0.0.1:8000/api/auth/otp/verify", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ phone: phoneClean, code: entered, purpose: "password_reset" }),
+      });
+      const data = await res.json();
+      if (!res.ok) {
+        setOtpError(data.detail || "Kode OTP salah. Coba lagi.");
         setOtpVerifying(false);
         setOtp(Array(OTP_LENGTH).fill(""));
         otpRefs.current[0]?.focus();
+        return;
       }
-    }, 1000);
+      setOtpError("");
+      setOtpVerifying(false);
+      setStep(4);
+    } catch {
+      setOtpError("Gagal terhubung ke server.");
+      setOtpVerifying(false);
+    }
   };
 
   /* ── STEP 4: new password ── */
-  const handleSavePassword = () => {
+  const handleSavePassword = async () => {
     if (!newPass) { setPassError("Password baru wajib diisi"); return; }
     if (newPass.length < 6) { setPassError("Password minimal 6 karakter"); return; }
     if (newPass !== confirmPass) { setPassError("Konfirmasi password tidak cocok"); return; }
     setPassError("");
     setSaving(true);
-    setTimeout(() => {
+    try {
+      const res = await fetch("http://127.0.0.1:8000/api/auth/password/reset", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          phone: phoneClean,
+          code: otp.join(""),
+          new_password: newPass,
+        }),
+      });
+      const data = await res.json();
+      if (!res.ok) { setPassError(data.detail || "Gagal reset password"); setSaving(false); return; }
       setSaving(false);
       setDone(true);
-      // redirect to login after 2s
       setTimeout(() => navigate("/login"), 2200);
-    }, 1200);
+    } catch {
+      setPassError("Gagal terhubung ke server");
+      setSaving(false);
+    }
   };
 
   /* ── password strength ── */
@@ -346,11 +378,6 @@ export default function ForgotPassword() {
               <button className="fp-btn-ghost" onClick={() => { setOtp(Array(OTP_LENGTH).fill("")); setStep(2); }}>
                 <ArrowLeft size={15} /> Kembali
               </button>
-
-              {/* Simulasi label */}
-              <div className="fp-sim-note">
-                <span>🔧 Simulasi: gunakan kode <strong>{DUMMY_OTP}</strong></span>
-              </div>
             </>
           )}
 

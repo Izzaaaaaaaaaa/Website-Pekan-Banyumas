@@ -1,14 +1,31 @@
 import { useNavigate, useLocation } from "react-router-dom";
 import { useState } from "react";
-import { Home, Box, Book, Ticket, FileText, Settings, User } from "lucide-react";
+import { useEffect } from "react";
+import { Home, Box, Book, Ticket, FileText, Settings, User, Globe } from "lucide-react";
 import "../assets/styles/sidebar.css";
-import logo from "../assets/images/logo.jpeg";
+import logo from "../assets/images/logo.png";
 import ConfirmLogoutModal from "./modals/ConfirmLogoutModal";
 
 export default function Sidebar({ open, setOpen }) {
   const navigate = useNavigate();
   const location = useLocation();
   const [showLogout, setShowLogout] = useState(false);
+
+  const nama  = localStorage.getItem("nama")  || "Artisan";
+  const email = localStorage.getItem("email") || "";
+  const initials = nama.split(" ").map(w => w[0]).join("").slice(0, 2).toUpperCase();
+
+  const [profilePhoto, setProfilePhoto] = useState(
+    localStorage.getItem("profilePhoto")
+  );
+
+  useEffect(() => {
+    const sync = () => {
+      setProfilePhoto(localStorage.getItem("profilePhoto"));
+    };
+    window.addEventListener("storage", sync);
+    return () => window.removeEventListener("storage", sync);
+  }, []);
 
   const menu = [
     { path: "/", label: "Dashboard", icon: <Home size={18} /> },
@@ -43,8 +60,8 @@ export default function Sidebar({ open, setOpen }) {
 
           <div className="sb-kios">
             <p className="lbl">KIOS ANDA</p>
-            <h3>Sate Blengong Bu Yati</h3>
-            <span>Stand A-12 · Zona Kuliner</span>
+            <h3>{nama}</h3>
+            <span>{email}</span>
           </div>
         </div>
 
@@ -97,11 +114,25 @@ export default function Sidebar({ open, setOpen }) {
 
         {/* FOOTER PROFILE — klik untuk logout */}
         <div className="sb-divider" />
+        <div
+            className="si"
+            onClick={() => {
+              window.open("/", "_blank");
+              setOpen(false);
+            }}
+          >
+            <span className="icon"><Globe size={15} /></span>
+            <span className="si-label">Beranda Publik</span>
+          </div>
         <div className="sb-profile" onClick={() => setShowLogout(true)}>
-          <div className="avatar">BY</div>
+          <div className="avatar">{profilePhoto ? (
+            <img src={profilePhoto} alt="profile" 
+            className="sb-avatar-img"
+            />): initials}
+          </div>
           <div className="sb-profile-info">
-            <strong>Bu Yati</strong>
-            <p>Pemilik · Stand A-12</p>
+            <strong>{nama}</strong>
+            <p>{email}</p>
           </div>
           <span className="sb-profile-arrow">›</span>
         </div>
@@ -112,7 +143,7 @@ export default function Sidebar({ open, setOpen }) {
       <ConfirmLogoutModal
         show={showLogout}
         onClose={() => setShowLogout(false)}
-        userName="Bu Yati"
+        userName={nama}
       />
     </>
   );

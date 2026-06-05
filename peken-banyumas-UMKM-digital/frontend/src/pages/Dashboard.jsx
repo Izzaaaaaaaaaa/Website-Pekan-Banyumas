@@ -7,10 +7,16 @@ import {
 } from "lucide-react";
 import "../assets/styles/dashboard.css";
 
-// ── FORMAT RUPIAH ────────────────────────────────────────
+const API_STOK   = "http://127.0.0.1:8000/api/artisan/stok";
+const API_KAS    = "http://127.0.0.1:8000/api/artisan/kas";
+const API_NOTIF  = "http://127.0.0.1:8000/api/notifikasi";
+
+function authHeaders() {
+  return { Authorization: `Bearer ${localStorage.getItem("token")}` };
+}
+
 const fmt = (n) => new Intl.NumberFormat("id-ID").format(n);
 
-// ── GREETING ─────────────────────────────────────────────
 function getGreeting() {
   const h = new Date().getHours();
   if (h < 11) return "Selamat Pagi";
@@ -19,17 +25,14 @@ function getGreeting() {
   return "Selamat Malam";
 }
 
-// ── TANGGAL ──────────────────────────────────────────────
 function getTanggalHari() {
   return new Date().toLocaleDateString("id-ID", {
     weekday: "long", day: "numeric", month: "long", year: "numeric"
   });
 }
 
-// ── COUNTDOWN ────────────────────────────────────────────
 function Countdown() {
   const [hari, setHari] = useState("00");
-
   useEffect(() => {
     function tick() {
       const diff = new Date("2026-03-22T08:00:00+07:00") - new Date();
@@ -40,7 +43,6 @@ function Countdown() {
     const id = setInterval(tick, 3600000);
     return () => clearInterval(id);
   }, []);
-
   return (
     <div className="cd-boxes">
       <div className="cd-box">
@@ -51,7 +53,6 @@ function Countdown() {
   );
 }
 
-// ── STAT CARD ─────────────────────────────────────────────
 function StatCard({ icon, label, value, unit, badge, badgeType }) {
   return (
     <div className="stat">
@@ -66,7 +67,6 @@ function StatCard({ icon, label, value, unit, badge, badgeType }) {
   );
 }
 
-// ── CHART BAR MINI ────────────────────────────────────────
 function MiniChart({ data }) {
   const mx = Math.max(...data.map(d => d.omzet), 1);
   return (
@@ -84,70 +84,85 @@ function MiniChart({ data }) {
   );
 }
 
-// ── MAIN ─────────────────────────────────────────────────
 export default function Dashboard() {
   const navigate = useNavigate();
+  const nama     = localStorage.getItem("nama") || "Artisan";
 
-  // ── STATE ──────────────────────────────────────────────
-  const [items,   setItems]   = useState([]);
-  const [kasData, setKasData] = useState([]);
-  const [riwayat, setRiwayat] = useState([]);
+  const [stokItems,  setStokItems]  = useState(() => {
+    try { return JSON.parse(localStorage.getItem("cache_stok") || "[]"); } catch { return []; }
+  });
+  const [kasData,    setKasData]    = useState(() => {
+    try { return JSON.parse(localStorage.getItem("cache_kas") || "[]"); } catch { return []; }
+  });
+  const [unreadNotif, setUnreadNotif] = useState(0);
+  const [loading,    setLoading]    = useState(true);
 
-  // ── LOAD DATA ──────────────────────────────────────────
   useEffect(() => {
-    const loadAll = () => {
-      setItems  (JSON.parse(localStorage.getItem("items")   || "[]"));
-      setKasData(JSON.parse(localStorage.getItem("kas")     || "[]"));
-      setRiwayat(JSON.parse(localStorage.getItem("riwayat") || "[]"));
-    };
-    loadAll();
-    window.addEventListener("storage", loadAll);
-    return () => window.removeEventListener("storage", loadAll);
+    const token = localStorage.getItem("token");
+    if (!token) return;
+
+    Promise.all([
+      fetch(API_STOK,  { headers: authHeaders() }).then(r => r.json()).catch(() => []),
+      fetch(API_KAS,   { headers: authHeaders() }).then(r => r.json()).catch(() => []),
+      fetch(API_NOTIF, { headers: authHeaders() }).then(r => r.json()).catch(() => []),
+    ]).then(([stok, kas, notif]) => {
+      const stokArr  = Array.isArray(stok)  ? stok  : [];
+      const kasArr   = Array.isArray(kas)   ? kas   : [];
+      setStokItems(stokArr);
+      setKasData(kasArr);
+      setUnreadNotif(Array.isArray(notif) ? notif.filter(n => !n.read).length : 0);
+      // simpan cache
+      try {
+        localStorage.setItem("cache_stok", JSON.stringify(stokArr));
+        localStorage.setItem("cache_kas",  JSON.stringify(kasArr));
+      } catch {}
+      setLoading(false);
+    });
   }, []);
 
-  // ── DERIVED: STOK ──────────────────────────────────────
-  const stokKritis   = items.filter(i => i.stok <= (i.stokMin ?? 5));
-  const namaKritis   = stokKritis.slice(0, 2).map(i => i.nama).join(" & ");
-
-  // ── DERIVED: OMSET HARI INI ────────────────────────────
-  const todayStr = new Date().toLocaleDateString("id-ID", {
-    day: "numeric", month: "short", year: "numeric"
+  // ── DERIVED: STOK KRITIS ──
+  // item dianggap kritis jika stok <= stok_min (dan stok_min > 0)
+  const stokKritis = stokItems.filter(i => {
+    const min = i.stok_min ?? 0;
+    return min > 0 && i.stok <= min;
   });
+  const namaKritis = stokKritis.slice(0, 2).map(i => i.nama).join(" & ");
+
+  // ── DERIVED: OMSET HARI INI ──
+  const todayISO = new Date().toISOString().split("T")[0];
   const omsetHariIni = kasData
-    .filter(k => k.jenis === "masuk" && k.tgl === todayStr)
-    .reduce((a, b) => a + b.nominal, 0);
+    .filter(k => k.jenis === "masuk" && k.tgl === todayISO)
+    .reduce((a, b) => a + Number(b.nominal), 0);
 
-  // ── DERIVED: TRANSAKSI HARI INI ────────────────────────
-  const trxHariIni = riwayat.filter(r => r.tgl === todayStr).length;
+  // ── DERIVED: TRANSAKSI HARI INI ──
+  const trxHariIni = kasData.filter(k => k.jenis === "masuk" && k.tgl === todayISO).length;
 
-  // ── DERIVED: SALDO KAS ─────────────────────────────────
-  const totalMasuk  = kasData.filter(k => k.jenis === "masuk" ).reduce((a, b) => a + b.nominal, 0);
-  const totalKeluar = kasData.filter(k => k.jenis === "keluar").reduce((a, b) => a + b.nominal, 0);
+  // ── DERIVED: SALDO ──
+  const totalMasuk  = kasData.filter(k => k.jenis === "masuk" ).reduce((a, b) => a + Number(b.nominal), 0);
+  const totalKeluar = kasData.filter(k => k.jenis === "keluar").reduce((a, b) => a + Number(b.nominal), 0);
   const saldo       = totalMasuk - totalKeluar;
 
-  // ── DERIVED: CHART 7 HARI ──────────────────────────────
+  // ── DERIVED: CHART 7 HARI ──
   const chartData = (() => {
     const days = ["Min","Sen","Sel","Rab","Kam","Jum","Sab"];
     return Array.from({ length: 7 }, (_, i) => {
-      const d   = new Date();
+      const d = new Date();
       d.setDate(d.getDate() - (6 - i));
-      const tgl = d.toLocaleDateString("id-ID", {
-        day: "numeric", month: "short", year: "numeric"
-      });
+      const tgl = d.toISOString().split("T")[0];
       return {
         label: days[d.getDay()],
-        omzet: kasData
-          .filter(k => k.jenis === "masuk" && k.tgl === tgl)
-          .reduce((a, b) => a + b.nominal, 0),
-        trx: riwayat.filter(r => r.tgl === tgl).length,
+        omzet: kasData.filter(k => k.jenis === "masuk" && k.tgl === tgl).reduce((a, b) => a + Number(b.nominal), 0),
+        trx:   kasData.filter(k => k.jenis === "masuk" && k.tgl === tgl).length,
       };
     });
   })();
 
-  // ── DERIVED: TRANSAKSI TERAKHIR (5 terakhir) ───────────
-  const trxTerakhir = riwayat.slice(0, 5);
+  // ── DERIVED: TRANSAKSI TERAKHIR ──
+  const trxTerakhir = kasData
+    .filter(k => k.jenis === "masuk")
+    .sort((a, b) => new Date(b.created_at) - new Date(a.created_at))
+    .slice(0, 5);
 
-  // ── FORMAT OMSET ──────────────────────────────────────
   const fmtOmset = (n) => {
     if (n >= 1_000_000) return { val: (n / 1_000_000).toFixed(1), unit: "jt" };
     if (n >= 1_000)     return { val: (n / 1_000).toFixed(0),     unit: "rb" };
@@ -157,30 +172,29 @@ export default function Dashboard() {
 
   return (
     <div className="dashboard">
-
       {/* ── TOPBAR ── */}
       <div className="topbar">
         <div>
           <div className="pg-eye">{getGreeting()}</div>
-          <div className="pg-title">Halo, <em>Bu Yati</em></div>
-          <div className="pg-sub">{getTanggalHari()} · H-12 menuju Peken Banyumas</div>
+          <div className="pg-title">Halo, <em>{nama}</em></div>
+          <div className="pg-sub">{getTanggalHari()}</div>
         </div>
         <div className="topbar-actions">
           <button className="btn-bell" onClick={() => navigate("/notifikasi")} title="Notifikasi">
             <Bell size={18} />
-            {stokKritis.length > 0 && (
-              <span className="bell-dot">{stokKritis.length}</span>
+            {(stokKritis.length + unreadNotif) > 0 && (
+              <span className="bell-dot">{stokKritis.length + unreadNotif}</span>
             )}
           </button>
         </div>
       </div>
 
-      {/* ── COUNTDOWN BANNER ── */}
+      {/* ── COUNTDOWN ── */}
       <div className="cd-banner">
         <div>
           <div className="cd-lbl">Acara Dimulai Dalam</div>
           <div className="cd-title">Peken Banyumas</div>
-          <div className="cd-sub">Stand A-12 · Zona Kuliner · Masuk Gratis</div>
+          <div className="cd-sub">Masuk Gratis</div>
         </div>
         <Countdown />
       </div>
@@ -194,67 +208,64 @@ export default function Dashboard() {
               {stokKritis.length} barang stok hampir habis
               {namaKritis ? ` — ${namaKritis}` : ""}
             </div>
-            <div className="alert-sub">
-              Segera update stok sebelum acara dimulai → klik untuk kelola
-            </div>
+            <div className="alert-sub">Segera update stok → klik untuk kelola</div>
           </div>
         </div>
       )}
 
       {/* ── STATS ── */}
-      <div className="stats">
-        <StatCard
-          icon={<Package size={20} className="icon-stats" />}
-          label="Total Produk Kios"
-          value={String(items.length)}
-          unit="item"
-          badge={items.length > 0 ? `${items.length} produk aktif` : "Belum ada produk"}
-          badgeType="green"
-        />
-        <StatCard
-          icon={<Banknote size={20} className="icon-stats" />}
-          label="Omset Hari Ini"
-          value={omsetHariIni > 0 ? `Rp ${omset.val}` : "Rp 0"}
-          unit={omset.unit || undefined}
-          badge={omsetHariIni > 0 ? "▲ dari kemarin" : "Belum ada"}
-          badgeType={omsetHariIni > 0 ? "green" : "warn"}
-        />
-        <StatCard
-          icon={<ShoppingBasket size={20} className="icon-stats" />}
-          label="Transaksi Hari Ini"
-          value={String(trxHariIni)}
-          unit="trx"
-          badge={trxHariIni > 0 ? `${trxHariIni} transaksi` : "Belum ada"}
-          badgeType={trxHariIni > 0 ? "green" : "warn"}
-        />
-        <StatCard
-          icon={<AlertOctagon size={20} className="icon-stats" />}
-          label="Stok Kritis"
-          value={String(stokKritis.length)}
-          unit="item"
-          badge={stokKritis.length > 0 ? "Perlu restok" : "Aman"}
-          badgeType={stokKritis.length > 0 ? "warn" : "green"}
-        />
-      </div>
+      {loading && stokItems.length === 0 ? (
+        <div style={{ padding: 24, textAlign: "center", color: "#9ca3af" }}>Memuat data...</div>
+      ) : (
+        <div className="stats">
+          <StatCard
+            icon={<Package size={20} className="icon-stats" />}
+            label="Total Produk Kios"
+            value={String(stokItems.length)}
+            unit="item"
+            badge={stokItems.length > 0 ? `${stokItems.length} produk aktif` : "Belum ada produk"}
+            badgeType="green"
+          />
+          <StatCard
+            icon={<Banknote size={20} className="icon-stats" />}
+            label="Omset Hari Ini"
+            value={omsetHariIni > 0 ? `Rp ${omset.val}` : "Rp 0"}
+            unit={omset.unit || undefined}
+            badge={omsetHariIni > 0 ? "▲ dari kemarin" : "Belum ada"}
+            badgeType={omsetHariIni > 0 ? "green" : "warn"}
+          />
+          <StatCard
+            icon={<ShoppingBasket size={20} className="icon-stats" />}
+            label="Transaksi Hari Ini"
+            value={String(trxHariIni)}
+            unit="trx"
+            badge={trxHariIni > 0 ? `${trxHariIni} transaksi` : "Belum ada"}
+            badgeType={trxHariIni > 0 ? "green" : "warn"}
+          />
+          <StatCard
+            icon={<AlertOctagon size={20} className="icon-stats" />}
+            label="Stok Kritis"
+            value={String(stokKritis.length)}
+            unit="item"
+            badge={stokKritis.length > 0 ? "Perlu restok" : "Aman"}
+            badgeType={stokKritis.length > 0 ? "warn" : "green"}
+          />
+        </div>
+      )}
 
       {/* ── MID GRID ── */}
       <div className="mid-grid">
-
-        {/* CHART PENJUALAN */}
         <div className="card">
           <div className="card-head">
             <div>
               <h3>Penjualan Minggu Ini</h3>
-              <p className="card-sub">Kios Sate Blengong Bu Yati · Stand A-12</p>
+              <p className="card-sub">{nama}</p>
             </div>
             <span className="link" onClick={() => navigate("/riwayat")}>Riwayat →</span>
           </div>
 
           {kasData.length === 0 ? (
-            <div className="dash-empty">
-              <Inbox size={32} />
-              <p>Belum ada data transaksi</p>
-            </div>
+            <div className="dash-empty"><Inbox size={32} /><p>Belum ada data transaksi</p></div>
           ) : (
             <MiniChart data={chartData} />
           )}
@@ -264,7 +275,6 @@ export default function Dashboard() {
             <div><span className="dot w" /> Jml Transaksi</div>
           </div>
 
-          {/* Ringkasan saldo kas */}
           <div className="kas-summary-row">
             <div className="kas-sum-item">
               <span className="kas-sum-lbl">Total Masuk</span>
@@ -283,13 +293,12 @@ export default function Dashboard() {
           </div>
         </div>
 
-        {/* AKSI CEPAT */}
         <div className="card">
           <h3>Aksi Cepat</h3>
           <button className="quick-btn primary"   onClick={() => navigate("/stok")}>
             <Box size={18} /> Tambah Barang ke Stok
           </button>
-          <button className="quick-btn secondary" onClick={() => navigate("/evento")}>
+          <button className="quick-btn secondary" onClick={() => navigate("/event")}>
             <Ticket size={18} /> Daftar Event Baru
           </button>
           <button className="quick-btn ghost"     onClick={() => navigate("/riwayat")}>
@@ -303,8 +312,6 @@ export default function Dashboard() {
 
       {/* ── BOTTOM GRID ── */}
       <div className="bot-grid">
-
-        {/* TRANSAKSI TERAKHIR */}
         <div className="card">
           <div className="card-head">
             <div>
@@ -313,29 +320,24 @@ export default function Dashboard() {
             </div>
             <span className="link" onClick={() => navigate("/riwayat")}>Semua →</span>
           </div>
-
           {trxTerakhir.length === 0 ? (
-            <div className="dash-empty">
-              <Inbox size={28} />
-              <p>Belum ada transaksi</p>
-            </div>
+            <div className="dash-empty"><Inbox size={28} /><p>Belum ada transaksi</p></div>
           ) : (
             trxTerakhir.map((t) => (
               <div key={t.id} className="trx" onClick={() => navigate("/riwayat")}>
                 <span className="trx-dot" />
                 <div className="trx-info">
                   <span className="trx-name">
-                    {t.pelanggan ? `${t.pelanggan} · ` : ""}{t.barang} × {t.qty}
+                    {t.pelanggan ? `${t.pelanggan} · ` : ""}{t.barang || t.ket} × {t.qty}
                   </span>
                   <span className="trx-time">{t.tgl}</span>
                 </div>
-                <span className="trx-total">Rp {fmt(t.total)}</span>
+                <span className="trx-total">Rp {fmt(Number(t.nominal))}</span>
               </div>
             ))
           )}
         </div>
 
-        {/* RINGKASAN STOK */}
         <div className="card">
           <div className="card-head">
             <div>
@@ -344,17 +346,15 @@ export default function Dashboard() {
             </div>
             <span className="link" onClick={() => navigate("/stok")}>Kelola →</span>
           </div>
-
-          {items.length === 0 ? (
-            <div className="dash-empty">
-              <Inbox size={28} />
-              <p>Belum ada produk di stok</p>
-            </div>
+          {stokItems.length === 0 ? (
+            <div className="dash-empty"><Inbox size={28} /><p>Belum ada produk di stok</p></div>
           ) : (
-            items.slice(0, 5).map((item) => {
-              const max   = item.stokAwal ?? item.stok ?? 1;
-              const pct   = Math.min((item.stok / max) * 100, 100);
-              const isLow = item.stok <= (item.stokMin ?? 5);
+            stokItems.slice(0, 5).map((item) => {
+              const min   = item.stok_min ?? 0;
+              const isLow = min > 0 && item.stok <= min;
+              const pct   = min > 0
+                ? Math.min((item.stok / (min * 3)) * 100, 100)
+                : 100;
               return (
                 <div key={item.id} className="stok-row" onClick={() => navigate("/stok")}>
                   <div className="stok-label">
@@ -364,10 +364,7 @@ export default function Dashboard() {
                     </span>
                   </div>
                   <div className="track">
-                    <div
-                      className={`fill ${isLow ? "fill-low" : ""}`}
-                      style={{ width: `${pct}%` }}
-                    />
+                    <div className={`fill ${isLow ? "fill-low" : ""}`} style={{ width: `${pct}%` }} />
                   </div>
                 </div>
               );
@@ -375,7 +372,6 @@ export default function Dashboard() {
           )}
         </div>
       </div>
-
     </div>
   );
 }

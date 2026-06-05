@@ -9,10 +9,11 @@ export default function Layout() {
   const navigate = useNavigate();
 
   useEffect(() => {
-    if (localStorage.getItem("isLogin") !== "true") {
-      navigate("/login");
+    const login = localStorage.getItem("isLogin");
+    if (login !== "true") {
+      navigate("/login", { replace: true });
     }
-  }, [navigate]);
+  }, []);
 
   const [open, setOpen] = useState(false);
 
@@ -21,13 +22,24 @@ export default function Layout() {
       <Sidebar open={open} setOpen={setOpen} />
 
       <main className="main">
-        <button 
-          className="menu-toggle"
-          onClick={() => setOpen(!open)}
-        >
-          ☰
-        </button>
+
+        <div className="mobile-header">
+
+          <button
+            className="menu-toggle"
+            onClick={() => setOpen(!open)}
+          >
+            ☰
+          </button>
+
+          <span className="mobile-title">
+            Peken Banyumasan
+          </span>
+
+        </div>
+
         <Outlet />
+
       </main>
     </div>
   );

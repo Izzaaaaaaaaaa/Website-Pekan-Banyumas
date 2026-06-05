@@ -6,7 +6,7 @@ import {
 
 const todayISO = () => new Date().toISOString().split("T")[0];
 
-export default function TambahKasModal({ show, onClose, onSave, items }) {
+export default function TambahKasModal({ show, onClose, onSave, items, namaUsaha }) {
   const [step, setStep] = useState("pilih");
   const [showQrisModal, setShowQrisModal] = useState(false);
   const buktiRef = useRef();
@@ -17,12 +17,33 @@ export default function TambahKasModal({ show, onClose, onSave, items }) {
   );
 
   useEffect(() => {
-    setQrisImage(localStorage.getItem("qrisImage") || null);
-    const handleQrisUpdate = () => {
-      setQrisImage(localStorage.getItem("qrisImage") || null);
+    // Load QRIS dari backend
+    const fetchQris = () => {
+      const token = localStorage.getItem("token");
+      if (token) {
+        fetch("http://127.0.0.1:8000/api/artisan/pengaturan/profil", {
+          headers: { Authorization: `Bearer ${token}` },
+        })
+          .then(r => r.json())
+          .then(data => {
+            if (data?.qris_url) {
+              setQrisImage(data.qris_url);
+              localStorage.setItem("qrisImage", data.qris_url);
+            } else {
+              setQrisImage(null);
+              localStorage.removeItem("qrisImage");
+            }
+          })
+          .catch(() => {
+            // fallback ke localStorage
+            setQrisImage(localStorage.getItem("qrisImage") || null);
+          });
+      }
     };
-    window.addEventListener("qrisUpdated", handleQrisUpdate);
-    return () => window.removeEventListener("qrisUpdated", handleQrisUpdate);
+
+    fetchQris();
+    window.addEventListener("qrisUpdated", fetchQris);
+    return () => window.removeEventListener("qrisUpdated", fetchQris);
   }, []);
 
   const [form, setForm] = useState({
@@ -126,21 +147,19 @@ export default function TambahKasModal({ show, onClose, onSave, items }) {
     }
 
     const d = new Date(form.tgl);
-    const tglFmt = d.toLocaleDateString("id-ID", {
-      day: "numeric", month: "short", year: "numeric"
-    });
+    const tglISO = form.tgl; // sudah dalam format YYYY-MM-DD dari input type="date"
 
     onSave({
-      id: Date.now(),
       jenis: form.jenis,
       kategori: form.jenis === "masuk" ? "Penjualan" : form.kategori,
       pelanggan: form.pelanggan,
       barang: form.namaBarang,
+      barang_id: form.barangId || null,
       qty: Number(form.qty),
       metode: form.metode,
       nominal: Number(form.nominal),
-      tgl: tglFmt,
-      buktiUrl: form.buktiUrl || null,
+      tgl: tglISO,
+      bukti_url: form.buktiUrl || null,
       ket: form.jenis === "masuk"
         ? `${form.namaBarang} x${form.qty} (${form.metode.toUpperCase()})`
         : form.ket,
@@ -210,7 +229,7 @@ export default function TambahKasModal({ show, onClose, onSave, items }) {
         <div className="bk-modal-hd">
           <div className="bk-modal-hd-left">
             <h3>Tambah Transaksi Kas</h3>
-            <span className="bk-stand-tag">Stand A-12</span>
+            <span className="bk-stand-tag">{namaUsaha || "Kios Saya"}</span>
           </div>
           <button className="bk-modal-close" onClick={onClose}>
             <X size={16} />

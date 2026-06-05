@@ -4,6 +4,7 @@ export default function TambahBarangModal({
   form,
   handleChange,
   handleSubmit,
+  namaUsaha,
 }) {
   if (!show) return null;
 
@@ -14,14 +15,13 @@ export default function TambahBarangModal({
         <div className="ms-modal-hd">
           <div className="ms-modal-hd-left">
             <h3>Tambah Barang</h3>
-            <span className="ms-stand-tag">Stand A-12</span>
           </div>
           <button className="ms-modal-close" onClick={onClose}>✕</button>
         </div>
 
         {/* INFO */}
         <div className="ms-modal-info">
-          Barang ini akan ditambahkan ke stok <strong>Sate Blengong Bu Yati</strong>
+          Barang ini akan ditambahkan ke stok <strong>{namaUsaha || "Kios Saya"}</strong>
         </div>
 
         {/* FORM */}
@@ -86,6 +86,17 @@ export default function TambahBarangModal({
               name="satuan"
               placeholder="porsi / pcs / cup"
               value={form.satuan}
+              onChange={handleChange}
+            />
+          </div>
+
+          <div className="ms-fg">
+            <label>Stok Minimum (Alert)</label>
+            <input
+              name="stok_min"
+              type="number"
+              placeholder="5"
+              value={form.stok_min ?? 5}
               onChange={handleChange}
             />
           </div>

@@ -106,8 +106,14 @@ export default function Register() {
       if (!formData.email.trim())       e.email       = "Email wajib diisi";
       else if (!/\S+@\S+\.\S+/.test(formData.email)) e.email = "Format email tidak valid";
       if (!formData.username.trim())    e.username    = "Username wajib diisi";
+      else if (formData.username.trim().length < 4) e.username = "Username minimal 4 karakter";
+      else if (!/^[a-zA-Z0-9_]+$/.test(formData.username.trim())) e.username = "Username hanya boleh huruf, angka, dan underscore (_)";
       if (!formData.password)           e.password    = "Password wajib diisi";
-      else if (formData.password.length < 6) e.password = "Password minimal 6 karakter";
+      else if (
+        formData.password.length < 6 ||
+        !/[A-Za-z]/.test(formData.password) ||
+        !/[0-9]/.test(formData.password)
+      ) e.password = "Password minimal 6 karakter dan harus mengandung huruf & angka";
       if (formData.password !== formData.konfirmPassword) e.konfirmPassword = "Password tidak cocok";
       if (!formData.kategori)           e.kategori    = "Pilih kategori usaha";
       if (formData.kategori === "lainnya" && !formData.kategoriCustom.trim())
@@ -125,14 +131,40 @@ export default function Register() {
   const nextStep = () => { if (validate()) setStep((p) => p + 1); };
   const prevStep = () => setStep((p) => p - 1);
 
-  const handleSubmit = () => {
+  const handleSubmit = async () => {
     setSubmitting(true);
+    try {
+      const kategoriValue = formData.kategori === "lainnya"
+        ? formData.kategoriCustom
+        : formData.kategori;
 
-    localStorage.setItem("status", "pending");
-
-    setTimeout(() => {
+      const res = await fetch("http://127.0.0.1:8000/api/auth/register", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          nama_usaha: formData.namaArtisan,
+          pemilik: formData.namaArtisan,
+          email: formData.email,
+          username: formData.username,
+          password: formData.password,
+          kategori_usaha: [kategoriValue],
+          deskripsi: formData.deskripsi || "",
+          no_hp: "",
+          kota: "",
+        }),
+      });
+      const data = await res.json();
+      if (!res.ok) {
+        setErrors({ submit: data.detail || "Pendaftaran gagal, coba lagi." });
+        setSubmitting(false);
+        return;
+      }
+      localStorage.setItem("status", "pending");
       navigate("/status");
-    }, 800);
+    } catch (err) {
+      setErrors({ submit: "Gagal terhubung ke server." });
+      setSubmitting(false);
+    }
   };
 
   /* kios filter */
@@ -433,6 +465,11 @@ export default function Register() {
             </>
           )}
 
+              {errors.submit && (
+                <div className="err-msg" style={{ marginBottom: 12 }}>
+                  <AlertCircle size={12} />{errors.submit}
+                </div>
+              )}
           {/* Navigation */}
           <div className="nav-row">
             {step > 1 && (
