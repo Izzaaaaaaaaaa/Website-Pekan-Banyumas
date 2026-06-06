@@ -2,7 +2,7 @@
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 
-from app.api.routes import auth, dashboard, event, kolaborator, notifikasi, pengaturan, test
+from app.api.routes import auth, dashboard, event, kolaborator, notifikasi, pengaturan
 from fastapi import APIRouter
 
 app = FastAPI(
@@ -28,10 +28,15 @@ api.include_router(kolaborator.router)
 api.include_router(notifikasi.router)
 api.include_router(pengaturan.router)
 
-app.include_router(test.router)
 app.include_router(api)
 
 
 @app.get("/")
 def root() -> dict[str, str]:
     return {"message": "Backend Kolaborator is running"}
+
+
+@app.get("/health")
+def health() -> dict[str, str]:
+    """Lightweight health probe — used by Docker healthcheck and monitoring."""
+    return {"status": "ok"}

@@ -1,7 +1,7 @@
 -- =============================================================================
 -- Peken Banyumasan — Unified Supabase Postgres Schema
--- Version : 2.2.2
--- Date    : 2026-05-03
+-- Version : 2.2.3
+-- Date    : 2026-06-06
 -- Source  : This file is the SINGLE source of truth for the DB contract.
 --           All 4 OpenAPI YAMLs were read-audited before this rewrite.
 --           Apply via: Supabase SQL Editor → paste and run as one migration.
@@ -135,7 +135,8 @@ DROP TABLE IF EXISTS public.users_profile             CASCADE;
 --                      functions persist independently — drop them here).
 
 -- 0.2.1 Trigger functions (Section 4) — reverse order of definition
-DROP FUNCTION IF EXISTS public.update_kolaborator_counts()    CASCADE;
+DROP FUNCTION IF EXISTS public.sync_kolaborator_status_to_auth()     CASCADE;
+DROP FUNCTION IF EXISTS public.update_kolaborator_counts()            CASCADE;
 DROP FUNCTION IF EXISTS public.update_event_peserta_count()   CASCADE;
 DROP FUNCTION IF EXISTS public.recount_event_peserta(UUID)    CASCADE;
 DROP FUNCTION IF EXISTS public.sync_user_role()               CASCADE;
@@ -1110,11 +1111,41 @@ CREATE TRIGGER trg_kolaborator_story_delete
     EXECUTE FUNCTION public.update_kolaborator_counts();
 
 
+-- ---------------------------------------------------------------------------
+-- 4.8  Sync kolaborator status → auth.users app_metadata  (KOL-2)
+--      Mirrors kolaborators.status into raw_app_meta_data.status so the
+--      login guard in deps.py always sees an accurate status claim without
+--      a separate DB query.
+--
+--      Pattern: same as 4.5 (sync_user_role) — SECURITY DEFINER so the
+--      trigger can write to auth.users even from a restricted DB role.
+--
+--      Without this trigger: if the DB is rebuilt from this schema file,
+--      admin-side status activation silently stops working (the guard
+--      still reads the stale 'pending' claim in app_metadata).
+-- ---------------------------------------------------------------------------
+CREATE OR REPLACE FUNCTION public.sync_kolaborator_status_to_auth()
+RETURNS TRIGGER LANGUAGE plpgsql SECURITY DEFINER AS $$
+BEGIN
+    IF NEW.status IS DISTINCT FROM OLD.status THEN
+        UPDATE auth.users
+        SET    raw_app_meta_data =
+                   raw_app_meta_data || jsonb_build_object('status', NEW.status)
+        WHERE  id = NEW.id;
+    END IF;
+    RETURN NEW;
+END;
+$$;
+
+CREATE TRIGGER trg_sync_kolaborator_status
+    AFTER UPDATE OF status ON public.kolaborators
+    FOR EACH ROW EXECUTE FUNCTION public.sync_kolaborator_status_to_auth();
+
+
 -- =============================================================================
 -- SECTION 5 — Indexes (additional — primary keys and some BTREEs already above)
 -- =============================================================================
 
--- D2b: username lookup (artisan profile URL)
 CREATE INDEX idx_artisans_username ON public.artisans(username);
 
 -- D11a: filter artisans by category
