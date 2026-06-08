@@ -2,47 +2,26 @@ from pydantic import BaseModel, EmailStr
 from typing import Optional
 
 
-class LoginSchema(BaseModel):
-    email: EmailStr
-    password: str
-
-
 class RegisterSchema(BaseModel):
     """
-    Sesuai schema DB artisans v2.3.0.
-    username: required, lowercase alphanumeric + dash, 3–32 char.
-    kategori_usaha: UMKM 9 categories (array).
+    Schema pendaftaran artisan baru.
+    username: unik, huruf kecil + angka + underscore, 4–30 karakter.
+    kategori_usaha: array string (fnb, kriya, fashion, lainnya, dll).
+    password: diteruskan ke Supabase Admin create_user — minimal 6 karakter.
     """
-    nama_usaha: str                         # artisans.nama_usaha
-    pemilik: str                            # artisans.pemilik
+    nama_usaha: str
+    pemilik: str
     email: EmailStr
-    username: str                           # artisans.username — UNIQUE
+    username: str
     password: str
     no_hp: Optional[str] = ""
     kota: Optional[str] = ""
-    kategori_usaha: list[str] = []          # artisans.kategori_usaha TEXT[]
+    kategori_usaha: list[str] = []
     deskripsi: Optional[str] = ""
 
 
-class OtpRequestSchema(BaseModel):
-    phone: str
-    purpose: str = "password_reset"         # password_reset | verify | register
-
-
-class OtpVerifySchema(BaseModel):
-    phone: str
-    code: str
-    purpose: str = "password_reset"
-
-
-class ResetPasswordSchema(BaseModel):
-    """Dipakai setelah OTP diverifikasi — simpan token dari otp verify step."""
-    phone: str
-    code: str
-    new_password: str
-
-
 class ChangePasswordSchema(BaseModel):
-    password_lama: str
+    """Ganti password dari halaman Pengaturan."""
+    password_lama: str   # dipakai FE untuk re-auth sebelum call endpoint ini
     password_baru: str
     konfirmasi: str

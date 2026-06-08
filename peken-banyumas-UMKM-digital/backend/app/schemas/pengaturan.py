@@ -14,6 +14,8 @@ class UpdateProfilSchema(BaseModel):
     kota: Optional[str] = None
     kategori_usaha: Optional[list[str]] = None
     deskripsi: Optional[str] = None
+    foto_url: Optional[str] = None    # URL foto profil / logo dari Supabase Storage
+    cover_url: Optional[str] = None   # URL cover/banner dari Supabase Storage
 
 
 class UpdateQrisSchema(BaseModel):

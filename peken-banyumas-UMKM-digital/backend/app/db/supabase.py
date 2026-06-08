@@ -24,6 +24,18 @@ if not SUPABASE_URL or not SUPABASE_KEY:
 _active_key = SUPABASE_SERVICE_KEY if SUPABASE_SERVICE_KEY else SUPABASE_KEY
 supabase: Client = create_client(SUPABASE_URL, _active_key)
 
+# Client khusus anon key — WAJIB untuk supabase.auth.get_user(user_token).
+# Service role key tidak bisa memverifikasi user JWT, hanya anon key yang bisa.
+supabase_anon: Client = create_client(SUPABASE_URL, SUPABASE_KEY)
+
+# Admin client (service role) — bypass RLS, dipakai untuk register + admin ops
+# None jika SUPABASE_SERVICE_ROLE_KEY tidak diset
+supabase_admin: Client | None = (
+    create_client(SUPABASE_URL, SUPABASE_SERVICE_KEY)
+    if SUPABASE_SERVICE_KEY
+    else None
+)
+
 
 # ── Helper: SELECT ────────────────────────────────────────────────────────────
 def db_select(table: str, filters: dict = None, single: bool = False):

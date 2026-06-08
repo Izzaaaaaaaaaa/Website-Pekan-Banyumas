@@ -45,6 +45,7 @@ class EditKasSchema(BaseModel):
     kategori: Optional[str] = None
     pelanggan: Optional[str] = None
     barang: Optional[str] = None
+    barang_id: Optional[str] = None     # id stok — untuk penyesuaian stok saat edit
     qty: Optional[float] = None
     metode: Optional[str] = None
     ket: Optional[str] = None

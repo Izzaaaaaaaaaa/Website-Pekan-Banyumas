@@ -81,7 +81,7 @@ class KasItem(BaseModel):
     ket: str
     nominal: float
     tgl: str                # DATE WIB YYYY-MM-DD
-    saldo_after: float      # dihitung backend, jangan ditulis langsung
+    saldo_after: Optional[float] = 0.0  # dihitung backend on-the-fly, tidak disimpan di DB
     bukti_url: Optional[str] = None
     created_at: Optional[str] = None
     updated_at: Optional[str] = None
