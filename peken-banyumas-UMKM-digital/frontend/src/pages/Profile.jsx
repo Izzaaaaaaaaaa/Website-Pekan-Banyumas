@@ -1,10 +1,11 @@
 import { useState, useRef, useEffect } from "react";
-import { User, Settings, LogOut, Store, MapPin, Tag, CheckCircle, Package, Receipt } from "lucide-react";
+import { User, Settings, LogOut, Store, MapPin, Tag, CheckCircle, Package, Receipt, Camera, Loader2 } from "lucide-react";
 import { useNavigate } from "react-router-dom";
+import { supabase } from "../lib/supabase";
 import ConfirmLogoutModal from "../components/modals/ConfirmLogoutModal";
 import "../assets/styles/profile.css";
 
-const BASE       = import.meta.env.VITE_API_URL || "http://127.0.0.1:8004";
+const BASE       = import.meta.env.VITE_API_URL;
 const API_PROFIL = `${BASE}/api/artisan/pengaturan/profil`;
 const API_STOK   = `${BASE}/api/artisan/stok`;
 const API_KAS    = `${BASE}/api/artisan/kas`;
@@ -17,31 +18,117 @@ export default function Profile() {
   const navigate     = useNavigate();
   const fileInputRef = useRef(null);
 
-  const [showLogout, setShowLogout] = useState(false);
-  const [profil,     setProfil]     = useState(null);
-  const [totalProduk, setTotalProduk] = useState(0);
-  const [totalTrx,    setTotalTrx]    = useState(0);
-  const [photo,      setPhoto]      = useState(localStorage.getItem("profilePhoto") || null);
+  const [showLogout,   setShowLogout]   = useState(false);
+  const [profil,       setProfil]       = useState(null);
+  const [totalProduk,  setTotalProduk]  = useState(0);
+  const [totalTrx,     setTotalTrx]     = useState(0);
+  const [photo,        setPhoto]        = useState(null);
+  const [uploading,    setUploading]    = useState(false);
 
   useEffect(() => {
-    // Fetch profil
+    // Fetch profil — foto diambil dari artisans.foto_url di DB
     fetch(API_PROFIL, { headers: authHeaders() })
       .then(r => r.json())
-      .then(d => { if (d?.id) setProfil(d); })
-      .catch(() => {});
+      .then(d => {
+        if (d?.id) {
+          setProfil(d);
+          // Pakai foto dari DB, bukan localStorage
+          if (d.foto_url) {
+            setPhoto(d.foto_url);
+            localStorage.setItem("profilePhoto", d.foto_url);
+          } else {
+            // Fallback ke localStorage kalau DB belum ada
+            setPhoto(localStorage.getItem("profilePhoto") || null);
+          }
+        }
+      })
+      .catch(() => {
+        setPhoto(localStorage.getItem("profilePhoto") || null);
+      });
 
-    // Fetch total produk
     fetch(API_STOK, { headers: authHeaders() })
       .then(r => r.json())
       .then(d => setTotalProduk(Array.isArray(d) ? d.length : 0))
       .catch(() => {});
 
-    // Fetch total transaksi (kas masuk)
     fetch(API_KAS, { headers: authHeaders() })
       .then(r => r.json())
       .then(d => setTotalTrx(Array.isArray(d) ? d.filter(k => k.jenis === "masuk").length : 0))
       .catch(() => {});
   }, []);
+
+  const handlePhotoChange = async (e) => {
+    const file = e.target.files[0];
+    if (!file) return;
+
+    // Preview lokal dulu
+    const reader = new FileReader();
+    reader.onload = async (ev) => {
+      const previewUrl = ev.target.result;
+      setPhoto(previewUrl);
+
+      // Upload ke Supabase Storage
+      setUploading(true);
+      try {
+        const userId = localStorage.getItem("user_id");
+        if (!userId) throw new Error("user_id tidak ditemukan");
+
+        const ext  = file.name.split(".").pop() || "jpg";
+        const path = `artisans/${userId}/profil-${Date.now()}.${ext}`;
+
+        const { error: uploadErr } = await supabase.storage
+          .from("peken-uploads")
+          .upload(path, file, { upsert: true });
+
+        if (uploadErr) throw uploadErr;
+
+        const { data: urlData } = supabase.storage
+          .from("peken-uploads")
+          .getPublicUrl(path);
+
+        const publicUrl = urlData?.publicUrl;
+        if (!publicUrl) throw new Error("Gagal mendapat public URL");
+
+        // Simpan URL ke artisans.foto_url di DB
+        const res = await fetch(`${BASE}/api/artisan/pengaturan/profil`, {
+          method: "PUT",
+          headers: {
+            "Content-Type": "application/json",
+            ...authHeaders(),
+          },
+          body: JSON.stringify({ foto_url: publicUrl }),
+        });
+
+        if (!res.ok) throw new Error("Gagal simpan ke DB");
+
+        // Update state & localStorage
+        setPhoto(publicUrl);
+        localStorage.setItem("profilePhoto", publicUrl);
+        // Dispatch storage event supaya Sidebar ikut update
+        window.dispatchEvent(new Event("storage"));
+      } catch (err) {
+        console.error("[Profile] upload foto gagal:", err);
+        // Tetap tampilkan preview lokal meski upload gagal
+      } finally {
+        setUploading(false);
+      }
+    };
+    reader.readAsDataURL(file);
+  };
+
+  const handleRemovePhoto = async () => {
+    setPhoto(null);
+    localStorage.removeItem("profilePhoto");
+    window.dispatchEvent(new Event("storage"));
+    // Hapus dari DB
+    try {
+      await fetch(`${BASE}/api/artisan/pengaturan/profil`, {
+        method: "PUT",
+        headers: { "Content-Type": "application/json", ...authHeaders() },
+        body: JSON.stringify({ foto_url: null }),
+      });
+    } catch { /* tidak blocking */ }
+  };
 
   const nama     = profil?.pemilik     || localStorage.getItem("nama") || "Artisan";
   const kios     = profil?.nama_usaha  || "—";
@@ -60,11 +147,25 @@ export default function Profile() {
       </div>
 
       <div className="pf-card">
-        <div className="pf-avatar-wrap" onClick={() => !photo && fileInputRef.current.click()}>
+        <div className="pf-avatar-wrap" onClick={() => fileInputRef.current.click()}>
           <div className="pf-avatar">
-            {photo ? <img src={photo} alt="profile" className="pf-avatar-img" /> : inisial}
+            {photo
+              ? <img src={photo} alt="profile" className="pf-avatar-img" />
+              : inisial
+            }
+            {uploading && (
+              <div style={{
+                position: "absolute", inset: 0, borderRadius: "50%",
+                background: "rgba(0,0,0,0.4)", display: "flex",
+                alignItems: "center", justifyContent: "center",
+              }}>
+                <Loader2 size={20} color="white" style={{ animation: "spin 1s linear infinite" }} />
+              </div>
+            )}
           </div>
-          <div className="pf-avatar-overlay" />
+          <div className="pf-avatar-overlay">
+            <Camera size={16} color="white" />
+          </div>
         </div>
 
         <input
@@ -72,33 +173,11 @@ export default function Profile() {
           type="file"
           accept="image/*"
           style={{ display: "none" }}
-          onChange={(e) => {
-            const file = e.target.files[0];
-            if (!file) return;
-            const img    = new Image();
-            const reader = new FileReader();
-            reader.onload = (ev) => {
-              img.src = ev.target.result;
-              img.onload = () => {
-                const SIZE   = 300;
-                const canvas = document.createElement("canvas");
-                canvas.width = SIZE; canvas.height = SIZE;
-                const ctx    = canvas.getContext("2d");
-                const srcSize = Math.min(img.width, img.height);
-                const srcX    = (img.width  - srcSize) / 2;
-                const srcY    = (img.height - srcSize) / 2;
-                ctx.drawImage(img, srcX, srcY, srcSize, srcSize, 0, 0, SIZE, SIZE);
-                const compressed = canvas.toDataURL("image/jpeg", 0.7);
-                setPhoto(compressed);
-                localStorage.setItem("profilePhoto", compressed);
-              };
-            };
-            reader.readAsDataURL(file);
-          }}
+          onChange={handlePhotoChange}
         />
 
-        {photo && (
-          <button className="pf-remove-photo" onClick={() => { setPhoto(null); localStorage.removeItem("profilePhoto"); }}>
+        {photo && !uploading && (
+          <button className="pf-remove-photo" onClick={handleRemovePhoto}>
             Hapus Foto
           </button>
         )}

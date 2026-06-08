@@ -6,7 +6,7 @@ import {
 
 const todayISO = () => new Date().toISOString().split("T")[0];
 
-export default function TambahKasModal({ show, onClose, onSave, items, namaUsaha }) {
+export default function TambahKasModal({ show, onClose, onSave, items, namaUsaha, standLabel }) {
   const [step, setStep] = useState("pilih");
   const [showQrisModal, setShowQrisModal] = useState(false);
   const buktiRef = useRef();
@@ -21,7 +21,7 @@ export default function TambahKasModal({ show, onClose, onSave, items, namaUsaha
     const fetchQris = () => {
       const token = localStorage.getItem("token");
       if (token) {
-        fetch(`${import.meta.env.VITE_API_URL || "http://127.0.0.1:8004"}/api/artisan/pengaturan/profil`, {
+        fetch(`${import.meta.env.VITE_API_URL}/api/artisan/pengaturan/profil`, {
           headers: { Authorization: `Bearer ${token}` },
         })
           .then(r => r.json())
@@ -229,7 +229,10 @@ export default function TambahKasModal({ show, onClose, onSave, items, namaUsaha
         <div className="bk-modal-hd">
           <div className="bk-modal-hd-left">
             <h3>Tambah Transaksi Kas</h3>
-            <span className="bk-stand-tag">{namaUsaha || "Kios Saya"}</span>
+            {standLabel
+              ? <span className="bk-stand-tag">{standLabel}</span>
+              : <span className="bk-stand-tag">{namaUsaha || "Kios Saya"}</span>
+            }
           </div>
           <button className="bk-modal-close" onClick={onClose}>
             <X size={16} />

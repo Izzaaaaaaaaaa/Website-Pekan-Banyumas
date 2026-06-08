@@ -1,12 +1,15 @@
 import { useNavigate } from "react-router-dom";
 import { LogOut } from "lucide-react";
+import { supabase } from "../../lib/supabase";
 
 export default function ConfirmLogoutModal({ show, onClose, userName }) {
   const navigate = useNavigate();
 
   if (!show) return null;
 
-  const handleLogout = () => {
+  const handleLogout = async () => {
+    // Cabut refresh token di Supabase — fire-and-forget, tidak perlu await
+    supabase.auth.signOut().catch(() => {});
     localStorage.clear();
     navigate("/login", { replace: true });
   };

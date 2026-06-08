@@ -7,10 +7,12 @@ import {
 } from "lucide-react";
 import "../assets/styles/dashboard.css";
 
-const BASE       = import.meta.env.VITE_API_URL || "http://127.0.0.1:8004";
+const BASE       = import.meta.env.VITE_API_URL;
 const API_STOK   = `${BASE}/api/artisan/stok`;
 const API_KAS    = `${BASE}/api/artisan/kas`;
 const API_NOTIF  = `${BASE}/api/notifikasi`;
+const API_EVENT  = `${BASE}/api/event`;
+const API_EVENT_SAYA = `${BASE}/api/event/saya`;
 
 function authHeaders() {
   return { Authorization: `Bearer ${localStorage.getItem("token")}` };
@@ -32,18 +34,30 @@ function getTanggalHari() {
   });
 }
 
-function Countdown() {
-  const [hari, setHari] = useState("00");
+function Countdown({ tanggal }) {
+  const [hari, setHari] = useState("--");
+
   useEffect(() => {
+    if (!tanggal) { setHari("--"); return; }
+
     function tick() {
-      const diff = new Date("2026-03-22T08:00:00+07:00") - new Date();
-      if (diff <= 0) { setHari("00"); return; }
+      const target = new Date(tanggal);
+      // Guard: kalau tanggal tidak valid, tampilkan "--"
+      if (isNaN(target.getTime())) { setHari("--"); return; }
+
+      const diff = target - new Date();
+      if (diff <= 0) {
+        setHari("00");
+        return;
+      }
       setHari(String(Math.floor(diff / 86400000)).padStart(2, "0"));
     }
+
     tick();
     const id = setInterval(tick, 3600000);
     return () => clearInterval(id);
-  }, []);
+  }, [tanggal]);
+
   return (
     <div className="cd-boxes">
       <div className="cd-box">
@@ -97,6 +111,7 @@ export default function Dashboard() {
   });
   const [unreadNotif, setUnreadNotif] = useState(0);
   const [loading,    setLoading]    = useState(true);
+  const [eventBanner, setEventBanner] = useState(null); // { nama, tanggal, sub }
 
   useEffect(() => {
     const token = localStorage.getItem("token");
@@ -106,12 +121,60 @@ export default function Dashboard() {
       fetch(API_STOK,  { headers: authHeaders() }).then(r => r.json()).catch(() => []),
       fetch(API_KAS,   { headers: authHeaders() }).then(r => r.json()).catch(() => []),
       fetch(API_NOTIF, { headers: authHeaders() }).then(r => r.json()).catch(() => []),
-    ]).then(([stok, kas, notif]) => {
+      fetch(API_EVENT_SAYA, { headers: authHeaders() }).then(r => r.json()).catch(() => []),
+      fetch(API_EVENT).then(r => r.json()).catch(() => []),
+    ]).then(([stok, kas, notif, eventSaya, eventPublik]) => {
       const stokArr  = Array.isArray(stok)  ? stok  : [];
       const kasArr   = Array.isArray(kas)   ? kas   : [];
       setStokItems(stokArr);
       setKasData(kasArr);
       setUnreadNotif(Array.isArray(notif) ? notif.filter(n => !n.read).length : 0);
+
+      // ── Tentukan event untuk banner countdown ──
+      // Prioritas 1: event yang artisan sudah approved
+      // Prioritas 2: event publik yang akan datang (published/berlangsung)
+      let banner = null;
+
+      // Helper: buat ISO string yang valid dari tanggal + jam_mulai
+      const toIso = (tanggal, jam_mulai) => {
+        // jam_mulai bisa "08:00", "08:00:00", atau kosong
+        const jam = (jam_mulai || "08:00").slice(0, 5); // ambil HH:MM saja
+        return `${tanggal}T${jam}:00+07:00`;
+      };
+
+      if (Array.isArray(eventSaya) && eventSaya.length > 0) {
+        const approved = eventSaya.find(e => e.status_request === "approved");
+        if (approved) {
+          const detail = Array.isArray(eventPublik)
+            ? eventPublik.find(e => e.id === approved.event_id)
+            : null;
+          if (detail) {
+            banner = {
+              nama:    detail.nama,
+              tanggal: toIso(detail.tanggal, detail.jam_mulai),
+              sub:     detail.lokasi || "Masuk Gratis",
+            };
+          }
+        }
+      }
+
+      // Fallback: event publik terdekat yang belum selesai
+      if (!banner && Array.isArray(eventPublik) && eventPublik.length > 0) {
+        const mendatang = eventPublik
+          .filter(e => e.status === "published" || e.status === "berlangsung")
+          .sort((a, b) => new Date(a.tanggal) - new Date(b.tanggal));
+        if (mendatang.length > 0) {
+          const e = mendatang[0];
+          banner = {
+            nama:    e.nama,
+            tanggal: toIso(e.tanggal, e.jam_mulai),
+            sub:     e.lokasi || "Masuk Gratis",
+          };
+        }
+      }
+
+      setEventBanner(banner);
+
       // simpan cache
       try {
         localStorage.setItem("cache_stok", JSON.stringify(stokArr));
@@ -193,11 +256,17 @@ export default function Dashboard() {
       {/* ── COUNTDOWN ── */}
       <div className="cd-banner">
         <div>
-          <div className="cd-lbl">Acara Dimulai Dalam</div>
-          <div className="cd-title">Peken Banyumas</div>
-          <div className="cd-sub">Masuk Gratis</div>
+          <div className="cd-lbl">
+            {eventBanner ? "Acara Dimulai Dalam" : "Belum Ada Event Terdaftar"}
+          </div>
+          <div className="cd-title">
+            {eventBanner ? eventBanner.nama : "Peken Banyumas"}
+          </div>
+          <div className="cd-sub">
+            {eventBanner ? eventBanner.sub : "Daftar event untuk mulai berjualan"}
+          </div>
         </div>
-        <Countdown />
+        <Countdown tanggal={eventBanner?.tanggal} />
       </div>
 
       {/* ── ALERT STOK KRITIS ── */}

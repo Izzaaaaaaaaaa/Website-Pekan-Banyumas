@@ -4,7 +4,7 @@ import {
   Receipt, RefreshCw, ArrowLeft
 } from "lucide-react";
 
-export default function EditKasModal({ show, item, onClose, onSave, items }) {
+export default function EditKasModal({ show, item, onClose, onSave, items, standLabel }) {
   const buktiRef = useRef();
 
   const [qrisImage] = useState(() => localStorage.getItem("qrisImage") || null);
@@ -93,6 +93,7 @@ export default function EditKasModal({ show, item, onClose, onSave, items }) {
       jenis     : form.jenis,
       pelanggan : form.pelanggan,
       barang    : form.namaBarang,
+      barang_id : form.barangId || null,
       qty       : Number(form.qty),
       metode    : form.metode,
       kategori  : form.jenis === "masuk" ? "Penjualan" : form.kategori,
@@ -152,7 +153,7 @@ export default function EditKasModal({ show, item, onClose, onSave, items }) {
         <div className="bk-modal-hd">
           <div className="bk-modal-hd-left">
             <h3>Edit Transaksi Kas</h3>
-            <span className="bk-stand-tag">Stand A-12</span>
+            {standLabel && <span className="bk-stand-tag">{standLabel}</span>}
           </div>
           <button className="bk-modal-close" onClick={onClose}>
             <X size={16} />

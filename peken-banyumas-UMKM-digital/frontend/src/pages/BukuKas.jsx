@@ -9,7 +9,7 @@ import ConfirmDeleteKasModal from "../components/modals/ConfirmDeleteKasModal";
 import Toast from "../components/Toast";
 import "../assets/styles/kas.css";
 
-const BASE = import.meta.env.VITE_API_URL || "http://127.0.0.1:8004";
+const BASE = import.meta.env.VITE_API_URL;
 const API = `${BASE}/api/artisan/kas`;
 const fmt = (angka) => new Intl.NumberFormat("id-ID").format(angka);
 
@@ -25,6 +25,7 @@ export default function BukuKas() {
 
   const [data,       setData]       = useState([]);
   const [stokItems,  setStokItems]  = useState([]);
+  const [standLabel, setStandLabel] = useState("");
   const [loading,    setLoading]    = useState(true);
   const [filter,     setFilter]     = useState("semua");
   const [search,     setSearch]     = useState("");
@@ -59,6 +60,23 @@ export default function BukuKas() {
     fetch(`${BASE}/api/artisan/stok`, { headers: authHeaders() })
       .then(r => r.json())
       .then(d => setStokItems(Array.isArray(d) ? d : []))
+      .catch(() => {});
+  }, []);
+
+  // ── FETCH STAND dari event yang sudah approved ──
+  useEffect(() => {
+    fetch(`${BASE}/api/event/saya`, { headers: authHeaders() })
+      .then(r => r.json())
+      .then(d => {
+        if (!Array.isArray(d)) return;
+        // Cari entri yang approved dan punya stand_id atau posisi_event
+        const approved = d.find(e =>
+          e.status_request === "approved" && (e.stand_id || e.posisi_event)
+        );
+        if (approved) {
+          setStandLabel(approved.stand_id || approved.posisi_event || "");
+        }
+      })
       .catch(() => {});
   }, []);
 
@@ -119,6 +137,7 @@ export default function BukuKas() {
           kategori:  updated.kategori,
           pelanggan: updated.pelanggan || null,
           barang:    updated.barang || null,
+          barang_id: updated.barang_id || null,
           qty:       Number(updated.qty) || 1,
           metode:    updated.metode,
           ket:       updated.ket || "",
@@ -247,8 +266,8 @@ export default function BukuKas() {
       </div>
 
       {/* ── MODALS ── */}
-      <TambahKasModal show={showModal} onClose={() => setShowModal(false)} onSave={handleAdd} items={stokItems} namaUsaha={nama} />
-      <EditKasModal show={!!editItem} item={editItem} onClose={() => setEditItem(null)} onSave={handleUpdate} />
+      <TambahKasModal show={showModal} onClose={() => setShowModal(false)} onSave={handleAdd} items={stokItems} namaUsaha={nama} standLabel={standLabel} />
+      <EditKasModal show={!!editItem} item={editItem} onClose={() => setEditItem(null)} onSave={handleUpdate} items={stokItems} standLabel={standLabel} />
       <ConfirmDeleteKasModal show={!!deleteItem} item={deleteItem} onClose={() => setDeleteItem(null)} onConfirm={handleDelete} />
 
       {toast && <Toast message={toast} />}

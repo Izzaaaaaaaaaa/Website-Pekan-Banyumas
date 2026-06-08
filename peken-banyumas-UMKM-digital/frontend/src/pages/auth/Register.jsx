@@ -6,6 +6,7 @@ import {
   Send, Lightbulb, Home, Loader2, Eye, EyeOff,
   ImagePlus, X, User, Mail, Lock, Filter, Search,
 } from "lucide-react";
+import { supabase } from "../../lib/supabase";
 import "../../assets/styles/register.css";
 
 /* ─── CONSTANTS ─── */
@@ -138,7 +139,7 @@ export default function Register() {
         ? formData.kategoriCustom
         : formData.kategori;
 
-      const BASE = import.meta.env.VITE_API_URL || "http://127.0.0.1:8004";
+      const BASE = import.meta.env.VITE_API_URL;
       const res = await fetch(`${BASE}/api/auth/register`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
@@ -160,6 +161,57 @@ export default function Register() {
         setSubmitting(false);
         return;
       }
+
+      // ── Upload foto ke Supabase Storage (peken-uploads) ──────────────────
+      // Login dulu dengan kredensial baru untuk dapat session (butuh token upload)
+      if (formData.photos.length > 0) {
+        try {
+          const { data: signInData } = await supabase.auth.signInWithPassword({
+            email: formData.email,
+            password: formData.password,
+          });
+
+          if (signInData?.user) {
+            const userId = signInData.user.id;
+            const uploadedUrls = [];
+
+            for (let i = 0; i < formData.photos.length; i++) {
+              const photo = formData.photos[i];
+              const ext   = photo.file.name.split(".").pop() || "jpg";
+              const path  = `artisans/${userId}/foto-${i + 1}-${Date.now()}.${ext}`;
+
+              const { error: uploadErr } = await supabase.storage
+                .from("peken-uploads")
+                .upload(path, photo.file, { upsert: true });
+
+              if (!uploadErr) {
+                const { data: urlData } = supabase.storage
+                  .from("peken-uploads")
+                  .getPublicUrl(path);
+                if (urlData?.publicUrl) uploadedUrls.push(urlData.publicUrl);
+              }
+            }
+
+            // Simpan foto pertama sebagai foto_url artisan via BE
+            if (uploadedUrls.length > 0) {
+              await fetch(`${BASE}/api/artisan/pengaturan/profil`, {
+                method: "PUT",
+                headers: {
+                  "Content-Type": "application/json",
+                  Authorization: `Bearer ${signInData.session.access_token}`,
+                },
+                body: JSON.stringify({ foto_url: uploadedUrls[0] }),
+              }).catch(() => {}); // tidak blocking kalau gagal
+            }
+
+            // Sign out setelah upload — artisan masih pending, belum bisa masuk dashboard
+            await supabase.auth.signOut();
+          }
+        } catch {
+          // Upload foto gagal tidak boleh batalkan registrasi
+        }
+      }
+
       localStorage.setItem("status", "pending");
       navigate("/status");
     } catch (err) {

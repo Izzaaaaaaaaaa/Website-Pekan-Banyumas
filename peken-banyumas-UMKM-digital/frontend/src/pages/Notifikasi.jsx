@@ -2,7 +2,7 @@ import { useState, useEffect, useCallback } from "react";
 import { Bell, CheckCheck, X, Package, ShoppingCart, AlertTriangle, Info, ChevronRight, Calendar, Clock, Tag } from "lucide-react";
 import "../assets/styles/notifikasi.css";
 
-const BASE        = import.meta.env.VITE_API_URL || "http://127.0.0.1:8004";
+const BASE        = import.meta.env.VITE_API_URL;
 const API_NOTIF   = `${BASE}/api/notifikasi`;
 const API_READ    = `${BASE}/api/notifikasi/read`;
 const API_READALL = `${BASE}/api/notifikasi/read-all`;

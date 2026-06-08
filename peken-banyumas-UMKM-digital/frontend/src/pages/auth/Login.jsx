@@ -4,11 +4,12 @@ import {
   Mail, Lock, Eye, EyeOff, AlertCircle,
   ArrowRight, Loader2, Store,
 } from "lucide-react";
+import { supabase } from "../../lib/supabase";
 import logobanyumas from "../../assets/images/logo-banyumas.png";
 import logo from "../../assets/images/logo.png";
 import "../../assets/styles/login.css";
 
-/* ── Left panel decorative sub-components (inline styles, zero class dependency) ── */
+/* ── Left panel decorative sub-components ── */
 
 const DotGrid = () => (
   <div style={{
@@ -62,30 +63,87 @@ export default function Login() {
 
   const handleLogin = async (e) => {
     e.preventDefault();
-    if (!form.email || !form.password) { setError("Semua field harus diisi!"); return; }
+    if (!form.email || !form.password) {
+      setError("Semua field harus diisi!");
+      return;
+    }
     setLoading(true);
     try {
-      const BASE = import.meta.env.VITE_API_URL || "http://127.0.0.1:8004";
-      const res = await fetch(`${BASE}/api/auth/login`, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ email: form.email, password: form.password }),
+      // 1. Login via Supabase Auth — dapat access_token (Supabase JWT)
+      const { data, error: authError } = await supabase.auth.signInWithPassword({
+        email: form.email,
+        password: form.password,
       });
-      const data = await res.json();
-      if (!res.ok) {
-        setError(data.detail || "Email atau password salah!");
+
+      if (authError) {
+        setError("Email atau password salah!");
         setLoading(false);
         return;
       }
-      // simpan token dan info user
+
+      const session = data.session;
+      const user    = data.user;
+
+      // 2. Cek artisans.status dari BE — status dikelola admin di tabel artisans
+      const BASE = import.meta.env.VITE_API_URL;
+      const statusRes = await fetch(`${BASE}/api/auth/me/status`, {
+        headers: { Authorization: `Bearer ${session.access_token}` },
+      });
+      const statusData = await statusRes.json();
+
+      if (!statusRes.ok) {
+        await supabase.auth.signOut();
+        setError(statusData.detail || "Gagal memverifikasi akun.");
+        setLoading(false);
+        return;
+      }
+
+      const artisanStatus = statusData.status;
+      if (artisanStatus === "pending") {
+        await supabase.auth.signOut();
+        setError("Akun belum disetujui admin. Tunggu konfirmasi.");
+        setLoading(false);
+        return;
+      }
+      if (artisanStatus === "suspended") {
+        await supabase.auth.signOut();
+        setError("Akun kamu sedang disuspend. Hubungi admin.");
+        setLoading(false);
+        return;
+      }
+      if (artisanStatus === "rejected") {
+        await supabase.auth.signOut();
+        setError("Pendaftaran akun ditolak. Hubungi admin.");
+        setLoading(false);
+        return;
+      }
+
+      // 3. Simpan info ke localStorage
       localStorage.setItem("isLogin", "true");
-      localStorage.setItem("token", data.access_token);
-      localStorage.setItem("user_id", data.user_id);
-      localStorage.setItem("nama", data.nama);
-      localStorage.setItem("email", data.email);
-      localStorage.setItem("role", data.role);
+      localStorage.setItem("token", session.access_token);
+      localStorage.setItem("user_id", user.id);
+      localStorage.setItem("nama", statusData.nama || user.email);
+      localStorage.setItem("email", user.email);
+      localStorage.setItem("role", user.app_metadata?.role || "artisan");
+
+      // 4. Fetch foto profil dari DB dan simpan ke localStorage supaya Sidebar update
+      try {
+        const BASE_URL = import.meta.env.VITE_API_URL;
+        const profilRes = await fetch(`${BASE_URL}/api/artisan/pengaturan/profil`, {
+          headers: { Authorization: `Bearer ${session.access_token}` },
+        });
+        if (profilRes.ok) {
+          const profilData = await profilRes.json();
+          if (profilData.foto_url) {
+            localStorage.setItem("profilePhoto", profilData.foto_url);
+          } else {
+            localStorage.removeItem("profilePhoto");
+          }
+        }
+      } catch { /* tidak blocking */ }
+
       navigate("/");
-    } catch (err) {
+    } catch {
       setError("Gagal terhubung ke server. Coba lagi.");
       setLoading(false);
     }
@@ -100,15 +158,12 @@ export default function Login() {
       background: "#f2f4e8",
     }}>
 
-      {/* ══════════════════════════════════════════════════════
-          LEFT — Branding panel (charcoal dark, inline styles)
-          ══════════════════════════════════════════════════════ */}
+      {/* LEFT — Branding panel */}
       <div className="login-left-panel">
         <DotGrid />
         <SageGlow />
         <PixelSkyline />
 
-        {/* Logo */}
         <div style={{ position: "relative", zIndex: 1, display: "flex", alignItems: "center", gap: 12 }}>
           <img
             src={logo}
@@ -134,7 +189,6 @@ export default function Login() {
           </div>
         </div>
 
-        {/* Hero copy */}
         <div style={{ position: "relative", zIndex: 1, maxWidth: 420 }}>
           <div style={{
             fontFamily: "var(--font-display)",
@@ -148,7 +202,6 @@ export default function Login() {
             dan tampilkan produk terbaikmu dalam satu dasbor yang simpel dan terintegrasi.
           </p>
 
-          {/* Feature bullets */}
           <div style={{ marginTop: 32, display: "flex", flexDirection: "column", gap: 10 }}>
             {FEATURES.map(text => (
               <div key={text} style={{ display: "flex", alignItems: "center", gap: 10 }}>
@@ -162,7 +215,6 @@ export default function Login() {
           </div>
         </div>
 
-        {/* Footer */}
         <div style={{
           position: "relative", zIndex: 1,
           fontSize: 10, color: "#3a4030", letterSpacing: ".04em",
@@ -171,32 +223,24 @@ export default function Login() {
         </div>
       </div>
 
-      {/* ══════════════════════════════════════════════════════
-          RIGHT — Login form (CSS classes, light krem)
-          ══════════════════════════════════════════════════════ */}
+      {/* RIGHT — Login form */}
       <div className="login-right">
-        <div style={{ position: 'absolute', top: 16, right: 20 }}>
+        <div style={{ position: "absolute", top: 16, right: 20 }}>
           <span
-            onClick={() => navigate("/")}
-            style={{
-              fontSize: 12,
-              color: "#8a9070",
-              cursor: "pointer"
-            }}
+            onClick={() => window.open(import.meta.env.VITE_COMPANY_URL || "http://localhost:5174", "_blank")}
+            style={{ fontSize: 12, color: "#8a9070", cursor: "pointer" }}
           >
             ← Beranda Publik
           </span>
         </div>
         <div className="login-card">
 
-          {/* Mobile logo (hidden on desktop) */}
           <div className="card-logos">
             <img src={logobanyumas} alt="Kabupaten Banyumas" className="card-logo" />
             <div className="card-logo-sep" />
             <img src={logo} alt="Peken Banyumas" className="card-logo peken" />
           </div>
 
-          {/* Icon mark */}
           <div className="logo-mark">
             <Store size={24} color="white" strokeWidth={2} />
           </div>
@@ -204,7 +248,6 @@ export default function Login() {
           <h2 className="card-title">Selamat datang!</h2>
           <p className="card-sub">Masuk ke dashboard artisan Anda</p>
 
-          {/* Error */}
           {error && (
             <div className="error-box">
               <AlertCircle size={15} strokeWidth={2} style={{ flexShrink: 0 }} />
@@ -212,9 +255,7 @@ export default function Login() {
             </div>
           )}
 
-          {/* Form */}
           <form onSubmit={handleLogin}>
-
             <div className="field">
               <label className="field-label">Email</label>
               <div className="input-wrap">
@@ -262,10 +303,8 @@ export default function Login() {
             </button>
           </form>
 
-          {/* Divider */}
           <div className="divider">atau</div>
 
-          {/* Register CTA */}
           <p className="register-row">
             Belum punya akun?{" "}
             <span className="register-link" onClick={() => navigate("/register")}>
@@ -273,7 +312,6 @@ export default function Login() {
             </span>
           </p>
 
-          {/* Event strip — static */}
           <div className="event-strip">
             <div className="event-strip-left">
               <img src={logo} alt="Peken Banyumas" className="event-strip-logo" />

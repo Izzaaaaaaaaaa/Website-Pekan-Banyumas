@@ -4,28 +4,25 @@ import {
   Mail, Send, ArrowLeft, CheckCircle2,
   AlertCircle, Loader2,
 } from "lucide-react";
+import { supabase } from "../../lib/supabase";
 import logobanyumas from "../../assets/images/logo-banyumas.png";
 import logo         from "../../assets/images/logo.png";
 import "../../assets/styles/lupapass.css";
 
-const BASE = import.meta.env.VITE_API_URL || "http://localhost:8004";
-
 export default function ForgotPassword() {
   const navigate = useNavigate();
 
-  const [email, setEmail]     = useState("");
+  const [email, setEmail]           = useState("");
   const [emailError, setEmailError] = useState("");
-  const [loading, setLoading] = useState(false);
-  const [sent, setSent]       = useState(false);
+  const [loading, setLoading]       = useState(false);
+  const [sent, setSent]             = useState(false);
   const [serverError, setServerError] = useState("");
 
-  /* ── validasi email sederhana ── */
   const isValidEmail = (val) => /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(val);
 
   const handleSubmit = async (e) => {
     e.preventDefault();
 
-    // validasi lokal
     if (!email.trim()) {
       setEmailError("Email wajib diisi");
       return;
@@ -40,23 +37,21 @@ export default function ForgotPassword() {
     setLoading(true);
 
     try {
-      const res = await fetch(`${BASE}/api/auth/password/forgot`, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ email: email.trim() }),
+      // Supabase kirim email reset password gratis — tidak perlu call BE
+      const { error } = await supabase.auth.resetPasswordForEmail(email.trim(), {
+        redirectTo: `${window.location.origin}/reset-password`,
       });
 
-      const data = await res.json();
-
-      if (!res.ok) {
-        setServerError(data.message || data.detail || "Gagal mengirim email reset. Coba lagi.");
-        setLoading(false);
-        return;
+      if (error) {
+        // Supabase tidak membedakan email terdaftar / tidak demi keamanan —
+        // tetap tampilkan sukses agar tidak bocorkan info akun
+        console.error("[LupaPass] resetPasswordForEmail error:", error.message);
       }
 
+      // Selalu tampilkan sukses (best practice anti-enumeration)
       setSent(true);
     } catch {
-      setServerError("Gagal terhubung ke server. Periksa koneksi dan coba lagi.");
+      setServerError("Gagal terhubung. Periksa koneksi dan coba lagi.");
     } finally {
       setLoading(false);
     }
@@ -64,27 +59,21 @@ export default function ForgotPassword() {
 
   return (
     <div className="fp-root">
-      {/* ── Background decorations ── */}
       <div className="fp-blob fp-blob-1" />
       <div className="fp-blob fp-blob-2" />
       <div className="fp-dot-grid" />
 
       <div className="fp-wrapper">
 
-        {/* ── Brand logos ── */}
         <div className="fp-brand">
           <img src={logobanyumas} alt="Kabupaten Banyumas" className="fp-brand-logo" />
           <div className="fp-brand-sep" />
           <img src={logo} alt="Peken Banyumas" className="fp-brand-logo peken" />
         </div>
 
-        {/* ══════════════════════════════════════ */}
-        {/*  CARD                                  */}
-        {/* ══════════════════════════════════════ */}
         <div className="fp-card">
 
           {sent ? (
-            /* ── SUCCESS STATE ── */
             <div className="fp-success">
               <div className="fp-success-icon">
                 <CheckCircle2 size={36} strokeWidth={2} />
@@ -92,8 +81,8 @@ export default function ForgotPassword() {
 
               <h2 className="fp-title">Email Terkirim!</h2>
               <p className="fp-desc">
-                Kami sudah mengirimkan tautan reset password ke{" "}
-                <strong>{email}</strong>.<br />
+                Jika email <strong>{email}</strong> terdaftar, tautan reset password
+                sudah dikirim.<br />
                 Periksa kotak masuk atau folder spam kamu.
               </p>
 
@@ -101,10 +90,7 @@ export default function ForgotPassword() {
                 <div className="fp-success-bar-fill" />
               </div>
 
-              <button
-                className="fp-btn-primary"
-                onClick={() => navigate("/login")}
-              >
+              <button className="fp-btn-primary" onClick={() => navigate("/login")}>
                 Kembali ke Login <ArrowLeft size={16} />
               </button>
 
@@ -117,9 +103,7 @@ export default function ForgotPassword() {
             </div>
 
           ) : (
-            /* ── FORM STATE ── */
             <>
-              {/* Icon */}
               <div className="fp-icon-wrap">
                 <Mail size={22} color="white" strokeWidth={2} />
               </div>
@@ -129,7 +113,6 @@ export default function ForgotPassword() {
                 Masukkan email akun kamu. Kami akan mengirim tautan untuk membuat password baru.
               </p>
 
-              {/* Server error banner */}
               {serverError && (
                 <div className="fp-err" style={{ marginBottom: 16 }}>
                   <AlertCircle size={14} style={{ flexShrink: 0 }} />
@@ -179,17 +162,13 @@ export default function ForgotPassword() {
                 </button>
               </form>
 
-              <button
-                className="fp-btn-ghost"
-                onClick={() => navigate("/login")}
-              >
+              <button className="fp-btn-ghost" onClick={() => navigate("/login")}>
                 <ArrowLeft size={15} /> Kembali ke Login
               </button>
             </>
           )}
         </div>
 
-        {/* ── Footer ── */}
         <p className="fp-footer">
           Ingat password kamu?{" "}
           <span className="fp-footer-link" onClick={() => navigate("/login")}>

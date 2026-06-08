@@ -117,7 +117,7 @@ export default function Sidebar({ open, setOpen }) {
         <div
             className="si"
             onClick={() => {
-              window.open("/", "_blank");
+              window.open(import.meta.env.VITE_COMPANY_URL || "http://localhost:5174", "_blank");
               setOpen(false);
             }}
           >

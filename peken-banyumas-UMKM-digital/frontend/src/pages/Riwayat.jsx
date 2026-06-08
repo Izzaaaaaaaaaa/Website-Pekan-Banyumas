@@ -2,7 +2,7 @@ import { useState, useEffect, useCallback } from "react";
 import { ClipboardList, Search, Download, Utensils } from "lucide-react";
 import "../assets/styles/riwayat.css";
 
-const BASE = import.meta.env.VITE_API_URL || "http://127.0.0.1:8004";
+const BASE = import.meta.env.VITE_API_URL;
 const API = `${BASE}/api/artisan/riwayat`;
 
 function authHeaders() {
