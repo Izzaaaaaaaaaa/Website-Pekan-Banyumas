@@ -1,0 +1,80 @@
+# ============================================================================
+# Peken Banyumasan — Local Backend Stack
+#
+# 3 backend tim = STANDALONE (supabase-py REST, requirements.txt, uvicorn :8000).
+#   build context = folder backend masing-masing (simpel, tanpa peken_common).
+# CP (Company Profile) = CANONICAL (pakai peken_common, gunicorn :7860).
+#   build context = ROOT repo (perlu folder peken_common/).
+#
+# ── Cara pakai ──
+#   1. Di tiap backend: copy .env.example -> .env, isi nilai Supabase tim.
+#      (Kolaborator .env mungkin sudah ada; Gate/UMKM/CP perlu dibuat.)
+#   2. docker compose up --build
+#   3. Smoke test:
+#        curl localhost:8001/health   # CP
+#        curl localhost:8002/health   # Gate
+#        curl localhost:8003/         # Kolaborator (root = liveness)
+#        curl localhost:8004/         # UMKM (root = liveness)
+#   4. Stop: docker compose down
+#
+# ── Ports (host -> container) ──
+#   CP 8001->7860 | Gate 8002->8000 | Kolaborator 8003->8000 | UMKM 8004->8000
+#
+# CATATAN: kalau belum fokus ke CP, comment-out service cp-api (CP canonical,
+# perlu peken_common + SUPABASE_DB_URL di .env-nya — beda dari 3 backend tim).
+# ============================================================================
+
+services:
+
+  # ── CP — CANONICAL (peken_common, context = repo root) ──
+  cp-api:
+    build:
+      context: .
+      dockerfile: Peken-Banyumasan-Company-Profile/backend/Dockerfile
+    image: peken-cp-api:dev
+    container_name: peken-cp-api
+    ports:
+      - "8001:7860"
+    env_file:
+      - path: ./Peken-Banyumasan-Company-Profile/backend/.env
+        required: false
+    restart: unless-stopped
+
+  # ── Gate — STANDALONE (context = folder backend) ──
+  gate-api:
+    build:
+      context: ./Peken-Banyumasan-Gate-Masuk-Keluar/backend
+    image: peken-gate-api:dev
+    container_name: peken-gate-api
+    ports:
+      - "8002:8000"
+    env_file:
+      - path: ./Peken-Banyumasan-Gate-Masuk-Keluar/backend/.env
+        required: false
+    restart: unless-stopped
+
+  # ── Kolaborator — STANDALONE ──
+  kolaborator-api:
+    build:
+      context: ./Peken-Banyumasan-Kolaborator/backend
+    image: peken-kolaborator-api:dev
+    container_name: peken-kolaborator-api
+    ports:
+      - "8003:8000"
+    env_file:
+      - path: ./Peken-Banyumasan-Kolaborator/backend/.env
+        required: false
+    restart: unless-stopped
+
+  # ── UMKM / Artisan — STANDALONE ──
+  umkm-api:
+    build:
+      context: ./peken-banyumas-UMKM-digital/backend
+    image: peken-umkm-api:dev
+    container_name: peken-umkm-api
+    ports:
+      - "8004:8000"
+    env_file:
+      - path: ./peken-banyumas-UMKM-digital/backend/.env
+        required: false
+    restart: unless-stopped
