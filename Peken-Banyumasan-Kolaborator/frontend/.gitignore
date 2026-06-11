@@ -33,3 +33,11 @@ env/
 .wrangler
 .dev.vars*
 !.dev.vars.example
+
+# testing artifacts
+coverage
+playwright-report
+test-results
+lighthouse-report
+.lighthouseci
+.lhci-chrome

@@ -193,7 +193,6 @@ export default function Pengaturan() {
           {[
             ['event',  'Notifikasi Event',   'Pengingat event yang kamu daftarkan',       false],
             ['system', 'Notifikasi Sistem',  'Update status akun dan konten',              false],
-            ['digest', 'Ringkasan Mingguan', 'Email ringkasan aktivitas setiap minggu',    true],
           ].map(([key, label, desc, comingSoon]) => (
             <div key={key} className="flex items-center justify-between"
               style={comingSoon ? { opacity: 0.5 } : {}}>

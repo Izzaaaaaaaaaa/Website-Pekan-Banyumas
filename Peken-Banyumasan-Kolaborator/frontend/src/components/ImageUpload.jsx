@@ -1,7 +1,7 @@
 // ImageUpload.jsx — Peken Banyumasan Design System v2.0
 // Drag-and-drop image upload → Supabase Storage (public URL), base64 fallback.
 import React, { useRef, useState } from 'react';
-import { Upload, Camera, Loader2 } from 'lucide-react';
+import { Upload, Camera, Loader2, X } from 'lucide-react';
 import { uploadImage } from '../lib/uploadImage';
 
 export default function ImageUpload({
@@ -11,6 +11,7 @@ export default function ImageUpload({
   hint     = 'JPG, PNG, WebP · maks 5 MB',
   shape    = 'square',  // 'square' | 'circle' | 'wide'
   folder   = 'upload',  // Storage subfolder (e.g. 'profil', 'karya', 'story')
+  removable = false,    // true → tombol "Hapus foto" (onChange('')) saat ada foto
   className = '',
 }) {
   const inputRef = useRef();
@@ -85,6 +86,16 @@ export default function ImageUpload({
               </div>
             </div>
           </>
+        ) : shape === 'circle' ? (
+          // Lingkaran avatar biasanya kecil (mis. w-24): konten ringkas saja
+          // supaya tidak terpotong oleh border-radius + overflow-hidden.
+          <div className="absolute inset-0 flex flex-col items-center justify-center gap-1 p-2 text-center"
+            style={{color:'#8a9070'}}>
+            <Upload size={16} style={{color:'#7A8A52'}}/>
+            <p className="text-[9px] font-semibold leading-tight" style={{color:'#5a6040'}}>
+              {dragging ? 'Lepas' : 'Upload foto'}
+            </p>
+          </div>
         ) : (
           <div className="absolute inset-0 flex flex-col items-center justify-center gap-2 p-4"
             style={{color:'#8a9070'}}>
@@ -104,6 +115,17 @@ export default function ImageUpload({
 
       {error && (
         <p className="text-xs mt-1.5" style={{color:'#B87272'}}>{error}</p>
+      )}
+
+      {removable && value && !uploading && (
+        <button
+          type="button"
+          onClick={() => onChange('')}
+          className="flex items-center gap-1 text-xs font-semibold mt-1.5 hover:underline"
+          style={{color:'#B87272'}}
+        >
+          <X size={12}/> Hapus foto
+        </button>
       )}
 
       <input

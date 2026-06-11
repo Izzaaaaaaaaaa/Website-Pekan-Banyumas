@@ -98,6 +98,7 @@ export default function Profil() {
                 onChange={v => setForm(p => ({...p, foto_url: v}))}
                 label=""
                 shape="circle"
+                removable
               />
             </div>
           ) : (
@@ -191,6 +192,7 @@ export default function Profil() {
               value={form.cover_url}
               onChange={v => setForm(p => ({...p, cover_url: v}))}
               label=""
+              removable
               shape="wide"
             />
           </div>
