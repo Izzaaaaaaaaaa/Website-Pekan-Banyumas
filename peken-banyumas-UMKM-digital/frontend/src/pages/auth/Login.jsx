@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import {
   Mail, Lock, Eye, EyeOff, AlertCircle,
@@ -55,6 +55,28 @@ export default function Login() {
   const [error, setError]               = useState("");
   const [showPassword, setShowPassword] = useState(false);
   const [loading, setLoading]           = useState(false);
+  const [activeEvent, setActiveEvent]   = useState(null);
+
+  // Fetch event aktif untuk event-strip
+  useEffect(() => {
+    const BASE = import.meta.env.VITE_API_URL;
+    fetch(`${BASE}/api/event`)
+      .then(r => r.json())
+      .then(data => {
+        if (!Array.isArray(data)) return;
+        // Prioritas: berlangsung > published, ambil yang paling dekat
+        const aktif = data
+          .filter(e => e.status === "berlangsung" || e.status === "published")
+          .sort((a, b) => {
+            // berlangsung duluan
+            if (a.status === "berlangsung" && b.status !== "berlangsung") return -1;
+            if (b.status === "berlangsung" && a.status !== "berlangsung") return 1;
+            return new Date(a.tanggal) - new Date(b.tanggal);
+          });
+        if (aktif.length > 0) setActiveEvent(aktif[0]);
+      })
+      .catch(() => {});
+  }, []);
 
   const handleChange = (e) => {
     setForm({ ...form, [e.target.name]: e.target.value });
@@ -316,10 +338,26 @@ export default function Login() {
             <div className="event-strip-left">
               <img src={logo} alt="Peken Banyumas" className="event-strip-logo" />
             </div>
-            <div>
-              <div className="event-name">Peken Banyumas</div>
-              <div className="event-detail">22–24 Maret · Taman Sari Kota Lama Banyumas · Masuk Gratis</div>
-            </div>
+            {activeEvent ? (
+              <div>
+                <div className="event-name">{activeEvent.nama}</div>
+                <div className="event-detail">
+                  {activeEvent.tanggal
+                    ? new Date(activeEvent.tanggal).toLocaleDateString("id-ID", { day: "numeric", month: "long" })
+                    : ""}
+                  {activeEvent.tanggal_selesai && activeEvent.tanggal_selesai !== activeEvent.tanggal
+                    ? ` – ${new Date(activeEvent.tanggal_selesai).toLocaleDateString("id-ID", { day: "numeric", month: "long" })}`
+                    : ""}
+                  {activeEvent.lokasi ? ` · ${activeEvent.lokasi}` : ""}
+                  {" · Masuk Gratis"}
+                </div>
+              </div>
+            ) : (
+              <div>
+                <div className="event-name">Peken Banyumas</div>
+                <div className="event-detail">Platform UMKM Artisan Banyumas</div>
+              </div>
+            )}
           </div>
 
         </div>

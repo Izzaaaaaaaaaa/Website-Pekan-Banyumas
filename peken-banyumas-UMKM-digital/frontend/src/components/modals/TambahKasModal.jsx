@@ -90,6 +90,12 @@ export default function TambahKasModal({ show, onClose, onSave, items, namaUsaha
     }));
   };
 
+  // Warning real-time jika qty melebihi stok tersedia
+  const selectedBarang = items?.find(i => String(i.id) === String(form.barangId));
+  const stokWarning = selectedBarang && Number(form.qty) > Number(selectedBarang.stok)
+    ? `Stok hanya ${selectedBarang.stok} — qty ${form.qty} melebihi stok!`
+    : null;
+
   const set = (key, val) => setForm(prev => ({ ...prev, [key]: val }));
 
   const handleJenis = (jenis) => {
@@ -296,7 +302,18 @@ export default function TambahKasModal({ show, onClose, onSave, items, namaUsaha
                 type="number" min={1}
                 value={form.qty}
                 onChange={e => handleQty(Number(e.target.value))}
+                style={stokWarning ? { borderColor: "#ef4444" } : {}}
               />
+              {stokWarning && (
+                <div style={{ fontSize: 12, color: "#ef4444", marginTop: 4 }}>
+                  ⚠️ {stokWarning}
+                </div>
+              )}
+              {selectedBarang && !stokWarning && (
+                <div style={{ fontSize: 11, color: "#6b7280", marginTop: 4 }}>
+                  Stok tersedia: {selectedBarang.stok}
+                </div>
+              )}
             </div>
           )}
 

@@ -67,6 +67,17 @@ export default function EditKasModal({ show, item, onClose, onSave, items, stand
     }));
   };
 
+  // Warning real-time jika qty melebihi stok
+  // Untuk edit: stok tersedia = stok di DB + qty lama (yang akan dikembalikan)
+  const selectedBarang = items?.find(i => String(i.id) === String(form.barangId));
+  const qtyLama = item?.qty ?? 0;
+  const stokTersedia = selectedBarang
+    ? Number(selectedBarang.stok) + (form.jenis === "masuk" ? Number(qtyLama) : 0)
+    : 0;
+  const stokWarning = selectedBarang && form.jenis === "masuk" && Number(form.qty) > stokTersedia
+    ? `Stok hanya ${selectedBarang.stok} (+ ${qtyLama} dikembalikan = ${stokTersedia}) — qty ${form.qty} melebihi stok!`
+    : null;
+
   const handleBuktiChange = (e) => {
     const file = e.target.files[0];
     if (!file) return;
@@ -80,6 +91,9 @@ export default function EditKasModal({ show, item, onClose, onSave, items, stand
   const handleSubmit = () => {
     if (form.jenis === "masuk" && (!form.namaBarang || form.qty <= 0)) {
       alert("Produk dan qty wajib diisi!"); return;
+    }
+    if (stokWarning) {
+      alert(stokWarning); return;
     }
     if (form.jenis === "keluar" && (!form.ket || Number(form.nominal) <= 0)) {
       alert("Pengeluaran belum lengkap!"); return;
@@ -224,7 +238,18 @@ export default function EditKasModal({ show, item, onClose, onSave, items, stand
                 type="number" min={1}
                 value={form.qty}
                 onChange={e => handleQty(Number(e.target.value))}
+                style={stokWarning ? { borderColor: "#ef4444" } : {}}
               />
+              {stokWarning && (
+                <div style={{ fontSize: 12, color: "#ef4444", marginTop: 4 }}>
+                  ⚠️ {stokWarning}
+                </div>
+              )}
+              {selectedBarang && !stokWarning && (
+                <div style={{ fontSize: 11, color: "#6b7280", marginTop: 4 }}>
+                  Stok tersedia: {selectedBarang.stok}
+                </div>
+              )}
             </div>
           )}
 

@@ -200,7 +200,7 @@ export default function Event() {
     finally { setLoading(false); }
   }, []);
 
-  // ── Fetch event saya ──
+  // ── Fetch event saya — auto-refresh setiap 30 detik untuk tangkap admin answer ──
   const fetchMyEvents = useCallback(async () => {
     try {
       const res  = await fetch(API_SAYA, { headers: authHeaders() });
@@ -209,7 +209,13 @@ export default function Event() {
     } catch { /* ignore */ }
   }, []);
 
-  useEffect(() => { fetchEvents(); fetchMyEvents(); }, [fetchEvents, fetchMyEvents]);
+  useEffect(() => {
+    fetchEvents();
+    fetchMyEvents();
+    // Poll setiap 30 detik supaya perubahan admin (approve/reject/delete) langsung terlihat
+    const interval = setInterval(fetchMyEvents, 30000);
+    return () => clearInterval(interval);
+  }, [fetchEvents, fetchMyEvents]);
 
   const registeredEventIds = myEvents.map(e => e.event_id);
   const pendingCount       = myEvents.filter(e => e.status_request === 'pending').length;
@@ -311,38 +317,71 @@ export default function Event() {
           <div className="ev-usaha-list">
             {myEvents.map(e => {
               const eventData = events.find(ev => ev.id === e.event_id) || {};
+              // Stand aktif: setelah admin approve change, stand_id sudah diupdate
+              const standAktif = e.stand_id || e.posisi_event || '—';
+              // Deteksi state berdasarkan spec v2.4.2:
+              // pending_change   = artisan sudah minta ubah, admin belum jawab
+              // approved + !change_request = approved normal ATAU change ditolak (stand lama)
+              // approved + change_request  = seharusnya tidak muncul (admin clear-nya)
+              const isPendingChange = e.status_request === 'pending_change';
+              const isApproved      = e.status_request === 'approved';
+              const isRejected      = e.status_request === 'rejected';
+
               return (
-                <div key={e.id} className={`ev-usaha-item${e.status_request === 'approved' ? ' approved' : ''}`}>
+                <div key={e.id} className={`ev-usaha-item${isApproved ? ' approved' : ''}`}>
                   <div className="ev-usaha-top">
                     <div>
-                      <div className="ev-usaha-name">{eventData.nama || `Event #${e.event_id?.slice(0, 8)}`}</div>
+                      <div className="ev-usaha-name">{eventData.nama || `Event #${(e.event_id || '').slice(0, 8)}`}</div>
                       <div className="ev-usaha-sub"><Calendar size={12} /> {fmtTgl(eventData.tanggal)}</div>
                       <div className="ev-usaha-pos">
-                        <MapPin size={12} />{e.posisi_event || e.stand_id || '—'}
-                        {e.status_request === 'approved' && (
+                        <MapPin size={12} />{standAktif}
+                        {isApproved && (
                           <span className="ev-stand-locked"><Lock size={10} />Terkunci</span>
                         )}
                       </div>
-                      {e.change_request && e.status_request === 'pending_change' && (
+
+                      {/* (a) change approved — stand baru sudah aktif */}
+                      {isApproved && !e.change_request && standAktif !== (e.posisi_event || e.stand_id) && (
+                        <div className="ev-stand-change-notice" style={{ color: '#2f6f4e' }}>
+                          ✓ Stand diperbarui oleh admin
+                        </div>
+                      )}
+
+                      {/* menunggu jawaban admin atas permintaan ubah stand */}
+                      {isPendingChange && e.change_request && (
                         <div className="ev-stand-change-notice">
                           <Clock size={11} />Permintaan ubah ke: <b>{e.change_request}</b> (menunggu admin)
                         </div>
                       )}
+
+                      {/* (b) change rejected — change_request null, status approved, tombol ubah muncul lagi */}
+                      {isApproved && !e.change_request && !isPendingChange && (
+                        <div style={{ fontSize: 11, color: '#6b7280', marginTop: 2 }}>
+                          Stand: {standAktif}
+                        </div>
+                      )}
                     </div>
                     <div className="ev-usaha-right">
-                      <span className={`ev-badge ${e.status_request === 'approved' ? 'approved' : 'pending'}`}>
-                        {e.status_request === 'approved' ? '✓ Disetujui' :
-                         e.status_request === 'pending_change' ? '⏳ Ubah Stand' : '⏳ Menunggu'}
+                      <span className={`ev-badge ${isApproved ? 'approved' : isRejected ? 'rejected' : 'pending'}`}>
+                        {isApproved      ? '✓ Disetujui'   :
+                         isPendingChange ? '⏳ Ubah Stand'  :
+                         isRejected      ? '✕ Ditolak'     :
+                                           '⏳ Menunggu'}
                       </span>
                     </div>
                   </div>
-                  {e.status_request === 'approved' && !e.change_request && (
+
+                  {/* Tombol ubah stand — hanya kalau approved dan tidak sedang pending_change */}
+                  {isApproved && !isPendingChange && (
                     <div className="ev-stand-actions">
                       <button className="ev-btn-ubah-stand" onClick={() => setChangeModal({ ...e, nama: eventData.nama })}>
                         <RefreshCcw size={12} />Minta Ubah Posisi Stand
                       </button>
                     </div>
                   )}
+
+                  {/* (c) case: participation dihapus admin tidak perlu di-handle di sini —
+                       setelah refetch row sudah tidak ada di myEvents, jadi tidak render */}
                 </div>
               );
             })}
