@@ -50,6 +50,7 @@ const DEFAULT_HOME = {
     'dua kali setiap bulan di kawasan Kota Lama Banyumas, Peken\n' +
     'terus berkembang sebagai ekosistem kreatif.',
   agenda_date:     '—',
+  agenda_nama:     '',
   agenda_label:    'Agenda berikutnya akan diumumkan',
   agenda_lokasi:   '',
   agenda_deskripsi: 'Pantau terus informasi event Peken Banyumasan berikutnya.',
@@ -179,9 +180,16 @@ function deriveAgenda(event) {
     : '';
   return {
     agenda_date:      date,
+    agenda_nama:      event.nama || '',
     agenda_label:     `${hari} · ${bulan} ${tahun}${jamStr}`,
     agenda_lokasi:    event.lokasi || '',
-    agenda_deskripsi: event.deskripsi || '',
+    // Jangan biarkan kolom kanan kosong saat event belum punya deskripsi —
+    // rangkai teks informatif dari data yang ada.
+    agenda_deskripsi: event.deskripsi
+      || [
+           event.nama ? `${event.nama} akan segera digelar` : null,
+           event.lokasi ? `di ${event.lokasi}` : null,
+         ].filter(Boolean).join(' ') + (event.nama || event.lokasi ? '. Sampai jumpa di lokasi!' : ''),
   };
 }
 
@@ -417,6 +425,19 @@ export default function HomeScreen({ onNavigate }) {
               alt=""
               style={{ width: 30, height: 30, marginBottom: 20 }}
             />
+            {homeData.agenda_nama && (
+              <h3
+                style={{
+                  fontFamily: 'var(--font-display)',
+                  fontSize: 24,
+                  fontWeight: 400, /* h3 default bold != display font lain di screen ini */
+                  lineHeight: 1.3,
+                  margin: '0 0 14px',
+                }}
+              >
+                {homeData.agenda_nama}
+              </h3>
+            )}
             <p
               style={{
                 fontFamily: 'var(--font-body)',
