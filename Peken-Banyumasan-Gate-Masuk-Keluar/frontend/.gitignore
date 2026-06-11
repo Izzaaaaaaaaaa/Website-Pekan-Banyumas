@@ -34,3 +34,11 @@ env/
 .dev.vars*
 !.dev.vars.example
 !.env.example
+
+# testing artifacts
+coverage
+playwright-report
+test-results
+lighthouse-report
+.lighthouseci
+.lhci-chrome

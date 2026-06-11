@@ -241,7 +241,7 @@ export default function EventDetail() {
 
   const refreshZones = (updatedartisanss, updatedRequests) => {
     try {
-      let z = syncOccupiedFromArtisans(id, updatedartisanss.map(t => ({ posisi_event: t.posisi_event })));
+      let z = syncOccupiedFromArtisans(id, updatedartisanss.map(t => ({ posisi_event: t.stand_id || t.posisi_event })));
       if (updatedRequests) z = syncPendingFromRequests(id, updatedRequests);
       setZones(z);
     } catch {}
@@ -286,7 +286,7 @@ export default function EventDetail() {
         setartisansRequests(reqs || []);
         setKolaboratorRequests(kReqs || []);
         try {
-          let z = syncOccupiedFromArtisans(id, (arts || []).map(t => ({ posisi_event: t.posisi_event })));
+          let z = syncOccupiedFromArtisans(id, (arts || []).map(t => ({ posisi_event: t.stand_id || t.posisi_event })));
           z = syncPendingFromRequests(id, reqs || []);
           setZones(z);
         } catch {
@@ -316,14 +316,16 @@ export default function EventDetail() {
     }
   };
 
+  // Pessimistic: state hanya berubah setelah server konfirmasi, lalu toast —
+  // sehingga admin selalu tahu perubahan benar-benar tersimpan di DB.
   const updateKolaboratorField = async (emId, data) => {
-    // Optimistic update
-    setKolaborators(l => l.map(x => x.id === emId ? { ...x, ...data } : x));
     try {
       await eventApi.updateKolaborator(id, emId, data);
+      setKolaborators(l => l.map(x => x.id === emId ? { ...x, ...data } : x));
+      toast.success('Perubahan kolaborator tersimpan');
     } catch (err) {
       toast.error(extractError(err, 'Gagal memperbarui kolaborator'));
-      await loadRelations(); // revert
+      await loadRelations();
     }
   };
 
@@ -373,10 +375,12 @@ export default function EventDetail() {
     }
   };
 
-  const removeartisans = async (etId) => {
+  // Backend route /events/:id/artisan/:aid mem-filter kolom artisan_id —
+  // jadi yang dikirim HARUS t.artisan_id, bukan id baris junction (t.id).
+  const removeartisans = async (t) => {
     if (!confirm('Hapus dari event ini?')) return;
     try {
-      await eventApi.removeArtisan(id, etId);
+      await eventApi.removeArtisan(id, t.artisan_id);
       toast.success('Artisan dihapus');
       await loadRelations();
     } catch (err) {
@@ -384,16 +388,18 @@ export default function EventDetail() {
     }
   };
 
-  const updateartisansStand = async (etId, val) => {
-    // Optimistic update
-    const updated = artisans.map(t => t.id === etId ? { ...t, posisi_event: val } : t);
-    setartisanss(updated);
-    refreshZones(updated);
+  // Pessimistic + kirim artisan_id (BE filter kolom artisan_id, bukan id junction).
+  // stand_id = kolom kanonik; posisi_event hanya alias tampilan — tulis keduanya.
+  const updateartisansStand = async (row, val) => {
     try {
-      await eventApi.updateArtisan(id, etId, { posisi_event: val });
+      await eventApi.updateArtisan(id, row.artisan_id, { stand_id: val, posisi_event: val });
+      const updated = artisans.map(t => t.id === row.id ? { ...t, stand_id: val, posisi_event: val } : t);
+      setartisanss(updated);
+      refreshZones(updated);
+      toast.success('Posisi stand tersimpan');
     } catch (err) {
       toast.error(extractError(err, 'Gagal memperbarui posisi stand'));
-      await loadRelations(); // revert
+      await loadRelations();
     }
   };
 
@@ -588,11 +594,11 @@ export default function EventDetail() {
                         </div>
                         <div className="flex items-center gap-2 shrink-0">
                           <StandEditor
-                            value={t.posisi_event}
-                            onChange={val=>updateartisansStand(t.id, val)}
+                            value={t.stand_id || t.posisi_event}
+                            onChange={val=>updateartisansStand(t, val)}
                             zones={zones}
                           />
-                          <button onClick={()=>removeartisans(t.id)}
+                          <button onClick={()=>removeartisans(t)}
                             className="p-1.5 rounded-lg text-gray-300 hover:text-[#B87272] hover:bg-[#f7eeee] transition opacity-0 group-hover:opacity-100">
                             <Trash2 size={13}/>
                           </button>

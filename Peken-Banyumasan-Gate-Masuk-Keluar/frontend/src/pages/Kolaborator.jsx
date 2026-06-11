@@ -214,6 +214,19 @@ const DetailDrawer = ({ kolaborator, onClose, onApprove, onSuspend, onUpdate, al
     }
   };
 
+  // Pessimistic: tulis ke event_kolaborators via API dulu, state UI baru
+  // berubah setelah server konfirmasi (sebelumnya dropdown ini UI-only dan
+  // perubahan peran/kehadiran tidak pernah tersimpan ke DB).
+  const updateEventField = async (e, data) => {
+    try {
+      await eventApi.updateKolaborator(e.event_id, e.id, data);
+      setKolaboratorEvents(l => l.map(x => x.id === e.id ? { ...x, ...data } : x));
+      toast.success('Perubahan tersimpan');
+    } catch (err) {
+      toast.error(extractError(err, 'Gagal menyimpan perubahan'));
+    }
+  };
+
   // Approve/reject a kolaborator's event request straight from this panel
   // (no need to open Kelola Event). Re-fetch both lists after.
   const respondRequest = async (req, action) => {
@@ -442,7 +455,7 @@ const DetailDrawer = ({ kolaborator, onClose, onApprove, onSuspend, onUpdate, al
                           <div className="flex items-center gap-2 mt-1.5 flex-wrap">
                             <select
                               value={e.peran}
-                              onChange={ev => setKolaboratorEvents(l => l.map(x => x.id===e.id ? {...x,peran:ev.target.value} : x))}
+                              onChange={ev => updateEventField(e, { peran: ev.target.value })}
                               className="text-[10px] border border-[#e4e7d4] rounded-lg px-1.5 py-1 focus:outline-none focus:border-[#7a8a52] bg-white"
                             >
                               <option value="peserta">Peserta</option>
@@ -451,7 +464,7 @@ const DetailDrawer = ({ kolaborator, onClose, onApprove, onSuspend, onUpdate, al
                             </select>
                             <select
                               value={e.status_kehadiran}
-                              onChange={ev => setKolaboratorEvents(l => l.map(x => x.id===e.id ? {...x,status_kehadiran:ev.target.value} : x))}
+                              onChange={ev => updateEventField(e, { status_kehadiran: ev.target.value })}
                               className={`text-[10px] border border-[#e4e7d4] rounded-lg px-1.5 py-1 focus:outline-none focus:border-[#7a8a52] bg-white ${e.status_kehadiran==='hadir'?'text-[#7a8a52]':e.status_kehadiran==='tidak_hadir'?'text-[#B87272]':'text-[#8a9070]'}`}
                             >
                               <option value="terdaftar">Terdaftar</option>
