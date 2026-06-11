@@ -119,7 +119,11 @@ def remove_kolaborator(event_id: str, kolab_id: str):
     """Remove kolaborator from event."""
     try:
         res = supabase_admin.table("event_kolaborators").delete().eq("id", kolab_id).eq("event_id", event_id).execute()
+        if not res.data:  # BE-5: detect silent no-op
+            raise HTTPException(404, "Kolaborator assignment tidak ditemukan")
         return {"message": "Kolaborator removed"}
+    except HTTPException:
+        raise
     except Exception as e:
         raise HTTPException(500, f"Error removing kolaborator: {str(e)}")
 
@@ -159,6 +163,7 @@ def assign_artisan(event_id: str, data: dict):
             "event_id": event_id,
             "artisan_id": data.get("artisan_id"),
             "stand_id": stand_id,
+            "posisi_event": stand_id,  # BE-4: always mirror stand_id
             "status_request": "approved",
             "assigned_by": "admin"
         }
@@ -197,7 +202,11 @@ def remove_artisan(event_id: str, artisan_id: str):
     """Remove artisan from event."""
     try:
         res = supabase_admin.table("event_artisans").delete().eq("artisan_id", artisan_id).eq("event_id", event_id).execute()
+        if not res.data:  # BE-5: detect silent no-op
+            raise HTTPException(404, "Artisan assignment tidak ditemukan")
         return {"message": "Artisan removed"}
+    except HTTPException:
+        raise
     except Exception as e:
         raise HTTPException(500, f"Error removing artisan: {str(e)}")
 
@@ -205,21 +214,49 @@ def remove_artisan(event_id: str, artisan_id: str):
 # Artisan request handling
 
 def get_artisan_requests(event_id: str):
-    """Get pending artisan self-join requests with enriched names."""
+    """Self-join requests (artisan_requests) + stand-change requests (event_artisans).
+
+    BE-1 fix: stand-change requests are written to event_artisans by the artisan
+    backend (status_request='pending_change'). We merge them here so the FE
+    "Permintaan" tab sees both kinds of request cards.
+    """
     try:
         res = supabase_admin.table("artisan_requests") \
             .select("*, artisans(nama_usaha, kategori_usaha)") \
             .eq("event_id", event_id) \
             .neq("status_request", "rejected") \
             .execute()
-            
+
         reqs = []
         for row in (res.data or []):
             a_info = row.pop("artisans", None) or {}
             row["nama_usaha"] = a_info.get("nama_usaha", "—")
             row["kategori_usaha"] = a_info.get("kategori_usaha", [])
             reqs.append(row)
-            
+
+        # Stand-change requests live on the event_artisans junction row
+        # (written by the artisan backend). Map them to the same request-card
+        # shape so the FE "Permintaan" tab renders them without changes.
+        ea = supabase_admin.table("event_artisans") \
+            .select("*, artisans(nama_usaha, kategori_usaha)") \
+            .eq("event_id", event_id) \
+            .eq("status_request", "pending_change") \
+            .execute()
+        for row in (ea.data or []):
+            a_info = row.pop("artisans", None) or {}
+            reqs.append({
+                "id": row.get("id"),                # FE uses this as {rid}
+                "event_id": row.get("event_id"),
+                "artisan_id": row.get("artisan_id"),
+                "posisi_event": row.get("stand_id") or row.get("posisi_event"),  # CURRENT stand
+                "change_request": row.get("change_request"),                     # REQUESTED stand
+                "status_request": "pending_change",
+                "assigned_by": row.get("assigned_by"),
+                "created_at": row.get("created_at"),
+                "nama_usaha": a_info.get("nama_usaha", "—"),
+                "kategori_usaha": a_info.get("kategori_usaha", []),
+            })
+
         return reqs
     except Exception as e:
         raise HTTPException(500, f"Error fetching artisan requests: {str(e)}")
@@ -246,6 +283,7 @@ def respond_artisan_request(event_id: str, request_id: str, action: str):
                 "event_id": event_id,
                 "artisan_id": req.get("artisan_id"),
                 "stand_id": stand_id,
+                "posisi_event": stand_id,  # BE-4: always mirror stand_id
                 "status_request": "approved",
                 "assigned_by": "self"
             }
@@ -264,45 +302,44 @@ def respond_artisan_request(event_id: str, request_id: str, action: str):
 
 
 def respond_position_change(event_id: str, request_id: str, action: str):
-    """Respond to artisan position change request."""
+    """Respond to an artisan stand-change request.
+
+    BE-1 fix: request_id = event_artisans.id (NOT artisan_requests.id).
+    The artisan backend writes stand-change requests to event_artisans
+    (status_request='pending_change', change_request=<new_stand_id>).
+    """
     try:
-        req_res = supabase_admin.table("artisan_requests").select("*").eq("id", request_id).single().execute()
+        req_res = supabase_admin.table("event_artisans").select("*") \
+            .eq("id", request_id).eq("event_id", event_id).single().execute()
         if not req_res.data:
             raise HTTPException(404, "Request tidak ditemukan")
+        row = req_res.data
+        new_stand = row.get("change_request")
 
-        req = req_res.data
-        
         if action == "approve":
-            new_stand = req.get("change_request")
-            if new_stand:
-                # Check conflict
-                existing = supabase_admin.table("event_artisans") \
-                    .select("id") \
-                    .eq("event_id", event_id) \
-                    .eq("stand_id", new_stand) \
-                    .execute()
-                
-                if existing.data:
-                    raise HTTPException(400, f"Posisi {new_stand} sudah ditempati.")
-                
-                # Apply change to actual assignment
-                supabase_admin.table("event_artisans") \
-                    .update({"stand_id": new_stand}) \
-                    .eq("event_id", event_id) \
-                    .eq("artisan_id", req.get("artisan_id")) \
-                    .execute()
-            
-            # Request handled - delete it
-            supabase_admin.table("artisan_requests").delete().eq("id", request_id).execute()
-            return {"message": "Position change approved"}
-        else:
-            # Reject change: reset change_request to null but keep approved status
-            supabase_admin.table("artisan_requests").update({
+            if not new_stand:
+                raise HTTPException(404, "Tidak ada permintaan perubahan posisi")
+            # Conflict: another row of the same event already occupies the target stand
+            existing = supabase_admin.table("event_artisans").select("id") \
+                .eq("event_id", event_id).eq("stand_id", new_stand) \
+                .neq("id", request_id).execute()
+            if existing.data:
+                raise HTTPException(400, f"Posisi {new_stand} sudah ditempati.")
+            # Apply: move the stand, clear the request, back to approved.
+            # The row is NEVER deleted.
+            supabase_admin.table("event_artisans").update({
+                "stand_id": new_stand,
+                "posisi_event": new_stand,
                 "change_request": None,
-                "status_request": "approved"
+                "status_request": "approved",
+            }).eq("id", request_id).execute()
+            return {"message": "Position change approved"}
+        else:  # reject — old stand stays, request cleared
+            supabase_admin.table("event_artisans").update({
+                "change_request": None,
+                "status_request": "approved",
             }).eq("id", request_id).execute()
             return {"message": "Position change rejected"}
-
     except HTTPException:
         raise
     except Exception as e:

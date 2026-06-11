@@ -156,8 +156,14 @@ def get_dashboard_stats(event_id: Optional[str] = None) -> Stats:
             logs = logs_res.data if logs_res.data else []
             logger.debug(f"[STATS] Found {len(logs)} visitor records")
 
-            # Pengunjung yang saat ini masih di dalam (status = "di_dalam")
-            di_dalam = len([l for l in logs if l.get("status") == "di_dalam"])
+            # NFC visitors (uid NOT NULL): count open sessions
+            nfc_inside = len([l for l in logs if l.get("uid") and l.get("status") == "di_dalam"])
+            # Manual visitors (uid NULL): net = masuk rows minus keluar rows (floor 0)
+            manual_in = len([l for l in logs if not l.get("uid") and l.get("status") == "di_dalam"])
+            manual_out = len([l for l in logs if not l.get("uid") and l.get("status") == "keluar"])
+            manual_net = max(0, manual_in - manual_out)
+            di_dalam = nfc_inside + manual_net
+
             # Total yang pernah masuk = semua record (di_dalam + keluar)
             total_masuk = len(logs)
             # Total yang sudah keluar
@@ -305,37 +311,21 @@ def manual_visitor_entry(aksi: str, event_id: Optional[str] = None) -> dict:
                         "event_id": event_id,
                         "waktu_masuk": now_iso,
                         "status": "di_dalam",
-                        "nama": "Tamu Manual"
+                        "nama": "Tamu Manual",
                     }).execute()
                 res = execute_with_retry(perform_insert, is_admin=True)
             else:
-                def fetch_active():
-                    return supabase_admin.table("visitors") \
-                        .select("id") \
-                        .eq("event_id", event_id) \
-                        .eq("status", "di_dalam") \
-                        .limit(1) \
-                        .execute()
-                active_res = execute_with_retry(fetch_active, is_admin=True)
-                
-                if not active_res.data:
-                    def insert_complete():
-                        return supabase_admin.table("visitors").insert({
-                            "event_id": event_id,
-                            "waktu_masuk": now_iso,
-                            "waktu_keluar": now_iso,
-                            "status": "keluar",
-                            "nama": "Tamu Manual"
-                        }).execute()
-                    res = execute_with_retry(insert_complete, is_admin=True)
-                else:
-                    target_id = active_res.data[0]["id"]
-                    def update_active():
-                        return supabase_admin.table("visitors").update({
-                            "waktu_keluar": now_iso,
-                            "status": "keluar"
-                        }).eq("id", target_id).execute()
-                    res = execute_with_retry(update_active, is_admin=True)
+                # keluar — STATELESS: always a fresh, already-closed row.
+                # Do NOT look up / close any existing 'di_dalam' row (it may be NFC).
+                def insert_keluar():
+                    return supabase_admin.table("visitors").insert({
+                        "event_id": event_id,
+                        "waktu_masuk": now_iso,
+                        "waktu_keluar": now_iso,
+                        "status": "keluar",
+                        "nama": "Tamu Manual",
+                    }).execute()
+                res = execute_with_retry(insert_keluar, is_admin=True)
 
             if not res.data:
                 logger.error(f"[MANUAL] Database returned empty response")

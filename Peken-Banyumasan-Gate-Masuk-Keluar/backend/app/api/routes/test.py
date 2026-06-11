@@ -1,9 +1,7 @@
 from fastapi import APIRouter
-from app.db.supabase import supabase
+
+# CARRYOVER fix: /test/db route removed — it was unauthenticated and exposed
+# raw DB data. Route file kept empty so the import in main.py still resolves
+# without a module-not-found error.
 
 router = APIRouter(prefix="/test", tags=["Test"])
-
-@router.get("/db")
-def test_db():
-    res = supabase.table("users").select("*").limit(5).execute()
-    return res.data

@@ -15,7 +15,7 @@ from app.api.routes import notifikasi
 from app.api.routes import company_profile
 
 
-app = FastAPI(title="Peken Banyumasan Gate Admin API", version="2.4.0")
+app = FastAPI(title="Peken Banyumasan Gate Admin API", version="2.4.2")
 
 # CORS Middleware
 app.add_middleware(
@@ -43,9 +43,9 @@ app.include_router(company_profile.router)
 
 @app.get("/")
 def root():
-    return {"message": "Backend is running 🚀", "version": "2.4.0"}
+    return {"message": "Backend is running 🚀", "version": "2.4.2"}
 
 
 @app.get("/health")
 def health():
-    return {"status": "ok", "service": "gate", "version": "2.4.0"}
+    return {"status": "ok", "service": "gate", "version": "2.4.2"}
