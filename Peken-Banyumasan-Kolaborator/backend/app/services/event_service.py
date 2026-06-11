@@ -164,6 +164,23 @@ def request_event_join(user_payload: dict, event_id: str, peran: str) -> dict:
     }
     result = client.table("kolaborator_requests").insert(insert_data).execute()
     if result.data:
+        # Notifikasi: admin diberi tahu ada permintaan baru (inbox DB, bukan
+        # hanya badge lokal di Gate), requester dapat konfirmasi terkirim.
+        try:
+            from app.services.notification_service import create_notifikasi, notify_admins
+            ev = client.table("events").select("nama").eq("id", event_id).limit(1).execute()
+            ev_nama = (ev.data[0].get("nama") if ev.data else None) or "event"
+            kol = client.table("kolaborators").select("nama").eq("id", user_id).limit(1).execute()
+            kol_nama = (kol.data[0].get("nama") if kol.data else None) or "Kolaborator"
+            notify_admins("event_request",
+                          "Permintaan bergabung baru",
+                          f"{kol_nama} mengajukan bergabung sebagai {peran} di event '{ev_nama}'.")
+            create_notifikasi(user_id, "event_request_sent",
+                              "Permintaan terkirim",
+                              f"Permintaan bergabung di event '{ev_nama}' terkirim — menunggu konfirmasi admin.",
+                              link="/event")
+        except Exception:
+            pass
         return {
             "id": result.data[0].get("id"),
             "status": "pending",

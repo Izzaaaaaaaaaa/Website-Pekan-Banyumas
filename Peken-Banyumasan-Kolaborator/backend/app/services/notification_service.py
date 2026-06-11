@@ -46,3 +46,40 @@ def mark_all_read(user_payload: dict) -> dict:
     count = len(unread.data or [])
     client.table("notifikasi").update({"read": True}).eq("user_id", user_id).execute()
     return {"count": count}
+
+
+# ── Creation helper ──────────────────────────────────────────────────────────
+# Dipakai event_service untuk memberi tahu admin saat ada permintaan bergabung
+# baru. NEVER raises — gagal kirim notifikasi tidak boleh menggagalkan aksi
+# utamanya.
+
+def create_notifikasi(user_id: str, type: str, title: str, message: str,
+                      link: str = None):
+    if not user_id:
+        return
+    try:
+        client = supabase_admin or supabase
+        client.table("notifikasi").insert({
+            "user_id": user_id,
+            "type": type,
+            "title": title,
+            "message": message,
+            "link": link,
+        }).execute()
+    except Exception:
+        pass
+
+
+def notify_admins(type: str, title: str, message: str, link: str = None):
+    """Insert the same notification for every admin (users_profile.role='admin')."""
+    try:
+        client = supabase_admin or supabase
+        admins = client.table("users_profile").select("id").eq("role", "admin").execute()
+        rows = [{
+            "user_id": a["id"], "type": type, "title": title,
+            "message": message, "link": link,
+        } for a in (admins.data or []) if a.get("id")]
+        if rows:
+            client.table("notifikasi").insert(rows).execute()
+    except Exception:
+        pass
