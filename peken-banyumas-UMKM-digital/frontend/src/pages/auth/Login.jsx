@@ -1,5 +1,5 @@
 import { useState, useEffect } from "react";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, useLocation } from "react-router-dom";
 import {
   Mail, Lock, Eye, EyeOff, AlertCircle,
   ArrowRight, Loader2, Store,
@@ -51,8 +51,10 @@ const FEATURES = [
 
 export default function Login() {
   const navigate = useNavigate();
+  const location = useLocation();
   const [form, setForm]                 = useState({ email: "", password: "" });
   const [error, setError]               = useState("");
+  const [info, setInfo]                 = useState(location.state?.message || "");
   const [showPassword, setShowPassword] = useState(false);
   const [loading, setLoading]           = useState(false);
   const [activeEvent, setActiveEvent]   = useState(null);
@@ -122,9 +124,10 @@ export default function Login() {
 
       const artisanStatus = statusData.status;
       if (artisanStatus === "pending") {
-        await supabase.auth.signOut();
-        setError("Akun belum disetujui admin. Tunggu konfirmasi.");
+        // Jangan sign out — simpan session supaya /status bisa cek ulang ke server
+        localStorage.setItem("status", "pending");
         setLoading(false);
+        navigate("/status");
         return;
       }
       if (artisanStatus === "suspended") {
@@ -248,12 +251,14 @@ export default function Login() {
       {/* RIGHT — Login form */}
       <div className="login-right">
         <div style={{ position: "absolute", top: 16, right: 20 }}>
-          <span
-            onClick={() => window.open(import.meta.env.VITE_COMPANY_URL || "http://localhost:5174", "_blank")}
-            style={{ fontSize: 12, color: "#8a9070", cursor: "pointer" }}
+          <a
+            href={import.meta.env.VITE_COMPANY_URL || "http://localhost:5175"}
+            target="_blank"
+            rel="noopener noreferrer"
+            style={{ fontSize: 12, color: "#8a9070", cursor: "pointer", textDecoration: "none" }}
           >
             ← Beranda Publik
-          </span>
+          </a>
         </div>
         <div className="login-card">
 
@@ -269,6 +274,13 @@ export default function Login() {
 
           <h2 className="card-title">Selamat datang!</h2>
           <p className="card-sub">Masuk ke dashboard artisan Anda</p>
+
+          {info && (
+            <div className="error-box" style={{ background: "#eef4eb", borderColor: "#b8d4b0", color: "#4a6b3a" }}>
+              <AlertCircle size={15} strokeWidth={2} style={{ flexShrink: 0, color: "#7A9B6A" }} />
+              {info}
+            </div>
+          )}
 
           {error && (
             <div className="error-box">

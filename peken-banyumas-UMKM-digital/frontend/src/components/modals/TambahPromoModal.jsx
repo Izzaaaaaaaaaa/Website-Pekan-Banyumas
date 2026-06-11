@@ -1,5 +1,6 @@
 import { useState, useRef } from "react";
 import "../../assets/styles/promo.css";
+import DatePicker from "../DatePicker";
 
 export default function TambahPromoModal({ show, onClose, onSave, onToast }) {
   const [form, setForm] = useState({
@@ -106,11 +107,19 @@ export default function TambahPromoModal({ show, onClose, onSave, onToast }) {
           {/* Tanggal */}
           <div className="pd-fg">
             <label>Berlaku Mulai</label>
-            <input type="date" value={form.mulai} onChange={(e) => set("mulai", e.target.value)} />
+            <DatePicker
+              value={form.mulai}
+              onChange={(iso) => set("mulai", iso)}
+              className="pd-date-input"
+            />
           </div>
           <div className="pd-fg">
             <label>Berlaku Hingga</label>
-            <input type="date" value={form.akhir} onChange={(e) => set("akhir", e.target.value)} />
+            <DatePicker
+              value={form.akhir}
+              onChange={(iso) => set("akhir", iso)}
+              className="pd-date-input"
+            />
           </div>
 
           {/* Upload Poster */}

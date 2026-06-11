@@ -1,8 +1,10 @@
 import { useState, useEffect, useRef } from "react";
 import {
   RefreshCw, TrendingUp, TrendingDown, ArrowLeft,
-  Save, QrCode, X, ImagePlus, Trash2, Receipt
+  Save, QrCode, X, ImagePlus, Trash2, Receipt, Loader2
 } from "lucide-react";
+import { uploadBuktiKas } from "../../lib/uploadBukti";
+import DatePicker from "../DatePicker";
 
 const todayISO = () => new Date().toISOString().split("T")[0];
 
@@ -59,6 +61,8 @@ export default function TambahKasModal({ show, onClose, onSave, items, namaUsaha
     tgl: todayISO(),
     buktiUrl: null,
   });
+  const [uploadingBukti, setUploadingBukti] = useState(false);
+  const [buktiError, setBuktiError]         = useState("");
 
   useEffect(() => {
     if (show) {
@@ -118,20 +122,20 @@ export default function TambahKasModal({ show, onClose, onSave, items, namaUsaha
     if (val === "qris") setShowQrisModal(true);
   };
 
-  const handleBuktiChange = (e) => {
+  const handleBuktiChange = async (e) => {
     const file = e.target.files[0];
     if (!file) return;
-    if (!file.type.startsWith("image/")) {
-      alert("File harus berupa gambar.");
-      return;
+    setBuktiError("");
+    setUploadingBukti(true);
+    try {
+      const url = await uploadBuktiKas(file);
+      set("buktiUrl", url);
+    } catch (err) {
+      setBuktiError(err.message || "Upload gagal, coba lagi.");
+    } finally {
+      setUploadingBukti(false);
+      if (buktiRef.current) buktiRef.current.value = "";
     }
-    if (file.size > 3 * 1024 * 1024) {
-      alert("Ukuran gambar maksimal 3MB.");
-      return;
-    }
-    const reader = new FileReader();
-    reader.onload = (ev) => set("buktiUrl", ev.target.result);
-    reader.readAsDataURL(file);
   };
 
   const handleSubmit = () => {
@@ -386,10 +390,10 @@ export default function TambahKasModal({ show, onClose, onSave, items, namaUsaha
           {/* TANGGAL */}
           <div className="bk-fg">
             <label>Tanggal</label>
-            <input
-              type="date"
+            <DatePicker
               value={form.tgl}
-              onChange={e => set("tgl", e.target.value)}
+              onChange={(iso) => set("tgl", iso)}
+              className="bk-date-input"
             />
           </div>
 
@@ -401,7 +405,12 @@ export default function TambahKasModal({ show, onClose, onSave, items, namaUsaha
                 <span className="bk-label-opt"> · Opsional</span>
               </label>
 
-              {form.buktiUrl ? (
+              {uploadingBukti ? (
+                <div className="bk-bukti-dropzone" style={{ cursor: "default" }}>
+                  <Loader2 size={22} className="bk-bukti-dz-icon" style={{ animation: "spin 1s linear infinite" }} />
+                  <p>Mengupload foto...</p>
+                </div>
+              ) : form.buktiUrl ? (
                 <div className="bk-bukti-preview">
                   <img src={form.buktiUrl} alt="Bukti" className="bk-bukti-img" />
                   <div className="bk-bukti-actions">
@@ -417,6 +426,7 @@ export default function TambahKasModal({ show, onClose, onSave, items, namaUsaha
                       className="bk-bukti-btn-del"
                       onClick={() => {
                         set("buktiUrl", null);
+                        setBuktiError("");
                         if (buktiRef.current) buktiRef.current.value = "";
                       }}
                     >
@@ -432,6 +442,12 @@ export default function TambahKasModal({ show, onClose, onSave, items, namaUsaha
                   <Receipt size={22} className="bk-bukti-dz-icon" />
                   <p>Klik untuk upload foto struk / bukti transfer</p>
                   <small>JPG, PNG · Maks 3MB</small>
+                </div>
+              )}
+
+              {buktiError && (
+                <div style={{ fontSize: 12, color: "#ef4444", marginTop: 6 }}>
+                  ⚠️ {buktiError}
                 </div>
               )}
 
@@ -453,8 +469,8 @@ export default function TambahKasModal({ show, onClose, onSave, items, namaUsaha
             <button className="bk-btn-batal" onClick={() => setStep("pilih")}>
               <ArrowLeft size={14} /> Kembali
             </button>
-            <button className="bk-btn-save" onClick={handleSubmit}>
-              Simpan &amp; Update Saldo
+            <button className="bk-btn-save" onClick={handleSubmit} disabled={uploadingBukti}>
+              {uploadingBukti ? <><Loader2 size={14} style={{ animation: "spin 1s linear infinite" }} /> Mengupload...</> : "Simpan & Update Saldo"}
             </button>
           </div>
         )}

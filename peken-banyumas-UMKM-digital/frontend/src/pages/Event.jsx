@@ -317,15 +317,28 @@ export default function Event() {
           <div className="ev-usaha-list">
             {myEvents.map(e => {
               const eventData = events.find(ev => ev.id === e.event_id) || {};
-              // Stand aktif: setelah admin approve change, stand_id sudah diupdate
+              // Stand yang sedang aktif (dikonfirmasi admin) = stand_id (kolom final)
+              // posisi_event adalah nilai awal saat daftar — bisa berbeda setelah admin pindah stand
               const standAktif = e.stand_id || e.posisi_event || '—';
+              const standAsal  = e.posisi_event || e.stand_id || '—';
+
               // Deteksi state berdasarkan spec v2.4.2:
-              // pending_change   = artisan sudah minta ubah, admin belum jawab
-              // approved + !change_request = approved normal ATAU change ditolak (stand lama)
-              // approved + change_request  = seharusnya tidak muncul (admin clear-nya)
+              // pending           = artisan request, belum ada jawaban admin
+              // pending_change    = artisan sudah minta ubah, admin belum jawab
+              // approved          = aktif — stand_id adalah stand final
+              // approved + !change_request = normal ATAU change ditolak (stand lama tetap)
+              // rejected          = ditolak admin
+              // row hilang        = admin hapus partisipasi — tidak render (sudah tidak ada di myEvents)
               const isPendingChange = e.status_request === 'pending_change';
               const isApproved      = e.status_request === 'approved';
               const isRejected      = e.status_request === 'rejected';
+              const isPending       = e.status_request === 'pending';
+
+              // Skenario (a): admin approve change → stand_id sudah diupdate ke stand baru
+              // Deteksi: approved, tidak ada change_request, stand_id berbeda dari posisi_event asal
+              const standBerubah = isApproved && !e.change_request &&
+                e.stand_id && e.posisi_event &&
+                e.stand_id !== e.posisi_event;
 
               return (
                 <div key={e.id} className={`ev-usaha-item${isApproved ? ' approved' : ''}`}>
@@ -340,10 +353,10 @@ export default function Event() {
                         )}
                       </div>
 
-                      {/* (a) change approved — stand baru sudah aktif */}
-                      {isApproved && !e.change_request && standAktif !== (e.posisi_event || e.stand_id) && (
+                      {/* (a) change approved — stand_id sudah diupdate ke stand baru */}
+                      {standBerubah && (
                         <div className="ev-stand-change-notice" style={{ color: '#2f6f4e' }}>
-                          ✓ Stand diperbarui oleh admin
+                          ✓ Stand diperbarui oleh admin: {standAsal} → <b>{standAktif}</b>
                         </div>
                       )}
 
@@ -353,19 +366,13 @@ export default function Event() {
                           <Clock size={11} />Permintaan ubah ke: <b>{e.change_request}</b> (menunggu admin)
                         </div>
                       )}
-
-                      {/* (b) change rejected — change_request null, status approved, tombol ubah muncul lagi */}
-                      {isApproved && !e.change_request && !isPendingChange && (
-                        <div style={{ fontSize: 11, color: '#6b7280', marginTop: 2 }}>
-                          Stand: {standAktif}
-                        </div>
-                      )}
                     </div>
                     <div className="ev-usaha-right">
                       <span className={`ev-badge ${isApproved ? 'approved' : isRejected ? 'rejected' : 'pending'}`}>
                         {isApproved      ? '✓ Disetujui'   :
                          isPendingChange ? '⏳ Ubah Stand'  :
                          isRejected      ? '✕ Ditolak'     :
+                         isPending       ? '⏳ Menunggu'    :
                                            '⏳ Menunggu'}
                       </span>
                     </div>
@@ -380,8 +387,8 @@ export default function Event() {
                     </div>
                   )}
 
-                  {/* (c) case: participation dihapus admin tidak perlu di-handle di sini —
-                       setelah refetch row sudah tidak ada di myEvents, jadi tidak render */}
+                  {/* (c) row dihapus admin: tidak perlu di-handle di sini —
+                       setelah refetch (poll 30s) row sudah tidak ada di myEvents → tidak render */}
                 </div>
               );
             })}

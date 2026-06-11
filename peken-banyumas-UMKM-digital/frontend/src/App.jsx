@@ -1,6 +1,6 @@
 import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
 import { Toaster } from "react-hot-toast";
-import { useEffect } from "react";
+import { useEffect, useState } from "react";
 import { supabase } from "./lib/supabase";
 
 import SelectRole    from "./pages/auth/SelectRole";
@@ -25,16 +25,21 @@ function ProtectedRoute({ children }) {
 }
 
 function App() {
-  // Sync Supabase session → localStorage saat token di-refresh otomatis
-  // supaya ProtectedRoute dan API calls selalu punya token terbaru.
+  const [isLogin, setIsLogin] = useState(
+    localStorage.getItem("isLogin") === "true"
+  );
+
+  // Sync Supabase session → localStorage + state saat token di-refresh otomatis
   useEffect(() => {
     const { data: { subscription } } = supabase.auth.onAuthStateChange(
       (event, session) => {
         if (session) {
           localStorage.setItem("token", session.access_token);
           localStorage.setItem("isLogin", "true");
+          setIsLogin(true);
         } else if (event === "SIGNED_OUT") {
           localStorage.clear();
+          setIsLogin(false);
         }
       }
     );
@@ -50,11 +55,7 @@ function App() {
         <Route path="/select-role"    element={<SelectRole />} />
         <Route
           path="/login"
-          element={
-            localStorage.getItem("isLogin") === "true"
-              ? <Navigate to="/" />
-              : <Login />
-          }
+          element={isLogin ? <Navigate to="/" /> : <Login />}
         />
         <Route path="/lupa-pass"      element={<LupaPass />} />
         <Route path="/reset-password" element={<ResetPassword />} />

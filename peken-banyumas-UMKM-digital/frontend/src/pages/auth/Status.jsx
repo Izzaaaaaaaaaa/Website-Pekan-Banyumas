@@ -373,44 +373,64 @@ export default function Status() {
   const [rejectionReason, setRejection] = useState(null);
   const [checking, setChecking]       = useState(true);
 
-  // Cek status terbaru dari server saat halaman dibuka
-  useEffect(() => {
-    let cancelled = false;
+  // Fungsi cek status — bisa dipanggil ulang tanpa reload halaman
+  const checkStatus = async (cancelled = { value: false }) => {
+    setChecking(true);
+    try {
+      // Coba ambil session Supabase (kalau masih ada token sementara)
+      let { data: { session } } = await supabase.auth.getSession();
 
-    const checkStatus = async () => {
-      try {
-        // Coba ambil session Supabase (kalau masih ada token sementara)
-        const { data: { session } } = await supabase.auth.getSession();
+      // Jika session sudah habis (misal setelah register + signOut),
+      // coba refresh sekali — kalau masih gagal, arahkan ke login
+      if (!session) {
+        const { data: refreshed } = await supabase.auth.refreshSession();
+        session = refreshed?.session ?? null;
+      }
 
-        if (!session) {
-          // Tidak ada session → pakai nilai localStorage (bisa dari redirect pasca-register)
+      if (!session) {
+        // Tidak ada session valid → minta user login ulang untuk cek status
+        if (!cancelled.value) {
           setChecking(false);
-          return;
+          navigate("/login", {
+            state: { message: "Silakan login untuk memeriksa status pendaftaranmu." },
+          });
         }
+        return;
+      }
 
-        const BASE = import.meta.env.VITE_API_URL;
-        const res = await fetch(`${BASE}/api/auth/me/status`, {
-          headers: { Authorization: `Bearer ${session.access_token}` },
-        });
+      const BASE = import.meta.env.VITE_API_URL;
+      const res = await fetch(`${BASE}/api/auth/me/status`, {
+        headers: { Authorization: `Bearer ${session.access_token}` },
+      });
 
-        if (res.ok) {
-          const data = await res.json();
-          const s = data.status || "pending";
-          if (!cancelled) {
-            setStatus(s);
-            localStorage.setItem("status", s);
-            if (data.catatan_penolakan) setRejection(data.catatan_penolakan);
+      if (res.ok) {
+        const data = await res.json();
+        const s = data.status || "pending";
+        if (!cancelled.value) {
+          setStatus(s);
+          localStorage.setItem("status", s);
+          if (data.catatan_penolakan) setRejection(data.catatan_penolakan);
+
+          // Jika sudah diaktifkan → langsung masuk ke dashboard
+          if (s === "aktif") {
+            localStorage.setItem("isLogin", "true");
+            navigate("/", { replace: true });
+            return;
           }
         }
-      } catch {
-        // Gagal fetch → tetap gunakan nilai localStorage
-      } finally {
-        if (!cancelled) setChecking(false);
       }
-    };
+    } catch {
+      // Gagal fetch → tetap gunakan nilai localStorage
+    } finally {
+      if (!cancelled.value) setChecking(false);
+    }
+  };
 
-    checkStatus();
-    return () => { cancelled = true; };
+  // Cek status terbaru dari server saat halaman dibuka
+  useEffect(() => {
+    const cancelled = { value: false };
+    checkStatus(cancelled);
+    return () => { cancelled.value = true; };
   }, []);
 
   const handleGoToDashboard = () => {
@@ -503,7 +523,7 @@ export default function Status() {
                     Sudah mendapat konfirmasi?{" "}
                     <span
                       className="link"
-                      onClick={() => { setChecking(true); window.location.reload(); }}
+                      onClick={() => checkStatus()}
                     >
                       Perbarui status
                     </span>
@@ -578,9 +598,9 @@ export default function Status() {
               )}
 
               {/* ══════════════════════════════════════
-                  DISETUJUI
+                  DISETUJUI / AKTIF
               ══════════════════════════════════════ */}
-              {status === "approved" && (
+              {status === "aktif" && (
                 <>
                   {/* Icon */}
                   <div className="sv-icon-ring approved">

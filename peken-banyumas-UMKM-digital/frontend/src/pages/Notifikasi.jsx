@@ -1,5 +1,6 @@
 import { useState, useEffect, useCallback } from "react";
-import { Bell, CheckCheck, X, Package, ShoppingCart, AlertTriangle, Info, ChevronRight, Calendar, Clock, Tag } from "lucide-react";
+import { useNavigate } from "react-router-dom";
+import { Bell, CheckCheck, X, ShoppingCart, AlertTriangle, Info, ChevronRight, Calendar, Clock, Tag, MapPin, Megaphone } from "lucide-react";
 import "../assets/styles/notifikasi.css";
 
 const BASE        = import.meta.env.VITE_API_URL;
@@ -16,12 +17,23 @@ function authHeaders() {
 
 // ── TYPE CONFIG ──────────────────────────────────────────────
 const TYPE_META = {
+  // ── internal (notif_helper.py) ─────────────────────────────
   system:                      { label: "Sistem",     color: "#0ea5e9", bg: "#f0f9ff",  icon: <Info size={16} /> },
+  stok_kritis:                 { label: "Stok",       color: "#f97316", bg: "#fff7ed",  icon: <AlertTriangle size={16} /> },
+  transaksi_baru:              { label: "Transaksi",  color: "#10b981", bg: "#ecfdf5",  icon: <ShoppingCart size={16} /> },
+
+  // ── event — dari Gate backend ──────────────────────────────
+  event_invite:                { label: "Undangan",   color: "#8b5cf6", bg: "#f5f3ff",  icon: <Calendar size={16} /> },
+  event_update:                { label: "Event",      color: "#0ea5e9", bg: "#f0f9ff",  icon: <Megaphone size={16} /> },
+  event_starting_soon:         { label: "Event",      color: "#f97316", bg: "#fff7ed",  icon: <Calendar size={16} /> },
+
+  // ── artisan request ────────────────────────────────────────
   artisan_request_approved:    { label: "Event",      color: "#6E7D47", bg: "#EEF1E2",  icon: <Calendar size={16} /> },
   artisan_request_rejected:    { label: "Event",      color: "#ef4444", bg: "#fff1f0",  icon: <Calendar size={16} /> },
-  position_change_approved:    { label: "Stand",      color: "#6E7D47", bg: "#EEF1E2",  icon: <Info size={16} /> },
-  position_change_rejected:    { label: "Stand",      color: "#ef4444", bg: "#fff1f0",  icon: <Info size={16} /> },
-  event_starting_soon:         { label: "Event",      color: "#f97316", bg: "#fff7ed",  icon: <Calendar size={16} /> },
+
+  // ── stand / posisi ─────────────────────────────────────────
+  position_change_approved:    { label: "Stand",      color: "#6E7D47", bg: "#EEF1E2",  icon: <MapPin size={16} /> },
+  position_change_rejected:    { label: "Stand",      color: "#ef4444", bg: "#fff1f0",  icon: <MapPin size={16} /> },
 };
 
 const getTypeMeta = (type) =>
@@ -37,11 +49,7 @@ function NotifAvatar({ type }) {
   const meta = getTypeMeta(type);
   return (
     <div className="notif-avatar" style={{ background: meta.bg, color: meta.color }}>
-      {type?.includes("stok") ? <AlertTriangle size={20} /> :
-       type?.includes("transaksi") ? <ShoppingCart size={20} /> :
-       type?.includes("promo") ? <Tag size={20} /> :
-       type?.includes("event") || type?.includes("artisan") || type?.includes("position") ? <Calendar size={20} /> :
-       <Info size={20} />}
+      {meta.icon}
     </div>
   );
 }
@@ -96,6 +104,7 @@ function DetailModal({ notif, onClose }) {
 }
 
 export default function Notifikasi() {
+  const navigate = useNavigate();
   const [filter,   setFilter]   = useState("semua");
   const [notifs,   setNotifs]   = useState([]);
   const [loading,  setLoading]  = useState(true);
@@ -142,7 +151,12 @@ export default function Notifikasi() {
         setNotifs((prev) => prev.map((n) => n.id === notif.id ? { ...n, read: true } : n));
       } catch { /* ignore */ }
     }
-    setSelected(notif);
+    // Navigasi ke link jika ada (misal '/event', '/stok')
+    if (notif.link) {
+      navigate(notif.link);
+    } else {
+      setSelected(notif);
+    }
   };
 
   const now = new Date().toLocaleDateString("id-ID", {
