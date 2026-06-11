@@ -20,12 +20,17 @@ const TYPE_META = {
 // Pemetaan tipe notifikasi ke kategori preferensi
 // Digunakan untuk filter berdasarkan toggle di Pengaturan
 const TYPE_TO_PREF = {
-  kolaborator_approved: 'system',
-  story_deleted:        'system',
-  event_assigned:       'event',
-  event_status_change:  'event',
-  event:                'event',
-  system:               'system',
+  kolaborator_approved:   'system',
+  story_deleted:          'system',
+  event_assigned:         'event',
+  event_status_change:    'event',
+  event:                  'event',
+  event_invite:           'event',
+  event_update:           'event',
+  event_request_sent:     'event',
+  event_request_approved: 'event',
+  event_request_rejected: 'event',
+  system:                 'system',
 };
 
 const NOTIF_PREF_KEY = 'peken_notif_pref';
@@ -85,9 +90,13 @@ export default function Notifikasi() {
   };
 
   // Terapkan filter preferensi: sembunyikan tipe yang dinonaktifkan user
+  // Hanya kategori 'event' yang bisa dimatikan dari Pengaturan; tipe lain
+  // (system dsb.) selalu tampil — toggle "Notifikasi Sistem" sudah dihapus,
+  // jadi tanpa pengecualian ini notif system bisa tersembunyi selamanya bagi
+  // user yang pernah mematikannya dulu.
   const prefFiltered = list.filter(n => {
     const pref = TYPE_TO_PREF[n.type] || 'system';
-    return notifPref[pref] !== false;
+    return pref === 'event' ? notifPref.event !== false : true;
   });
 
   const unread = prefFiltered.filter(n => !n.read).length;
@@ -124,7 +133,7 @@ export default function Notifikasi() {
       </div>
 
       {/* Info preferensi jika ada yang dinonaktifkan */}
-      {(!notifPref.event || !notifPref.system) && (
+      {!notifPref.event && (
         <div className="mb-3 px-3 py-2 rounded-xl text-xs"
           style={{background:T.accentBg, border:`1px solid ${T.accentBorder}`, color:T.sageDark}}>
           Beberapa notifikasi disembunyikan sesuai preferensi. Atur di{' '}

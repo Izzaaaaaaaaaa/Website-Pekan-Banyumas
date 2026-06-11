@@ -1,6 +1,6 @@
 // Toast.jsx — Peken Banyumasan Design System v2.0
 // Sage-harmonized status colors (muted, not vivid)
-import React, { createContext, useContext, useState, useCallback, useRef } from 'react';
+import React, { createContext, useContext, useState, useCallback, useRef, useMemo } from 'react';
 import { X, CheckCircle, AlertCircle, Info, AlertTriangle } from 'lucide-react';
 
 const ToastCtx = createContext(null);
@@ -69,12 +69,14 @@ export function ToastProvider({ children }) {
 
   const remove = useCallback(id => setToasts(t => t.filter(x => x.id !== id)), []);
 
-  const api = {
+  // useMemo WAJIB: identitas stabil supaya useEffect/useCallback halaman yang
+  // bergantung pada toast tidak re-run tiap ada toast muncul/hilang.
+  const api = useMemo(() => ({
     success: m => add(m, 'success'),
     error:   m => add(m, 'error'),
     warning: m => add(m, 'warning'),
     info:    m => add(m, 'info'),
-  };
+  }), [add]);
 
   return (
     <ToastCtx.Provider value={api}>

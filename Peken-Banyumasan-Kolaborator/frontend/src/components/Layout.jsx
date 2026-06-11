@@ -82,7 +82,17 @@ export default function Layout() {
     const fetchUnread = async () => {
         try {
             const list = await notifikasiApi.list();
-            const count = (list || []).filter(n => !n.read).length;
+            // Hormati preferensi: tipe event tidak dihitung saat dimatikan
+            // (sinkron dengan filter di Notifikasi.jsx).
+            const EVENT_TYPES = new Set(['event_assigned','event_status_change','event',
+                'event_invite','event_update','event_request_sent',
+                'event_request_approved','event_request_rejected']);
+            let evOn = true;
+            try {
+                const pref = JSON.parse(localStorage.getItem('peken_notif_pref') || '{}');
+                evOn = pref.event !== false;
+            } catch (_) { /* default on */ }
+            const count = (list || []).filter(n => !n.read && (evOn || !EVENT_TYPES.has(n.type))).length;
             setNotifCount(count);
         } catch {
             // Fail soft — tidak crash jika backend tidak tersedia

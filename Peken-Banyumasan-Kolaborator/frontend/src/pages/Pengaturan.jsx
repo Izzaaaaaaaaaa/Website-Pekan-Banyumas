@@ -191,8 +191,7 @@ export default function Pengaturan() {
       <Section icon={Bell} title="Preferensi Notifikasi">
         <div className="space-y-4">
           {[
-            ['event',  'Notifikasi Event',   'Pengingat event yang kamu daftarkan',       false],
-            ['system', 'Notifikasi Sistem',  'Update status akun dan konten',              false],
+            ['event',  'Notifikasi Event',   'Update event: undangan, persetujuan, perubahan jadwal', false],
           ].map(([key, label, desc, comingSoon]) => (
             <div key={key} className="flex items-center justify-between"
               style={comingSoon ? { opacity: 0.5 } : {}}>
