@@ -45,6 +45,40 @@ def _kas_row(id="kas-001", jenis="masuk", nominal=100_000, tgl=TODAY, saldo_afte
     }
 
 
+def _artisan_row(komisi_persen="10"):
+    """Row artisans yang dikembalikan saat recompute_artisan_aggregates."""
+    return {
+        "id":               ARTISAN_ID,
+        "komisi_persen":    komisi_persen,
+        "total_penjualan":  "0",
+        "komisi_terkumpul": "0",
+    }
+
+
+def _make_select_side_effect(*kas_calls, artisan=None):
+    """
+    Buat side_effect untuk db_select yang melayani urutan call:
+      - call kas  → kembalikan list kas rows
+      - call artisans single=True → kembalikan artisan dict
+    Setiap elemen kas_calls adalah return value untuk satu call ke kas.
+    """
+    art = artisan or _artisan_row()
+    call_queue = list(kas_calls)
+
+    def _side(table, filters=None, single=False):
+        if table == "artisans":
+            return art
+        if table == "kas":
+            if call_queue:
+                return call_queue.pop(0)
+            return []
+        if table == "stok":
+            return None if single else []
+        return None if single else []
+
+    return _side
+
+
 # ── GET /api/artisan/kas ──────────────────────────────────────────────────────
 
 def test_get_kas_kosong(client, db):
@@ -98,7 +132,8 @@ def test_get_kas_filter_jenis(client, db):
 def test_tambah_kas_masuk(client, db):
     inserted = _kas_row()
     db["insert"].return_value = inserted
-    db["select"].return_value = [inserted]
+    # recompute butuh: kas list → artisan single → kas list (untuk saldo_after)
+    db["select"].side_effect = _make_select_side_effect([inserted], [inserted])
 
     res = client.post(
         "/api/artisan/kas",
@@ -115,7 +150,7 @@ def test_tambah_kas_masuk(client, db):
 def test_tambah_kas_keluar(client, db):
     inserted = _kas_row("K", "keluar", 30_000)
     db["insert"].return_value = inserted
-    db["select"].return_value = [inserted]
+    db["select"].side_effect = _make_select_side_effect([inserted], [inserted])
 
     res = client.post(
         "/api/artisan/kas",
@@ -149,11 +184,13 @@ def test_tambah_kas_metode_invalid(client, db):
 def test_edit_kas_berhasil(client, db):
     existing = _kas_row()
     updated  = _kas_row(nominal=50_000, saldo_after=50_000.0)
-    db["select"].side_effect = [
-        existing,          # select untuk cek item ada
-        [updated],         # select semua untuk recompute saldo
-    ]
     db["update"].return_value = [updated]
+    # call sequence: cek item ada → kas list untuk recompute → artisan single
+    db["select"].side_effect = _make_select_side_effect(
+        existing,       # single=True — cek item ada
+        [updated],      # recompute: kas list
+        [updated],      # recompute: kas list untuk saldo_after response
+    )
 
     res = client.put(
         f"/api/artisan/kas/{existing['id']}",
@@ -178,8 +215,12 @@ def test_edit_kas_tidak_ditemukan(client, db):
 
 def test_hapus_kas_berhasil(client, db):
     existing = _kas_row()
-    db["select"].return_value = existing
     db["delete"].return_value = [existing]
+    # call sequence: cek item ada (single) → recompute: kas list → artisan single
+    db["select"].side_effect = _make_select_side_effect(
+        existing,   # single — cek item ada
+        [],         # recompute: kas kosong setelah hapus
+    )
 
     res = client.delete(
         f"/api/artisan/kas/{existing['id']}",
