@@ -5,11 +5,34 @@ Kolaborators can browse published/berlangsung events, view details,
 request to join (kolaborator_requests), and list their own requests.
 """
 
+from datetime import date
+
 from app.db.supabase import supabase, supabase_admin
 
 
+def _status_efektif(ev: dict) -> str:
+    """Date-derived display status. Computed per-request, NEVER stored.
+
+    Rules (per openapi-colab.yaml v2.4.2):
+    - If DB status == 'selesai' → 'selesai'
+    - If tanggal < today        → 'selesai'
+    - If tanggal == today       → 'berlangsung'
+    - Otherwise                 → raw status ('published' or 'berlangsung')
+    """
+    s, tgl = ev.get("status"), ev.get("tanggal")  # tanggal is 'YYYY-MM-DD'
+    if s == "selesai":
+        return "selesai"
+    if tgl:
+        today = date.today().isoformat()
+        if tgl < today:
+            return "selesai"
+        if tgl == today:
+            return "berlangsung"
+    return s  # 'published' or 'berlangsung'
+
+
 def get_events(user_payload: dict | None = None) -> list[dict]:
-    """GET /api/events — list events scoped to published/berlangsung."""
+    """GET /api/events — list events scoped to published/berlangsung/selesai."""
     client = supabase_admin or supabase
 
     result = (
@@ -21,12 +44,11 @@ def get_events(user_payload: dict | None = None) -> list[dict]:
     )
     events = result.data or []
 
-    # Frontend Kolaborator uses status vocabulary: upcoming|berlangsung|selesai.
+    # status is sent RAW (the spec forbids renaming 'published').
+    # status_efektif is the display derivation.
     for ev in events:
-        if ev.get("status") == "published":
-            ev["status"] = "upcoming"
+        ev["status_efektif"] = _status_efektif(ev)
 
-    # Enrich with kolaborator's own request status
     user_id = user_payload.get("user_id") if user_payload else None
     if not user_id:
         return events
@@ -58,15 +80,18 @@ def get_events(user_payload: dict | None = None) -> list[dict]:
 
         if req:
             status = req.get("status", "pending")
-            ev["pending_request"] = status == "pending"
-            ev["pending_peran"] = req.get("peran")
+            ev["request_status"] = status               # new contract (spec)
+            ev["pending_request"] = status == "pending"  # transitional; drop later
+            ev["pending_peran"] = req.get("peran")       # transitional; drop later
             ev["terdaftar"] = status == "approved"
             ev["peran"] = req.get("peran")
         elif reg:
+            ev["request_status"] = None
             ev["pending_request"] = False
             ev["terdaftar"] = True
             ev["peran"] = reg.get("peran")
         else:
+            ev["request_status"] = None
             ev["pending_request"] = False
             ev["terdaftar"] = False
 
@@ -81,8 +106,8 @@ def get_event_detail(event_id: str) -> dict:
         return {}
 
     data = result.data[0]
-    if data.get("status") == "published":
-        data["status"] = "upcoming"
+    # Do NOT rename status. Only add the display derivation.
+    data["status_efektif"] = _status_efektif(data)
     return data
 
 

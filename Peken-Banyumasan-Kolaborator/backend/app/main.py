@@ -8,7 +8,7 @@ from fastapi import APIRouter
 app = FastAPI(
     title="Peken Banyumasan Kolaborator API",
     description="Backend API untuk portal Kolaborator Peken Banyumasan.",
-    version="1.0.0",
+    version="2.4.2",
 )
 
 # CORS — izinkan request dari frontend
@@ -39,4 +39,4 @@ def root() -> dict[str, str]:
 @app.get("/health")
 def health() -> dict[str, str]:
     """Lightweight health probe — used by Docker healthcheck and monitoring."""
-    return {"status": "ok"}
+    return {"status": "ok", "service": "peken-kolab-api", "version": "2.4.2"}
