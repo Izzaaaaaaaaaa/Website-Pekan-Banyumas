@@ -44,6 +44,18 @@ def update_artisan(artisan_id: str, data: dict):
         if not update_data:
             return get_artisan(artisan_id)
 
+        # Invariant uang: komisi_terkumpul = ROUND(total_penjualan*persen/100, 2).
+        # Recompute milik backend artisan hanya berjalan saat mutasi kas — jadi
+        # saat admin mengubah komisi_persen DI SINI, turunannya wajib ikut
+        # dihitung ulang; tanpa ini dashboard & laporan menampilkan komisi basi
+        # sampai artisan kebetulan mencatat transaksi baru.
+        if "komisi_persen" in update_data:
+            from decimal import Decimal
+            cur = supabase_admin.table("artisans").select("total_penjualan")                 .eq("id", artisan_id).single().execute()
+            total = Decimal(str((cur.data or {}).get("total_penjualan") or 0))
+            persen = Decimal(str(update_data["komisi_persen"] or 0))
+            update_data["komisi_terkumpul"] = str((total * persen / 100).quantize(Decimal("0.01")))
+
         res = supabase_admin.table("artisans").update(update_data).eq("id", artisan_id).execute()
         if not res.data:
             raise HTTPException(404, "Artisan tidak ditemukan")

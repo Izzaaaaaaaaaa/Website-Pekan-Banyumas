@@ -23,11 +23,12 @@ def list_notifikasi(
 @router.patch("/{id}/baca", response_model=dict)
 def mark_read(
     id: str,
-    user=Depends(get_current_user)
+    user=Depends(get_current_user),
+    user_id: str = Depends(get_current_user_id)
 ):
-    """Mark notification as read."""
+    """Mark notification as read (own notifications only)."""
     try:
-        notif = notifikasi_service.mark_notifikasi_read(id)
+        notif = notifikasi_service.mark_notifikasi_read(id, user_id)
         return success_response(notif)
     except HTTPException as e:
         raise

@@ -3,7 +3,7 @@ import os
 from supabase import create_client
 
 from app.core.config import SUPABASE_URL
-from app.db.supabase import supabase, execute_with_retry
+from app.db.supabase import supabase, supabase_admin, execute_with_retry
 from fastapi import HTTPException
 
 EMAIL_NOT_REGISTERED = "EMAIL_NOT_REGISTERED"
@@ -105,25 +105,31 @@ def login_user(email: str, password: str):
 
 def update_profile(user_id: str, data: dict):
     """
-    Update custom profile fields in users_profile table.
-    Nama/email are handled by Supabase auth client on frontend.
+    Update own users_profile row (nama/jabatan/extra).
+
+    Identity comes from the verified JWT (user_id). The write MUST use the
+    service-role client: users_profile has no UPDATE RLS policy (SELECT-only
+    by design), so the anon client always matched 0 rows here — that is why
+    name changes never reached the DB.
+    Returns the updated subset so the FE can refresh its stored user.
     """
     try:
-        # Filter out None/empty values
+        # Filter out None values
         update_data = {k: v for k, v in data.items() if v is not None}
 
         if not update_data:
             return {"message": "Tidak ada data yang diupdate"}
 
-        res = execute_with_retry(lambda: supabase.table("users_profile") \
+        res = execute_with_retry(lambda: supabase_admin.table("users_profile") \
             .update(update_data) \
             .eq("id", user_id) \
-            .execute())
+            .execute(), is_admin=True)
 
         if not res.data:
             raise HTTPException(404, "User tidak ditemukan")
 
-        return {"message": "Profile berhasil diupdate"}
+        row = res.data[0]
+        return {"nama": row.get("nama"), "jabatan": row.get("jabatan")}
 
     except HTTPException:
         raise

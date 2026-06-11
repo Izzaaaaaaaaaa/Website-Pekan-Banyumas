@@ -2,6 +2,38 @@ from app.db.supabase import supabase, supabase_admin
 from fastapi import HTTPException
 from datetime import datetime
 
+from app.services.notifikasi_service import create_notifikasi, create_notifikasi_bulk
+
+
+def _event_nama(event_id: str) -> str:
+    """Nama event untuk pesan notifikasi; aman saat gagal."""
+    try:
+        res = supabase_admin.table("events").select("nama").eq("id", event_id).single().execute()
+        return (res.data or {}).get("nama") or "event"
+    except Exception:
+        return "event"
+
+
+def _event_participant_ids(event_id: str):
+    """Semua user peserta event: kolaborator (non-dibatalkan) + artisan (approved)."""
+    ids = []
+    try:
+        kol = supabase_admin.table("event_kolaborators").select("kolaborator_id")             .eq("event_id", event_id).neq("status_kehadiran", "dibatalkan").execute()
+        ids += [r.get("kolaborator_id") for r in (kol.data or [])]
+    except Exception:
+        pass
+    try:
+        art = supabase_admin.table("event_artisans").select("artisan_id")             .eq("event_id", event_id).eq("status_request", "approved").execute()
+        ids += [r.get("artisan_id") for r in (art.data or [])]
+    except Exception:
+        pass
+    return ids
+
+
+# Field event yang relevan untuk peserta — perubahan di luar ini tidak dinotifikasi.
+_EVENT_NOTIFY_FIELDS = {"nama", "tanggal", "tanggal_selesai", "jam_mulai",
+                        "jam_selesai", "lokasi", "status"}
+
 
 def list_events(status: str = None):
     """List all events."""
@@ -40,12 +72,23 @@ def create_event(data: dict):
 
 
 def update_event(event_id: str, data: dict):
-    """Update event."""
+    """Update event. Peserta (kolaborator + artisan) dinotifikasi bila field
+    yang relevan berubah — kontrak 'notifikasi event harus benar-benar jalan'."""
     try:
+        changed = _EVENT_NOTIFY_FIELDS.intersection(k for k, v in data.items() if v is not None)
         res = supabase_admin.table("events").update(data).eq("id", event_id).execute()
         if not res.data:
             raise HTTPException(404, "Event tidak ditemukan")
-        return res.data[0]
+        row = res.data[0]
+        if changed:
+            nama = row.get("nama") or "event"
+            if changed == {"status"}:
+                msg = f"Status event '{nama}' kini {row.get('status')}."
+            else:
+                msg = f"Detail event '{nama}' diperbarui ({', '.join(sorted(changed))}). Cek jadwal terbaru."
+            create_notifikasi_bulk(_event_participant_ids(event_id),
+                                   "event_update", "Event diperbarui", msg, link="/event")
+        return row
     except HTTPException:
         raise
     except Exception as e:
@@ -53,9 +96,15 @@ def update_event(event_id: str, data: dict):
 
 
 def delete_event(event_id: str):
-    """Delete event."""
+    """Delete event. Peserta dinotifikasi (data peserta diambil SEBELUM delete
+    karena baris junction ikut terhapus via ON DELETE CASCADE)."""
     try:
+        nama = _event_nama(event_id)
+        participants = _event_participant_ids(event_id)
         res = supabase_admin.table("events").delete().eq("id", event_id).execute()
+        if res.data:
+            create_notifikasi_bulk(participants, "event_update", "Event dibatalkan",
+                                   f"Event '{nama}' dibatalkan/dihapus oleh penyelenggara.")
         return {"message": "Event berhasil dihapus"}
     except Exception as e:
         raise HTTPException(500, f"Error deleting event: {str(e)}")
@@ -96,6 +145,10 @@ def assign_kolaborator(event_id: str, data: dict):
         res = supabase_admin.table("event_kolaborators").insert(insert_data).execute()
         if not res.data:
             raise HTTPException(500, "Gagal assign kolaborator")
+        create_notifikasi(insert_data["kolaborator_id"], "event_invite",
+                          "Ditambahkan ke event",
+                          f"Anda ditambahkan sebagai {insert_data['peran']} di event '{_event_nama(event_id)}'.",
+                          link="/event")
         return res.data[0]
     except Exception as e:
         raise HTTPException(500, f"Error assigning kolaborator: {str(e)}")
@@ -108,7 +161,13 @@ def update_event_kolaborator(event_id: str, kolab_id: str, data: dict):
         res = supabase_admin.table("event_kolaborators").update(update_data).eq("id", kolab_id).eq("event_id", event_id).execute()
         if not res.data:
             raise HTTPException(404, "Kolaborator assignment tidak ditemukan")
-        return res.data[0]
+        row = res.data[0]
+        if "peran" in update_data:
+            create_notifikasi(row.get("kolaborator_id"), "event_update",
+                              "Peran event diubah",
+                              f"Peran Anda di event '{_event_nama(event_id)}' kini {update_data['peran']}.",
+                              link="/event")
+        return row
     except HTTPException:
         raise
     except Exception as e:
@@ -121,6 +180,9 @@ def remove_kolaborator(event_id: str, kolab_id: str):
         res = supabase_admin.table("event_kolaborators").delete().eq("id", kolab_id).eq("event_id", event_id).execute()
         if not res.data:  # BE-5: detect silent no-op
             raise HTTPException(404, "Kolaborator assignment tidak ditemukan")
+        create_notifikasi(res.data[0].get("kolaborator_id"), "event_update",
+                          "Dikeluarkan dari event",
+                          f"Keikutsertaan Anda di event '{_event_nama(event_id)}' dihapus oleh penyelenggara.")
         return {"message": "Kolaborator removed"}
     except HTTPException:
         raise
@@ -170,6 +232,12 @@ def assign_artisan(event_id: str, data: dict):
         res = supabase_admin.table("event_artisans").insert(insert_data).execute()
         if not res.data:
             raise HTTPException(500, "Gagal assign artisan")
+        stand = insert_data.get("stand_id")
+        create_notifikasi(insert_data.get("artisan_id"), "event_invite",
+                          "Ditambahkan ke event",
+                          f"Anda ditambahkan ke event '{_event_nama(event_id)}'"
+                          + (f" di stand {stand}." if stand else "."),
+                          link="/event")
         return res.data[0]
     except HTTPException:
         raise
@@ -191,6 +259,11 @@ def update_event_artisan(event_id: str, artisan_id: str, data: dict):
         res = supabase_admin.table("event_artisans").update(update_data).eq("artisan_id", artisan_id).eq("event_id", event_id).execute()
         if not res.data:
             raise HTTPException(404, "Artisan assignment tidak ditemukan")
+        if "stand_id" in update_data or "posisi_event" in update_data:
+            stand = update_data.get("stand_id") or update_data.get("posisi_event")
+            create_notifikasi(artisan_id, "event_update", "Posisi stand diubah",
+                              f"Posisi stand Anda di event '{_event_nama(event_id)}' kini {stand}.",
+                              link="/event")
         return res.data[0]
     except HTTPException:
         raise
@@ -204,6 +277,8 @@ def remove_artisan(event_id: str, artisan_id: str):
         res = supabase_admin.table("event_artisans").delete().eq("artisan_id", artisan_id).eq("event_id", event_id).execute()
         if not res.data:  # BE-5: detect silent no-op
             raise HTTPException(404, "Artisan assignment tidak ditemukan")
+        create_notifikasi(artisan_id, "event_update", "Dikeluarkan dari event",
+                          f"Keikutsertaan Anda di event '{_event_nama(event_id)}' dihapus oleh penyelenggara.")
         return {"message": "Artisan removed"}
     except HTTPException:
         raise
@@ -290,10 +365,19 @@ def respond_artisan_request(event_id: str, request_id: str, action: str):
             supabase_admin.table("event_artisans").insert(insert_data).execute()
             # Delete request
             supabase_admin.table("artisan_requests").delete().eq("id", request_id).execute()
+            create_notifikasi(req.get("artisan_id"), "artisan_request_approved",
+                              "Permintaan disetujui",
+                              f"Permintaan Anda bergabung di event '{_event_nama(event_id)}' disetujui"
+                              + (f" (stand {stand_id})." if stand_id else "."),
+                              link="/event")
             return {"message": "Request approved"}
         else:  # reject
-            # Hard delete to allow re-request
-            supabase_admin.table("artisan_requests").delete().eq("id", request_id).execute()
+            # Hard delete to allow re-request (artisan_id diambil dari baris terhapus)
+            res = supabase_admin.table("artisan_requests").delete().eq("id", request_id).execute()
+            if res.data:
+                create_notifikasi(res.data[0].get("artisan_id"), "artisan_request_rejected",
+                                  "Permintaan ditolak",
+                                  f"Permintaan Anda bergabung di event '{_event_nama(event_id)}' ditolak.")
             return {"message": "Request rejected"}
     except HTTPException:
         raise
@@ -333,12 +417,19 @@ def respond_position_change(event_id: str, request_id: str, action: str):
                 "change_request": None,
                 "status_request": "approved",
             }).eq("id", request_id).execute()
+            create_notifikasi(row.get("artisan_id"), "position_change_approved",
+                              "Perubahan posisi disetujui",
+                              f"Stand Anda di event '{_event_nama(event_id)}' kini {new_stand}.",
+                              link="/event")
             return {"message": "Position change approved"}
         else:  # reject — old stand stays, request cleared
             supabase_admin.table("event_artisans").update({
                 "change_request": None,
                 "status_request": "approved",
             }).eq("id", request_id).execute()
+            create_notifikasi(row.get("artisan_id"), "position_change_rejected",
+                              "Perubahan posisi ditolak",
+                              f"Permintaan pindah stand di event '{_event_nama(event_id)}' ditolak; posisi Anda tetap {row.get('stand_id')}.")
             return {"message": "Position change rejected"}
     except HTTPException:
         raise
@@ -407,6 +498,15 @@ def respond_kolaborator_request(event_id: str, request_id: str, action: str):
                     supabase_admin.table("event_kolaborators").insert(insert_data).execute()
                     
                 supabase_admin.table("kolaborator_requests").delete().eq("id", request_id).execute()
+                if action == "approve":
+                    create_notifikasi(req.get("kolaborator_id"), "event_request_approved",
+                                      "Permintaan disetujui",
+                                      f"Anda terdaftar sebagai {req.get('peran', 'peserta')} di event '{_event_nama(event_id)}'.",
+                                      link="/event")
+                else:
+                    create_notifikasi(req.get("kolaborator_id"), "event_request_rejected",
+                                      "Permintaan ditolak",
+                                      f"Permintaan Anda bergabung di event '{_event_nama(event_id)}' ditolak.")
                 return {"message": f"Request {action}d"}
         except Exception:
             pass # Fallback below
@@ -425,7 +525,7 @@ def respond_kolaborator_request(event_id: str, request_id: str, action: str):
 def get_active_event():
     """Get currently active event."""
     try:
-        res = supabase_admin.table("events").select("*").eq("status", "active").single().execute()
+        res = supabase_admin.table("events").select("*").eq("status", "berlangsung").limit(1).execute()
         return res.data
     except Exception:
         return None

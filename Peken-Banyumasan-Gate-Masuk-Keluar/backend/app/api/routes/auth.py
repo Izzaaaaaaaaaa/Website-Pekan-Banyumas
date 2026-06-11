@@ -68,9 +68,11 @@ def update_user_profile(
     user=Depends(get_current_user),
     user_id: str = Depends(get_current_user_id)
 ):
-    """Update custom profile fields (nama/email handled by Supabase client)."""
+    """Update own users_profile row (nama/jabatan). Returns the updated subset."""
     try:
         result = update_profile(user_id, data.dict(exclude_unset=True))
-        return success_response(None, message=result.get("message", "Profile berhasil diupdate"))
+        return success_response(result, message="Profile berhasil diupdate")
+    except HTTPException:
+        raise
     except Exception as e:
         raise HTTPException(500, detail=error_response(str(e), 500))

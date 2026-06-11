@@ -21,7 +21,10 @@ class UserResponse(BaseModel):
 
 
 class ProfileUpdate(BaseModel):
-    """Update custom profile fields only. Nama/email handled by Supabase."""
+    """Update own users_profile row. nama is accepted here so the DB table
+    stays in sync with Supabase user_metadata (FE updates both); email is
+    Supabase-Auth-only and intentionally NOT accepted."""
+    nama: Optional[str] = None
     jabatan: Optional[str] = None
     extra: Optional[dict] = None  # Additional custom fields
 
