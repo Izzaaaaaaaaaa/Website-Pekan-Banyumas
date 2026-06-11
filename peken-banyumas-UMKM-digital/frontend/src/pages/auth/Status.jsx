@@ -1,149 +1,638 @@
+import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
-import { useState } from "react";
+import {
+  Clock, XCircle, CheckCircle2,
+  CheckCircle, Search, Lock, AlertTriangle,
+  Phone, Package, CalendarDays, ArrowRight,
+  RefreshCw, LogOut, FileCheck,
+} from "lucide-react";
+import { supabase } from "../../lib/supabase";
+import logo from "../../assets/images/logo.png";
 
+/* ─────────────────────────────────────────────────────────────
+   Inline CSS — sepenuhnya menggunakan token design system
+   Peken Banyumasan (colors_and_type.css sudah di-load global)
+───────────────────────────────────────────────────────────── */
 const CSS = `
-@import url('https://fonts.googleapis.com/css2?family=Lora:wght@500;600;700&family=DM+Sans:wght@300;400;500;600&display=swap');
-*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
-.status-root{min-height:100vh;background:#f0ede6;display:flex;align-items:center;justify-content:center;padding:40px 16px;font-family:'DM Sans',sans-serif;position:relative}
-.status-root::before{content:'';position:fixed;inset:0;background-image:radial-gradient(circle at 30% 30%,rgba(47,133,90,.07) 0%,transparent 50%),radial-gradient(circle at 70% 70%,rgba(217,119,6,.05) 0%,transparent 50%);pointer-events:none}
-.status-card{position:relative;background:white;border-radius:28px;padding:52px 48px;width:100%;max-width:460px;box-shadow:0 0 0 1px rgba(0,0,0,.05),0 8px 32px rgba(0,0,0,.08);text-align:center;animation:cardIn .5s cubic-bezier(.22,1,.36,1) both}
-@keyframes cardIn{from{opacity:0;transform:translateY(24px)}to{opacity:1;transform:translateY(0)}}
-@media(max-width:500px){.status-card{padding:36px 24px}}
-.status-brand{display:flex;align-items:center;justify-content:center;gap:10px;margin-bottom:36px}
-.status-brand-mark{width:36px;height:36px;background:linear-gradient(135deg,#2f855a,#48bb78);border-radius:10px;display:flex;align-items:center;justify-content:center;font-size:16px;box-shadow:0 4px 10px rgba(47,133,90,.3)}
-.status-brand-name{font-family:'Lora',serif;font-size:16px;font-weight:700;color:#1a2e1f}
-.status-icon-wrap{width:88px;height:88px;border-radius:50%;display:flex;align-items:center;justify-content:center;margin:0 auto 24px;font-size:40px;animation:popIn .4s .15s cubic-bezier(.22,1,.36,1) both}
-@keyframes popIn{from{opacity:0;transform:scale(.6)}to{opacity:1;transform:scale(1)}}
-.status-icon-wrap.pending{background:#fefce8;box-shadow:0 0 0 8px #fef9c3}
-.status-icon-wrap.rejected{background:#fff1f0;box-shadow:0 0 0 8px #fee2e2}
-.status-icon-wrap.approved{background:#f0fdf4;box-shadow:0 0 0 8px #dcfce7}
-.status-title{font-family:'Lora',serif;font-size:24px;font-weight:700;color:#1a2e1f;margin-bottom:8px}
-.status-badge{display:inline-flex;align-items:center;gap:6px;padding:5px 16px;border-radius:999px;font-size:13px;font-weight:700;margin-bottom:16px;letter-spacing:.02em}
-.status-badge.pending{background:#fef9c3;color:#a16207}
-.status-badge.rejected{background:#fee2e2;color:#b91c1c}
-.status-badge.approved{background:#dcfce7;color:#166534}
-.status-desc{font-size:14px;color:#6b7280;line-height:1.7;margin-bottom:32px;max-width:320px;margin-left:auto;margin-right:auto}
-.btn-primary{display:inline-flex;align-items:center;justify-content:center;gap:8px;width:100%;padding:14px;background:linear-gradient(135deg,#276749,#2f855a);color:white;border:none;border-radius:14px;font-size:15px;font-weight:700;font-family:'DM Sans',sans-serif;cursor:pointer;transition:all .2s;box-shadow:0 6px 20px rgba(47,133,90,.38);margin-bottom:12px}
-.btn-primary:hover{transform:translateY(-1px);box-shadow:0 10px 28px rgba(47,133,90,.45)}
-.btn-danger{display:inline-flex;align-items:center;justify-content:center;gap:8px;width:100%;padding:14px;background:linear-gradient(135deg,#b91c1c,#dc2626);color:white;border:none;border-radius:14px;font-size:15px;font-weight:700;font-family:'DM Sans',sans-serif;cursor:pointer;transition:all .2s;box-shadow:0 6px 20px rgba(220,38,38,.35);margin-bottom:12px}
-.btn-danger:hover{transform:translateY(-1px);box-shadow:0 10px 28px rgba(220,38,38,.45)}
-.divider{height:1px;background:#f0f0f0;margin:24px 0}
-.sim-section{text-align:left}
-.sim-label{font-size:11px;font-weight:700;color:#9ca3af;letter-spacing:.1em;text-transform:uppercase;margin-bottom:10px}
-.sim-row{display:flex;gap:8px}
-.sim-btn{flex:1;padding:9px 4px;border:1.5px solid #e5e7eb;border-radius:10px;background:white;font-size:12px;font-weight:600;font-family:'DM Sans',sans-serif;cursor:pointer;transition:all .15s;color:#374151}
-.sim-btn:hover{transform:translateY(-1px);box-shadow:0 4px 10px rgba(0,0,0,.08)}
-.sim-btn.sim-pending{border-color:#fbbf24;color:#92400e;background:#fffbeb}
-.sim-btn.sim-rejected{border-color:#f87171;color:#b91c1c;background:#fff1f0}
-.sim-btn.sim-approved{border-color:#4ade80;color:#166534;background:#f0fdf4}
-.info-box{background:#f8fafc;border:1.5px solid #e5e7eb;border-radius:14px;padding:14px 16px;margin-bottom:24px;text-align:left}
-.info-row{display:flex;align-items:center;gap:8px;font-size:13px;color:#4b5563}
-.info-row+.info-row{margin-top:8px}
-.info-dot{width:6px;height:6px;border-radius:50%;flex-shrink:0}
-.pulse{animation:pulse 2s ease-in-out infinite}
-@keyframes pulse{0%,100%{opacity:1}50%{opacity:.4}}
+  @import url('https://api.fontshare.com/v2/css?f[]=clash-display@500,600,700&display=swap');
+
+  *,*::before,*::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+  /* Page */
+  .sv-root {
+    min-height: 100vh;
+    background: var(--dash-bg, #f2f4e8);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: var(--sp-8, 40px) var(--sp-4, 16px);
+    font-family: var(--font-body, "Montserrat", sans-serif);
+    position: relative;
+    overflow: hidden;
+  }
+
+  /* Decorative background blobs */
+  .sv-root::before {
+    content: '';
+    position: fixed;
+    inset: 0;
+    background-image:
+      radial-gradient(ellipse at 20% 20%, rgba(195,202,150,.12) 0%, transparent 55%),
+      radial-gradient(ellipse at 80% 80%, rgba(122,138,82,.08) 0%, transparent 55%);
+    pointer-events: none;
+  }
+
+  /* Card */
+  .sv-card {
+    position: relative;
+    background: var(--dash-surface, #fff);
+    border: 1px solid var(--dash-border, #e4e7d4);
+    border-radius: var(--r-lg, 16px);
+    padding: var(--sp-9, 48px) var(--sp-8, 40px);
+    width: 100%;
+    max-width: 480px;
+    box-shadow: var(--shadow-lg, 0 8px 24px rgba(30,32,16,.10));
+    text-align: center;
+    animation: sv-card-in var(--dur-slow, 560ms) var(--ease-out, cubic-bezier(.22,.61,.36,1)) both;
+  }
+  @keyframes sv-card-in {
+    from { opacity: 0; transform: translateY(20px); }
+    to   { opacity: 1; transform: translateY(0); }
+  }
+  @media (max-width: 520px) {
+    .sv-card { padding: var(--sp-7, 32px) var(--sp-6, 24px); }
+  }
+
+  /* Brand header */
+  .sv-brand {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: var(--sp-3, 12px);
+    margin-bottom: var(--sp-8, 40px);
+  }
+  .sv-brand-logo {
+    width: 36px;
+    height: 36px;
+    border-radius: var(--r-md, 12px);
+    object-fit: cover;
+    border: 1px solid var(--dash-border, #e4e7d4);
+    box-shadow: var(--shadow-sm);
+  }
+  .sv-brand-name {
+    font-family: var(--font-body, "Montserrat", sans-serif);
+    font-size: var(--fs-14, 14px);
+    font-weight: 700;
+    color: var(--dash-text-primary, #1e2010);
+    line-height: 1;
+  }
+  .sv-brand-sub {
+    font-size: var(--fs-11, 11px);
+    color: var(--dash-text-muted, #8a9070);
+    margin-top: 3px;
+    letter-spacing: var(--ls-wide, .06em);
+    text-transform: uppercase;
+  }
+
+  /* Status icon ring */
+  .sv-icon-ring {
+    width: 88px;
+    height: 88px;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    margin: 0 auto var(--sp-6, 24px);
+    animation: sv-pop var(--dur-base, 320ms) .12s var(--ease-out, cubic-bezier(.22,.61,.36,1)) both;
+  }
+  @keyframes sv-pop {
+    from { opacity: 0; transform: scale(.55); }
+    to   { opacity: 1; transform: scale(1); }
+  }
+
+  /* Pending — amber/warning palette */
+  .sv-icon-ring.pending {
+    background: var(--dash-warning-bg, #f7f2e4);
+    box-shadow: 0 0 0 8px rgba(196,162,77,.14);
+  }
+  /* Ditolak — error palette */
+  .sv-icon-ring.rejected {
+    background: var(--dash-error-bg, #f7eeee);
+    box-shadow: 0 0 0 8px rgba(184,114,114,.14);
+  }
+  /* Disetujui — success palette */
+  .sv-icon-ring.approved {
+    background: var(--dash-success-bg, #eef4eb);
+    box-shadow: 0 0 0 8px rgba(122,155,106,.14);
+  }
+
+  /* Spin animation for pending Clock icon */
+  .sv-icon-spin {
+    animation: sv-icon-rotate 8s linear infinite;
+  }
+  @keyframes sv-icon-rotate { to { transform: rotate(360deg); } }
+
+  /* Badge pill */
+  .sv-badge {
+    display: inline-flex;
+    align-items: center;
+    gap: var(--sp-2, 8px);
+    padding: 5px var(--sp-4, 16px);
+    border-radius: var(--r-full, 9999px);
+    font-size: var(--fs-12, 12px);
+    font-weight: 700;
+    letter-spacing: var(--ls-label, .02em);
+    margin-bottom: var(--sp-3, 12px);
+    text-transform: uppercase;
+  }
+  .sv-badge-dot {
+    width: 7px; height: 7px;
+    border-radius: 50%;
+    flex-shrink: 0;
+  }
+  .sv-badge.pending  {
+    background: var(--dash-warning-bg, #f7f2e4);
+    color: var(--dash-warning, #C4A24D);
+    border: 1px solid var(--dash-warning-border, #dcc882);
+  }
+  .sv-badge.rejected {
+    background: var(--dash-error-bg, #f7eeee);
+    color: var(--dash-error, #B87272);
+    border: 1px solid var(--dash-error-border, #dbb8b8);
+  }
+  .sv-badge.approved {
+    background: var(--dash-success-bg, #eef4eb);
+    color: var(--dash-success, #7A9B6A);
+    border: 1px solid var(--dash-success-border, #b8d4b0);
+  }
+  .sv-badge-dot.pending  { background: var(--dash-warning, #C4A24D); animation: sv-pulse 2s ease-in-out infinite; }
+  .sv-badge-dot.rejected { background: var(--dash-error, #B87272); }
+  .sv-badge-dot.approved { background: var(--dash-success, #7A9B6A); }
+  @keyframes sv-pulse { 0%,100% { opacity:1; } 50% { opacity:.3; } }
+
+  /* Title & description */
+  .sv-title {
+    font-family: var(--font-body, "Montserrat", sans-serif);
+    font-size: var(--fs-20, 20px);
+    font-weight: 700;
+    color: var(--dash-text-primary, #1e2010);
+    margin-bottom: var(--sp-2, 8px);
+    line-height: var(--lh-snug, 1.3);
+  }
+  .sv-desc {
+    font-size: var(--fs-13, 13px);
+    color: var(--dash-text-secondary, #5a6040);
+    line-height: var(--lh-relaxed, 1.7);
+    margin-bottom: var(--sp-6, 24px);
+    max-width: 340px;
+    margin-left: auto;
+    margin-right: auto;
+  }
+
+  /* Info card / infobox */
+  .sv-info-card {
+    background: var(--dash-surface-hover, #f7f8f2);
+    border: 1px solid var(--dash-border, #e4e7d4);
+    border-radius: var(--r-md, 12px);
+    padding: var(--sp-4, 16px) var(--sp-5, 20px);
+    margin-bottom: var(--sp-6, 24px);
+    text-align: left;
+  }
+  .sv-info-row {
+    display: flex;
+    align-items: flex-start;
+    gap: var(--sp-3, 12px);
+    font-size: var(--fs-13, 13px);
+    color: var(--dash-text-secondary, #5a6040);
+    line-height: var(--lh-normal, 1.5);
+  }
+  .sv-info-row + .sv-info-row { margin-top: var(--sp-3, 12px); }
+  .sv-info-icon {
+    flex-shrink: 0;
+    width: 20px;
+    height: 20px;
+    border-radius: 6px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 11px;
+    margin-top: 1px;
+  }
+  .sv-info-icon.warning { background: var(--dash-warning-bg, #f7f2e4); color: var(--dash-warning, #C4A24D); }
+  .sv-info-icon.info    { background: var(--dash-info-bg, #eaf0f4);    color: var(--dash-info, #6B8FA3); }
+  .sv-info-icon.error   { background: var(--dash-error-bg, #f7eeee);   color: var(--dash-error, #B87272); }
+  .sv-info-icon.success { background: var(--dash-success-bg, #eef4eb); color: var(--dash-success, #7A9B6A); }
+
+  /* Rejection reason box */
+  .sv-reject-reason {
+    background: var(--dash-error-bg, #f7eeee);
+    border: 1px solid var(--dash-error-border, #dbb8b8);
+    border-radius: var(--r-md, 12px);
+    padding: var(--sp-4, 16px) var(--sp-5, 20px);
+    margin-bottom: var(--sp-6, 24px);
+    text-align: left;
+  }
+  .sv-reject-reason-label {
+    font-size: var(--fs-11, 11px);
+    font-weight: 700;
+    color: var(--dash-error, #B87272);
+    text-transform: uppercase;
+    letter-spacing: var(--ls-wide, .06em);
+    margin-bottom: var(--sp-2, 8px);
+  }
+  .sv-reject-reason-text {
+    font-size: var(--fs-13, 13px);
+    color: var(--dash-text-secondary, #5a6040);
+    line-height: var(--lh-relaxed, 1.7);
+  }
+
+  /* Divider */
+  .sv-divider {
+    height: 1px;
+    background: var(--dash-border, #e4e7d4);
+    margin: var(--sp-6, 24px) 0;
+  }
+
+  /* Buttons */
+  .sv-btn-primary {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: var(--sp-2, 8px);
+    width: 100%;
+    padding: 13px var(--sp-5, 20px);
+    background: var(--dash-accent-dark, #7A8A52);
+    color: var(--peken-white, #fff);
+    border: none;
+    border-radius: var(--r-xl, 20px);
+    font-family: var(--font-body, "Montserrat", sans-serif);
+    font-size: var(--fs-14, 14px);
+    font-weight: 700;
+    cursor: pointer;
+    transition: background var(--dur-fast, 180ms) var(--ease-out),
+                box-shadow var(--dur-fast, 180ms) var(--ease-out),
+                transform var(--dur-fast, 180ms) var(--ease-out);
+    box-shadow: var(--shadow-accent, 0 4px 14px rgba(122,138,82,.25));
+    margin-bottom: var(--sp-3, 12px);
+  }
+  .sv-btn-primary:hover {
+    background: var(--dash-accent-deeper, #4f5c30);
+    box-shadow: 0 6px 20px rgba(79,92,48,.32);
+    transform: translateY(-1px);
+  }
+
+  .sv-btn-ghost {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: var(--sp-2, 8px);
+    width: 100%;
+    padding: 12px var(--sp-5, 20px);
+    background: transparent;
+    color: var(--dash-accent-dark, #7A8A52);
+    border: 1.5px solid var(--dash-accent-border, #c8d09a);
+    border-radius: var(--r-xl, 20px);
+    font-family: var(--font-body, "Montserrat", sans-serif);
+    font-size: var(--fs-14, 14px);
+    font-weight: 600;
+    cursor: pointer;
+    transition: background var(--dur-fast, 180ms) var(--ease-out),
+                transform var(--dur-fast, 180ms) var(--ease-out);
+    margin-bottom: var(--sp-3, 12px);
+  }
+  .sv-btn-ghost:hover {
+    background: var(--dash-accent-bg, #eef0e0);
+    transform: translateY(-1px);
+  }
+
+  /* Footer note */
+  .sv-footer-note {
+    font-size: var(--fs-12, 12px);
+    color: var(--dash-text-muted, #8a9070);
+    line-height: var(--lh-normal, 1.5);
+    margin-top: var(--sp-2, 8px);
+  }
+  .sv-footer-note a, .sv-footer-note span.link {
+    color: var(--dash-accent-dark, #7A8A52);
+    font-weight: 600;
+    cursor: pointer;
+    text-decoration: none;
+  }
+  .sv-footer-note a:hover, .sv-footer-note span.link:hover {
+    color: var(--dash-accent-deeper, #4f5c30);
+    text-decoration: underline;
+  }
+
+  /* Loading skeleton */
+  .sv-loading {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: var(--sp-4, 16px);
+    padding: var(--sp-7, 32px) 0;
+  }
+  .sv-spinner {
+    width: 36px; height: 36px;
+    border: 3px solid var(--dash-border, #e4e7d4);
+    border-top-color: var(--dash-accent-dark, #7A8A52);
+    border-radius: 50%;
+    animation: sv-spin .7s linear infinite;
+  }
+  @keyframes sv-spin { to { transform: rotate(360deg); } }
+  .sv-loading-text {
+    font-size: var(--fs-13, 13px);
+    color: var(--dash-text-muted, #8a9070);
+  }
+
+  /* Estimasi waktu chip */
+  .sv-eta {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    background: var(--dash-warning-bg, #f7f2e4);
+    border: 1px solid var(--dash-warning-border, #dcc882);
+    border-radius: var(--r-full, 9999px);
+    padding: 4px 14px;
+    font-size: var(--fs-11, 11px);
+    font-weight: 600;
+    color: var(--dash-warning, #C4A24D);
+    letter-spacing: var(--ls-label, .02em);
+    margin: 0 auto var(--sp-6, 24px);
+    width: fit-content;
+  }
 `;
 
-const STATUS_CONFIG = {
-  pending: {
-    icon:   "⏳",
-    badge:  "Menunggu Konfirmasi",
-    title:  "Sedang Diproses",
-    desc:   "Admin sedang memverifikasi data pendaftaranmu. Silakan tunggu hingga status diperbarui.",
-    infos: [
-      { dot: "#f59e0b", text: "Proses verifikasi biasanya 1×24 jam" },
-    ],
-  },
-  rejected: {
-    icon:   "❌",
-    badge:  "Tidak Disetujui",
-    title:  "Pendaftaran Ditolak",
-    desc:   "Kios telah penuh, pendaftaranmu belum bisa diproses.",
-    infos: [
-      { dot: "#ef4444", text: "Hubungi admin untuk informasi lebih lanjut" },
-    ],
-  },
-  approved: {
-    icon:   "🎉",
-    badge:  "Disetujui",
-    title:  "Selamat, Berhasil!",
-    desc:   "Pendaftaranmu telah disetujui oleh admin. Kamu sekarang bisa mengakses dashboard UMKM dan mulai mengelola kiosmu.",
-    infos: [
-      { dot: "#22c55e", text: "Kamu mendapat kios 22" },
-      { dot: "#22c55e", text: "Pantau stok & transaksi di dashboard" },
-      { dot: "#22c55e", text: "Acara dimulai 22 Maret 2026" },
-    ],
-  },
-};
-
+/* ─────────────────────────────────────────────────────────────
+   Component
+───────────────────────────────────────────────────────────── */
 export default function Status() {
   const navigate = useNavigate();
-  const [status, setStatus] = useState(localStorage.getItem("status") || "pending");
 
-  const sim = (s) => { localStorage.setItem("status", s); setStatus(s); };
-  const cfg = STATUS_CONFIG[status] || STATUS_CONFIG.pending;
+  // Baca status dari localStorage yang di-set saat register / login
+  const [status, setStatus]           = useState(localStorage.getItem("status") || "pending");
+  const [rejectionReason, setRejection] = useState(null);
+  const [checking, setChecking]       = useState(true);
 
+  // Cek status terbaru dari server saat halaman dibuka
+  useEffect(() => {
+    let cancelled = false;
+
+    const checkStatus = async () => {
+      try {
+        // Coba ambil session Supabase (kalau masih ada token sementara)
+        const { data: { session } } = await supabase.auth.getSession();
+
+        if (!session) {
+          // Tidak ada session → pakai nilai localStorage (bisa dari redirect pasca-register)
+          setChecking(false);
+          return;
+        }
+
+        const BASE = import.meta.env.VITE_API_URL;
+        const res = await fetch(`${BASE}/api/auth/me/status`, {
+          headers: { Authorization: `Bearer ${session.access_token}` },
+        });
+
+        if (res.ok) {
+          const data = await res.json();
+          const s = data.status || "pending";
+          if (!cancelled) {
+            setStatus(s);
+            localStorage.setItem("status", s);
+            if (data.catatan_penolakan) setRejection(data.catatan_penolakan);
+          }
+        }
+      } catch {
+        // Gagal fetch → tetap gunakan nilai localStorage
+      } finally {
+        if (!cancelled) setChecking(false);
+      }
+    };
+
+    checkStatus();
+    return () => { cancelled = true; };
+  }, []);
+
+  const handleGoToDashboard = () => {
+    localStorage.setItem("isLogin", "true");
+    navigate("/");
+  };
+
+  const handleReregister = () => {
+    localStorage.removeItem("status");
+    navigate("/register");
+  };
+
+  const handleLogout = async () => {
+    await supabase.auth.signOut();
+    localStorage.clear();
+    navigate("/login");
+  };
+
+  /* ── Render ── */
   return (
     <>
       <style>{CSS}</style>
-      <div className="status-root">
-        <div className="status-card">
+      <div className="sv-root">
+        <div className="sv-card">
 
           {/* Brand */}
-          <div className="status-brand">
-            <div className="status-brand-mark">🎪</div>
-            <span className="status-brand-name">Peken Banyumas 2026</span>
-          </div>
-
-          {/* Icon */}
-          <div className={`status-icon-wrap ${status}`}>
-            {status === "pending" && <span className="pulse">{cfg.icon}</span>}
-            {status !== "pending" && cfg.icon}
-          </div>
-
-          {/* Badge */}
-          <div className={`status-badge ${status}`}>
-            {status === "pending"  && "⏳ "}
-            {status === "rejected" && "✕ "}
-            {status === "approved" && "✓ "}
-            {cfg.badge}
-          </div>
-
-          <h2 className="status-title">{cfg.title}</h2>
-          <p className="status-desc">{cfg.desc}</p>
-
-          {/* Info bullets */}
-          <div className="info-box">
-            {cfg.infos.map(({ dot, text }, i) => (
-              <div className="info-row" key={i}>
-                <span className="info-dot" style={{ background: dot }} />
-                {text}
-              </div>
-            ))}
-          </div>
-
-          {/* Action buttons */}
-          {status === "approved" && (
-            <button className="btn-primary" onClick={() => { localStorage.setItem("isLogin", "true"); navigate("/"); }}>
-              🏠 Masuk ke Dashboard
-            </button>
-          )}
-          {status === "rejected" && (
-            <button className="btn-danger" onClick={() => navigate("/register")}>
-              🔄 Daftar Ulang
-            </button>
-          )}
-
-          {/* Divider + Simulasi */}
-          <div className="divider" />
-          <div className="sim-section">
-            <div className="sim-label">🔧 Simulasi Status Admin</div>
-            <div className="sim-row">
-              <button className="sim-btn sim-pending"  onClick={() => sim("pending")}>⏳ Pending</button>
-              <button className="sim-btn sim-rejected" onClick={() => sim("rejected")}>✕ Ditolak</button>
-              <button className="sim-btn sim-approved" onClick={() => sim("approved")}>✓ Disetujui</button>
+          <div className="sv-brand">
+            <img src={logo} alt="Peken Banyumas" className="sv-brand-logo" />
+            <div>
+              <div className="sv-brand-name">Peken Banyumasan</div>
+              <div className="sv-brand-sub">Platform Artisan UMKM</div>
             </div>
           </div>
+
+          {/* Loading state */}
+          {checking ? (
+            <div className="sv-loading">
+              <div className="sv-spinner" />
+              <div className="sv-loading-text">Memeriksa status pendaftaran…</div>
+            </div>
+          ) : (
+            <>
+              {/* ══════════════════════════════════════
+                  PENDING
+              ══════════════════════════════════════ */}
+              {status === "pending" && (
+                <>
+                  {/* Icon */}
+                  <div className="sv-icon-ring pending">
+                    <Clock size={36} strokeWidth={1.5} color="var(--dash-warning, #C4A24D)" className="sv-icon-spin" />
+                  </div>
+
+                  {/* Badge */}
+                  <div className="sv-badge pending">
+                    <span className="sv-badge-dot pending" />
+                    Menunggu Konfirmasi
+                  </div>
+
+                  <h2 className="sv-title">Pendaftaran Sedang Diverifikasi</h2>
+                  <p className="sv-desc">
+                    Data UMKM kamu telah berhasil dikirim dan sedang dalam proses
+                    verifikasi oleh Admin Peken Banyumas. Harap bersabar.
+                  </p>
+
+                  {/* Estimasi waktu */}
+                  <div className="sv-eta">
+                    <Clock size={12} strokeWidth={2} />
+                    Estimasi verifikasi: 1 × 24 jam kerja
+                  </div>
+
+                  {/* Info bullets */}
+                  <div className="sv-info-card">
+                    <div className="sv-info-row">
+                      <span className="sv-info-icon warning"><FileCheck size={12} strokeWidth={2.5} /></span>
+                      <span>Data pendaftaran UMKM kamu telah berhasil dikirim.</span>
+                    </div>
+                    <div className="sv-info-row">
+                      <span className="sv-info-icon info"><Search size={12} strokeWidth={2.5} /></span>
+                      <span>Admin Peken Banyumas sedang meninjau kelengkapan data.</span>
+                    </div>
+                    <div className="sv-info-row">
+                      <span className="sv-info-icon warning"><Lock size={12} strokeWidth={2.5} /></span>
+                      <span>Dashboard UMKM hanya dapat diakses setelah akun disetujui oleh Admin.</span>
+                    </div>
+                  </div>
+
+                  <div className="sv-divider" />
+
+                  <div className="sv-footer-note">
+                    Sudah mendapat konfirmasi?{" "}
+                    <span
+                      className="link"
+                      onClick={() => { setChecking(true); window.location.reload(); }}
+                    >
+                      Perbarui status
+                    </span>
+                  </div>
+                  <div className="sv-footer-note" style={{ marginTop: 10 }}>
+                    <span className="link" onClick={handleLogout}>
+                      <LogOut size={11} style={{ display:"inline", verticalAlign:"middle", marginRight:4 }} />
+                      Keluar
+                    </span>
+                  </div>
+                </>
+              )}
+
+              {/* ══════════════════════════════════════
+                  DITOLAK
+              ══════════════════════════════════════ */}
+              {status === "rejected" && (
+                <>
+                  {/* Icon */}
+                  <div className="sv-icon-ring rejected">
+                    <XCircle size={36} strokeWidth={1.5} color="var(--dash-error, #B87272)" />
+                  </div>
+
+                  {/* Badge */}
+                  <div className="sv-badge rejected">
+                    <span className="sv-badge-dot rejected" />
+                    Pendaftaran Ditolak
+                  </div>
+
+                  <h2 className="sv-title">Pendaftaran Tidak Disetujui</h2>
+                  <p className="sv-desc">
+                    Maaf, pendaftaran UMKM kamu belum dapat disetujui oleh
+                    Admin Peken Banyumas. Kamu dapat memperbaiki data dan
+                    mengajukan ulang pendaftaran.
+                  </p>
+
+                  {/* Alasan penolakan (jika ada) */}
+                  {rejectionReason && (
+                    <div className="sv-reject-reason">
+                      <div className="sv-reject-reason-label">Alasan Penolakan</div>
+                      <div className="sv-reject-reason-text">{rejectionReason}</div>
+                    </div>
+                  )}
+
+                  {/* Info bullets */}
+                  <div className="sv-info-card">
+                    <div className="sv-info-row">
+                      <span className="sv-info-icon error"><AlertTriangle size={12} strokeWidth={2.5} /></span>
+                      <span>Periksa kembali kelengkapan dan kebenaran data yang kamu daftarkan.</span>
+                    </div>
+                    <div className="sv-info-row">
+                      <span className="sv-info-icon info"><Phone size={12} strokeWidth={2.5} /></span>
+                      <span>Hubungi panitia Peken Banyumas untuk informasi lebih lanjut sebelum mendaftar ulang.</span>
+                    </div>
+                  </div>
+
+                  {/* CTA */}
+                  <button className="sv-btn-primary" onClick={handleReregister}>
+                    <RefreshCw size={16} strokeWidth={2} />
+                    Daftar Ulang
+                  </button>
+
+                  <div className="sv-divider" />
+
+                  <div className="sv-footer-note">
+                    <span className="link" onClick={handleLogout}>
+                      <LogOut size={11} style={{ display:"inline", verticalAlign:"middle", marginRight:4 }} />
+                      Keluar dari akun
+                    </span>
+                  </div>
+                </>
+              )}
+
+              {/* ══════════════════════════════════════
+                  DISETUJUI
+              ══════════════════════════════════════ */}
+              {status === "approved" && (
+                <>
+                  {/* Icon */}
+                  <div className="sv-icon-ring approved">
+                    <CheckCircle2 size={36} strokeWidth={1.5} color="var(--dash-success, #7A9B6A)" />
+                  </div>
+
+                  {/* Badge */}
+                  <div className="sv-badge approved">
+                    <span className="sv-badge-dot approved" />
+                    Disetujui
+                  </div>
+
+                  <h2 className="sv-title">Selamat, Kamu Diterima!</h2>
+                  <p className="sv-desc">
+                    Pendaftaran UMKM kamu telah disetujui oleh Admin Peken Banyumas.
+                    Kamu sekarang dapat mengakses Dashboard dan mulai mengelola kiosmu.
+                  </p>
+
+                  {/* Info bullets */}
+                  <div className="sv-info-card">
+                    <div className="sv-info-row">
+                      <span className="sv-info-icon success"><CheckCircle size={12} strokeWidth={2.5} /></span>
+                      <span>Akun UMKM kamu aktif dan siap digunakan.</span>
+                    </div>
+                    <div className="sv-info-row">
+                      <span className="sv-info-icon success"><Package size={12} strokeWidth={2.5} /></span>
+                      <span>Pantau stok, transaksi, dan jadwal event di dashboard.</span>
+                    </div>
+                    <div className="sv-info-row">
+                      <span className="sv-info-icon info"><CalendarDays size={12} strokeWidth={2.5} /></span>
+                      <span>Acara Peken Banyumas dimulai 22 Maret 2026 di Taman Sari Kota Lama.</span>
+                    </div>
+                  </div>
+
+                  {/* CTA */}
+                  <button className="sv-btn-primary" onClick={handleGoToDashboard}>
+                    Masuk ke Dashboard UMKM
+                    <ArrowRight size={16} strokeWidth={2.5} />
+                  </button>
+
+                  <div className="sv-divider" />
+
+                  <div className="sv-footer-note">
+                    <span className="link" onClick={handleLogout}>
+                      <LogOut size={11} style={{ display:"inline", verticalAlign:"middle", marginRight:4 }} />
+                      Keluar dari akun
+                    </span>
+                  </div>
+                </>
+              )}
+            </>
+          )}
 
         </div>
       </div>

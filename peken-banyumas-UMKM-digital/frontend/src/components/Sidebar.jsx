@@ -54,7 +54,7 @@ export default function Sidebar({ open, setOpen }) {
             </div>
             <div className="sb-header-text">
               <span className="sb-header-title">Dashboard <em>ARTISAN</em></span>
-              <span className="sb-header-sub">PEKEN BANYUMAS 2026</span>
+              <span className="sb-header-sub">PEKEN BANYUMASAN</span>
             </div>
           </div>
 
