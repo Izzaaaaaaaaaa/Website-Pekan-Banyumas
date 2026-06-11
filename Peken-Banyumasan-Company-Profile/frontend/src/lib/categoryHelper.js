@@ -8,14 +8,15 @@
  * `.map()` / `.join()` it.
  */
 export function getCategory(entity) {
-  const isArtisan = entity?.role === 'artisan' || entity?.owner_type === 'artisan';
-  const raw = isArtisan
-    ? (entity?.kategori_usaha ?? entity?.subsektor)
-    : (entity?.subsektor ?? entity?.kategori_usaha);
-  const values = Array.isArray(raw) ? raw : raw ? [raw] : [];
-  return {
-    key: isArtisan ? 'kategori_usaha' : 'subsektor',
-    label: isArtisan ? 'Kategori Usaha' : 'Subsektor',
-    values,
-  };
+    const isArtisan =
+        entity?.role === "artisan" || entity?.owner_type === "artisan";
+    const raw = isArtisan
+        ? (entity?.kategori_usaha ?? entity?.subsektor)
+        : (entity?.subsektor ?? entity?.kategori_usaha);
+    const values = Array.isArray(raw) ? raw : raw ? [raw] : [];
+    return {
+        key: isArtisan ? "kategori_usaha" : "subsektor",
+        label: isArtisan ? "Kategori Usaha" : "Subsektor",
+        values,
+    };
 }

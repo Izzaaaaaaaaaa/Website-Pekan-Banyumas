@@ -7,7 +7,9 @@ export default defineConfig({
   plugins: [react(), cloudflare()],
   server: {
     port: 5173,
-    open: true,
+    // Auto-open the browser for normal `npm run dev`, but NOT when Playwright
+    // starts the dev server for E2E (it sets PW_TEST) — avoids a popped tab.
+    open: !process.env.PW_TEST,
   },
   build: {
     outDir: 'dist',

@@ -11,3 +11,11 @@ dist
 .env.*
 !.env.example
 !.env.production
+
+# testing artifacts
+coverage
+playwright-report
+test-results
+lighthouse-report
+.lighthouseci
+.lhci-chrome
