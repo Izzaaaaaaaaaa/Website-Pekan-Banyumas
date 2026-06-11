@@ -34,7 +34,10 @@ def edit_kas(kas_id: str, body: EditKasSchema, user=Depends(get_current_user)):
     try:
         return kas_service.edit_kas(user["sub"], kas_id, body)
     except ValueError as e:
-        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail=str(e))
+        msg = str(e)
+        if "tidak ditemukan" in msg:
+            raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail=msg)
+        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail=msg)
 
 
 @router.delete("/{kas_id}", response_model=MessageResponse)

@@ -1,6 +1,38 @@
 import uuid
+from decimal import Decimal
 from app.db.supabase import db_select, db_insert, db_update, db_delete
 from app.schemas.kas import TambahKasSchema, EditKasSchema
+
+
+def recompute_artisan_aggregates(artisan_id: str) -> None:
+    """Recompute & PERSIST per-row saldo_after + artisans aggregates.
+
+    Called after EVERY kas mutation. Decimal only — float is forbidden for
+    money. Writes through the service-role client (db_update) by design.
+    """
+    rows = db_select("kas", filters={"artisan_id": artisan_id}) or []
+    rows.sort(key=lambda r: (r.get("tgl", ""), r.get("created_at", "")))
+
+    saldo = Decimal("0")
+    masuk = Decimal("0")
+
+    for r in rows:
+        n = Decimal(str(r["nominal"]))
+        saldo += n if r["jenis"] == "masuk" else -n
+        if r["jenis"] == "masuk":
+            masuk += n
+        # Hanya update ke DB jika berbeda (hindari unnecessary write)
+        if Decimal(str(r.get("saldo_after") or 0)) != saldo:
+            db_update("kas", {"id": r["id"]}, {"saldo_after": str(saldo)})
+
+    artisan = db_select("artisans", filters={"id": artisan_id}, single=True)
+    komisi_persen = Decimal(str((artisan or {}).get("komisi_persen") or 0))
+    komisi = (masuk * komisi_persen / 100).quantize(Decimal("0.01"))
+    db_update(
+        "artisans",
+        {"id": artisan_id},
+        {"total_penjualan": str(masuk), "komisi_terkumpul": str(komisi)},
+    )
 
 
 def _cari_stok_item(artisan_id: str, barang_id: str = None, barang: str = None):
@@ -103,12 +135,26 @@ def tambah_kas(artisan_id: str, body: TambahKasSchema) -> dict:
     if inserted:
         result = inserted
 
-    # jika masuk & ada barang → kurangi stok otomatis
+    # jika masuk & ada barang → validasi & kurangi stok otomatis
     if body.jenis == "masuk" and body.qty:
         try:
             stok_item = _cari_stok_item(artisan_id, barang_id=body.barang_id, barang=body.barang)
             if stok_item:
-                _sesuaikan_stok(artisan_id, stok_item, -int(body.qty))
+                stok_tersedia = int(stok_item.get("stok", 0))
+                qty_diminta   = int(body.qty)
+                if qty_diminta > stok_tersedia:
+                    # Rollback: hapus kas yang sudah di-insert
+                    try:
+                        db_delete("kas", {"id": data["id"]})
+                    except Exception:
+                        pass
+                    raise ValueError(
+                        f"Stok '{stok_item['nama']}' tidak mencukupi. "
+                        f"Tersedia: {stok_tersedia}, diminta: {qty_diminta}."
+                    )
+                _sesuaikan_stok(artisan_id, stok_item, -qty_diminta)
+        except ValueError:
+            raise
         except Exception as e:
             print(f"[KAS ERROR] pengurangan stok gagal: {e}")
 
@@ -126,6 +172,7 @@ def tambah_kas(artisan_id: str, body: TambahKasSchema) -> dict:
         except Exception:
             pass  # notifikasi gagal tidak boleh crash endpoint utama
 
+    recompute_artisan_aggregates(artisan_id)
     return result
 
 
@@ -163,7 +210,15 @@ def edit_kas(artisan_id: str, kas_id: str, body: EditKasSchema) -> dict:
 
         if stok_item:
             if jenis_lama == "masuk" and jenis_baru == "masuk":
-                # Sama-sama masuk: kembalikan qty lama (+), kurangi qty baru (-)
+                # Sama-sama masuk: net delta = qty_lama dikembalikan, qty_baru dikurangi
+                # Validasi: stok + qty_lama (dikembalikan) harus >= qty_baru
+                stok_sekarang = int(stok_item.get("stok", 0))
+                stok_setelah_rollback = stok_sekarang + qty_lama
+                if qty_baru > stok_setelah_rollback:
+                    raise ValueError(
+                        f"Stok '{stok_item['nama']}' tidak mencukupi. "
+                        f"Tersedia setelah koreksi: {stok_setelah_rollback}, diminta: {qty_baru}."
+                    )
                 delta = qty_lama - qty_baru
                 _sesuaikan_stok(artisan_id, stok_item, delta)
 
@@ -172,7 +227,13 @@ def edit_kas(artisan_id: str, kas_id: str, body: EditKasSchema) -> dict:
                 _sesuaikan_stok(artisan_id, stok_item, +qty_lama)
 
             elif jenis_lama != "masuk" and jenis_baru == "masuk":
-                # Ganti dari bukan masuk ke masuk: kurangi qty baru
+                # Ganti dari bukan masuk ke masuk: validasi stok cukup
+                stok_sekarang = int(stok_item.get("stok", 0))
+                if qty_baru > stok_sekarang:
+                    raise ValueError(
+                        f"Stok '{stok_item['nama']}' tidak mencukupi. "
+                        f"Tersedia: {stok_sekarang}, diminta: {qty_baru}."
+                    )
                 _sesuaikan_stok(artisan_id, stok_item, -qty_baru)
             # jenis_lama != masuk && jenis_baru != masuk → tidak ada efek stok
     except Exception as e:
@@ -182,6 +243,7 @@ def edit_kas(artisan_id: str, kas_id: str, body: EditKasSchema) -> dict:
     semua = db_select("kas", filters={"artisan_id": artisan_id})
     semua_dengan_saldo = _compute_saldo_after(semua)
     updated = next((r for r in semua_dengan_saldo if r["id"] == kas_id), None)
+    recompute_artisan_aggregates(artisan_id)
     return updated or {}
 
 
@@ -202,6 +264,7 @@ def hapus_kas(artisan_id: str, kas_id: str) -> dict:
         print(f"[KAS HAPUS] pengembalian stok gagal: {e}")
 
     db_delete("kas", {"id": kas_id})
+    recompute_artisan_aggregates(artisan_id)
     return {"message": "Data kas berhasil dihapus"}
 
 

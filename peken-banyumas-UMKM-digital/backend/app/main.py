@@ -5,8 +5,8 @@ from app.routers import auth, stok, kas, riwayat, event, notifikasi, pengaturan
 
 app = FastAPI(
     title="Peken Banyumas — Artisan API",
-    description="Backend API untuk platform artisan UMKM Peken Banyumas — schema v2.3.0",
-    version="2.3.0",
+    description="Backend API untuk platform artisan UMKM Peken Banyumas — schema v2.4.2",
+    version="2.4.2",
 )
 
 # ── CORS ──────────────────────────────────────────────────────────────────────
