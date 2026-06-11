@@ -197,7 +197,7 @@ const Login = () => {
                 <input
                   type="email" name="email" required
                   value={formData.email} onChange={handleChange}
-                  placeholder="admin@pekenbanyumas.com"
+                  placeholder="nama@email.com"
                   className="peken-input"
                   style={{ paddingLeft: 40 }}
                 />
@@ -221,7 +221,7 @@ const Login = () => {
                 <input
                   type={showPassword ? 'text' : 'password'} name="password" required
                   value={formData.password} onChange={handleChange}
-                  placeholder="••••••••"
+                  placeholder="Masukkan password"
                   className="peken-input"
                   style={{ paddingLeft: 40, paddingRight: 44 }}
                 />

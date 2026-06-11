@@ -89,6 +89,11 @@ const Dashboard = () => {
   const [isLoadingActivities, setIsLoadingActivities] = useState(true);
   const [submittingAction, setSubmittingAction] = useState(null);
   const [flashKey, setFlashKey] = useState(0);
+  // Anti-kedip: state aktivitas hanya disentuh saat datanya berubah;
+  // animasi highlight hanya untuk baris yang BARU muncul.
+  const [flashIds, setFlashIds] = useState(() => new Set());
+  const activitiesRef = useRef([]);
+  const prevStatsRef = useRef(null);
   const [scannerBuffer, setScannerBuffer] = useState('');
   const [scannerState, setScannerState] = useState('idle');
   const [scannerResult, setScannerResult] = useState(null);
@@ -149,7 +154,17 @@ const Dashboard = () => {
       }
 
       window.dispatchEvent(new CustomEvent(STORAGE_EVENTS.EVENT_UPDATE));
-      if (silent) setFlashKey((k) => k + 1);
+      // Flash nilai statistik HANYA saat angkanya benar-benar berubah —
+      // sebelumnya setiap siklus polling 5 detik me-remount & menganimasi
+      // ulang seluruh kartu + tabel walau tidak ada data baru (terlihat
+      // "blank"/kasar), dan input manual/tap tampak refresh dua kali
+      // karena echo realtime menyusul setelah debounce.
+      const sig = JSON.stringify([data.di_dalam, data.total_masuk,
+        data.total_keluar, data.total_harian, data.event_id]);
+      if (silent && prevStatsRef.current !== null && prevStatsRef.current !== sig) {
+        setFlashKey((k) => k + 1);
+      }
+      prevStatsRef.current = sig;
     } catch (error) {
       // Silent polling cycles must not spam toasts; only the foreground
       // fetch surfaces an error. Either way we log for diagnostics.
@@ -170,7 +185,20 @@ const Dashboard = () => {
       const rows = (await dashboardApi.visitors(params)) || [];
       const sortTime = (row) => (row.status === 'keluar' && row.waktu_keluar ? new Date(row.waktu_keluar) : new Date(row.waktu_masuk));
       const sorted = [...rows].sort((a, b) => sortTime(b) - sortTime(a));
-      setActivities(sorted.slice(0, 10));
+      const next = sorted.slice(0, 10);
+      const prev = activitiesRef.current;
+      // Refresh dengan data identik tidak boleh menyentuh DOM sama sekali.
+      const same = prev.length === next.length && prev.every((p, i) =>
+        p.id === next[i].id && p.status === next[i].status &&
+        p.waktu_keluar === next[i].waktu_keluar);
+      if (!same) {
+        const prevIds = new Set(prev.map((r) => r.id));
+        const freshIds = next.filter((r) => !prevIds.has(r.id)).map((r) => r.id);
+        // Jangan flash pada render pertama (prev kosong).
+        setFlashIds(prev.length && freshIds.length ? new Set(freshIds) : new Set());
+        activitiesRef.current = next;
+        setActivities(next);
+      }
     } catch (error) {
       console.error('Gagal mengambil aktivitas:', error);
       if (!silent) toast.error(extractError(error, 'Gagal mengambil aktivitas.'));
@@ -564,7 +592,7 @@ const Dashboard = () => {
                   </tr>
                 </thead>
                 <tbody className="text-sm divide-y divide-[#f2f4e8]">
-                  {isLoadingActivities ? (
+                  {isLoadingActivities && activities.length === 0 ? (
                     <tr>
                       <td colSpan="4" className="px-5 py-8 text-center text-[#8a9070]">Memuat data aktivitas...</td>
                     </tr>
@@ -574,7 +602,7 @@ const Dashboard = () => {
                     </tr>
                   ) : (
                     activities.map((activity) => (
-                      <tr key={`${activity.id}-${flashKey}`} className="hover:bg-[#f7f8f2] transition row-flash align-top">
+                      <tr key={activity.id} className={`hover:bg-[#f7f8f2] transition align-top${flashIds.has(activity.id) ? ' row-flash' : ''}`}>
                         <td className="px-5 py-3 text-[#8a9070] font-medium whitespace-nowrap">
                           {getActivityTime(activity).toLocaleTimeString('id-ID', { hour: '2-digit', minute: '2-digit' })} WIB
                         </td>

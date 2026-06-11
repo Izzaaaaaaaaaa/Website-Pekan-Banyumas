@@ -100,6 +100,7 @@ export const authApi = {
       const response = await apiClient.put('/api/auth/profile', data);
       return extractData(response);
     }
+    // nama/email → Supabase Auth (user_metadata) supaya payload login/me tetap segar.
     const supabaseUpdate = {};
     if (data.nama) supabaseUpdate.data = { nama: data.nama };
     if (data.email) supabaseUpdate.email = data.email;
@@ -107,14 +108,16 @@ export const authApi = {
       const { error } = await supabase.auth.updateUser(supabaseUpdate);
       if (error) throw new Error(error.message);
     }
+    // nama juga WAJIB dikirim ke BE: users_profile.nama adalah yang dibaca
+    // daftar admin/petugas — tanpa ini DB tidak pernah berubah (bug changename).
     const beFields = { ...data };
-    delete beFields.nama;
-    delete beFields.email;
+    delete beFields.email; // email hanya di Supabase Auth
     if (Object.keys(beFields).length > 0) {
       const response = await apiClient.put('/api/auth/profile', beFields);
-      return extractData(response);
+      const result = extractData(response) || {};
+      return { nama: data.nama, ...result };
     }
-    return { message: 'Profile berhasil diupdate' };
+    return { nama: data.nama, message: 'Profile berhasil diupdate' };
   },
 
   /**

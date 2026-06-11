@@ -130,8 +130,10 @@ const Settings = () => {
         try {
             setIsUpdatingNama(true);
             // authApi.updateProfile returns the unwrapped updated-user subset.
+            // Pakai nilai lokal sebagai fallback supaya nama tidak pernah jadi
+            // undefined di localStorage walau bentuk response berubah.
             const data = await authApi.updateProfile({ nama });
-            const newUser = { ...userData, nama: data.nama };
+            const newUser = { ...userData, nama: data?.nama || nama };
             // setUser writes to localStorage AND dispatches STORAGE_EVENTS.USER_UPDATE,
             // so AdminLayout's sidebar updates reactively — no manual dispatch needed.
             setUser(newUser);

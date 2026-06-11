@@ -1,5 +1,5 @@
 // src/components/Toast.jsx — Peken Banyumasan Design System v2.0
-import React, { createContext, useContext, useState, useCallback } from 'react';
+import React, { createContext, useContext, useState, useCallback, useMemo } from 'react';
 import { CheckCircle, XCircle, AlertTriangle, Info, X } from 'lucide-react';
 
 const ToastContext = createContext(null);
@@ -25,12 +25,16 @@ export const ToastProvider = ({ children }) => {
     setTimeout(() => dismiss(id), duration);
   }, [dismiss]);
 
-  const toast = {
+  // useMemo WAJIB: tanpa ini setiap render provider (tiap toast muncul/hilang)
+  // menghasilkan identitas baru -> semua useCallback([toast]) di halaman
+  // dibuat ulang -> useEffect yang bergantung padanya re-run (re-subscribe
+  // realtime, fetch non-silent) -> dashboard berkedip blank & refresh ganda.
+  const toast = useMemo(() => ({
     success: (msg) => addToast(msg, 'success'),
     error:   (msg) => addToast(msg, 'error', 4500),
     warning: (msg) => addToast(msg, 'warning'),
     info:    (msg) => addToast(msg, 'info'),
-  };
+  }), [addToast]);
 
   return (
     <ToastContext.Provider value={toast}>

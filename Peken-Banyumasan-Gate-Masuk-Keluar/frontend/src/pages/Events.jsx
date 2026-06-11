@@ -11,6 +11,29 @@ import { eventApi } from '../services/endpoints';
 import { extractError } from '../lib/unwrap';
 import { SUBSEKTOR } from '../constants/subsektor';
 
+
+// ── Preview tanggal Indonesia ────────────────────────────────────────────────
+// Picker native <input type=date/time> tampil mengikuti BAHASA BROWSER user
+// (tidak bisa dipaksa via kode). Preview ini menjamin pembacaan Indonesia
+// (Senin, 22 Juni 2026 · 09.00-21.00 WIB) apa pun locale browser-nya.
+import { TanggalInput, JamInput } from '../components/PickerID';
+
+const HARI_ID  = ['Minggu','Senin','Selasa','Rabu','Kamis','Jumat','Sabtu'];
+const BULAN_ID = ['Januari','Februari','Maret','April','Mei','Juni','Juli','Agustus','September','Oktober','November','Desember'];
+const fmtTglIndo = (iso) => {
+  if (!iso) return '';
+  const d = new Date(`${iso}T00:00:00`);
+  if (isNaN(d)) return '';
+  return `${HARI_ID[d.getDay()]}, ${d.getDate()} ${BULAN_ID[d.getMonth()]} ${d.getFullYear()}`;
+};
+const fmtJadwalIndo = (f) => {
+  const tgl = fmtTglIndo(f.tanggal);
+  if (!tgl) return '';
+  const akhir = f.tanggal_selesai && f.tanggal_selesai !== f.tanggal ? ` — ${fmtTglIndo(f.tanggal_selesai)}` : '';
+  const jam = f.jam_mulai ? ` · ${f.jam_mulai.slice(0,5).replace(':','.')}${f.jam_selesai ? `–${f.jam_selesai.slice(0,5).replace(':','.')}` : ''} WIB` : '';
+  return `${tgl}${akhir}${jam}`;
+};
+
 const EMPTY = { nama:'', tanggal:'', jam_mulai:'08:00', jam_selesai:'22:00', tanggal_selesai:'', lokasi:'', deskripsi:'', konten_lengkap:'', kapasitas:100, status:'draft', subsektor:[], banner_url:'', galeri:[] };
 const fmtTgl = d => d ? new Date(d).toLocaleDateString('id-ID',{day:'numeric',month:'short',year:'numeric'}) : '';
 const STATUS_CLS = {
@@ -69,27 +92,28 @@ function EventFormModal({ editItem, onClose, onSave }) {
           <div className="grid grid-cols-2 gap-3">
             <div>
               <label className="text-[#5a6040] text-xs font-semibold mb-1.5 block">Tanggal Mulai *</label>
-              <input type="date" value={form.tanggal} onChange={e => set('tanggal', e.target.value)}
-                className="w-full border border-[#e4e7d4] rounded-[12px] px-4 py-2.5 text-sm focus:outline-none focus:border-[#7a8a52] transition"/>
+              <TanggalInput value={form.tanggal} onChange={v => set('tanggal', v)} />
             </div>
             <div>
               <label className="text-[#5a6040] text-xs font-semibold mb-1.5 block">Tanggal Selesai</label>
-              <input type="date" value={form.tanggal_selesai} onChange={e => set('tanggal_selesai', e.target.value)}
-                className="w-full border border-[#e4e7d4] rounded-[12px] px-4 py-2.5 text-sm focus:outline-none focus:border-[#7a8a52] transition"/>
+              <TanggalInput value={form.tanggal_selesai} onChange={v => set('tanggal_selesai', v)} />
             </div>
           </div>
           <div className="grid grid-cols-2 gap-3">
             <div>
               <label className="text-[#5a6040] text-xs font-semibold mb-1.5 block">🕐 Jam Mulai *</label>
-              <input type="time" value={form.jam_mulai} onChange={e => set('jam_mulai', e.target.value)}
-                className="w-full border border-[#e4e7d4] rounded-[12px] px-4 py-2.5 text-sm focus:outline-none focus:border-[#7a8a52] transition"/>
+              <JamInput value={form.jam_mulai} onChange={v => set('jam_mulai', v)} />
             </div>
             <div>
               <label className="text-[#5a6040] text-xs font-semibold mb-1.5 block">🕐 Jam Selesai</label>
-              <input type="time" value={form.jam_selesai} onChange={e => set('jam_selesai', e.target.value)}
-                className="w-full border border-[#e4e7d4] rounded-[12px] px-4 py-2.5 text-sm focus:outline-none focus:border-[#7a8a52] transition"/>
+              <JamInput value={form.jam_selesai} onChange={v => set('jam_selesai', v)} />
             </div>
           </div>
+          {fmtJadwalIndo(form) && (
+            <p className="text-[11px] font-medium text-[#7a8a52] -mt-1.5">
+              📅 {fmtJadwalIndo(form)}
+            </p>
+          )}
           <div className="grid grid-cols-2 gap-3">
             <div>
               <label className="text-[#5a6040] text-xs font-semibold mb-1.5 block">Lokasi</label>
