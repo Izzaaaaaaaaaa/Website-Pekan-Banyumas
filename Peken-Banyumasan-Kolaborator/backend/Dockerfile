@@ -27,6 +27,6 @@ EXPOSE 8000
 
 # Kolaborator: tidak ada /health, root "/" dipakai sebagai liveness
 HEALTHCHECK --interval=30s --timeout=5s --retries=3 --start-period=20s \
-    CMD curl -fsS http://localhost:8000/ || exit 1
+    CMD curl -fsS "http://localhost:${PORT:-8000}/" || exit 1
 
-CMD ["sh", "-c", "uvicorn app.main:app --host 0.0.0.0 --port ${PORT:-8000}"]
+CMD ["sh", "-c", "exec uvicorn app.main:app --host 0.0.0.0 --port ${PORT:-8000}"]
