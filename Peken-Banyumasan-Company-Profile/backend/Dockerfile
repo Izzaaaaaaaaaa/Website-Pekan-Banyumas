@@ -55,7 +55,7 @@ WORKDIR /home/app
 EXPOSE 7860
 
 HEALTHCHECK --interval=30s --timeout=5s --retries=3 --start-period=15s \
-    CMD curl -fsS http://localhost:7860/health || exit 1
+    CMD curl -fsS "http://localhost:${PORT:-7860}/health" || exit 1
 
 # Public CP is read-only + light traffic → single uvicorn worker is enough.
-CMD ["uvicorn", "app.main:app", "--host", "0.0.0.0", "--port", "7860"]
+CMD ["sh", "-c", "exec uvicorn app.main:app --host 0.0.0.0 --port ${PORT:-7860}"]
