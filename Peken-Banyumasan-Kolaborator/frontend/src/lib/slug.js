@@ -37,5 +37,6 @@ export function toSlug(str) {
  */
 export function profileUrl(nama, base = '') {
   const slug = toSlug(nama);
-  return `${base}/#/@${slug}`;
+  // Strip trailing slash so a misconfigured base (".../") never yields "//#/@".
+  return `${base.replace(/\/+$/, '')}/#/@${slug}`;
 }
