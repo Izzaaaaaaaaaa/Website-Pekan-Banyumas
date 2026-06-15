@@ -31,7 +31,8 @@ export default function LoginModal({ open, onClose }) {
       return;
     }
     // Origin-only env contract — append the path explicitly here.
-    window.location.href = `${baseUrl}/login`;
+    // Strip any trailing slash so a misconfigured env (".../") never yields "//login".
+    window.location.href = `${baseUrl.replace(/\/+$/, '')}/login`;
     onClose();
   };
 
