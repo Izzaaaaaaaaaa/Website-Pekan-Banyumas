@@ -11,8 +11,12 @@ import { Eyebrow } from './Typography.jsx';
  *   onViewProfile — (ownerName: string) => void — navigate to profile
  */
 export default function Lightbox({ work, onClose, onViewProfile }) {
+  // Only account-linked works (has_profile) expose a clickable profile link.
+  // Manual / admin-curated entries aren't tied to an account → the creator is
+  // rendered as plain text instead of a dead link.
+  const canViewProfile = !!onViewProfile && !!work?.has_profile;
   const handleProfile = () => {
-    if (!work || !onViewProfile) return;
+    if (!work || !canViewProfile) return;
     onClose();
     // Use the work's canonical slug (owner_id) so the profile lookup matches
     // the DB slug exactly. Falling back to the display name only happens for
@@ -43,10 +47,10 @@ export default function Lightbox({ work, onClose, onViewProfile }) {
             <div style={{ paddingBottom: 20, borderBottom: '1px solid rgba(255,255,255,.12)' }}>
               <button
                 onClick={handleProfile}
-                title={onViewProfile ? `Lihat profil publik ${work.owner}` : undefined}
+                title={canViewProfile ? `Lihat profil publik ${work.owner}` : undefined}
                 style={{
                   background: 'transparent', border: 0, padding: 0,
-                  cursor: onViewProfile ? 'pointer' : 'default',
+                  cursor: canViewProfile ? 'pointer' : 'default',
                   display: 'inline-flex', alignItems: 'center', gap: 10, textAlign: 'left',
                 }}
               >
@@ -64,12 +68,12 @@ export default function Lightbox({ work, onClose, onViewProfile }) {
                   <span style={{
                     fontFamily: 'var(--font-display)', fontSize: 14, color: 'var(--accent)',
                     display: 'block', lineHeight: 1.25,
-                    ...(onViewProfile ? { textDecoration: 'underline', textUnderlineOffset: 3, textDecorationColor: 'rgba(195,202,150,.45)' } : {}),
+                    ...(canViewProfile ? { textDecoration: 'underline', textUnderlineOffset: 3, textDecorationColor: 'rgba(195,202,150,.45)' } : {}),
                   }}>
                     {work.owner}
                   </span>
                   <span style={{ fontFamily: 'var(--font-body)', fontSize: 11, color: 'var(--fg-muted)', textTransform: 'uppercase', letterSpacing: '.05em' }}>
-                    {work.kategori_display || ''}{onViewProfile ? ' · Lihat profil →' : ''}
+                    {work.kategori_display || ''}{canViewProfile ? ' · Lihat profil →' : ''}
                   </span>
                 </span>
               </button>
@@ -82,7 +86,7 @@ export default function Lightbox({ work, onClose, onViewProfile }) {
 
             {/* Actions */}
             <div style={{ marginTop: 'auto', paddingTop: 16, display: 'flex', gap: 12, flexWrap: 'wrap' }}>
-              {onViewProfile && (
+              {canViewProfile && (
                 <PillButton onClick={handleProfile}>
                   Profil Kolaborator
                 </PillButton>

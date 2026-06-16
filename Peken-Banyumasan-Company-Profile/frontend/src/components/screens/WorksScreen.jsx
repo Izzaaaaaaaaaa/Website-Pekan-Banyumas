@@ -29,8 +29,11 @@ export default function WorksScreen({ onNavigate }) {
       karyaApi.list({ limit: 100 }),
     ])
       .then(([sec, kry]) => {
+        // Manual (admin-curated) entries are NOT tied to an account → has_profile
+        // false, so the lightbox renders the creator as plain text (no dead
+        // "view profile" link). Real account uploads get has_profile true.
         const curated = (sec.status === 'fulfilled' && Array.isArray(sec.value))
-          ? sec.value.filter(w => w.visible !== false)
+          ? sec.value.filter(w => w.visible !== false).map(w => ({ ...w, has_profile: false }))
           : [];
         const uploaded = (kry.status === 'fulfilled' && Array.isArray(kry.value))
           ? kry.value.map(k => ({
@@ -44,6 +47,7 @@ export default function WorksScreen({ onNavigate }) {
               kategori_display: k.subsektor,
               tahun:           k.tahun,
               deskripsi:       k.deskripsi,
+              has_profile:     true,
             }))
           : [];
         const merged = [...uploaded, ...curated];
