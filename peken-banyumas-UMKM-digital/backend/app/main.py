@@ -1,5 +1,3 @@
-import os
-
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 
@@ -12,28 +10,15 @@ app = FastAPI(
 )
 
 # ── CORS ──────────────────────────────────────────────────────────────────────
-# allow_credentials=True forbids the "*" wildcard origin (CORS spec), so we list
-# explicit origins. Production frontend is the Cloudflare Pages deployment; the
-# regex additionally admits Pages *preview* deploys (e.g.
-# https://<hash>.artisan-pekenbanyumasan.pages.dev). Extra origins can be added
-# via the comma-separated CORS_ORIGINS env var on Railway without a code change.
-_DEFAULT_ORIGINS = [
-    "https://artisan-pekenbanyumasan.pages.dev",
-    "http://localhost:5173",
-    "http://127.0.0.1:5173",
-    "http://localhost:5174",
-    "http://127.0.0.1:5174",
-    "http://localhost:5175",
-    "http://127.0.0.1:5175",
-    "http://localhost:3000",
-    "http://127.0.0.1:3000",
-]
-_ENV_ORIGINS = [o.strip() for o in os.getenv("CORS_ORIGINS", "").split(",") if o.strip()]
-
+# allow_origin_regex=".*" accepts ANY origin (current *.pages.dev AND any future
+# custom domain — zero config) while staying CORS-spec-valid with credentials:
+# Starlette echoes the request's Origin back instead of the literal "*". A bare
+# allow_origins=["*"] + allow_credentials=True is illegal per spec and browsers
+# reject it once cookies are involved. Matches gate/kolab; no domain switch will
+# require editing this.
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=_DEFAULT_ORIGINS + _ENV_ORIGINS,
-    allow_origin_regex=r"https://([a-z0-9-]+\.)*artisan-pekenbanyumasan\.pages\.dev",
+    allow_origin_regex=".*",
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],

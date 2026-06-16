@@ -17,9 +17,14 @@ from app.api.routes import company_profile
 app = FastAPI(title="Peken Banyumasan Gate Admin API", version="2.4.2")
 
 # CORS Middleware
+# allow_origin_regex=".*" accepts ANY origin (current *.pages.dev AND any future
+# custom domain — zero config) while staying CORS-spec-valid with credentials:
+# Starlette echoes the request's Origin back instead of the literal "*". A bare
+# allow_origins=["*"] + allow_credentials=True is illegal per spec and browsers
+# reject it once cookies are involved. No domain switch will require editing this.
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["*"],
+    allow_origin_regex=".*",
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
