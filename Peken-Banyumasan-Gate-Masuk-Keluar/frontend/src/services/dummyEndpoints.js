@@ -389,6 +389,28 @@ export const companyProfileApi = {
   },
 };
 
+// ── karyaApi (dummy) ──────────────────────────────────────────────────────────
+// Real uploads come from the `karya` table; in dummy mode there are none, so the
+// Publication tab simply shows its manual `works` entries. Visibility toggle is
+// a no-op persisted to localStorage so the UI stays consistent on reload.
+export const karyaApi = {
+  list: async () => {
+    await delay();
+    const raw = localStorage.getItem('cp_karya_hidden');
+    const hidden = raw ? JSON.parse(raw) : {};
+    return (_dummyKarya || []).map(k => ({ ...k, visible: hidden[k.id] !== true }));
+  },
+  setVisible: async (id, tampil) => {
+    await delay();
+    const raw = localStorage.getItem('cp_karya_hidden');
+    const hidden = raw ? JSON.parse(raw) : {};
+    if (tampil) delete hidden[id]; else hidden[id] = true;
+    localStorage.setItem('cp_karya_hidden', JSON.stringify(hidden));
+    return { id, tampil };
+  },
+};
+const _dummyKarya = [];
+
 // ── zonesApi ──────────────────────────────────────────────────────────────────
 export const zonesApi = {
   listGlobal: async () => {

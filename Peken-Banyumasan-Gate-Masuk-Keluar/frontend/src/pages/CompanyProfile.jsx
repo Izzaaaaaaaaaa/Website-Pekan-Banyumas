@@ -12,7 +12,7 @@ import {
 import SimpleMDE from 'react-simplemde-editor';
 import 'easymde/dist/easymde.min.css';
 import { useToast } from '../components/Toast';
-import { companyProfileApi } from '../services/endpoints';
+import { companyProfileApi, karyaApi } from '../services/endpoints';
 import { extractError } from '../lib/unwrap';
 import { uploadImage } from '../lib/uploadImage';
 import { KATEGORI_USAHA } from '../constants/kategoriUsaha';
@@ -130,25 +130,11 @@ const DEFAULT_PROGRAMS = [
   { n: '06', slug: 'makers-workshop',         title: 'Makers Workshop',         image_url: '/assets/program-makers.jpg',       body: 'Workshop dua-jam: batik ecoprint, tenun mini, aksara Jawa, sablon manual. Terbuka untuk pengunjung.', body_short: 'Workshop dua-jam: batik ecoprint, tenun mini, aksara Jawa, sablon manual.',  target_peserta: 'Umum (maks 20 orang)', durasi: '±120 menit' },
 ];
 
-// Canonical 'works' shape — MUST match what the Company Profile public site
-// (WorksScreen.jsx + Lightbox.jsx) consumes:
-//   { id, judul, gambar_url, owner, owner_type, owner_id, kategori_display,
-//     tahun, deskripsi, visible }
-// `kategori_display` is the single human-readable category string the CP cards
-// render (kategori_usaha for artisan, subsektor for kolaborator). `owner_id` is
-// the profile slug the CP lightbox links to. The Gate WorkModal keeps the
-// separate subsektor/kategori_usaha selectors and derives kategori_display on save.
-const DEFAULT_WORKS = [
-  { id: 'w-001', judul: 'Senja di Pasar Lama', owner: 'Aji Pradana', owner_type: 'kolaborator', owner_id: 'aji-pradana', subsektor: 'Fotografi', kategori_usaha: '', kategori_display: 'Fotografi', tahun: 2026, gambar_url: '/assets/gallery-1.jpg', deskripsi: 'Seri foto malam di kawasan Pasar Lama Banyumas. Diambil dengan kamera analog format 35mm pada Februari 2026 — bagian dari proyek dokumentasi rutin Aji untuk Peken.', visible: true },
-  { id: 'w-002', judul: 'Tenun Lurik Modular', owner: 'Sanggar Lestari Sokaraja', owner_type: 'artisan', owner_id: 'sanggar-lestari-sokaraja', subsektor: '', kategori_usaha: 'Kriya', kategori_display: 'Kriya', tahun: 2025, gambar_url: '/assets/gallery-2.jpg', deskripsi: 'Eksperimen tenun lurik dengan modul lebar tetap untuk memudahkan kombinasi warna oleh desainer pakaian.', visible: true },
-  { id: 'w-003', judul: 'Edisi #54 — Geguritan Malam', owner: 'Komunitas Pitutur', owner_type: 'kolaborator', owner_id: 'komunitas-pitutur', subsektor: 'Seni Pertunjukan', kategori_usaha: '', kategori_display: 'Seni Pertunjukan', tahun: 2025, gambar_url: '/assets/gallery-3.jpg', deskripsi: 'Dokumentasi panggung geguritan malam pada Peken Edisi #54. Empat pelaku tampil bergantian membawakan cerita rakyat Banyumasan dalam balutan musik akustik.', visible: true },
-  { id: 'w-004', judul: 'Banyumasan Streetwear Cap.1', owner: 'Reka Studio', owner_type: 'kolaborator', owner_id: 'reka-studio', subsektor: 'Fashion', kategori_usaha: '', kategori_display: 'Fashion', tahun: 2025, gambar_url: '/assets/program-fashion.jpg', deskripsi: 'Lini streetwear pertama dari Reka Studio yang mengadaptasi motif batik banyumasan ke siluet kontemporer.', visible: true },
-  { id: 'w-005', judul: 'Wadah Bambu Lipat', owner: 'Artisan Tirta Karya', owner_type: 'artisan', owner_id: 'artisan-tirta-karya', subsektor: '', kategori_usaha: 'Kriya', kategori_display: 'Kriya', tahun: 2024, gambar_url: '/assets/gallery-4.jpg', deskripsi: 'Wadah makanan bambu lipat untuk mendukung Bring Your Own Bowl. Dibuat tanpa lem sintetis, dirakit hanya dengan ikatan rotan.', visible: true },
-  { id: 'w-006', judul: 'Mural Kota Lama', owner: 'Kolektif Coret', owner_type: 'kolaborator', owner_id: 'kolektif-coret', subsektor: 'Seni Rupa', kategori_usaha: '', kategori_display: 'Seni Rupa', tahun: 2024, gambar_url: '/assets/gallery-5.jpg', deskripsi: 'Mural permanen pada dinding selatan Taman Sari, dilukis selama dua minggu oleh enam seniman muda Kolektif Coret.', visible: true },
-  { id: 'w-007', judul: 'Kopi Robusta Banyumas', owner: 'Petani Kopi Baturraden', owner_type: 'artisan', owner_id: 'petani-kopi-baturraden', subsektor: '', kategori_usaha: 'F&B / Kuliner', kategori_display: 'F&B / Kuliner', tahun: 2024, gambar_url: '/assets/program-coffee.jpg', deskripsi: 'Robusta single-origin dari ketinggian 800 mdpl di Baturraden. Dipanen, dijemur, dan disangrai sendiri oleh kelompok tani.', visible: true },
-  { id: 'w-008', judul: 'Aksara Jawa Banyumasan', owner: 'Studio Wignya', owner_type: 'kolaborator', owner_id: 'studio-wignya', subsektor: 'Desain Produk', kategori_usaha: '', kategori_display: 'Desain Produk', tahun: 2023, gambar_url: '/assets/gallery-6.jpg', deskripsi: 'Tipografi aksara Jawa varian Banyumasan, dirilis sebagai font terbuka. Hasil riset enam bulan bersama akademisi linguistik Universitas Jenderal Soedirman.', visible: true },
-  { id: 'w-009', judul: 'Anyaman Pandan Modular', owner: 'Bu Tasrip & Komunitas', owner_type: 'artisan', owner_id: 'bu-tasrip-komunitas', subsektor: '', kategori_usaha: 'Kriya', kategori_display: 'Kriya', tahun: 2023, gambar_url: '/assets/gallery-perform-1.jpg', deskripsi: 'Anyaman pandan modular yang bisa dirangkai menjadi tas, alas duduk, atau partisi ruang. Karya kolektif perempuan Desa Banjarsari.', visible: true },
-];
+// NOTE: The Publication catalog is no longer seeded with sample works here.
+// TabKarya loads REAL uploads live from the `karya` table (karyaApi.list) and
+// merges them with admin-added manual entries stored in the `works` CP section.
+// A manual entry shape is: { id, judul, gambar_url, owner, owner_type, owner_id,
+// kategori_display, subsektor, kategori_usaha, tahun, deskripsi, visible }.
 
 // Canonical 'gallery' shape — MUST match what the Company Profile public site
 // (GalleryScreen.jsx) consumes: { images: [{ filename|src, label, year,
@@ -964,20 +950,41 @@ function WorkModal({ work, onClose, onSave }) {
 
 function TabKarya() {
   const toast = useToast();
-  const [works, setWorks] = useState(DEFAULT_WORKS);
+  // Two distinct sources, kept separate so each persists correctly:
+  //  • karyaItems  — REAL uploads from the `karya` table (live). Tagged _live.
+  //                  Visibility toggles persist immediately to karya.tampil.
+  //  • manualWorks — admin-added entries stored in the `works` CP section.
+  //                  Saved together via "Simpan Karya Manual".
+  const [karyaItems, setKaryaItems] = useState([]);
+  const [manualWorks, setManualWorks] = useState([]);
   const [editWork, setEditWork] = useState(null);
   const [filter, setFilter] = useState('all'); // 'all' | 'kolaborator' | 'manual'
   const [saving, setSaving] = useState(false);
+  const [loading, setLoading] = useState(true);
+  const [busyId, setBusyId] = useState(null);
 
   useEffect(() => {
-    companyProfileApi.get('works').then(d => Array.isArray(d) && d.length && setWorks(d)).catch(() => {});
+    Promise.allSettled([
+      companyProfileApi.get('works'),
+      karyaApi.list(),
+    ]).then(([sec, kry]) => {
+      const curated = (sec.status === 'fulfilled' && Array.isArray(sec.value)) ? sec.value : [];
+      // Only genuine manual entries belong in the section now; ignore any live
+      // rows that may have leaked in previously (real uploads come from karya).
+      setManualWorks(curated.filter(w => !w._live));
+      const live = (kry.status === 'fulfilled' && Array.isArray(kry.value)) ? kry.value : [];
+      setKaryaItems(live.map(k => ({ ...k, _live: true })));
+    }).finally(() => setLoading(false));
   }, []);
+
+  // Live uploads first (mirrors the public CP Publication ordering).
+  const works = [...karyaItems, ...manualWorks];
 
   const save = async () => {
     setSaving(true);
     try {
-      await companyProfileApi.save('works', works);
-      toast.success('Data karya berhasil disimpan');
+      await companyProfileApi.save('works', manualWorks);
+      toast.success('Karya manual berhasil disimpan');
     } catch (err) {
       toast.error(extractError(err, 'Gagal menyimpan'));
     } finally {
@@ -985,42 +992,53 @@ function TabKarya() {
     }
   };
 
-  const toggleVisible = (id) => {
-    setWorks(w => w.map(x => x.id === id ? { ...x, visible: !x.visible } : x));
+  const toggleVisible = async (item) => {
+    if (item._live) {
+      if (busyId === item.id) return;
+      const next = !item.visible;
+      setBusyId(item.id);
+      setKaryaItems(arr => arr.map(x => x.id === item.id ? { ...x, visible: next } : x)); // optimistic
+      try {
+        await karyaApi.setVisible(item.id, next);
+        toast.success(next ? 'Karya ditampilkan di company profile' : 'Karya disembunyikan dari company profile');
+      } catch (err) {
+        setKaryaItems(arr => arr.map(x => x.id === item.id ? { ...x, visible: !next } : x)); // revert
+        toast.error(extractError(err, 'Gagal memperbarui visibilitas'));
+      } finally {
+        setBusyId(null);
+      }
+    } else {
+      setManualWorks(arr => arr.map(x => x.id === item.id ? { ...x, visible: !x.visible } : x));
+    }
   };
 
   const openAdd = () => setEditWork({ id: null, judul: '', owner: '', owner_type: null, owner_id: '', subsektor: '', kategori_usaha: '', kategori_display: '', tahun: new Date().getFullYear(), gambar_url: '', deskripsi: '', visible: true });
 
   const saveWork = (updated) => {
     if (updated.id) {
-      setWorks(w => w.map(x => x.id === updated.id ? updated : x));
-      toast.success('Karya diperbarui');
+      setManualWorks(arr => arr.map(x => x.id === updated.id ? updated : x));
+      toast.success('Karya manual diperbarui — klik Simpan untuk menyimpan');
     } else {
       const newW = { ...updated, id: `w-m-${Date.now()}` };
-      setWorks(w => [newW, ...w]);
-      toast.success('Karya ditambahkan');
+      setManualWorks(arr => [newW, ...arr]);
+      toast.success('Karya manual ditambahkan — klik Simpan untuk menyimpan');
     }
     setEditWork(null);
   };
 
   const removeWork = (id) => {
-    const w = works.find(x => x.id === id);
-    if (w?.owner_type === 'kolaborator' || w?.owner_type === 'artisan') {
-      toast.warning('Karya dari kolaborator/artisan tidak bisa dihapus dari sini — hanya bisa disembunyikan');
-      return;
-    }
-    if (!window.confirm('Hapus karya ini?')) return;
-    setWorks(w => w.filter(x => x.id !== id));
-    toast.success('Karya dihapus');
+    if (!window.confirm('Hapus karya manual ini?')) return;
+    setManualWorks(arr => arr.filter(x => x.id !== id));
+    toast.success('Karya manual dihapus — klik Simpan untuk menyimpan');
   };
 
   const filtered = works.filter(w =>
-    filter === 'all' ? true : filter === 'kolaborator' ? (w.owner_type === 'kolaborator' || w.owner_type === 'artisan') : !w.owner_type
+    filter === 'all' ? true : filter === 'kolaborator' ? w._live : !w._live
   );
 
-  const visibleCount = works.filter(w => w.visible).length;
-  const kolabCount = works.filter(w => w.owner_type === 'kolaborator' || w.owner_type === 'artisan').length;
-  const manualCount = works.filter(w => !w.owner_type).length;
+  const visibleCount = works.filter(w => w.visible !== false).length;
+  const kolabCount = karyaItems.length;
+  const manualCount = manualWorks.length;
 
   return (
     <div className="space-y-5">
@@ -1029,7 +1047,7 @@ function TabKarya() {
       <div className="bg-blue-50 border border-blue-100 rounded-[12px] px-4 py-3 flex items-start gap-3">
         <AlertCircle size={16} className="text-blue-500 shrink-0 mt-0.5" />
         <p className="text-sm text-blue-700">
-          Karya dari <strong>Kolaborator</strong> otomatis muncul sesuai upload di portal kolaborator. Admin dapat menyembunyikan karya tertentu atau menambah karya manual. Karya dari kolaborator tidak bisa dihapus, hanya disembunyikan.
+          Karya dari <strong>Kolaborator &amp; Artisan</strong> otomatis muncul di sini sesuai upload mereka. Matikan toggle untuk <strong>menyembunyikan</strong> dari halaman publik (perubahan langsung tersimpan; karya asli tidak bisa dihapus). <strong>Tambah Manual</strong> untuk entri non-akun — entri manual perlu klik <strong>Simpan Karya Manual</strong>.
         </p>
       </div>
 
@@ -1037,7 +1055,7 @@ function TabKarya() {
       <div className="grid grid-cols-4 gap-3">
         {[
           { label: 'Total Karya', value: works.length, color: 'bg-[#f7f8f2] text-[#1e2010]' },
-          { label: 'Dari Kolaborator', value: kolabCount, color: 'bg-[#eef0e0] text-[#4f5c30]' },
+          { label: 'Dari Akun (Live)', value: kolabCount, color: 'bg-[#eef0e0] text-[#4f5c30]' },
           { label: 'Tambahan Manual', value: manualCount, color: 'bg-blue-50 text-blue-800' },
           { label: 'Ditampilkan', value: visibleCount, color: 'bg-amber-50 text-amber-800' },
         ].map(s => (
@@ -1051,7 +1069,7 @@ function TabKarya() {
       <Card className="p-4">
         <div className="flex items-center justify-between gap-4 flex-wrap">
           <div className="flex gap-2">
-            {[['all', 'Semua'], ['kolaborator', 'Dari Kolaborator'], ['manual', 'Manual Admin']].map(([val, lbl]) => (
+            {[['all', 'Semua'], ['kolaborator', 'Dari Akun'], ['manual', 'Manual Admin']].map(([val, lbl]) => (
               <button key={val} onClick={() => setFilter(val)}
                 className={`px-4 py-2 rounded-[12px] text-sm font-semibold transition ${filter === val ? 'bg-[#7a8a52] text-white' : 'bg-[#eef0e0] text-[#5a6040] hover:bg-[#eef0e0]'}`}>
                 {lbl}
@@ -1062,21 +1080,27 @@ function TabKarya() {
             <button onClick={openAdd} className="flex items-center gap-2 bg-[#7a8a52] hover:bg-[#4f5c30] text-white px-4 py-2 rounded-[12px] text-sm font-semibold transition">
               <Plus size={15} /> Tambah Manual
             </button>
-            <SaveBtn onClick={save} saving={saving} label="Simpan Semua" />
+            <SaveBtn onClick={save} saving={saving} label="Simpan Karya Manual" />
           </div>
         </div>
       </Card>
 
       {/* Works list */}
       <div className="space-y-2">
-        {filtered.length === 0 && (
+        {loading && (
+          <div className="bg-white rounded-[16px] border border-gray-100 p-10 text-center text-[#8a9070]">
+            <Loader2 size={24} className="mx-auto mb-2 animate-spin text-[#c8d09a]" />
+            <p className="text-sm">Memuat karya…</p>
+          </div>
+        )}
+        {!loading && filtered.length === 0 && (
           <div className="bg-white rounded-[16px] border border-gray-100 p-10 text-center text-[#8a9070]">
             <Image size={32} className="mx-auto mb-2 text-gray-200" />
             <p className="text-sm">Belum ada karya di kategori ini</p>
           </div>
         )}
-        {filtered.map((w) => (
-          <div key={w.id} className={`bg-white rounded-[12px] border border-gray-100 p-4 flex items-center gap-4 transition ${!w.visible ? 'opacity-50' : ''}`}>
+        {!loading && filtered.map((w) => (
+          <div key={w.id} className={`bg-white rounded-[12px] border border-gray-100 p-4 flex items-center gap-4 transition ${w.visible === false ? 'opacity-50' : ''}`}>
             <div className="w-16 h-16 rounded-[12px] overflow-hidden bg-[#eef0e0] shrink-0">
               {w.gambar_url
                 ? <img src={resolveCpAsset(w.gambar_url)} alt={w.judul} className="w-full h-full object-cover" />
@@ -1086,25 +1110,27 @@ function TabKarya() {
             <div className="flex-1 min-w-0">
               <div className="flex items-center gap-2">
                 <span className="font-semibold text-[#1e2010] text-sm truncate">{w.judul}</span>
-                {w.owner_type === 'kolaborator' && (
+                {w._live && w.owner_type === 'kolaborator' && (
                   <span className="shrink-0 text-[10px] font-bold bg-[#eef0e0] text-[#7a8a52] border border-[#c8d09a] px-1.5 py-0.5 rounded-full">Kolaborator</span>
                 )}
-                {w.owner_type === 'artisan' && (
+                {w._live && w.owner_type === 'artisan' && (
                   <span className="shrink-0 text-[10px] font-bold bg-blue-50 text-blue-700 border border-blue-200 px-1.5 py-0.5 rounded-full">Artisan</span>
                 )}
-                {!w.owner_type && (
-                  <span className="shrink-0 text-[10px] font-bold bg-blue-50 text-blue-700 border border-blue-200 px-1.5 py-0.5 rounded-full">Manual</span>
+                {!w._live && (
+                  <span className="shrink-0 text-[10px] font-bold bg-gray-100 text-gray-600 border border-gray-200 px-1.5 py-0.5 rounded-full">Manual</span>
                 )}
               </div>
               <div className="text-xs text-[#8a9070] mt-0.5">{w.owner} · {w.kategori_display || w.subsektor || w.kategori_usaha} · {w.tahun}</div>
               {w.deskripsi && <p className="text-xs text-[#8a9070] mt-1 line-clamp-1">{w.deskripsi}</p>}
             </div>
             <div className="flex items-center gap-2 shrink-0">
-              <ToggleSwitch value={w.visible} onChange={() => toggleVisible(w.id)} />
-              <button onClick={() => setEditWork(w)} className="w-8 h-8 rounded-lg border border-[#e4e7d4] flex items-center justify-center text-[#8a9070] hover:text-[#7a8a52] hover:border-[#c8d09a] transition">
-                <Edit2 size={14} />
-              </button>
-              {!w.owner_type && (
+              <ToggleSwitch value={w.visible !== false} onChange={() => toggleVisible(w)} />
+              {!w._live && (
+                <button onClick={() => setEditWork(w)} className="w-8 h-8 rounded-lg border border-[#e4e7d4] flex items-center justify-center text-[#8a9070] hover:text-[#7a8a52] hover:border-[#c8d09a] transition">
+                  <Edit2 size={14} />
+                </button>
+              )}
+              {!w._live && (
                 <button onClick={() => removeWork(w.id)} className="w-8 h-8 rounded-lg border border-[#e4e7d4] flex items-center justify-center text-[#8a9070] hover:text-red-500 hover:border-red-200 transition">
                   <Trash2 size={14} />
                 </button>

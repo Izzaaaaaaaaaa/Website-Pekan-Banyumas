@@ -24,6 +24,7 @@ export const kolaboratorApi    = _mod.kolaboratorApi;
 export const artisanApi        = _mod.artisanApi;
 export const aktivitasApi      = _mod.aktivitasApi;
 export const companyProfileApi = _mod.companyProfileApi;
+export const karyaApi          = _mod.karyaApi;
 export const zonesApi          = _mod.zonesApi;
 export const notifikasiApi     = _mod.notifikasiApi;
 export const petugasApi        = _mod.petugasApi;

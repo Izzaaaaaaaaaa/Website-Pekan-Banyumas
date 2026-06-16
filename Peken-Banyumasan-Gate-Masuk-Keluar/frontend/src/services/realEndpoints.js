@@ -297,6 +297,17 @@ export const companyProfileApi = {
   save: async (section, content) => extractData(await apiClient.put('/api/company-profile', { section, content })),
 };
 
+// ── karyaApi (real kolaborator/artisan uploads shown in the Publication tab) ──
+// These are LIVE uploads from the `karya` table (not the manual `works`
+// section). The Publication tab merges both; visibility toggles here persist
+// immediately to karya.tampil and reflect on the public CP site.
+export const karyaApi = {
+  /** GET /api/company-profile/karya → Array<{id,judul,gambar_url,owner,owner_type,owner_id,kategori_display,tahun,deskripsi,visible}> */
+  list: async () => extractData(await apiClient.get('/api/company-profile/karya')),
+  /** PATCH /api/company-profile/karya/:id { tampil } → { id, tampil } */
+  setVisible: async (id, tampil) => extractData(await apiClient.patch(`/api/company-profile/karya/${id}`, { tampil })),
+};
+
 // ── zonesApi (venue zone & stand management) ─────────────────────────────────
 export const zonesApi = {
   /** GET /api/zones → Array<Zone> (global venue layout) */
