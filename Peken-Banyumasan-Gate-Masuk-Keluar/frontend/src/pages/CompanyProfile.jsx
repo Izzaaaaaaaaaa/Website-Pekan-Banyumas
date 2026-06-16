@@ -909,15 +909,15 @@ function WorkModal({ work, onClose, onSave }) {
               <Input type="number" value={form.tahun} onChange={v => set('tahun', parseInt(v, 10) || new Date().getFullYear())} placeholder="2026" />
             </Field>
           </div>
-          <Field label="Tipe Pembuat" required>
+          <Field label="Tipe Pembuat" hint="Opsional — kosongkan untuk entri manual yang tidak terikat akun (tanpa link profil publik).">
             <select value={form.owner_type || ''} onChange={e => set('owner_type', e.target.value || null)}
               className="w-full border border-[#e4e7d4] rounded-[12px] px-4 py-2.5 text-sm focus:outline-none focus:border-[#7a8a52] transition bg-white">
-              <option value="">Pilih tipe pembuat...</option>
+              <option value="">— Manual (tanpa akun) —</option>
               <option value="artisan">Artisan (UMKM)</option>
               <option value="kolaborator">Kolaborator (Kreatif)</option>
             </select>
           </Field>
-          {form.owner_type && (isArtisan ? (
+          {form.owner_type ? (isArtisan ? (
             <Field label="Kategori Usaha" hint="Tampil sebagai kategori karya di halaman publik.">
               <select value={form.kategori_usaha || ''} onChange={e => setKategori('kategori_usaha', e.target.value)}
                 className="w-full border border-[#e4e7d4] rounded-[12px] px-4 py-2.5 text-sm focus:outline-none focus:border-[#7a8a52] transition bg-white">
@@ -933,7 +933,11 @@ function WorkModal({ work, onClose, onSave }) {
                 {SUBSEKTOR.map(s => <option key={s}>{s}</option>)}
               </select>
             </Field>
-          ))}
+          )) : (
+            <Field label="Kategori" hint="Kategori karya untuk entri manual (tampil di halaman publik).">
+              <Input value={form.kategori_display || ''} onChange={v => set('kategori_display', v)} placeholder="mis. Fotografi, Kriya, Kuliner" />
+            </Field>
+          )}
           <Field label="Deskripsi">
             <Textarea value={form.deskripsi} onChange={v => set('deskripsi', v)} rows={4} />
           </Field>
