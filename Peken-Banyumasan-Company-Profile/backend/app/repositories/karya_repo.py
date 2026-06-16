@@ -23,7 +23,8 @@ class KaryaRepository:
         owner_id: UUID | None = None,
         limit: int = 20,
     ) -> list[Karya]:
-        stmt = select(Karya)
+        # Public surfaces only ever show admin-visible karya.
+        stmt = select(Karya).where(Karya.tampil.is_(True))
         if subsektor:
             stmt = stmt.where(Karya.subsektor == subsektor)
         if featured is not None:
@@ -41,7 +42,11 @@ class KaryaRepository:
         """Used by `/api/public/profiles/{slug}` to embed featured karya."""
         stmt = (
             select(Karya)
-            .where(Karya.owner_type == owner_type, Karya.owner_id == owner_id)
+            .where(
+                Karya.owner_type == owner_type,
+                Karya.owner_id == owner_id,
+                Karya.tampil.is_(True),  # hidden karya never surface publicly
+            )
             .order_by(Karya.featured.desc(), Karya.created_at.desc())
             .limit(limit)
         )

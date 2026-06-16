@@ -30,5 +30,9 @@ class Karya(Base):
     tahun: Mapped[int] = mapped_column(Integer, nullable=False)
     gambar_url: Mapped[str | None] = mapped_column(Text, nullable=True)
     featured: Mapped[bool] = mapped_column(Boolean, nullable=False, default=False)
+    # Admin (Gate "Kelola Company Profile") visibility toggle. When False the
+    # karya is hidden from ALL public CP surfaces (Publication list + public
+    # profile). Defaults True so fresh uploads appear immediately.
+    tampil: Mapped[bool] = mapped_column(Boolean, nullable=False, default=True)
     created_at: Mapped[datetime] = mapped_column(TIMESTAMP(timezone=True), nullable=False)
     updated_at: Mapped[datetime] = mapped_column(TIMESTAMP(timezone=True), nullable=False)
