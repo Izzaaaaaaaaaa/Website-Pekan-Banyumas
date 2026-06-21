@@ -108,7 +108,7 @@ export default function Register() {
       else if (!/\S+@\S+\.\S+/.test(formData.email)) e.email = "Format email tidak valid";
       if (!formData.username.trim())    e.username    = "Username wajib diisi";
       else if (formData.username.trim().length < 4) e.username = "Username minimal 4 karakter";
-      else if (!/^[a-zA-Z0-9_]+$/.test(formData.username.trim())) e.username = "Username hanya boleh huruf, angka, dan underscore (_)";
+      else if (!/^[a-zA-Z0-9][a-zA-Z0-9_-]*[a-zA-Z0-9]$/.test(formData.username.trim())) e.username = "Username diawali & diakhiri huruf/angka; hanya huruf, angka, underscore (_), atau strip (-)";
       if (!formData.password)           e.password    = "Password wajib diisi";
       else if (
         formData.password.length < 6 ||

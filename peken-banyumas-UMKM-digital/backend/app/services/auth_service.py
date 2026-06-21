@@ -49,8 +49,11 @@ def register(body: RegisterSchema) -> dict:
         raise ValueError("Username minimal 4 karakter")
     if len(username) > 30:
         raise ValueError("Username maksimal 30 karakter")
-    if not re.match(r'^[a-z0-9_]+$', username):
-        raise ValueError("Username hanya boleh huruf kecil, angka, dan underscore (_)")
+    # Must match the DB CHECK constraint `artisans_username_check`
+    # (^[a-z0-9][a-z0-9_-]{1,30}[a-z0-9]$): start & end alphanumeric; lowercase
+    # letters, digits, underscore, or hyphen in between.
+    if not re.match(r'^[a-z0-9][a-z0-9_-]*[a-z0-9]$', username):
+        raise ValueError("Username harus diawali & diakhiri huruf kecil/angka; hanya huruf kecil, angka, underscore (_), atau strip (-)")
     if len(body.password) < 6:
         raise ValueError("Password minimal 6 karakter")
 
