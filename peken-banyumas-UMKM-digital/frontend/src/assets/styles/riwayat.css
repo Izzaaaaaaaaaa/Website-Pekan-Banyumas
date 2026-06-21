@@ -197,13 +197,17 @@
   background: var(--dash-surface);
   border-radius: var(--r-lg);
   border: 1px solid var(--dash-border);
-  overflow: hidden;
+  /* Horizontal scroll on small screens (matches Kas/Stok tables) instead of
+     cramping columns; keeps content from overflowing the page on phones. */
+  overflow-x: auto;
+  -webkit-overflow-scrolling: touch;
   box-shadow: var(--shadow-sm);
 }
 
 /* ── Table ───────────────────────────────────────────────── */
 .rw-table {
   width: 100%;
+  min-width: 560px;
   border-collapse: collapse;
   font-family: var(--font-body);
 }
