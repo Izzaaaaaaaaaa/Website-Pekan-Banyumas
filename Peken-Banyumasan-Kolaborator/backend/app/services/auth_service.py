@@ -92,7 +92,7 @@ def register_kolaborator(payload: dict) -> dict:
             "email": email,
             "nama": nama,
             "kota": kota,
-            "bio": bio,
+            "bio": bio or "",   # column is NOT NULL — never insert null when bio omitted
             "subsektor": subsektor,
             "status": "pending",
         }).execute()
