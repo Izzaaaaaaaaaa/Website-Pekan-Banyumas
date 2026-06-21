@@ -62,6 +62,19 @@ def _set_cached_user(token: str, user_dict: dict):
     _token_cache[token] = {"user": user_dict, "ts": time.time()}
 
 
+def _require_staff(user: dict):
+    """The Gate backend is staff-only. admin & petugas use it; external roles
+    (artisan, kolaborator) have their OWN backends and must never reach any gate
+    endpoint. Enforced centrally here so every endpoint that depends on
+    get_current_user (and thus get_admin_only) is covered."""
+    role = (user or {}).get("app_metadata", {}).get("role")
+    if role not in ("admin", "petugas"):
+        raise HTTPException(
+            status_code=403,
+            detail=error_response("Akses ditolak — khusus admin & petugas", 403),
+        )
+
+
 def get_current_user(
     credentials: HTTPAuthorizationCredentials = Depends(security)
 ):
@@ -76,6 +89,7 @@ def get_current_user(
     # ── Layer 1: Cache hit ──────────────────────────────────────────────
     cached = _get_cached_user(token)
     if cached:
+        _require_staff(cached)
         return cached
 
     # ── Layer 2: Local JWT decode ───────────────────────────────────────
@@ -97,6 +111,7 @@ def get_current_user(
     # Cache it immediately so subsequent requests are instant
     _set_cached_user(token, user_dict)
 
+    _require_staff(user_dict)
     return user_dict
 
 
