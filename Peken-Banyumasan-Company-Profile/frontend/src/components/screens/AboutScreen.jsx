@@ -196,7 +196,7 @@ function Stat({ n, label }) {
         style={{
           fontFamily: 'Inter',
           fontWeight: 300,
-          fontSize: 96,
+          fontSize: 'clamp(40px, 10vw, 96px)',
           lineHeight: 1,
           color: 'var(--accent)',
         }}
@@ -351,7 +351,7 @@ export default function AboutScreen() {
           position: 'relative',
           zIndex: 2,
           height: '100%',
-          padding: '0 120px',
+          padding: '0 var(--page-px)',
           display: 'flex',
           flexDirection: 'column',
           alignItems: 'center',
@@ -366,7 +366,7 @@ export default function AboutScreen() {
           style={{
             fontFamily: 'var(--font-display)',
             fontWeight: 400,
-            fontSize: 56,
+            fontSize: 'clamp(30px, 6vw, 56px)',
             lineHeight: 1.15,
             margin: '24px auto 0',
             maxWidth: 960,
@@ -381,7 +381,7 @@ export default function AboutScreen() {
   const Manifesto = (
     <section
       style={{
-        padding: '100px 120px',
+        padding: '100px var(--page-px)',
         background: 'var(--accent)',
         color: 'var(--accent-ink)',
       }}
@@ -440,7 +440,7 @@ export default function AboutScreen() {
       />
 
       {/* §5 — #MIRAPAT tag + extended intro, all CENTERED */}
-      <section style={{ padding: '120px 120px 60px', textAlign: 'center' }}>
+      <section style={{ padding: '120px var(--page-px) 60px', textAlign: 'center' }}>
         <div
           style={{
             display: 'inline-flex',
@@ -506,7 +506,7 @@ export default function AboutScreen() {
       </section>
 
       {/* THREE PILLARS */}
-      <section style={{ padding: '60px 120px 100px' }}>
+      <section style={{ padding: '60px var(--page-px) 100px' }}>
         <div
           style={{
             display: 'grid',
@@ -523,7 +523,7 @@ export default function AboutScreen() {
       {/* §6 — VISI · TUJUAN · SASARAN — sage band */}
       <section
         style={{
-          padding: '120px 120px',
+          padding: '120px var(--page-px)',
           background: 'var(--accent)',
           color: 'var(--accent-ink)',
         }}
@@ -629,7 +629,7 @@ export default function AboutScreen() {
       </section>
 
       {/* §7 — KEY PEOPLE */}
-      <section style={{ padding: '120px 120px' }}>
+      <section style={{ padding: '120px var(--page-px)' }}>
         <SectionHeader
           eyebrow="KEY PEOPLE · TIM INTI"
           title={
@@ -672,7 +672,7 @@ export default function AboutScreen() {
       {/* §9 — HEXA-HELIX */}
       <section
         style={{
-          padding: '120px 120px',
+          padding: '120px var(--page-px)',
           background: 'var(--bg-elevated)',
           color: '#fff',
         }}
@@ -712,7 +712,7 @@ export default function AboutScreen() {
       {/* §10 — LANDASAN LEGALITAS · 3 columns */}
       <section
         style={{
-          padding: '120px 120px',
+          padding: '120px var(--page-px)',
           background: 'var(--bg-page)',
           color: '#fff',
         }}
@@ -804,7 +804,7 @@ export default function AboutScreen() {
       {/* NUMBERS */}
       <section
         style={{
-          padding: '100px 120px',
+          padding: '100px var(--page-px)',
           background: 'var(--bg-elevated)',
         }}
       >

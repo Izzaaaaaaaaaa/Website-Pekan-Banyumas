@@ -258,7 +258,7 @@ export default function HomeScreen({ onNavigate }) {
             position: 'relative',
             zIndex: 1,
             minHeight: 640,
-            padding: '100px 120px 100px',
+            padding: '100px var(--page-px) 100px',
             display: 'flex',
             flexDirection: 'column',
             alignItems: 'center',
@@ -275,7 +275,7 @@ export default function HomeScreen({ onNavigate }) {
               style={{
                 fontFamily: 'var(--font-display)',
                 fontWeight: 400,
-                fontSize: 64,
+                fontSize: 'clamp(32px, 7vw, 64px)',
                 color: '#fff',
                 lineHeight: 1.1,
                 margin: '28px 0 0',
@@ -310,7 +310,7 @@ export default function HomeScreen({ onNavigate }) {
       {/* MANIFESTO BLOCK — sage band right below the carousel. */}
       <section
         style={{
-          padding: '80px 120px',
+          padding: '80px var(--page-px)',
           background: 'var(--bg-inverse)',
           color: 'var(--accent-ink)',
         }}
@@ -356,7 +356,7 @@ export default function HomeScreen({ onNavigate }) {
       {/* AGENDA TERDEKAT */}
       <section
         style={{
-          padding: '100px 120px',
+          padding: '100px var(--page-px)',
           background: 'var(--bg-page)',
           color: '#fff',
         }}
@@ -389,7 +389,7 @@ export default function HomeScreen({ onNavigate }) {
               style={{
                 fontFamily: 'Inter',
                 fontWeight: 300,
-                fontSize: 128,
+                fontSize: 'clamp(44px, 13vw, 128px)',
                 lineHeight: 1,
                 color: 'var(--accent)',
                 marginTop: 24,
@@ -467,7 +467,7 @@ export default function HomeScreen({ onNavigate }) {
           padding: '0 0 0 0',
         }}
       >
-        <div style={{ padding: '100px 120px 40px' }}>
+        <div style={{ padding: '100px var(--page-px) 40px' }}>
           <SectionHeader
             eyebrow="ENAM PROGRAM · TIAP EDISI"
             title={
@@ -555,7 +555,7 @@ export default function HomeScreen({ onNavigate }) {
       <section
         id="lokasi"
         style={{
-          padding: '100px 120px',
+          padding: '100px var(--page-px)',
           background: 'var(--bg-elevated)',
           color: '#fff',
         }}

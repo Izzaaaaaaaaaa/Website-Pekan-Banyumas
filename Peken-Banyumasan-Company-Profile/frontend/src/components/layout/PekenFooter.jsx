@@ -17,10 +17,10 @@ export default function PekenFooter({ onNavigate }) {
         style={{
           background: 'var(--accent)',
           color: 'var(--accent-ink)',
-          padding: '80px 120px 60px',
+          padding: 'clamp(48px, 8vw, 80px) var(--page-px) clamp(40px, 6vw, 60px)',
           display: 'grid',
-          gridTemplateColumns: '1.3fr 1fr 1fr',
-          gap: 60,
+          gridTemplateColumns: 'repeat(auto-fit, minmax(min(100%, 220px), 1fr))',
+          gap: 'clamp(32px, 5vw, 60px)',
           alignItems: 'flex-start',
         }}
       >
@@ -147,12 +147,14 @@ export default function PekenFooter({ onNavigate }) {
         style={{
           background: 'var(--bg-deep)',
           color: 'var(--fg-muted)',
-          padding: '16px 120px',
+          padding: '16px var(--page-px)',
           fontFamily: 'var(--font-body)',
           fontSize: 11,
           display: 'flex',
           justifyContent: 'space-between',
           alignItems: 'center',
+          flexWrap: 'wrap',
+          gap: 8,
         }}
       >
         <span>

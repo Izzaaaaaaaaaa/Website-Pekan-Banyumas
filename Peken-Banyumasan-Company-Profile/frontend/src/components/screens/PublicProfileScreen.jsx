@@ -151,7 +151,7 @@ function EventCard({ ev }) {
 function EmptyState({ label }) {
     return (
         <div style={{ textAlign: 'center', padding: '80px 0' }}>
-            <div style={{ fontFamily: 'var(--font-display)', fontWeight: 300, fontSize: 56, color: 'rgba(195,202,150,.08)', marginBottom: 16 }}>—</div>
+            <div style={{ fontFamily: 'var(--font-display)', fontWeight: 300, fontSize: 'clamp(30px, 6vw, 56px)', color: 'rgba(195,202,150,.08)', marginBottom: 16 }}>—</div>
             <p style={{ fontFamily: 'var(--font-body)', fontSize: 12, color: 'var(--fg-muted)', textTransform: 'uppercase', letterSpacing: '.07em' }}>{label}</p>
         </div>
     );
@@ -207,14 +207,14 @@ export default function PublicProfileScreen({ ownerName, onBack }) {
             }}>
                 {!coverImg && (
                     <div style={{ height: '100%', display: 'flex', alignItems: 'center', justifyContent: 'flex-end', paddingRight: 120 }}>
-                        <span style={{ fontFamily: 'Inter', fontWeight: 300, fontSize: 100, color: 'rgba(195,202,150,.04)', userSelect: 'none' }}>PEKEN BANYUMASAN</span>
+                        <span style={{ fontFamily: 'Inter', fontWeight: 300, fontSize: 'clamp(40px, 11vw, 100px)', color: 'rgba(195,202,150,.04)', userSelect: 'none' }}>PEKEN BANYUMASAN</span>
                     </div>
                 )}
             </div>
 
             {/* ── IDENTITY BAR ── */}
             <div style={{ background: 'var(--bg-elevated)', borderBottom: '1px solid rgba(255,255,255,.06)' }}>
-                <div style={{ maxWidth: 1060, margin: '0 auto', padding: '0 120px' }}>
+                <div style={{ maxWidth: 1060, margin: '0 auto', padding: '0 var(--page-px)' }}>
                     <div style={{ display: 'flex', alignItems: 'flex-end', gap: 24, transform: 'translateY(-44px)', marginBottom: -20 }}>
                         <Avatar foto_url={profile?.foto_url} nama={profile?.nama} size={86} />
                         <div style={{ flex: 1, paddingBottom: 14 }}>
@@ -258,7 +258,7 @@ export default function PublicProfileScreen({ ownerName, onBack }) {
             </div>
 
             {/* ── BIO BAND (sage) ── */}
-            <section style={{ background: 'var(--accent)', padding: '48px 120px' }}>
+            <section style={{ background: 'var(--accent)', padding: '48px var(--page-px)' }}>
                 <div style={{ maxWidth: 1060, margin: '0 auto', display: 'grid', gridTemplateColumns: '200px 1fr auto', gap: 48, alignItems: 'flex-start' }}>
                     <div>
                         <div style={{ fontFamily: 'var(--font-display)', fontWeight: 500, fontSize: 12, color: 'var(--accent-ink)', letterSpacing: '.03em' }}>PEKEN BANYUMASAN</div>
@@ -272,7 +272,7 @@ export default function PublicProfileScreen({ ownerName, onBack }) {
                     <div style={{ display: 'flex', gap: 32 }}>
                         {[['Karya', profile?.total_karya ?? 0], ['Story', profile?.total_story ?? 0], ['Event', profile?.total_event ?? 0]].map(([l, n]) => (
                             <div key={l} style={{ textAlign: 'center' }}>
-                                <div style={{ fontFamily: 'Inter', fontWeight: 300, fontSize: 40, lineHeight: 1, color: 'var(--accent-ink)' }}>{n}</div>
+                                <div style={{ fontFamily: 'Inter', fontWeight: 300, fontSize: 'clamp(26px, 5vw, 40px)', lineHeight: 1, color: 'var(--accent-ink)' }}>{n}</div>
                                 <div style={{ fontFamily: 'var(--font-body)', fontSize: 10, color: 'var(--peken-smoke)', textTransform: 'uppercase', letterSpacing: '.06em', marginTop: 4 }}>{l}</div>
                             </div>
                         ))}
@@ -282,7 +282,7 @@ export default function PublicProfileScreen({ ownerName, onBack }) {
 
             {/* ── TAB NAV ── */}
             <div style={{ background: 'var(--bg-elevated)', borderBottom: '1px solid rgba(255,255,255,.06)', position: 'sticky', top: 80, zIndex: 40 }}>
-                <div style={{ maxWidth: 1060, margin: '0 auto', padding: '0 120px', display: 'flex' }}>
+                <div style={{ maxWidth: 1060, margin: '0 auto', padding: '0 var(--page-px)', display: 'flex' }}>
                     {TABS.map(t => (
                         <button key={t.id} onClick={() => setTab(t.id)} style={{
                             background: 'transparent', border: 0, cursor: 'pointer',
@@ -300,7 +300,7 @@ export default function PublicProfileScreen({ ownerName, onBack }) {
             </div>
 
             {/* ── CONTENT ── */}
-            <div style={{ maxWidth: 1060, margin: '0 auto', padding: '52px 120px 96px' }}>
+            <div style={{ maxWidth: 1060, margin: '0 auto', padding: '52px var(--page-px) 96px' }}>
                 {tab === 'karya' && (
                     !(profile?.karya?.length)
                         ? <EmptyState label="Belum ada karya yang dipublikasikan." />
@@ -325,7 +325,7 @@ export default function PublicProfileScreen({ ownerName, onBack }) {
             </div>
 
             {/* ── FOOTER STRIP ── */}
-            <div style={{ background: 'var(--bg-elevated)', borderTop: '1px solid rgba(255,255,255,.06)', padding: '24px 120px' }}>
+            <div style={{ background: 'var(--bg-elevated)', borderTop: '1px solid rgba(255,255,255,.06)', padding: '24px var(--page-px)' }}>
                 <div style={{ maxWidth: 1060, margin: '0 auto', display: 'flex', alignItems: 'center', justifyContent: 'space-between', flexWrap: 'wrap', gap: 16 }}>
                     <div style={{ fontFamily: 'var(--font-body)', fontSize: 10, color: 'var(--fg-muted)', textTransform: 'uppercase', letterSpacing: '.07em' }}>
                         Peken Banyumasan · Ekosistem Kreatif Banyumas

@@ -66,7 +66,7 @@ export default function GalleryScreen() {
      hitting the gradient bridge to the documentation block. */
   const Body = (
     <div style={{ background: 'var(--bg-elevated)', color: '#fff' }}>
-      <section style={{ padding: '100px 120px 40px' }}>
+      <section style={{ padding: '100px var(--page-px) 40px' }}>
         <Eyebrow style={{ color: 'var(--accent)' }}>
           GALLERY · 2022 — 2026
         </Eyebrow>
@@ -74,7 +74,7 @@ export default function GalleryScreen() {
           style={{
             fontFamily: 'var(--font-display)',
             fontWeight: 400,
-            fontSize: 56,
+            fontSize: 'clamp(30px, 6vw, 56px)',
             lineHeight: 1.15,
             margin: '24px 0 0',
             maxWidth: 1000,
@@ -83,7 +83,7 @@ export default function GalleryScreen() {
           Empat tahun Peken dalam gambar.
         </h1>
       </section>
-      <section style={{ padding: '40px 60px 80px' }}>
+      <section style={{ padding: '40px clamp(16px, 4vw, 60px) 80px' }}>
         <div style={{ columnCount: 3, columnGap: 24 }}>
           {images.map((item, i) => {
             const src = item.src || `/assets/${item.filename}.jpg`;
@@ -123,7 +123,7 @@ export default function GalleryScreen() {
   const Documentation = (
     <section
       style={{
-        padding: '100px 120px 120px',
+        padding: '100px var(--page-px) 120px',
         background: 'var(--accent)',
         color: 'var(--accent-ink)',
       }}
@@ -216,7 +216,7 @@ export default function GalleryScreen() {
         flexDirection: 'column',
         alignItems: 'center',
         justifyContent: 'center',
-        padding: '0 120px',
+        padding: '0 var(--page-px)',
         textAlign: 'center',
       }}
     >
@@ -227,7 +227,7 @@ export default function GalleryScreen() {
         style={{
           fontFamily: 'var(--font-display)',
           fontWeight: 400,
-          fontSize: 48,
+          fontSize: 'clamp(28px, 6vw, 48px)',
           lineHeight: 1.2,
           color: '#fff',
           maxWidth: 900,

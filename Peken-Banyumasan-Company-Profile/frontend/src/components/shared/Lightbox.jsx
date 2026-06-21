@@ -27,9 +27,9 @@ export default function Lightbox({ work, onClose, onViewProfile }) {
   return (
     <Modal open={!!work} onClose={onClose} labelledBy="lightbox-title" width={1080} padded={false}>
       {work && (
-        <div style={{ display: 'grid', gridTemplateColumns: '1.5fr 1fr', minHeight: 480 }}>
-          <div style={{ background: `var(--bg-deep) url('${work.gambar_url}') center/contain no-repeat`, aspectRatio: '4/3' }} />
-          <div style={{ padding: 40, display: 'flex', flexDirection: 'column', gap: 20 }}>
+        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(min(100%, 300px), 1fr))', minHeight: 'min(480px, 70vh)' }}>
+          <div style={{ background: `var(--bg-deep) url('${work.gambar_url}') center/contain no-repeat`, aspectRatio: '4/3', minHeight: 200 }} />
+          <div style={{ padding: 'clamp(24px, 5vw, 40px)', display: 'flex', flexDirection: 'column', gap: 20 }}>
             {/* Top row */}
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', gap: 12 }}>
               <Eyebrow style={{ color: 'var(--accent)' }}>

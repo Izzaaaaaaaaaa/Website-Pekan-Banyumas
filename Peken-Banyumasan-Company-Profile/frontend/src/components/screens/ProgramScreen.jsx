@@ -26,7 +26,7 @@ export default function ProgramScreen({ onNavigate }) {
 
   return (
     <main style={{ background: 'var(--bg-page)', color: '#fff' }}>
-      <section style={{ padding: '100px 120px 60px' }}>
+      <section style={{ padding: '100px var(--page-px) 60px' }}>
         <Eyebrow style={{ color: 'var(--accent)' }}>
           PROGRAM · ENAM PILAR PEKEN
         </Eyebrow>
@@ -34,7 +34,7 @@ export default function ProgramScreen({ onNavigate }) {
           style={{
             fontFamily: 'var(--font-display)',
             fontWeight: 400,
-            fontSize: 56,
+            fontSize: 'clamp(30px, 6vw, 56px)',
             lineHeight: 1.15,
             margin: '24px 0 0',
             maxWidth: 1000,
@@ -45,7 +45,7 @@ export default function ProgramScreen({ onNavigate }) {
         </h1>
       </section>
 
-      <section style={{ padding: '40px 120px 100px' }}>
+      <section style={{ padding: '40px var(--page-px) 100px' }}>
         {programs.map((p, i) => (
           <ProgramRow key={p.n} program={p} flip={i % 2 === 1} onNavigate={onNavigate} />
         ))}
@@ -106,7 +106,7 @@ function ProgramRow({ program, flip, onNavigate }) {
           style={{
             fontFamily: 'Inter',
             fontWeight: 300,
-            fontSize: 64,
+            fontSize: 'clamp(32px, 7vw, 64px)',
             lineHeight: 1,
             color: 'var(--accent)',
           }}

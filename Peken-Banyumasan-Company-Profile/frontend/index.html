@@ -3,7 +3,7 @@
 <head>
   <meta charset="utf-8" />
   <link rel="icon" type="image/png" href="/favicon.png" />
-  <meta name="viewport" content="width=1440, initial-scale=1" />
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
   <title>Peken Banyumasan</title>
 
   <!-- Font loading, all via CDN for smaller bundle:
@@ -30,6 +30,37 @@
     html, body { background: var(--bg-page); }
     em { font-style: italic; }
     :focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+
+    /* ── Responsive base (mobile support) ──────────────────────────────
+       The site was authored as a fixed 1440px desktop canvas with inline
+       styles. These rules add a mobile-safe foundation:
+       - border-box so clamp()/% paddings never overflow
+       - overflow-x: clip (NOT hidden — hidden would break the sticky nav)
+       - media never exceeds its column
+       - fluid page tokens consumed by screens via var() instead of 120px. */
+    *, *::before, *::after { box-sizing: border-box; }
+    html { -webkit-text-size-adjust: 100%; }
+    html, body { max-width: 100%; overflow-x: clip; }
+    img, svg, video, canvas { max-width: 100%; }
+    :root {
+      --page-px: clamp(20px, 6vw, 120px);   /* horizontal page gutter */
+      --section-py: clamp(56px, 9vw, 100px); /* vertical section padding */
+    }
+
+    /* Nav: desktop links + login pill collapse into a hamburger on mobile. */
+    .pk-nav-burger { display: none; }
+    @media (max-width: 860px) {
+      .pk-nav-center, .pk-nav-login { display: none !important; }
+      .pk-nav-burger { display: inline-flex !important; }
+    }
+
+    /* Phone: collapse every inline multi-column grid in the page body to a
+       single column. The nav (.pk-nav) keeps its own grid. This preserves the
+       desktop layout untouched — it only applies <=760px. Screen horizontal
+       gutters shrink separately via the var(--page-px) token. */
+    @media (max-width: 760px) {
+      body [style*="grid-template-columns"]:not(.pk-nav) { grid-template-columns: 1fr !important; }
+    }
   </style>
 </head>
 <body>

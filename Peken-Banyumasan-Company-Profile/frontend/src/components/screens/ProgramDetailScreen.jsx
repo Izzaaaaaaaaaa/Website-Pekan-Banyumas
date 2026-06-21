@@ -39,7 +39,7 @@ export default function ProgramDetailScreen({ programId, onBack }) {
 
   if (!program) {
     return (
-      <main style={{ background: 'var(--bg-page)', color: '#fff', padding: '120px', textAlign: 'center' }}>
+      <main style={{ background: 'var(--bg-page)', color: '#fff', padding: 'clamp(40px, 8vw, 120px)', textAlign: 'center' }}>
         <Eyebrow style={{ color: 'var(--accent)' }}>PROGRAM · TIDAK DITEMUKAN</Eyebrow>
         <p style={{ fontFamily: 'var(--font-body)', color: 'var(--fg-secondary)', marginTop: 24 }}>
           Program tidak ditemukan.
@@ -77,7 +77,7 @@ export default function ProgramDetailScreen({ programId, onBack }) {
             display: 'flex',
             flexDirection: 'column',
             justifyContent: 'flex-end',
-            padding: '60px 120px',
+            padding: '60px var(--page-px)',
           }}
         >
           <Eyebrow style={{ color: 'var(--accent)', marginBottom: 12 }}>
@@ -87,7 +87,7 @@ export default function ProgramDetailScreen({ programId, onBack }) {
             style={{
               fontFamily: 'var(--font-display)',
               fontWeight: 400,
-              fontSize: 52,
+              fontSize: 'clamp(30px, 6vw, 52px)',
               lineHeight: 1.15,
               margin: 0,
               maxWidth: 900,
@@ -99,7 +99,7 @@ export default function ProgramDetailScreen({ programId, onBack }) {
       </section>
 
       {/* Body */}
-      <section style={{ padding: '80px 120px 120px', maxWidth: 1200 }}>
+      <section style={{ padding: '80px var(--page-px) 120px', maxWidth: 1200 }}>
         <div style={{ display: 'grid', gridTemplateColumns: '1.6fr 1fr', gap: 80 }}>
           <div>
             <div

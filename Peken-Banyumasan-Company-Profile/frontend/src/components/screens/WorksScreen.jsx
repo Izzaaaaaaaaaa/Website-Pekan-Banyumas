@@ -65,12 +65,12 @@ export default function WorksScreen({ onNavigate }) {
 
   return (
     <main style={{ background: 'var(--bg-page)', color: '#fff' }}>
-      <section style={{ padding: '100px 120px 40px' }}>
+      <section style={{ padding: '100px var(--page-px) 40px' }}>
         <Eyebrow style={{ color: 'var(--accent)' }}>
           PUBLICATION · KATALOG KOLABORATOR & ARTISAN
         </Eyebrow>
         <div style={{ display: 'grid', gridTemplateColumns: '1.5fr 1fr', gap: 40, alignItems: 'flex-end', marginTop: 24 }}>
-          <h1 style={{ fontFamily: 'var(--font-display)', fontWeight: 400, fontSize: 56, lineHeight: 1.15, margin: 0, maxWidth: 900 }}>
+          <h1 style={{ fontFamily: 'var(--font-display)', fontWeight: 400, fontSize: 'clamp(30px, 6vw, 56px)', lineHeight: 1.15, margin: 0, maxWidth: 900 }}>
             Karya kolaborator dan artisan yang pernah berproses di Peken.
           </h1>
           <p style={{ fontFamily: 'var(--font-body)', fontSize: 13, lineHeight: 1.9, color: 'var(--fg-secondary)', margin: 0 }}>
@@ -79,7 +79,7 @@ export default function WorksScreen({ onNavigate }) {
         </div>
       </section>
 
-      <section style={{ padding: '40px 60px 120px' }}>
+      <section style={{ padding: '40px clamp(16px, 4vw, 60px) 120px' }}>
         <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: 24 }}>
           {works.map((w) => (
             <PhotoTile
