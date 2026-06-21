@@ -397,7 +397,7 @@ function TabBeranda() {
           <Field label="Eyebrow (teks kecil atas)">
             <Input value={data.hero_eyebrow} onChange={v => set('hero_eyebrow', v)} placeholder="MIRAPAT · BANYUMASAN · 2026" />
           </Field>
-          <div className="grid grid-cols-3 gap-4">
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
             <Field label="Headline — Bagian Awal" hint="Teks sebelum kata aksen">
               <Input value={data.hero_headline_pre} onChange={v => set('hero_headline_pre', v)} placeholder="Temukan" />
             </Field>
@@ -417,7 +417,7 @@ function TabBeranda() {
       {/* Manifesto */}
       <SectionCard title="Blok Manifesto" subtitle="Dua kolom teks di bawah hero (latar sage/hijau)" icon={BookOpen} collapsible>
         <div className="space-y-4">
-          <div className="grid grid-cols-2 gap-4">
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
             <Field label="Kolom Kiri">
               <Textarea value={data.manifesto_col1} onChange={v => set('manifesto_col1', v)} rows={6} placeholder="Paragraf kolom kiri..." />
             </Field>
@@ -453,7 +453,7 @@ function TabBeranda() {
           <Field label="Info Transportasi" hint="Satu baris per rute/keterangan. Contoh baris terakhir: 'Operasional · 04:40 – 18:30 WIB'.">
             <Textarea value={data.lokasi_trans} onChange={v => set('lokasi_trans', v)} rows={3} placeholder={'Trans Banyumas Koridor 4 · Terminal Bulupitu\n...'} />
           </Field>
-          <div className="grid grid-cols-2 gap-4">
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
             <Field label="Link Maps — Tombol Rute 1" hint="Tombol 'Rute Peken Banyumasan'">
               <Input value={data.lokasi_trans1_url} onChange={v => set('lokasi_trans1_url', v)} placeholder="https://maps.google.com/..." />
             </Field>
@@ -524,7 +524,7 @@ function TabTentang() {
 
       {/* Manifesto */}
       <SectionCard title="Blok Manifesto About" subtitle="Dua kolom teks di bawah hero About (latar aksen/sage)" icon={BookOpen} collapsible>
-        <div className="grid grid-cols-2 gap-4">
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
           <Field label="Kolom Kiri">
             <Textarea value={data.manifesto_col1} onChange={v => set('manifesto_col1', v)} rows={6} />
           </Field>
@@ -557,7 +557,7 @@ function TabTentang() {
 
       {/* Three Pillars */}
       <SectionCard title="Tiga Pilar" subtitle="CULTURE · CREATIVE · CIRCULAR" icon={BookOpen} collapsible>
-        <div className="grid grid-cols-3 gap-4">
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
           {data.pillars.map((p, idx) => (
             <div key={p.n} className="border border-gray-100 rounded-[12px] p-4 space-y-3">
               <div className="text-xs font-bold text-[#7a8a52] uppercase tracking-wider">Pilar {p.n}</div>
@@ -581,7 +581,7 @@ function TabTentang() {
           <Field label="Visi (headline besar)" hint="Kata 'berdetak' dicetak miring">
             <Textarea value={data.visi} onChange={v => set('visi', v)} rows={3} />
           </Field>
-          <div className="grid grid-cols-2 gap-4">
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
             <Field label="Tujuan">
               <Textarea value={data.tujuan} onChange={v => set('tujuan', v)} rows={4} />
             </Field>
@@ -625,7 +625,7 @@ function PersonModal({ person, onClose, onSave }) {
         </div>
         <div className="overflow-y-auto flex-1 p-5 space-y-4">
           <ImageInput label="Foto Profil" value={form.photo} onChange={v => set('photo', v)} shape="square" />
-          <div className="grid grid-cols-2 gap-3">
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
             <Field label="Jabatan (label kecil)" required>
               <Input value={form.role} onChange={v => set('role', v)} placeholder="FOUNDER" />
             </Field>
@@ -715,7 +715,7 @@ function TabTim() {
       {/* Key People */}
       <SectionCard title="Tim Inti (Key People)" subtitle="Tiga kartu yang tampil di halaman About" icon={Users} collapsible>
         <div className="space-y-4">
-          <div className="grid grid-cols-3 gap-4">
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
             {data.key_people.map((kp) => (
               <div key={kp.id} className="border border-gray-100 rounded-[12px] overflow-hidden group relative">
                 <div className="aspect-square bg-[#eef0e0] overflow-hidden">
@@ -748,7 +748,7 @@ function TabTim() {
       {/* Hexa-Helix */}
       <SectionCard title="Model Hexa-Helix" subtitle="Enam pilar kolaborasi yang tampil di halaman About" icon={Grid} collapsible>
         <div className="space-y-4">
-          <div className="grid grid-cols-2 gap-4">
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
             {data.hexa_helix.map((hh, idx) => (
               <div key={hh.id} className="border border-gray-100 rounded-[12px] p-4 space-y-3">
                 <div className="text-xs font-bold text-[#7a8a52] uppercase tracking-wider">Helix {idx + 1}</div>
@@ -770,7 +770,7 @@ function TabTim() {
       {/* Legalitas */}
       <SectionCard title="Legalitas & Dukungan" subtitle="Dua blok teks di seksi legalitas halaman About" icon={BookOpen} collapsible>
         <div className="space-y-4">
-          <div className="grid grid-cols-2 gap-4">
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
             <Field label="Dukungan Kelembagaan">
               <Textarea value={data.legalitas_dukungan} onChange={v => set('legalitas_dukungan', v)} rows={8} />
             </Field>
@@ -842,7 +842,7 @@ function TabProgram() {
       {programs.map((p, idx) => (
         <SectionCard key={p.n} title={`Program ${p.n} — ${p.title}`} subtitle="Tampil di Home (tiles) dan halaman Program (rows)" icon={Grid} collapsible>
           <div className="space-y-4">
-            <div className="grid grid-cols-2 gap-4">
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
               <Field label="Judul Program" required>
                 <Input value={p.title} onChange={v => setP(idx, 'title', v)} />
               </Field>
@@ -857,7 +857,7 @@ function TabProgram() {
             <Field label="Deskripsi Pendek (tile di Home)" hint="Versi ringkas plain text untuk tile grid di halaman utama">
               <Textarea value={p.body_short || ''} onChange={v => setP(idx, 'body_short', v)} rows={3} />
             </Field>
-            <div className="grid grid-cols-2 gap-4">
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
               <Field label="Target Peserta" hint="Opsional. Contoh: Umum, Komunitas & undangan">
                 <Input value={p.target_peserta || ''} onChange={v => setP(idx, 'target_peserta', v)} placeholder="Umum" />
               </Field>
@@ -901,7 +901,7 @@ function WorkModal({ work, onClose, onSave }) {
           <Field label="Judul Karya" required>
             <Input value={form.judul} onChange={v => set('judul', v)} placeholder="Nama karya" />
           </Field>
-          <div className="grid grid-cols-2 gap-3">
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
             <Field label="Nama Pembuat/Kolaborator" required>
               <Input value={form.owner} onChange={v => set('owner', v)} placeholder="Nama individu/komunitas" />
             </Field>
@@ -1056,7 +1056,7 @@ function TabKarya() {
       </div>
 
       {/* Stats bar */}
-      <div className="grid grid-cols-4 gap-3">
+      <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
         {[
           { label: 'Total Karya', value: works.length, color: 'bg-[#f7f8f2] text-[#1e2010]' },
           { label: 'Dari Akun (Live)', value: kolabCount, color: 'bg-[#eef0e0] text-[#4f5c30]' },
@@ -1164,7 +1164,7 @@ function GalleryImageModal({ item, onClose, onSave }) {
         <div className="p-5 space-y-4">
           <ImageInput label="Gambar Galeri" value={form.src || `/assets/${form.filename}.jpg`}
             onChange={v => set('src', v)} shape="wide" />
-          <div className="grid grid-cols-2 gap-3">
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
             <Field label="Label/Judul">
               <Input value={form.label} onChange={v => set('label', v)} placeholder="Edisi #01" />
             </Field>

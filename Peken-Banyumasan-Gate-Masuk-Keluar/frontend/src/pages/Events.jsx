@@ -89,7 +89,7 @@ function EventFormModal({ editItem, onClose, onSave }) {
             <input value={form.nama} onChange={e => set('nama', e.target.value)} placeholder="Nama event"
               className="w-full border border-[#e4e7d4] rounded-[12px] px-4 py-2.5 text-sm focus:outline-none focus:border-[#7a8a52] transition"/>
           </div>
-          <div className="grid grid-cols-2 gap-3">
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
             <div>
               <label className="text-[#5a6040] text-xs font-semibold mb-1.5 block">Tanggal Mulai *</label>
               <TanggalInput value={form.tanggal} onChange={v => set('tanggal', v)} />
@@ -99,7 +99,7 @@ function EventFormModal({ editItem, onClose, onSave }) {
               <TanggalInput value={form.tanggal_selesai} onChange={v => set('tanggal_selesai', v)} />
             </div>
           </div>
-          <div className="grid grid-cols-2 gap-3">
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
             <div>
               <label className="text-[#5a6040] text-xs font-semibold mb-1.5 block">🕐 Jam Mulai *</label>
               <JamInput value={form.jam_mulai} onChange={v => set('jam_mulai', v)} />
@@ -114,7 +114,7 @@ function EventFormModal({ editItem, onClose, onSave }) {
               📅 {fmtJadwalIndo(form)}
             </p>
           )}
-          <div className="grid grid-cols-2 gap-3">
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
             <div>
               <label className="text-[#5a6040] text-xs font-semibold mb-1.5 block">Lokasi</label>
               <input value={form.lokasi} onChange={e => set('lokasi', e.target.value)} placeholder="Nama tempat"

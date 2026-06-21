@@ -106,7 +106,7 @@ export default function ZoneEditor({ zones = [], onZonesChange }) {
       {showAdd && (
         <div className="bg-[#f7f8f2] border border-[#e4e7d4] rounded-xl p-4 space-y-3">
           <p className="text-xs font-bold text-[#5a6040] uppercase tracking-wider">Tambah Zona</p>
-          <div className="grid grid-cols-2 gap-3">
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
             <div>
               <label className="text-[10px] font-semibold text-gray-400 mb-1 block">Kode *</label>
               <input value={nz.zona} maxLength={3} placeholder="D"

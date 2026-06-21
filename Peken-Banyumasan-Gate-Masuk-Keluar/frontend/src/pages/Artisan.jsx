@@ -459,7 +459,7 @@ const EditDrawer = ({ artisan, onClose, onSave, allEvents }) => {
                 <input value={profilEdit.nama_usaha} onChange={e=>setProfilEdit(f=>({...f,nama_usaha:e.target.value}))}
                   className="w-full border border-[#e4e7d4] rounded-[12px] px-3 py-2 text-sm focus:outline-none focus:border-[#7a8a52]"/>
               </div>
-              <div className="grid grid-cols-2 gap-2">
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
                 <div>
                   <label className="text-xs font-semibold text-[#8a9070] uppercase tracking-wider mb-1.5 block">No. HP</label>
                   <input value={profilEdit.no_hp} onChange={e=>setProfilEdit(f=>({...f,no_hp:e.target.value}))}
@@ -741,7 +741,7 @@ export default function ArtisanPage() {
         suspended.length === 0
           ? <div className="bg-white rounded-[16px] border border-[#e4e7d4] p-12 text-center text-[#8a9070] text-sm"><CheckCircle size={36} className="text-[#a8b07a] mx-auto mb-2"/>Tidak ada artisan yang disuspend</div>
           : <div className="bg-white rounded-[16px] border border-[#e4e7d4] overflow-hidden">
-              <table className="w-full text-left">
+              <div className="overflow-x-auto"><table className="w-full min-w-[680px] text-left">
                 <thead>
                   <tr className="border-b border-[#e4e7d4] bg-[#f7f8f2]/80">
                     {['Usaha','Kategori & Kota','Status','Komisi','Revenue','Aksi'].map(h => (
@@ -755,7 +755,7 @@ export default function ArtisanPage() {
                       onApprove={approve} onSuspend={suspend} onDelete={deleteArtisan} isProcessing={processing}/>
                   ))}
                 </tbody>
-              </table>
+              </table></div>
             </div>
       )}
 
@@ -806,7 +806,7 @@ export default function ArtisanPage() {
             </div>
           </div>
           <div className="bg-white rounded-[16px] border border-[#e4e7d4] overflow-hidden">
-            <table className="w-full text-left">
+            <div className="overflow-x-auto"><table className="w-full min-w-[680px] text-left">
               <thead>
                 <tr className="border-b border-[#e4e7d4] bg-[#f7f8f2]/80">
                   {['Usaha','Kategori & Kota','Status','Komisi','Revenue','Aksi'].map(h => (
@@ -823,7 +823,7 @@ export default function ArtisanPage() {
                     ))
                 }
               </tbody>
-            </table>
+            </table></div>
             <div className="px-5 py-3 border-t border-gray-50 text-xs text-[#8a9070]">{filtered.length} Artisan aktif</div>
           </div>
         </>

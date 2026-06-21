@@ -482,7 +482,7 @@ export default function PetugasPage() {
             Memuat data petugas...
           </div>
         ) : (
-          <table className="w-full text-left">
+          <div className="overflow-x-auto"><table className="w-full min-w-[680px] text-left">
             <thead>
               <tr className="border-b border-[#e4e7d4] bg-[#f7f8f2]/80">
                 {['Nama & Jabatan', 'Email', 'Status', 'Login Terakhir', 'Aksi'].map(h => (
@@ -510,7 +510,7 @@ export default function PetugasPage() {
                 />
               ))}
             </tbody>
-          </table>
+          </table></div>
         )}
 
         <div className="px-5 py-3 border-t border-gray-50 text-xs text-[#8a9070]">

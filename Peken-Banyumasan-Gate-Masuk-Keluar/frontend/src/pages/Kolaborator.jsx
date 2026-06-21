@@ -327,7 +327,7 @@ const DetailDrawer = ({ kolaborator, onClose, onApprove, onSuspend, onUpdate, al
                     <input value={editFields.nama} onChange={e=>setEditFields(f=>({...f,nama:e.target.value}))}
                       className="w-full border border-[#e4e7d4] rounded-[12px] px-3 py-2 text-sm focus:outline-none focus:border-[#7a8a52]"/>
                   </div>
-                  <div className="grid grid-cols-2 gap-2">
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
                     <div>
                       <label className="text-xs font-semibold text-[#8a9070] uppercase tracking-wider mb-1.5 block">Email</label>
                       <input type="email" value={editFields.email} onChange={e=>setEditFields(f=>({...f,email:e.target.value}))}
@@ -387,7 +387,7 @@ const DetailDrawer = ({ kolaborator, onClose, onApprove, onSuspend, onUpdate, al
                   )}
                 </>
               )}
-              <div className="grid grid-cols-2 gap-3">
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                 <div className="bg-[#f7f2e4] border border-amber-100 rounded-[12px] p-3 text-center">
                   <p className="text-2xl font-bold text-[#C4A24D]">{kolaborator.total_karya}</p>
                   <p className="text-[#C4A24D] text-xs mt-0.5">Total Karya</p>
@@ -805,7 +805,7 @@ export default function Kolaborator() {
       </div>
 
       <div className="bg-white rounded-[16px] border border-[#e4e7d4] overflow-hidden">
-        <table className="w-full text-left">
+        <div className="overflow-x-auto"><table className="w-full min-w-[680px] text-left">
           <thead>
             <tr className="border-b border-[#e4e7d4] bg-[#f7f8f2]/80">
               {['Kolaborator','Subsektor / Kota','Status','Karya','Terdaftar','Aksi'].map(h => (
@@ -819,7 +819,7 @@ export default function Kolaborator() {
               : filtered.map(m => <KolaboratorRow key={m.id} m={m} onApprove={approve} onSuspend={suspend} onDetail={setDetail} onDelete={deleteKolaborator} isProcessing={processing}/>)
             }
           </tbody>
-        </table>
+        </table></div>
         <div className="px-5 py-3 border-t border-gray-50 text-xs text-[#8a9070] flex items-center justify-between">
           <span>Menampilkan {filtered.length} dari {kolaborators.length} Kolaborator</span>
           {filterEvent !== 'semua' && (
