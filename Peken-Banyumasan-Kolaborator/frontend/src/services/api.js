@@ -73,7 +73,16 @@ export function setUnauthorizedHandler(handler) {
  */
 function normalizeBaseUrl(url) {
   if (typeof url !== 'string' || !url) return '';
-  const trimmed = url.replace(/\/+$/, '');
+  let trimmed = url.trim().replace(/\/+$/, '');
+  // Prepend https:// when the env var omits the scheme. Without a scheme axios
+  // treats the value as a RELATIVE path resolved against the page origin —
+  // e.g. "kolaborator-production.up.railway.app" becomes
+  // https://<pages-host>/kolaborator-production.up.railway.app/api/... which, with
+  // the SPA _redirects catch-all, returns index.html and crashes the app on JSON
+  // parse. A scheme makes it the absolute backend origin as intended.
+  if (!/^https?:\/\//i.test(trimmed)) {
+    trimmed = `https://${trimmed}`;
+  }
   if (/\/api$/.test(trimmed)) {
     if (import.meta.env?.DEV) {
       console.warn(
