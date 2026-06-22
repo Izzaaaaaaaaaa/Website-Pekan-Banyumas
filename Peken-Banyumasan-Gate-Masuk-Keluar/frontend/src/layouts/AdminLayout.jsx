@@ -335,7 +335,7 @@ const AdminLayout = () => {
           width: 260, minWidth: 260,
           background: '#1B1B1B',
           display: 'flex', flexDirection: 'column',
-          height: '100vh', position: 'sticky', top: 0,
+          height: '100vh',
           zIndex: 50,
           transition: 'transform 300ms cubic-bezier(0.22,0.61,0.36,1)',
         }}
