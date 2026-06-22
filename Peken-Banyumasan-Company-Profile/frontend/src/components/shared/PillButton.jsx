@@ -21,6 +21,7 @@ export default function PillButton({
   return (
     <button
       type={type}
+      className="pill-button"
       onClick={onClick}
       aria-label={ariaLabel}
       onMouseEnter={() => setHover(true)}

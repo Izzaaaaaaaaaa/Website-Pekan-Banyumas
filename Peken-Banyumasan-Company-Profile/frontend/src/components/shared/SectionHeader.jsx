@@ -13,6 +13,7 @@ export default function SectionHeader({
 }) {
   return (
     <div
+      className="cp-section-header"
       style={{
         display: align === 'center' ? 'block' : 'grid',
         gridTemplateColumns: align === 'center' ? undefined : '1fr auto',

@@ -1,4 +1,4 @@
-"""SQLAlchemy ORM models mirroring `db/schema.sql` v2.2.2.
+"""SQLAlchemy ORM models mirroring `docs/schema.sql` (canonical DB contract).
 
 This backend uses these models for READ-ONLY queries. Admin-only
 columns (e.g. `artisans.internal_notes`, `kolaborators.no_hp`) are

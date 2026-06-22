@@ -1,0 +1,42 @@
+/* =============================================================
+   Company Profile — mobile responsiveness.
+
+   The screens are built with fixed multi-column INLINE grids, which a
+   normal media query can't reach. These rules use `!important` so they
+   override the inline grid-template-columns ONLY at small widths — the
+   desktop layout (the inline styles) is left completely untouched.
+   ============================================================= */
+
+/* Pills must never shrink-distort in a tight row. */
+.pill-button { flex-shrink: 0; }
+
+/* No hover on touch → reveal photo-tile captions so program / works images
+   are not "just pictures" with no text. */
+@media (hover: none), (max-width: 768px) {
+  .photo-tile__caption { opacity: 1 !important; transform: none !important; }
+}
+
+/* Homepage program strip: 6-up on desktop (inline), 3-up then 2-up smaller. */
+@media (max-width: 900px) { .cp-home-programs { grid-template-columns: repeat(3, 1fr) !important; } }
+@media (max-width: 600px) { .cp-home-programs { grid-template-columns: repeat(2, 1fr) !important; } }
+
+/* Generic two/three-column bands (manifesto, agenda, lokasi) → single column. */
+@media (max-width: 768px) {
+  .cp-stack-mobile { grid-template-columns: 1fr !important; gap: 32px !important; }
+  /* In a now-full-width cell a pill would stretch — keep it content-width. */
+  .pill-button { align-self: flex-start; justify-self: start; max-width: 100%; }
+}
+
+/* Section header (title + right button) stacks; button stays left, not full-width. */
+@media (max-width: 640px) {
+  .cp-section-header { grid-template-columns: 1fr !important; gap: 18px !important; }
+  .cp-section-header > * { justify-self: start; }
+}
+
+/* Program-detail rows: zigzag on desktop; single column, IMAGE-FIRST on mobile
+   (the flipped rows render text-then-image in the DOM, so re-order on mobile). */
+@media (max-width: 768px) {
+  .cp-program-row { grid-template-columns: 1fr !important; gap: 16px !important; }
+  .cp-program-row.is-flip > :nth-child(1) { order: 2; }
+  .cp-program-row.is-flip > :nth-child(2) { order: 1; }
+}

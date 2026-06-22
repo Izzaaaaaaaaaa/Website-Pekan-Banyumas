@@ -296,7 +296,7 @@ export default function HomeScreen({ onNavigate }) {
               {homeData.hero_headline_post}
             </h1>
           </div>
-          <div style={{ display: 'flex', gap: 16 }}>
+          <div style={{ display: 'flex', gap: 16, flexWrap: 'wrap', justifyContent: 'center' }}>
             <PillButton onClick={() => onNavigate('PROGRAM')}>
               Detail Agenda
             </PillButton>
@@ -316,6 +316,7 @@ export default function HomeScreen({ onNavigate }) {
         }}
       >
         <div
+          className="cp-stack-mobile"
           style={{
             display: 'grid',
             gridTemplateColumns: '280px 1fr 1fr',
@@ -362,6 +363,7 @@ export default function HomeScreen({ onNavigate }) {
         }}
       >
         <div
+          className="cp-stack-mobile"
           style={{
             display: 'grid',
             gridTemplateColumns: '1fr 1fr',
@@ -493,6 +495,7 @@ export default function HomeScreen({ onNavigate }) {
           />
         </div>
         <div
+          className="cp-home-programs"
           style={{
             display: 'grid',
             gridTemplateColumns: 'repeat(6, 1fr)',
@@ -561,6 +564,7 @@ export default function HomeScreen({ onNavigate }) {
         }}
       >
         <div
+          className="cp-stack-mobile"
           style={{
             display: 'grid',
             gridTemplateColumns: '1fr 1fr',
@@ -583,6 +587,7 @@ export default function HomeScreen({ onNavigate }) {
               {homeData.lokasi_headline}
             </div>
             <div
+              className="cp-stack-mobile"
               style={{
                 display: 'grid',
                 gridTemplateColumns: '1fr 1fr',

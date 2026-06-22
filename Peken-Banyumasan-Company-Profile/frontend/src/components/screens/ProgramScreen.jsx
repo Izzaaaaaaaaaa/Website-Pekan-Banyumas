@@ -142,6 +142,7 @@ function ProgramRow({ program, flip, onNavigate }) {
   );
   return (
     <div
+      className={`cp-program-row${flip ? ' is-flip' : ''}`}
       style={{
         display: 'grid',
         gridTemplateColumns: flip ? '1fr 1.2fr' : '1.2fr 1fr',
