@@ -12,16 +12,16 @@ import { companyProfileApi } from '../../services/endpoints.js';
 //      instead of a hard gradient bridge.
 
 const STATIC_IMAGES = [
-  { filename: 'gallery-1',      label: 'Edisi #01',        year: '2022' },
-  { filename: 'gallery-2',      label: 'Edisi #02',        year: '2022' },
-  { filename: 'gallery-3',      label: 'Edisi #03',        year: '2022' },
-  { filename: 'gallery-4',      label: 'Edisi #04',        year: '2023' },
-  { filename: 'gallery-5',      label: 'Edisi #05',        year: '2023' },
-  { filename: 'gallery-6',      label: 'Edisi #06',        year: '2023' },
+  { filename: 'gallery-1',      label: 'Mrapat #01',        year: '2022' },
+  { filename: 'gallery-2',      label: 'Mrapat #02',        year: '2022' },
+  { filename: 'gallery-3',      label: 'Mrapat #03',        year: '2022' },
+  { filename: 'gallery-4',      label: 'Mrapat #04',        year: '2023' },
+  { filename: 'gallery-5',      label: 'Mrapat #05',        year: '2023' },
+  { filename: 'gallery-6',      label: 'Mrapat #06',        year: '2023' },
   { filename: 'gallery-perform-1', label: 'Pertunjukan #01', year: '2024' },
   { filename: 'gallery-perform-2', label: 'Pertunjukan #02', year: '2024' },
   { filename: 'banner-home-1',  label: 'Banner Peken',     year: '2025' },
-  { filename: 'banner-home-2',  label: 'Banner Edisi',     year: '2025' },
+  { filename: 'banner-home-2',  label: 'Banner Mrapat',    year: '2025' },
 ];
 
 const STATIC_DOC = {
