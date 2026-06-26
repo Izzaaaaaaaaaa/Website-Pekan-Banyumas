@@ -17,6 +17,9 @@ function authHeaders() {
 
 const fmtTgl = d => d ? new Date(d).toLocaleDateString('id-ID', { day: 'numeric', month: 'short', year: 'numeric' }) : '';
 
+// Label ramah dari status efektif (akan datang / berlangsung / selesai).
+const EFF_LABEL = { published: 'Akan Datang', berlangsung: 'Berlangsung', selesai: 'Selesai' };
+
 function useToast() {
   const [msg, setMsg] = useState(null);
   const show = (text, type = 'success') => { setMsg({ text, type }); setTimeout(() => setMsg(null), 3500); };
@@ -221,6 +224,15 @@ export default function Event() {
   const pendingCount       = myEvents.filter(e => e.status_request === 'pending').length;
   const approvedCount      = myEvents.filter(e => e.status_request === 'approved').length;
 
+  // "Jelajahi" hanya menampilkan event yang masih relevan untuk didaftari:
+  // status efektif 'akan datang'/'berlangsung' DAN belum didaftari usaha ini
+  // (yang sudah masuk "Usaha Saya" tidak muncul lagi di sini). Event 'selesai'
+  // & draft disembunyikan — konsisten dengan portal Kolaborator.
+  const jelajahiEvents = events.filter(ev =>
+    ['published', 'berlangsung'].includes(ev.status_efektif || ev.status) &&
+    !registeredEventIds.includes(ev.id)
+  );
+
   const handleDaftar = (event, posisi) => {
     toast(`Permintaan "${event.nama}" (${posisi}) berhasil dikirim ke admin`);
     fetchMyEvents();
@@ -242,7 +254,7 @@ export default function Event() {
       </div>
 
       <div className="ev-stats">
-        <div className="ev-stat"><div className="ev-stat-val">{events.length}</div><div className="ev-stat-lbl">Event Tersedia</div></div>
+        <div className="ev-stat"><div className="ev-stat-val">{jelajahiEvents.length}</div><div className="ev-stat-lbl">Event Tersedia</div></div>
         <div className="ev-stat green"><div className="ev-stat-val">{approvedCount}</div><div className="ev-stat-lbl">Disetujui</div></div>
         <div className="ev-stat amber"><div className="ev-stat-val">{pendingCount}</div><div className="ev-stat-lbl">Menunggu Acc</div></div>
       </div>
@@ -258,14 +270,14 @@ export default function Event() {
       {tab === 'jelajahi' && (
         loading ? (
           <div style={{ padding: 32, textAlign: 'center', color: '#9ca3af' }}>Memuat event...</div>
-        ) : events.length === 0 ? (
+        ) : jelajahiEvents.length === 0 ? (
           <div className="ev-empty">
             <Inbox size={32} />
             <div className="ev-empty-text">Belum ada event yang tersedia.</div>
           </div>
         ) : (
           <div className="ev-grid">
-            {events.map(ev => {
+            {jelajahiEvents.map(ev => {
               const isReg     = registeredEventIds.includes(ev.id);
               const myReq     = myEvents.find(e => e.event_id === ev.id);
               const isPending = myReq?.status_request === 'pending';
@@ -280,7 +292,7 @@ export default function Event() {
                         <div className="ev-card-meta"><Calendar size={14} />{fmtTgl(ev.tanggal)}{ev.tanggal_selesai && ev.tanggal_selesai !== ev.tanggal ? ` – ${fmtTgl(ev.tanggal_selesai)}` : ''}</div>
                         <div className="ev-card-meta"><MapPin size={14} />{ev.lokasi}</div>
                       </div>
-                      <span className={`ev-badge ${ev.status}`}>{ev.status}</span>
+                      <span className={`ev-badge ${ev.status_efektif || ev.status}`}>{EFF_LABEL[ev.status_efektif || ev.status] || ev.status}</span>
                     </div>
                     <div className="ev-card-desc">{ev.deskripsi}</div>
                     {ev.kapasitas && (

@@ -1,15 +1,75 @@
 import uuid
+from datetime import date, datetime, time, timezone, timedelta
 from app.db.supabase import db_select, db_insert, db_update
 from app.schemas.event import DaftarEventSchema, ChangeStandSchema
+
+# WIB (UTC+7) — events are scheduled in local Banyumas time.
+_WIB = timezone(timedelta(hours=7))
+
+
+def _parse_date(v):
+    if not v:
+        return None
+    if isinstance(v, date) and not isinstance(v, datetime):
+        return v
+    try:
+        return date.fromisoformat(str(v)[:10])
+    except ValueError:
+        return None
+
+
+def _parse_time(v):
+    if not v:
+        return None
+    if isinstance(v, time):
+        return v
+    s = str(v)
+    for cand in (s, s[:8], s[:5]):
+        try:
+            return time.fromisoformat(cand)
+        except ValueError:
+            continue
+    return None
+
+
+def _status_efektif(ev: dict) -> str:
+    """Effective display status, derived from schedule + clock (WIB).
+
+    Mirrors peken_common/lib/event_status.effective_event_status so all 4
+    apps agree. (This backend is built WITHOUT peken_common — keep in sync.)
+    draft→draft; before start → 'published' (akan datang); within [start,end]
+    → 'berlangsung'; after end → 'selesai'. Date AND jam count; multi-day
+    spans tanggal..tanggal_selesai.
+    """
+    status = ev.get("status") or "draft"
+    if status == "draft":
+        return "draft"
+    tgl = _parse_date(ev.get("tanggal"))
+    if tgl is None:
+        return status
+    tgl_selesai = _parse_date(ev.get("tanggal_selesai")) or tgl
+    start = datetime.combine(tgl, _parse_time(ev.get("jam_mulai")) or time(0, 0, 0), tzinfo=_WIB)
+    end = datetime.combine(tgl_selesai, _parse_time(ev.get("jam_selesai")) or time(23, 59, 59), tzinfo=_WIB)
+    now = datetime.now(_WIB)
+    if now < start:
+        return "published"
+    if now <= end:
+        return "berlangsung"
+    return "selesai"
 
 
 def get_all_events() -> list:
     """
-    Ambil event dengan status published | berlangsung | selesai.
+    Ambil event dengan status published | berlangsung | selesai, lalu lampirkan
+    `status_efektif` (akan-datang/berlangsung/selesai) hasil derivasi jadwal —
+    supaya FE bisa filter strict & konsisten dengan domain lain.
     'upcoming' BUKAN status valid di DB — tidak dipakai.
     """
     events = db_select("events")
-    return [e for e in events if e.get("status") in {"published", "berlangsung", "selesai"}]
+    out = [e for e in events if e.get("status") in {"published", "berlangsung", "selesai"}]
+    for e in out:
+        e["status_efektif"] = _status_efektif(e)
+    return out
 
 
 def get_event_by_id(event_id: str) -> dict:
