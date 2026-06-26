@@ -47,6 +47,8 @@ def create_event(
     try:
         event = event_service.create_event(jsonable_encoder(data))
         return success_response(event, message="Event berhasil dibuat")
+    except HTTPException:
+        raise
     except Exception as e:
         raise HTTPException(500, detail=error_response(str(e), 500))
 

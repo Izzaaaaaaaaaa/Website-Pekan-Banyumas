@@ -1,8 +1,44 @@
 from app.db.supabase import supabase, supabase_admin
 from fastapi import HTTPException
-from datetime import datetime
+from datetime import datetime, date, time
 
 from app.services.notifikasi_service import create_notifikasi, create_notifikasi_bulk
+
+
+def _parse_date(v):
+    if not v:
+        return None
+    try:
+        return date.fromisoformat(str(v)[:10])
+    except ValueError:
+        return None
+
+
+def _parse_time(v):
+    if not v:
+        return None
+    s = str(v)
+    for cand in (s, s[:8], s[:5]):
+        try:
+            return time.fromisoformat(cand)
+        except ValueError:
+            continue
+    return None
+
+
+def _validate_event_schedule(d: dict):
+    """Reject impossible schedules (admin is the source of truth for dates).
+    tanggal_selesai must not precede tanggal; on a single day, jam_selesai
+    must be after jam_mulai."""
+    tgl = _parse_date(d.get("tanggal"))
+    tgl_selesai = _parse_date(d.get("tanggal_selesai"))
+    jam_mulai = _parse_time(d.get("jam_mulai"))
+    jam_selesai = _parse_time(d.get("jam_selesai"))
+    if tgl and tgl_selesai and tgl_selesai < tgl:
+        raise HTTPException(422, "Tanggal selesai tidak boleh sebelum tanggal mulai.")
+    same_day = tgl_selesai is None or tgl_selesai == tgl
+    if same_day and jam_mulai and jam_selesai and jam_selesai <= jam_mulai:
+        raise HTTPException(422, "Jam selesai harus setelah jam mulai pada hari yang sama.")
 
 
 def _event_nama(event_id: str) -> str:
@@ -62,11 +98,14 @@ def get_event(event_id: str):
 
 def create_event(data: dict):
     """Create new event."""
+    _validate_event_schedule(data)
     try:
         res = supabase_admin.table("events").insert(data).execute()
         if not res.data:
             raise HTTPException(500, "Gagal membuat event")
         return res.data[0]
+    except HTTPException:
+        raise
     except Exception as e:
         raise HTTPException(500, f"Error creating event: {str(e)}")
 
@@ -75,6 +114,12 @@ def update_event(event_id: str, data: dict):
     """Update event. Peserta (kolaborator + artisan) dinotifikasi bila field
     yang relevan berubah — kontrak 'notifikasi event harus benar-benar jalan'."""
     try:
+        # Validate the resulting schedule (merge existing event + incoming partial).
+        existing_res = supabase_admin.table("events").select(
+            "tanggal, tanggal_selesai, jam_mulai, jam_selesai"
+        ).eq("id", event_id).limit(1).execute()
+        existing = (existing_res.data or [{}])[0]
+        _validate_event_schedule({**existing, **data})
         changed = _EVENT_NOTIFY_FIELDS.intersection(k for k, v in data.items() if v is not None)
         res = supabase_admin.table("events").update(data).eq("id", event_id).execute()
         if not res.data:
@@ -296,10 +341,14 @@ def get_artisan_requests(event_id: str):
     "Permintaan" tab sees both kinds of request cards.
     """
     try:
+        # Only genuinely-pending self-join requests belong in the queue.
+        # Approved requests are moved to event_artisans (and the request row
+        # deleted) on approval; a lingering 'approved'/other status here is a
+        # stale anomaly and must NOT appear as an actionable request.
         res = supabase_admin.table("artisan_requests") \
             .select("*, artisans(nama_usaha, kategori_usaha)") \
             .eq("event_id", event_id) \
-            .neq("status_request", "rejected") \
+            .eq("status_request", "pending") \
             .execute()
 
         reqs = []

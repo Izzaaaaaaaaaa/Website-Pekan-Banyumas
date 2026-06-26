@@ -85,6 +85,14 @@ const THEMES = {
     },
 };
 
+/* ─── Metrik monitor (kartu besar bisa di-switch) ──────────────────── */
+const METRICS = [
+    { key: 'total_harian', label: 'Kunjungan Hari Ini',  icon: CalendarCheck },
+    { key: 'di_dalam',     label: 'Pengunjung di Dalam', icon: Users },
+    { key: 'total_masuk',  label: 'Total Tap Masuk',     icon: LogIn },
+    { key: 'total_keluar', label: 'Total Tap Keluar',    icon: LogOut },
+];
+
 /* ─── Animated Number ──────────────────────────────────────────────── */
 const AnimatedNumber = ({ value, style }) => {
     const [displayed, setDisplayed] = useState(value);
@@ -121,6 +129,10 @@ const Monitor = () => {
 
     const [themeKey, setThemeKey] = useState(() => getThemeByHour(new Date()));
     const t = THEMES[themeKey];
+
+    // Metrik sorotan di kartu besar. Default: Kunjungan Hari Ini.
+    // Klik kartu kecil untuk menukar metrik yang disorot (switchable).
+    const [featuredKey, setFeaturedKey] = useState('total_harian');
 
     useEffect(() => {
         const tick = setInterval(() => {
@@ -232,11 +244,17 @@ const Monitor = () => {
         );
     }
 
-    const secondaryCards = [
-        { label: 'Total Tap Masuk',    value: stats?.total_masuk  ?? 0, icon: LogIn,         accent: t.secAccents[0] },
-        { label: 'Total Tap Keluar',   value: stats?.total_keluar ?? 0, icon: LogOut,        accent: t.secAccents[1] },
-        { label: 'Kunjungan Hari Ini', value: stats?.total_harian ?? 0, icon: CalendarCheck, accent: t.secAccents[2] },
-    ];
+    const hero = METRICS.find(m => m.key === featuredKey) || METRICS[0];
+    const HeroIcon = hero.icon;
+    const secondaryCards = METRICS
+        .filter(m => m.key !== hero.key)
+        .map((m, i) => ({
+            key:    m.key,
+            label:  m.label,
+            value:  stats?.[m.key] ?? 0,
+            icon:   m.icon,
+            accent: t.secAccents[i % t.secAccents.length],
+        }));
 
     return (
         <>
@@ -285,15 +303,15 @@ const Monitor = () => {
                         </div>
 
                         <div style={{ ...BASE.heroIconWrap, ...t.heroIconWrap }}>
-                            <Users size={28} color={t.secAccents[0]} />
+                            <HeroIcon size={28} color={t.secAccents[0]} />
                         </div>
 
                         <AnimatedNumber
-                            value={stats?.di_dalam ?? 0}
+                            value={stats?.[hero.key] ?? 0}
                             style={{ ...BASE.heroNumber, ...t.heroNumber }}
                         />
 
-                        <div style={{ ...BASE.heroLabel, ...t.heroLabel }}>Pengunjung di Dalam</div>
+                        <div style={{ ...BASE.heroLabel, ...t.heroLabel }}>{hero.label}</div>
                         <div style={{ ...BASE.heroDivider, ...t.heroDivider }} />
                     </div>
 
@@ -302,7 +320,7 @@ const Monitor = () => {
                         {secondaryCards.map((card) => {
                             const Icon = card.icon;
                             return (
-                                <div key={card.label} style={{ ...BASE.secCard, ...t.secCard }} className="sec-card">
+                                <div key={card.key} onClick={() => setFeaturedKey(card.key)} title={`Jadikan "${card.label}" sorotan utama`} style={{ ...BASE.secCard, ...t.secCard, cursor: 'pointer' }} className="sec-card">
                                     <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', width: '100%' }}>
                                         <div style={{ ...BASE.secIconWrap, background: card.accent + '18', border: `1px solid ${card.accent}28` }}>
                                             <Icon size={18} color={card.accent} />
