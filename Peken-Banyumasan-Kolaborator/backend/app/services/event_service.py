@@ -5,30 +5,66 @@ Kolaborators can browse published/berlangsung events, view details,
 request to join (kolaborator_requests), and list their own requests.
 """
 
-from datetime import date
+from datetime import date, datetime, time, timezone, timedelta
 
 from app.db.supabase import supabase, supabase_admin
 
+# WIB (UTC+7) — events are scheduled in local Banyumas time.
+_WIB = timezone(timedelta(hours=7))
+
+
+def _parse_date(v):
+    if not v:
+        return None
+    if isinstance(v, date) and not isinstance(v, datetime):
+        return v
+    try:
+        return date.fromisoformat(str(v)[:10])
+    except ValueError:
+        return None
+
+
+def _parse_time(v):
+    if not v:
+        return None
+    if isinstance(v, time):
+        return v
+    s = str(v)
+    for cand in (s, s[:8], s[:5]):
+        try:
+            return time.fromisoformat(cand)
+        except ValueError:
+            continue
+    return None
+
 
 def _status_efektif(ev: dict) -> str:
-    """Date-derived display status. Computed per-request, NEVER stored.
+    """Effective display status, derived from schedule + clock (WIB).
 
-    Rules (per openapi-colab.yaml v2.4.2):
-    - If DB status == 'selesai' → 'selesai'
-    - If tanggal < today        → 'selesai'
-    - If tanggal == today       → 'berlangsung'
-    - Otherwise                 → raw status ('published' or 'berlangsung')
+    Mirrors peken_common/lib/event_status.effective_event_status so all 4
+    apps agree. (This backend is built WITHOUT peken_common — keep this copy
+    in sync if the shared logic changes.)
+      - draft stays draft
+      - before start (date+jam)     → 'published' (akan datang)
+      - within [start, end]         → 'berlangsung'
+      - after end                   → 'selesai'
+    Both date AND jam count; multi-day events span tanggal..tanggal_selesai.
     """
-    s, tgl = ev.get("status"), ev.get("tanggal")  # tanggal is 'YYYY-MM-DD'
-    if s == "selesai":
-        return "selesai"
-    if tgl:
-        today = date.today().isoformat()
-        if tgl < today:
-            return "selesai"
-        if tgl == today:
-            return "berlangsung"
-    return s  # 'published' or 'berlangsung'
+    status = ev.get("status") or "draft"
+    if status == "draft":
+        return "draft"
+    tgl = _parse_date(ev.get("tanggal"))
+    if tgl is None:
+        return status
+    tgl_selesai = _parse_date(ev.get("tanggal_selesai")) or tgl
+    start = datetime.combine(tgl, _parse_time(ev.get("jam_mulai")) or time(0, 0, 0), tzinfo=_WIB)
+    end = datetime.combine(tgl_selesai, _parse_time(ev.get("jam_selesai")) or time(23, 59, 59), tzinfo=_WIB)
+    now = datetime.now(_WIB)
+    if now < start:
+        return "published"
+    if now <= end:
+        return "berlangsung"
+    return "selesai"
 
 
 def get_events(user_payload: dict | None = None) -> list[dict]:
