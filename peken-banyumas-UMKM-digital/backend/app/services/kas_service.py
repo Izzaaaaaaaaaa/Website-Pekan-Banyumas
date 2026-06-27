@@ -1,7 +1,43 @@
 import uuid
+from datetime import date
 from decimal import Decimal
 from app.db.supabase import db_select, db_insert, db_update, db_delete
 from app.schemas.kas import TambahKasSchema, EditKasSchema
+
+
+def _to_date(v):
+    if not v:
+        return None
+    if isinstance(v, date):
+        return v
+    try:
+        return date.fromisoformat(str(v)[:10])
+    except ValueError:
+        return None
+
+
+def _event_for_kas(artisan_id: str, tgl):
+    """Event (approved participation) whose date range contains `tgl`.
+
+    Tags each kas entry to its event so per-event omzet/komisi reports are
+    EXACT. Returns None when the transaction falls outside any event the
+    artisan is approved for (a general / non-event transaction).
+    """
+    d = _to_date(tgl)
+    if d is None:
+        return None
+    approved = db_select("event_artisans",
+                         filters={"artisan_id": artisan_id, "status_request": "approved"}) or []
+    best_id, best_start = None, None
+    for ea in approved:
+        ev = db_select("events", filters={"id": ea.get("event_id")}, single=True)
+        if not ev:
+            continue
+        start = _to_date(ev.get("tanggal"))
+        end = _to_date(ev.get("tanggal_selesai")) or start
+        if start and end and start <= d <= end and (best_start is None or start > best_start):
+            best_id, best_start = ev.get("id"), start
+    return best_id
 
 
 def recompute_artisan_aggregates(artisan_id: str) -> None:
@@ -124,6 +160,8 @@ def tambah_kas(artisan_id: str, body: TambahKasSchema) -> dict:
         "ket": body.ket,
         "nominal": body.nominal,
         "tgl": body.tgl,
+        # Auto-attribute ke event (approved) yang rentang tanggalnya memuat tgl ini.
+        "event_id": _event_for_kas(artisan_id, body.tgl),
         "bukti_url": body.bukti_url,
     }
     result = db_insert("kas", data)
@@ -184,6 +222,8 @@ def edit_kas(artisan_id: str, kas_id: str, body: EditKasSchema) -> dict:
     update_data = {k: v for k, v in body.model_dump().items() if v is not None}
     # barang_id hanya untuk lookup stok — tidak ada di tabel kas, jangan di-update ke DB
     update_data.pop("barang_id", None)
+    # Re-tag event dari tanggal efektif (auto-attribute ke event peserta).
+    update_data["event_id"] = _event_for_kas(artisan_id, update_data.get("tgl") or item.get("tgl"))
     db_update("kas", {"id": kas_id}, update_data)
 
     # ── Sesuaikan stok jika ini pemasukan dengan barang ───────────────────────
