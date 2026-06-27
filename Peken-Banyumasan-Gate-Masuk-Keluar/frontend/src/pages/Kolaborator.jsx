@@ -1,6 +1,7 @@
 // Kolaborator.jsx — Kelola Kolaborator dengan tab drawer (Info, Event, Portofolio, Aktivitas)
 import React, { useState, useEffect } from 'react';
 import { useSearchParams } from 'react-router-dom';
+import { createPortal } from 'react-dom';
 import {
   Search, CheckCircle, XCircle, UserCheck, Users, MapPin, Eye,
   Mail, X, Plus, Trash2, Calendar, Loader2, Image, BookOpen, Star, StarOff,
@@ -34,7 +35,7 @@ function AssignEventModal({ kolaboratorId, existingIds, onClose, onAssign, allEv
   const [peran, setPeran] = useState('peserta');
   const [saving, setSaving] = useState(false);
   const available = (allEvents || []).filter(e =>
-    ['published','berlangsung'].includes(e.status) && !existingIds.includes(e.id));
+    ['published','berlangsung'].includes(e.status_efektif || e.status) && !existingIds.includes(e.id));
 
   const save = async () => {
     if (!selected) return;
@@ -49,11 +50,14 @@ function AssignEventModal({ kolaboratorId, existingIds, onClose, onAssign, allEv
     }
   };
 
-  return (
+  // Portal ke <body>: drawer induk memakai transform (animasi slide), yang
+  // menjadikannya containing block untuk elemen position:fixed — tanpa portal,
+  // modal "terjebak" di dalam drawer & tombol Assign bisa ketutup/keluar layar.
+  return createPortal(
     <div className="fixed inset-0 bg-black/60 z-[60] flex items-center justify-center p-4" onClick={onClose}>
-      <div className="bg-white rounded-[16px] w-full max-w-sm shadow-2xl" onClick={e=>e.stopPropagation()}>
-        <div className="flex items-center justify-between p-5 border-b"><h3 className="font-bold text-[#1e2010]">Assign ke Event</h3><button onClick={onClose}><X size={18} className="text-[#8a9070]"/></button></div>
-        <div className="p-5 space-y-4">
+      <div className="bg-white rounded-[16px] w-full max-w-sm shadow-2xl max-h-[85vh] flex flex-col" onClick={e=>e.stopPropagation()}>
+        <div className="flex items-center justify-between p-5 border-b shrink-0"><h3 className="font-bold text-[#1e2010]">Assign ke Event</h3><button onClick={onClose}><X size={18} className="text-[#8a9070]"/></button></div>
+        <div className="p-5 space-y-4 overflow-y-auto flex-1">
           <div className="space-y-1.5 max-h-40 overflow-y-auto">
             {available.length === 0
               ? <p className="text-[#8a9070] text-sm text-center py-4">Tidak ada event tersedia</p>
@@ -74,16 +78,17 @@ function AssignEventModal({ kolaboratorId, existingIds, onClose, onAssign, allEv
               ))}
             </div>
           </div>
-          <div className="flex gap-2">
-            <button onClick={onClose} className="flex-1 border border-[#e4e7d4] text-[#5a6040] py-2 rounded-[12px] text-sm font-semibold">Batal</button>
-            <button onClick={save} disabled={!selected||saving}
-              className="flex-1 bg-[#7a8a52] text-white py-2 rounded-[12px] text-sm font-semibold disabled:opacity-50 flex items-center justify-center gap-1">
-              {saving?<Loader2 size={13} className="animate-spin"/>:<Plus size={13}/>} Assign
-            </button>
-          </div>
+        </div>
+        <div className="flex gap-2 p-5 border-t shrink-0">
+          <button onClick={onClose} className="flex-1 border border-[#e4e7d4] text-[#5a6040] py-2 rounded-[12px] text-sm font-semibold">Batal</button>
+          <button onClick={save} disabled={!selected||saving}
+            className="flex-1 bg-[#7a8a52] text-white py-2 rounded-[12px] text-sm font-semibold disabled:opacity-50 flex items-center justify-center gap-1">
+            {saving?<Loader2 size={13} className="animate-spin"/>:<Plus size={13}/>} Assign
+          </button>
         </div>
       </div>
-    </div>
+    </div>,
+    document.body
   );
 }
 

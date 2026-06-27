@@ -1,6 +1,9 @@
 from app.db.supabase import supabase, supabase_admin
 from fastapi import HTTPException
-from datetime import datetime, date, time
+from datetime import datetime, date, time, timezone, timedelta
+
+# WIB (UTC+7) — events are scheduled in local Banyumas time.
+_WIB = timezone(timedelta(hours=7))
 
 from app.services.notifikasi_service import create_notifikasi, create_notifikasi_bulk
 
@@ -41,6 +44,35 @@ def _validate_event_schedule(d: dict):
         raise HTTPException(422, "Jam selesai harus setelah jam mulai pada hari yang sama.")
 
 
+def _status_efektif(ev: dict) -> str:
+    """Effective display status, derived from schedule + clock (WIB).
+
+    Admin only ever stores intent: draft | published. The shown status
+    (akan datang / berlangsung / selesai) is DERIVED here so every domain
+    agrees. Mirrors peken_common/lib/event_status (Gate is built without it).
+      - draft stays draft
+      - before start (date+jam)  → 'published' (akan datang)
+      - within [start, end]      → 'berlangsung'
+      - after end                → 'selesai'
+    Date AND jam count; multi-day spans tanggal..tanggal_selesai.
+    """
+    status = ev.get("status") or "draft"
+    if status == "draft":
+        return "draft"
+    tgl = _parse_date(ev.get("tanggal"))
+    if tgl is None:
+        return status
+    tgl_selesai = _parse_date(ev.get("tanggal_selesai")) or tgl
+    start = datetime.combine(tgl, _parse_time(ev.get("jam_mulai")) or time(0, 0, 0), tzinfo=_WIB)
+    end = datetime.combine(tgl_selesai, _parse_time(ev.get("jam_selesai")) or time(23, 59, 59), tzinfo=_WIB)
+    now = datetime.now(_WIB)
+    if now < start:
+        return "published"
+    if now <= end:
+        return "berlangsung"
+    return "selesai"
+
+
 def _event_nama(event_id: str) -> str:
     """Nama event untuk pesan notifikasi; aman saat gagal."""
     try:
@@ -78,7 +110,10 @@ def list_events(status: str = None):
         if status:
             query = query.eq("status", status)
         res = query.order("tanggal", desc=True).execute()
-        return res.data or []
+        events = res.data or []
+        for ev in events:
+            ev["status_efektif"] = _status_efektif(ev)
+        return events
     except Exception as e:
         raise HTTPException(500, f"Error listing events: {str(e)}")
 
@@ -89,7 +124,9 @@ def get_event(event_id: str):
         res = supabase_admin.table("events").select("*").eq("id", event_id).single().execute()
         if not res.data:
             raise HTTPException(404, "Event tidak ditemukan")
-        return res.data
+        ev = res.data
+        ev["status_efektif"] = _status_efektif(ev)
+        return ev
     except HTTPException:
         raise
     except Exception as e:

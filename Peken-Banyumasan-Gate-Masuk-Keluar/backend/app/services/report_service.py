@@ -1,5 +1,6 @@
 from app.db.supabase import supabase_admin
 from fastapi import HTTPException
+from decimal import Decimal
 import csv
 import io
 
@@ -78,14 +79,28 @@ def get_artisan_report(event_id: str = None):
 
             stand_terakhir = stand_res.data[0].get("stand_id") if stand_res.data else None
 
-            # Count transactions from kas
-            kas_res = supabase_admin.table("kas") \
-                .select("id") \
-                .eq("artisan_id", artisan_id) \
-                .eq("jenis", "masuk") \
-                .execute()
-            transaksi_count = len(kas_res.data or [])
-            
+            komisi_persen = Decimal(str(artisan.get("komisi_persen") or 0))
+
+            if event_id:
+                # EXACT per-event figures from event-tagged kas (jenis=masuk).
+                kas_res = supabase_admin.table("kas") \
+                    .select("nominal") \
+                    .eq("artisan_id", artisan_id) \
+                    .eq("jenis", "masuk") \
+                    .eq("event_id", event_id) \
+                    .execute()
+                kas_rows = kas_res.data or []
+                omzet = sum((Decimal(str(k.get("nominal") or 0)) for k in kas_rows), Decimal("0"))
+                transaksi_count = len(kas_rows)
+                komisi = omzet * komisi_persen / Decimal("100")
+            else:
+                # All-time figures (persisted aggregates — exact).
+                omzet = Decimal(str(artisan.get("total_penjualan") or 0))
+                komisi = Decimal(str(artisan.get("komisi_terkumpul") or 0))
+                kas_res = supabase_admin.table("kas") \
+                    .select("id").eq("artisan_id", artisan_id).eq("jenis", "masuk").execute()
+                transaksi_count = len(kas_res.data or [])
+
             # Count events
             events_res = supabase_admin.table("event_artisans") \
                 .select("id") \
@@ -98,7 +113,8 @@ def get_artisan_report(event_id: str = None):
                 "id": artisan_id,
                 "nama_usaha": artisan.get("nama_usaha"),
                 "kategori": ", ".join(artisan.get("kategori_usaha") or []),
-                "omset": artisan.get("total_penjualan", 0),
+                "omset": float(omzet),
+                "komisi": float(komisi),
                 "komisi_persen": artisan.get("komisi_persen", 0),
                 "transaksi": transaksi_count,
                 "event_count": event_count,
@@ -113,7 +129,14 @@ def get_artisan_report(event_id: str = None):
 
 
 def get_accumulation_report(event_id: str = None):
-    """Get event accumulation report."""
+    """Event accumulation report: counts + EXACT per-event omzet & komisi.
+
+    Money is derived from kas rows tagged with this event_id (jenis=masuk).
+    Komisi = sum over participating artisans of (their omzet in this event ×
+    that artisan's komisi_persen). Status is the schedule-derived effective
+    status, consistent across all domains.
+    """
+    from app.services.event_service import _status_efektif
     try:
         events_query = supabase_admin.table("events").select("*")
         if event_id:
@@ -124,39 +147,47 @@ def get_accumulation_report(event_id: str = None):
 
         report_rows = []
         for event in events:
-            # Count visitors
-            visitors_res = supabase_admin.table("visitors") \
-                .select("id") \
-                .eq("event_id", event["id"]) \
-                .execute()
+            ev_id = event["id"]
+            visitors_res = supabase_admin.table("visitors").select("id").eq("event_id", ev_id).execute()
             pengunjung = len(visitors_res.data or [])
 
-            # Count approved artisans
-            artisans_res = supabase_admin.table("event_artisans") \
-                .select("artisan_id") \
-                .eq("event_id", event["id"]) \
-                .eq("status_request", "approved") \
-                .execute()
+            artisans_res = supabase_admin.table("event_artisans").select("artisan_id") \
+                .eq("event_id", ev_id).eq("status_request", "approved").execute()
             artisan_count = len(set(a.get("artisan_id") for a in (artisans_res.data or [])))
 
-            # Count kolaborators
-            kolabs_res = supabase_admin.table("event_kolaborators") \
-                .select("kolaborator_id") \
-                .eq("event_id", event["id"]) \
-                .neq("status_kehadiran", "dibatalkan") \
-                .execute()
+            kolabs_res = supabase_admin.table("event_kolaborators").select("kolaborator_id") \
+                .eq("event_id", ev_id).neq("status_kehadiran", "dibatalkan").execute()
             kolaborator_count = len(set(k.get("kolaborator_id") for k in (kolabs_res.data or [])))
 
-            row = {
-                "id": event.get("id"),
+            # Money — kas masuk tagged to this event (exact, per the event_id link).
+            kas_res = supabase_admin.table("kas").select("artisan_id, nominal") \
+                .eq("event_id", ev_id).eq("jenis", "masuk").execute()
+            omzet = Decimal("0")
+            per_artisan = {}
+            for k in (kas_res.data or []):
+                n = Decimal(str(k.get("nominal") or 0))
+                omzet += n
+                aid = k.get("artisan_id")
+                per_artisan[aid] = per_artisan.get(aid, Decimal("0")) + n
+            komisi = Decimal("0")
+            if per_artisan:
+                arts = supabase_admin.table("artisans").select("id, komisi_persen") \
+                    .in_("id", list(per_artisan.keys())).execute().data or []
+                kp = {a["id"]: Decimal(str(a.get("komisi_persen") or 0)) for a in arts}
+                for aid, omz in per_artisan.items():
+                    komisi += omz * kp.get(aid, Decimal("0")) / Decimal("100")
+
+            report_rows.append({
+                "id": ev_id,
                 "nama": event.get("nama"),
                 "tanggal": event.get("tanggal"),
-                "status": event.get("status"),
+                "status": _status_efektif(event),
                 "pengunjung": pengunjung,
                 "artisan_count": artisan_count,
-                "kolaborator_count": kolaborator_count
-            }
-            report_rows.append(row)
+                "kolaborator_count": kolaborator_count,
+                "omset_artisan": float(omzet),
+                "komisi": float(komisi),
+            })
 
         return report_rows
 

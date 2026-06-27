@@ -44,7 +44,7 @@ const STATUS_CLS = {
 };
 const STATUS_LABEL = {
   published:   'Akan Datang',
-  draft:       'Draft',
+  draft:       'Draf',
   berlangsung: 'Berlangsung',
   selesai:     'Selesai',
 };
@@ -127,14 +127,15 @@ function EventFormModal({ editItem, onClose, onSave }) {
             </div>
           </div>
           <div>
-            <label className="text-[#5a6040] text-xs font-semibold mb-1.5 block">Status</label>
-            <select value={form.status} onChange={e => set('status', e.target.value)}
+            <label className="text-[#5a6040] text-xs font-semibold mb-1.5 block">Status Publikasi</label>
+            <select value={form.status === 'draft' ? 'draft' : 'published'} onChange={e => set('status', e.target.value)}
               className="w-full border border-[#e4e7d4] rounded-[12px] px-4 py-2.5 text-sm focus:outline-none focus:border-[#7a8a52] transition bg-white">
-              <option value="draft">Draft</option>
-              <option value="published">Published</option>
-              <option value="berlangsung">Berlangsung</option>
-              <option value="selesai">Selesai</option>
+              <option value="draft">Draf — belum tampil ke publik</option>
+              <option value="published">Published — tampil ke publik</option>
             </select>
+            <p className="text-[11px] text-[#8a9070] mt-1.5">
+              Status acara (Akan Datang / Berlangsung / Selesai) dihitung otomatis dari tanggal &amp; jam.
+            </p>
           </div>
           {/* Banner photo upload */}
           <ImageUpload
@@ -269,7 +270,7 @@ export default function Events() {
     <div className="space-y-5">
       <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
         {[
-          ['Draft',       events.filter(e=>e.status==='draft').length,            'bg-[#f7f8f2] text-[#5a6040]'],
+          ['Draf',        events.filter(e=>e.status==='draft').length,            'bg-[#f7f8f2] text-[#5a6040]'],
           ['Akan Datang', events.filter(e=>evStatus(e)==='published').length,     'bg-[#eef0e0] text-[#7a8a52]'],
           ['Berlangsung', events.filter(e=>evStatus(e)==='berlangsung').length,   'bg-[#eaf0f4] text-[#6B8FA3]'],
           ['Selesai',     events.filter(e=>evStatus(e)==='selesai').length,       'bg-[#f7f2e4] text-[#C4A24D]'],

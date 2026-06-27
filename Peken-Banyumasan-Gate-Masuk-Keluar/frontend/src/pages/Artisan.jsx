@@ -1,6 +1,7 @@
 // Artisan.jsx — Kelola Artisan + tab drawer (Usaha, Event, Profil Publik)
 import React, { useState, useEffect, memo } from 'react';
 import { useSearchParams } from 'react-router-dom';
+import { createPortal } from 'react-dom';
 import {
   Search, CheckCircle, XCircle, Store, AlertCircle, UserCheck,
   ChevronDown, ChevronUp, Percent, MapPin, Phone, Mail,
@@ -75,7 +76,8 @@ function AssignEventModal({ artisanId, existingIds, onClose, onAssign, allEvents
   const [selected, setSelected] = useState(null);
   const [posisi, setPosisi] = useState('');
   const [saving, setSaving] = useState(false);
-  const available = (allEvents || []).filter(e => !existingIds.includes(e.id));
+  const available = (allEvents || []).filter(e =>
+    ['published','berlangsung'].includes(e.status_efektif || e.status) && !existingIds.includes(e.id));
 
   const save = async () => {
     if (!selected) return;
@@ -90,11 +92,15 @@ function AssignEventModal({ artisanId, existingIds, onClose, onAssign, allEvents
     }
   };
 
-  return (
+  // Portal ke <body>: drawer induk memakai transform (animasi slide) sehingga
+  // jadi containing block untuk position:fixed — tanpa portal modal terjebak di
+  // dalam drawer & tombol Assign bisa ketutup/keluar layar (apalagi ZoneSelector
+  // membuat modal tinggi). Body scrollable + footer tetap terlihat.
+  return createPortal(
     <div className="fixed inset-0 bg-black/60 z-[60] flex items-center justify-center p-4" onClick={onClose}>
-      <div className="bg-white rounded-[16px] w-full max-w-sm shadow-2xl" onClick={e=>e.stopPropagation()}>
-        <div className="flex items-center justify-between p-5 border-b"><h3 className="font-bold text-[#1e2010]">Assign ke Event</h3><button onClick={onClose}><X size={18} className="text-[#8a9070]"/></button></div>
-        <div className="p-5 space-y-4">
+      <div className="bg-white rounded-[16px] w-full max-w-sm shadow-2xl max-h-[85vh] flex flex-col" onClick={e=>e.stopPropagation()}>
+        <div className="flex items-center justify-between p-5 border-b shrink-0"><h3 className="font-bold text-[#1e2010]">Assign ke Event</h3><button onClick={onClose}><X size={18} className="text-[#8a9070]"/></button></div>
+        <div className="p-5 space-y-4 overflow-y-auto flex-1">
           <div className="space-y-1.5 max-h-40 overflow-y-auto">
             {available.length === 0
               ? <p className="text-[#8a9070] text-sm text-center py-4">Tidak ada event tersedia</p>
@@ -114,16 +120,17 @@ function AssignEventModal({ artisanId, existingIds, onClose, onAssign, allEvents
                 className="w-full border border-[#e4e7d4] rounded-[12px] px-3 py-2 text-xs focus:outline-none focus:border-[#7a8a52]"/>
             </div>
           </div>
-          <div className="flex gap-2">
-            <button onClick={onClose} className="flex-1 border border-[#e4e7d4] text-[#5a6040] py-2 rounded-[12px] text-sm font-semibold">Batal</button>
-            <button onClick={save} disabled={!selected||saving}
-              className="flex-1 bg-[#7a8a52] text-white py-2 rounded-[12px] text-sm font-semibold disabled:opacity-50 flex items-center justify-center gap-1">
-              {saving?<Loader2 size={13} className="animate-spin"/>:<Plus size={13}/>} Assign
-            </button>
-          </div>
+        </div>
+        <div className="flex gap-2 p-5 border-t shrink-0">
+          <button onClick={onClose} className="flex-1 border border-[#e4e7d4] text-[#5a6040] py-2 rounded-[12px] text-sm font-semibold">Batal</button>
+          <button onClick={save} disabled={!selected||saving}
+            className="flex-1 bg-[#7a8a52] text-white py-2 rounded-[12px] text-sm font-semibold disabled:opacity-50 flex items-center justify-center gap-1">
+            {saving?<Loader2 size={13} className="animate-spin"/>:<Plus size={13}/>} Assign
+          </button>
         </div>
       </div>
-    </div>
+    </div>,
+    document.body
   );
 }
 

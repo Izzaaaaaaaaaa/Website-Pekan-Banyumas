@@ -989,9 +989,18 @@ function ArtisanReport({ events = [] }) {
 }
 
 // ── Accumulation Report Tab ───────────────────────────────────────────────────
+// Effective status (derived from schedule) → seragam label + warna, sama di semua domain.
+const ACCUM_STATUS = {
+  draft:       { label: 'Draf',        cls: 'bg-gray-100 text-gray-500'   },
+  published:   { label: 'Akan Datang', cls: 'bg-[#f7f2e4] text-[#C4A24D]' },
+  berlangsung: { label: 'Berlangsung', cls: 'bg-[#eaf0f4] text-[#6B8FA3]' },
+  selesai:     { label: 'Selesai',     cls: 'bg-[#eef0e0] text-[#7a8a52]' },
+};
+const accumStatusLabel = s => (ACCUM_STATUS[s] || ACCUM_STATUS.published).label;
+
 const DEMO_ACCUM = [
-  { id:'e1', nama:'Festival Budaya Banyumasan 2025', tanggal:'2025-05-17', status:'mendatang',  pengunjung:0,    artisan_count:8,  kolaborator_count:12, omset_artisan:0,        komisi:0 },
-  { id:'e2', nama:'Workshop Batik & Tenun Nusantara', tanggal:'2025-04-26', status:'mendatang', pengunjung:0,    artisan_count:3,  kolaborator_count:5,  omset_artisan:0,        komisi:0 },
+  { id:'e1', nama:'Festival Budaya Banyumasan 2025', tanggal:'2025-05-17', status:'published', pengunjung:0,    artisan_count:8,  kolaborator_count:12, omset_artisan:0,        komisi:0 },
+  { id:'e2', nama:'Workshop Batik & Tenun Nusantara', tanggal:'2025-04-26', status:'published', pengunjung:0,    artisan_count:3,  kolaborator_count:5,  omset_artisan:0,        komisi:0 },
   { id:'e4', nama:'Peken Banyumasan #12',             tanggal:'2025-03-20', status:'selesai',   pengunjung:1247, artisan_count:24, kolaborator_count:18, omset_artisan:28450000, komisi:4267500 },
 ];
 
@@ -1026,7 +1035,7 @@ function AccumulationReport({ events = [] }) {
   const totK    = selesai.reduce((s,e) => s + Number(e.komisi || 0), 0);
 
   const HDRS = ['Nama Event','Tanggal','Status','Pengunjung','Kolaborator Hadir','Artisan','Omset Artisan (Rp)','Komisi (Rp)'];
-  const ROWS = data.map(e => [e.nama, new Date(e.tanggal).toLocaleDateString('id-ID', { day: 'numeric', month: 'short', year: 'numeric' }), e.status, e.pengunjung||0, e.kolaborator_count, e.artisan_count, e.omset_artisan||0, e.komisi||0]);
+  const ROWS = data.map(e => [e.nama, new Date(e.tanggal).toLocaleDateString('id-ID', { day: 'numeric', month: 'short', year: 'numeric' }), accumStatusLabel(e.status), e.pengunjung||0, e.kolaborator_count, e.artisan_count, e.omset_artisan||0, e.komisi||0]);
   const TOT  = selesai.length > 0
     ? [['TOTAL (selesai)','','', totP, selesai.reduce((s,e)=>s+e.kolaborator_count,0), selesai.reduce((s,e)=>s+e.artisan_count,0), totO, totK]]
     : [];
@@ -1111,8 +1120,8 @@ function AccumulationReport({ events = [] }) {
                 <td className="px-4 py-3 text-[#5a6040]">{e.omset_artisan ? fmtRp(e.omset_artisan) : '—'}</td>
                 <td className="px-4 py-3 text-[#7a8a52] font-medium">{e.komisi ? fmtRp(e.komisi) : '—'}</td>
                 <td className="px-4 py-3">
-                  <span className={`px-2 py-0.5 rounded-full text-[10px] font-bold ${e.status==='selesai' ? 'bg-[#eef0e0] text-[#7a8a52]' : 'bg-[#f7f2e4] text-[#C4A24D]'}`}>
-                    {e.status}
+                  <span className={`px-2 py-0.5 rounded-full text-[10px] font-bold ${(ACCUM_STATUS[e.status] || ACCUM_STATUS.published).cls}`}>
+                    {accumStatusLabel(e.status)}
                   </span>
                 </td>
               </tr>

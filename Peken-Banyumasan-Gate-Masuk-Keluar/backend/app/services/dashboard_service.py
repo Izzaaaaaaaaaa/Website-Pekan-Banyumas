@@ -52,24 +52,33 @@ def get_active_event():
 
         logger.debug(f"[QUERY] Fetching active event from database")
         
-        def fetch_event():
+        # Admin only stores draft|published; 'berlangsung' is DERIVED from the
+        # schedule. Fetch non-draft events and pick the one effectively
+        # berlangsung right now (date + jam, WIB) — keeps the dashboard, manual
+        # entry, and NFC tap gating consistent with every other domain.
+        def fetch_events():
             return supabase_admin.table("events") \
-                .select("id, nama, status") \
-                .eq("status", "berlangsung") \
-                .limit(1) \
+                .select("id, nama, status, tanggal, tanggal_selesai, jam_mulai, jam_selesai") \
+                .neq("status", "draft") \
+                .order("tanggal", desc=True) \
                 .execute()
 
-        res = execute_with_retry(fetch_event, is_admin=True)
+        res = execute_with_retry(fetch_events, is_admin=True)
 
-        result = res.data[0] if res.data else None
+        from app.services.event_service import _status_efektif
+        result = None
+        for ev in (res.data or []):
+            if _status_efektif(ev) == "berlangsung":
+                result = {"id": ev["id"], "nama": ev.get("nama"), "status": "berlangsung"}
+                break
         _event_cache["data"] = result
         _event_cache["ts"] = now
-        
+
         if result:
             logger.debug(f"[CACHE] Active event cached: {result.get('id')} - {result.get('nama')}")
         else:
-            logger.debug(f"[QUERY] No active event found")
-        
+            logger.debug(f"[QUERY] No active (berlangsung) event found")
+
         return result
     except Exception as e:
         logger.error(f"[ERROR] get_active_event failed: {str(e)}")
