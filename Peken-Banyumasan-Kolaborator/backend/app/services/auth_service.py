@@ -114,6 +114,44 @@ def register_kolaborator(payload: dict) -> dict:
     }
 
 
+def get_my_status(user_id: str) -> dict:
+    """Return the kolaborator's own account state from the `kolaborators` table.
+
+    The table is the SINGLE SOURCE OF TRUTH for account state — never trust the
+    Supabase `app_metadata` copy, which can lag. Called by the frontend right
+    after `signInWithPassword`, BEFORE entering the dashboard, so:
+      - a deleted account (row gone) -> 404 -> login fails closed (mirrors artisan);
+      - pending/suspended/rejected   -> routed to /status with the real state;
+      - aktif                        -> dashboard.
+    """
+    if not user_id:
+        return {"error": "Unauthorized", "status_code": 401}
+
+    client = supabase_admin or supabase
+    try:
+        res = (
+            client.table("kolaborators")
+            .select("status, nama, email")
+            .eq("id", user_id)
+            .limit(1)
+            .execute()
+        )
+    except Exception as e:
+        return {"error": f"Gagal memverifikasi akun: {str(e)}", "status_code": 500}
+
+    rows = res.data or []
+    if not rows:
+        return {"error": "Akun kolaborator tidak ditemukan atau telah dihapus.", "status_code": 404}
+
+    row = rows[0]
+    return {
+        "status": row.get("status", "pending"),
+        "nama": row.get("nama", ""),
+        "email": row.get("email", ""),
+        "user_id": user_id,
+    }
+
+
 def update_auth_profile(user_id: str, payload: dict) -> dict:
     """Update custom profile fields in the `kolaborators` table.
 

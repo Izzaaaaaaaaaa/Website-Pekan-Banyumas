@@ -63,6 +63,24 @@ export const authApi = {
       err.response = { status: 401, data: { status: 'error', message: err.message } };
       throw err;
     }
+    // Verify the account against the DB (kolaborators table = source of truth) and
+    // read the AUTHORITATIVE status from there. Fail closed: a deleted account
+    // (row gone -> 404) must NOT be allowed in, even if the Supabase Auth user
+    // still lingers. This mirrors the artisan portal so both behave identically.
+    let dbStatus;
+    try {
+      const res = await apiClient.get('/api/auth/me/status');
+      dbStatus = extractData(res)?.status ?? 'pending';
+    } catch (verifyErr) {
+      await supabase.auth.signOut();
+      const code = verifyErr?.response?.status;
+      const message = (code === 404 || code === 403)
+        ? 'Akun tidak ditemukan atau telah dihapus.'
+        : 'Gagal memverifikasi akun. Coba lagi.';
+      const err = new Error(message);
+      err.response = { status: code ?? 401, data: { status: 'error', message } };
+      throw err;
+    }
     return {
       token: data.session.access_token,
       user: {
@@ -70,7 +88,7 @@ export const authApi = {
         email: data.user.email,
         nama: data.user.user_metadata?.nama ?? data.user.email,
         role,
-        status: data.user.app_metadata?.status ?? 'aktif',
+        status: dbStatus,
       },
     };
   },
