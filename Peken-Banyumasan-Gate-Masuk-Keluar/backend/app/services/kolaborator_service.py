@@ -2,6 +2,25 @@ from app.db.supabase import supabase, supabase_admin
 from fastapi import HTTPException
 
 
+def _sync_auth_metadata(user_id: str, status: str) -> None:
+    """Mirror the account state into Supabase Auth app_metadata.
+
+    The `kolaborators` table is the source of truth, but the FE route guard and
+    the backend JWT read `app_metadata.{role,status}`. Syncing keeps the two
+    from drifting so approve/suspend take effect on reload. Best-effort: login
+    also re-checks the DB (/api/auth/me/status), so a sync failure never opens
+    the gate.
+    """
+    if not user_id or not status:
+        return
+    try:
+        supabase_admin.auth.admin.update_user_by_id(
+            user_id, {"app_metadata": {"role": "kolaborator", "status": status}}
+        )
+    except Exception as e:
+        print(f"Warning: gagal sync app_metadata kolaborator {user_id}: {e}")
+
+
 def list_kolaborators(status: str = None, kota: str = None, q: str = None, page: int = 1, per_page: int = 20):
     """List kolaborators with optional filters."""
     try:
@@ -45,6 +64,9 @@ def update_kolaborator(kolaborator_id: str, data: dict):
         res = supabase_admin.table("kolaborators").update(update_data).eq("id", kolaborator_id).execute()
         if not res.data:
             raise HTTPException(404, "Kolaborator tidak ditemukan")
+        # Keep the Supabase Auth copy of the account state in sync (see helper).
+        if "status" in update_data:
+            _sync_auth_metadata(kolaborator_id, update_data["status"])
         return res.data[0]
 
     except HTTPException:
@@ -59,14 +81,30 @@ def update_kolaborator_status(kolaborator_id: str, status: str):
 
 
 def delete_kolaborator(kolaborator_id: str):
-    """Delete kolaborator."""
+    """Hard-delete a kolaborator and everything attached to it.
+
+    Every child row (event_kolaborators, kolaborator_requests, karya, stories, …)
+    has FK ON DELETE CASCADE, and kolaborators -> users_profile -> auth.users all
+    cascade downward, so removing any ancestor cleans the whole subtree. We
+    attempt all three removals idempotently (each in its own guard) so one
+    failure can't leave a half-deleted account behind:
+      1. auth user    — cascades the entire chain when it succeeds;
+      2. users_profile — cascades kolaborators + children if the auth delete failed;
+      3. kolaborators row — final no-op safety net.
+    Login also fails closed when the row is gone (/api/auth/me/status -> 404),
+    so even a failed auth-user delete can never be used to log back in.
+    """
     try:
-        # Delete from Supabase auth (will cascade to profile if configured)
         try:
             supabase_admin.auth.admin.delete_user(kolaborator_id)
         except Exception as auth_err:
-            print(f"Warning: Failed to delete auth user {kolaborator_id}: {auth_err}")
-        # Also try to delete the record in case auth didn't cascade or user is missing from auth
+            print(f"Warning: gagal hapus auth user {kolaborator_id}: {auth_err}")
+
+        try:
+            supabase_admin.table("users_profile").delete().eq("id", kolaborator_id).execute()
+        except Exception:
+            pass
+
         supabase_admin.table("kolaborators").delete().eq("id", kolaborator_id).execute()
         return {"message": "Kolaborator berhasil dihapus"}
     except Exception as e:

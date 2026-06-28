@@ -2,6 +2,25 @@ from app.db.supabase import supabase, supabase_admin
 from fastapi import HTTPException
 
 
+def _sync_auth_metadata(user_id: str, status: str) -> None:
+    """Mirror the account state into Supabase Auth app_metadata.
+
+    The `artisans` table is the source of truth, but the FE route guards and
+    the JWT read `app_metadata.{role,status}`. Keeping the copy in sync means a
+    suspend/approve takes effect on the next token refresh/reload, and the two
+    never drift. Best-effort: the artisan login also re-checks the DB, so a sync
+    failure never compromises the gate.
+    """
+    if not user_id or not status:
+        return
+    try:
+        supabase_admin.auth.admin.update_user_by_id(
+            user_id, {"app_metadata": {"role": "artisan", "status": status}}
+        )
+    except Exception as e:
+        print(f"Warning: gagal sync app_metadata artisan {user_id}: {e}")
+
+
 def list_artisans(status: str = None, kota: str = None, kategori: str = None, q: str = None):
     """List artisans with optional filters."""
     try:
@@ -59,6 +78,9 @@ def update_artisan(artisan_id: str, data: dict):
         res = supabase_admin.table("artisans").update(update_data).eq("id", artisan_id).execute()
         if not res.data:
             raise HTTPException(404, "Artisan tidak ditemukan")
+        # Keep the Supabase Auth copy of the account state in sync (see helper).
+        if "status" in update_data:
+            _sync_auth_metadata(artisan_id, update_data["status"])
         return res.data[0]
 
     except HTTPException:
@@ -73,13 +95,30 @@ def update_artisan_status(artisan_id: str, status: str):
 
 
 def delete_artisan(artisan_id: str):
-    """Delete artisan."""
+    """Hard-delete an artisan and everything attached to it.
+
+    Every child row (event_artisans, artisan_requests, kas, karya, stories, …)
+    has FK ON DELETE CASCADE, and artisans -> users_profile -> auth.users all
+    cascade downward, so removing any ancestor cleans the whole subtree. We
+    attempt all three removals idempotently (each in its own guard) so one
+    failure can't leave a half-deleted account behind:
+      1. auth user   — cascades the entire chain when it succeeds;
+      2. users_profile — cascades artisans + children if the auth delete failed;
+      3. artisans row  — final no-op safety net.
+    The artisan login also fails closed when the row is gone, so even a failed
+    auth-user delete can never be used to log back in.
+    """
     try:
         try:
             supabase_admin.auth.admin.delete_user(artisan_id)
         except Exception as auth_err:
-            print(f"Warning: Failed to delete auth user {artisan_id}: {auth_err}")
-            
+            print(f"Warning: gagal hapus auth user {artisan_id}: {auth_err}")
+
+        try:
+            supabase_admin.table("users_profile").delete().eq("id", artisan_id).execute()
+        except Exception:
+            pass
+
         supabase_admin.table("artisans").delete().eq("id", artisan_id).execute()
         return {"message": "Artisan berhasil dihapus"}
     except Exception as e:
